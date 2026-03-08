@@ -1,0 +1,4059 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQUAD COMMANDER</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #060a0f;
+    --bg-mid: #0d1520;
+    --bg-card: #111c2a;
+    --bg-card-hover: #162233;
+    --accent: #00c8ff;
+    --accent2: #ff6b35;
+    --accent3: #a8ff3e;
+    --gold: #ffd700;
+    --text-main: #e8f4ff;
+    --text-dim: #5a7a99;
+    --text-mid: #8bafc8;
+    --border: rgba(0,200,255,0.15);
+    --border-bright: rgba(0,200,255,0.5);
+    --glow: 0 0 20px rgba(0,200,255,0.3);
+    --glow-accent2: 0 0 20px rgba(255,107,53,0.3);
+    --elem-fire: #ff4d4d;
+    --elem-water: #4d90ff;
+    --elem-thunder: #ffd700;
+    --elem-dark: #b388ff;
+    --elem-light: #ffffff;
+    --elem-none: #aaaaaa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 20% 0%, rgba(0,100,200,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255,107,53,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* GRID OVERLAY */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(6,10,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-bright);
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,200,255,0.6);
+  }
+
+  .logo span {
+    color: var(--accent2);
+  }
+
+  .header-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border-bright);
+  }
+
+  .header-subtitle {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .hstat {
+    text-align: right;
+  }
+
+  .hstat-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-family: 'Orbitron', monospace;
+  }
+
+  .hstat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .resource-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 24px;
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  main {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* ===== SIDEBAR ===== */
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    background: rgba(13,21,32,0.6);
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+
+  aside::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-track { background: transparent; }
+  aside::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* SQUAD SLOTS */
+  .squad-section { margin-bottom: 28px; }
+
+  .squad-slot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 52px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .squad-slot:hover {
+    border-color: var(--border-bright);
+    background: rgba(0,200,255,0.05);
+  }
+
+  .squad-slot.filled {
+    border-color: rgba(0,200,255,0.3);
+    background: rgba(0,200,255,0.05);
+  }
+
+  .squad-slot.filled:hover {
+    background: rgba(0,200,255,0.1);
+  }
+
+  /* Ensure content sits above aura overlay in squad slots */
+  .squad-slot > * { position: relative; z-index: 2; }
+  .squad-slot .aura-overlay { position: absolute; z-index: 1; }
+
+  .slot-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    width: 16px;
+    flex-shrink: 0;
+  }
+
+  .slot-img-wrap {
+    width: 32px;
+    height: 40px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgba(0,200,255,0.05);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .squad-equip-icon {
+    width: 24px;
+    height: 24px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-left: auto;
+    margin-right: 8px;
+  }
+
+  .slot-img-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .slot-img-empty {
+    font-size: 16px;
+    color: var(--text-dim);
+  }
+
+  .slot-info { flex: 1; min-width: 0; }
+
+  .slot-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .slot-role {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 1px;
+  }
+
+  .slot-power {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  .squad-power-total {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(0,200,255,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .squad-power-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+  }
+
+  .squad-power-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(0,200,255,0.5);
+  }
+
+  /* FILTER */
+  .filter-section { margin-bottom: 24px; }
+
+  .filter-btn {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-mid);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,200,255,0.08);
+  }
+
+  .filter-btn .count {
+    float: right;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .filter-btn.active .count { color: var(--accent); }
+
+  /* ===== ROSTER PANEL ===== */
+  .roster-panel {
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  .roster-panel::-webkit-scrollbar { width: 6px; }
+  .roster-panel::-webkit-scrollbar-track { background: transparent; }
+  .roster-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .roster-panel::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
+
+  .roster-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .roster-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--text-main);
+  }
+
+  .search-bar {
+    flex: 1;
+    max-width: 240px;
+    position: relative;
+  }
+
+  .search-bar input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--text-dim); }
+
+  .search-bar::before {
+    content: '⌕';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  .sort-select {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    padding: 6px 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  .sort-select:focus { border-color: var(--accent); }
+  .sort-select option { background: var(--bg-mid); color: var(--text-main); }
+
+  /* ===== CHARACTER CARDS ===== */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+  }
+
+  .char-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .char-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    background: linear-gradient(135deg, rgba(0,200,255,0.08), transparent);
+    pointer-events: none;
+  }
+
+  .char-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0,200,255,0.15);
+  }
+
+  .char-card:hover::before { opacity: 1; }
+
+  .char-card.in-squad {
+    border-color: rgba(0,200,255,0.45);
+    box-shadow: 0 0 16px rgba(0,200,255,0.15);
+  }
+
+  .char-card.in-squad::after {
+    content: '✓ 編成中';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-family: 'Orbitron', monospace;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.char-card.not-owned {
+  filter: grayscale(80%) brightness(0.6);
+  cursor: default;
+}
+.char-card.not-owned:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border);
+}
+.char-card.not-owned::before {
+  display: none;
+}
+.char-card.not-owned .card-action-btn {
+  display: none;
+}
+.char-card.not-owned.in-squad::after {
+  /* An unowned card can't be in a squad, but for safety */
+  display: none;
+}
+.char-card.not-owned::after {
+    content: '未所有';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-family: 'Orbitron', monospace;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  /* CARD IMAGE */
+  .card-img {
+    width: 100%;
+    display: block;
+    aspect-ratio: auto;
+    background: linear-gradient(160deg, #0d1a2a, #070e18);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-img img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .card-img-placeholder {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-img-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0d1a2a 0%, #070e18 100%);
+  }
+
+  .char-silhouette {
+    position: relative;
+    z-index: 1;
+    font-size: 72px;
+    filter: drop-shadow(0 0 16px rgba(0,200,255,0.4));
+  }
+
+  .card-elem-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 900;
+    border: 2px solid currentColor;
+    z-index: 2;
+  }
+
+  .elem-fire { color: var(--elem-fire); background: rgba(255,77,77,0.15); border-color: var(--elem-fire); }
+  .elem-water { color: var(--elem-water); background: rgba(77,144,255,0.15); border-color: var(--elem-water); }
+  .elem-thunder { color: var(--elem-thunder); background: rgba(255,215,0,0.15); border-color: var(--elem-thunder); }
+  .elem-dark { color: var(--elem-dark); background: rgba(179,136,255,0.15); border-color: var(--elem-dark); }
+  .elem-light { color: var(--elem-light); background: rgba(255,255,255,0.15); border-color: var(--elem-light); text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+  .elem-none { color: var(--elem-none); background: rgba(128,128,128,0.15); border-color: var(--elem-none); }
+
+  /* CARD BODY */
+  .card-body {
+    padding: 10px;
+  }
+
+  .card-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-main);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 2px;
+  }
+
+  .card-role-tag {
+    display: inline-block;
+    font-size: 8px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .role-assault { background: rgba(255,107,53,0.2); color: var(--accent2); border: 1px solid rgba(255,107,53,0.4); }
+  .role-sniper { background: rgba(0,200,255,0.1); color: var(--accent); border: 1px solid rgba(0,200,255,0.3); }
+  .role-support { background: rgba(168,255,62,0.1); color: var(--accent3); border: 1px solid rgba(168,255,62,0.3); }
+  .role-tank { background: rgba(150,80,255,0.1); color: #c080ff; border: 1px solid rgba(150,80,255,0.3); }
+  .role-medic { background: rgba(255,80,120,0.1); color: #ff80a0; border: 1px solid rgba(255,80,120,0.3); }
+
+  /* STAT BARS */
+  .stat-bars { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    width: 20px;
+    flex-shrink: 0;
+    font-family: 'Orbitron', monospace;
+  }
+
+  .stat-bar-bg {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .bar-hp { background: linear-gradient(90deg, #ff4d4d, #ff8080); }
+  .bar-atk { background: linear-gradient(90deg, #ff6b35, #ffaa80); }
+  .bar-def { background: linear-gradient(90deg, #4d90ff, #80b8ff); }
+  .bar-spd { background: linear-gradient(90deg, #a8ff3e, #d4ff8e); }
+
+  .stat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    color: var(--text-mid);
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* POTENTIAL */
+  .potential-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .potential-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+  }
+
+  .potential-stars {
+    display: flex;
+    gap: 2px;
+  }
+
+  .star {
+    font-size: 10px;
+    color: var(--text-dim);
+    transition: color 0.2s;
+  }
+
+  .star.lit { color: var(--gold); text-shadow: 0 0 6px rgba(255,215,0,0.6); }
+
+  /* CARD ABILITY */
+  .card-ability {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    border-left: 2px solid var(--accent);
+    font-size: 9px;
+    color: var(--text-mid);
+    line-height: 1.4;
+  }
+
+  .ability-name {
+    color: var(--accent);
+    font-size: 9px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  /* ADD / REMOVE BTN */
+  .card-action-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .card-action-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,200,255,0.08);
+  }
+
+  .card-action-btn.remove {
+    border-color: rgba(255,107,53,0.4);
+    color: var(--accent2);
+  }
+
+  .card-action-btn.remove:hover {
+    background: rgba(255,107,53,0.1) !important;
+    border-color: var(--accent2) !important;
+    color: var(--accent2) !important;
+  }
+
+  .card-action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* ===== DETAIL MODAL ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--bg-mid);
+    border: 1px solid var(--border-bright);
+    border-radius: 12px;
+    width: 480px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 60px rgba(0,200,255,0.15), 0 32px 80px rgba(0,0,0,0.8);
+    transform: translateY(16px);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal::-webkit-scrollbar { width: 4px; }
+  .modal::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+  .modal-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .modal-subtitle {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .modal-close:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .modal-img {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+    display: block;
+    padding: 16px;
+  }
+
+  .modal-img img {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 20px rgba(0,200,255,0.3));
+  }
+
+  .modal-body { padding: 16px 20px 20px; }
+
+  .modal-section { margin-bottom: 18px; }
+
+  .modal-section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .mstat {
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .mstat-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .mstat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .modal-abilities { display: flex; flex-direction: column; gap: 8px; }
+
+  .ability-card {
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .ability-card-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .ability-card-desc {
+    font-size: 11px;
+    color: var(--text-mid);
+    line-height: 1.5;
+  }
+
+  .modal-footer {
+    padding: 0 20px 20px;
+  }
+
+  .modal-add-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: rgba(0,200,255,0.1);
+    color: var(--accent);
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .modal-add-btn:hover {
+    background: rgba(0,200,255,0.2);
+    box-shadow: var(--glow);
+  }
+
+  .modal-add-btn.remove-mode {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(255,107,53,0.1);
+  }
+
+  .modal-add-btn.remove-mode:hover {
+    background: rgba(255,107,53,0.2);
+    box-shadow: var(--glow-accent2);
+  }
+
+  .mission-chapter { margin-bottom: 24px; }
+  .mission-chapter-title {
+    font-size: 14px; font-weight: 700; color: var(--accent3);
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+
+  /* ===== MISSION & BATTLE ===== */
+  .mission-panel { padding: 24px; }
+  .mission-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .mission-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s;
+  }
+  .mission-card:hover { border-color: var(--border-bright); background: var(--bg-card-hover); }
+  .mission-title { font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+  .mission-title .cleared-check { color: var(--accent3); margin-right: 6px; }
+  .mission-desc { font-size: 11px; color: var(--text-mid); margin-bottom: 12px; line-height: 1.5; }
+  .mission-info { display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; color: var(--text-dim); margin-bottom: 12px; }
+  .mission-reward-info { text-align: right; }
+  .mission-reward-info .first-clear { color: var(--gold); font-weight: bold; }
+
+  .mission-card.locked {
+    opacity: 0.5;
+    filter: grayscale(1);
+    pointer-events: none;
+  }
+  .mission-btn {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    background: rgba(0,200,255,0.1);
+    color: var(--accent);
+    font-family: 'Orbitron', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mission-btn:hover { background: rgba(0,200,255,0.2); }
+  .mission-card.locked .mission-btn {
+    display: none;
+  }
+  
+  /* EQUIPMENT MODAL */
+  .equip-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .equip-item {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+  }
+  .equip-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(0,0,0,0.4);
+    border-color: transparent;
+  }
+  .equip-item.disabled:hover {
+    border-color: transparent;
+    background: rgba(0,0,0,0.4);
+  }
+  
+  /* EQUIP CARD (List View) */
+  .equip-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .equip-card:hover {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+  }
+  .equip-card-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .equip-card-icon {
+    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .equip-card-info { flex: 1; min-width: 0; }
+  .equip-card-name { font-weight: 700; color: var(--text-main); font-size: 13px; margin-bottom: 2px; }
+  .equip-card-desc { font-size: 10px; color: var(--text-mid); line-height: 1.4; }
+  .equip-card-owner {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .equip-item:hover { background: rgba(0,200,255,0.1); border-color: var(--accent); }
+  .equip-item.equipped { border-color: var(--gold); background: rgba(255,215,0,0.1); }
+  
+  .equip-icon-box {
+    width: 40px;
+    height: 40px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .equip-info { flex: 1; min-width: 0; }
+  .equip-name { font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
+  .equip-desc { font-size: 10px; color: var(--text-mid); line-height: 1.2; }
+  .equip-status { font-size: 9px; color: var(--gold); font-family: 'Orbitron', monospace; white-space: nowrap; }
+  .equip-status.other { color: var(--accent2); }
+  
+  .current-equip-display {
+    margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .battle-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6,10,15,0.95);
+    z-index: 250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .battle-overlay.open { opacity: 1; pointer-events: all; }
+  .battle-container {
+    width: 95%;
+    height: 95%;
+    max-width: 1200px;
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    background: var(--bg-mid);
+    display: flex;
+    flex-direction: column;
+  }
+  .battle-header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; }
+  .battle-header h2 { font-size: 16px; color: var(--accent2); }
+  .battle-header-controls {
+    display: flex;
+    gap: 8px;
+    justify-self: flex-end;
+  }
+  .battle-speed-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0,0,0,0.3);
+    padding: 4px;
+    border-radius: 4px;
+    justify-self: center;
+  }
+  .battle-speed-controls span {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-family: 'Orbitron', monospace;
+    margin: 0 6px;
+  }
+  .battle-speed-controls button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .battle-speed-controls button:hover {
+    background: rgba(0,200,255,0.1);
+    color: var(--accent);
+  }
+  .battle-speed-controls button.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .battle-field { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; gap: 20px; }
+  .battle-team { display: flex; justify-content: center; gap: 16px; }
+  .battle-unit {
+    width: 160px;
+    height: 220px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    transition: all 0.2s, transform 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .battle-unit.enemy-unit { border-color: var(--accent2); }
+  .battle-unit.player-unit { border-color: var(--accent); }
+  .battle-unit.defeated { opacity: 0.4; filter: grayscale(80%); }
+  .battle-unit.is-attacking {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px var(--gold);
+    z-index: 10;
+  }
+  .battle-unit.is-taking-damage {
+    animation: shake 0.4s;
+  }
+  .battle-unit.is-taking-skill-damage {
+    animation: shake-hard 0.5s;
+  }
+  .battle-unit.is-targeted {
+    border-color: var(--gold);
+    box-shadow: 0 0 12px var(--gold);
+  }
+  .battle-unit.is-turn-active {
+    box-shadow: 0 0 16px var(--gold), 0 0 24px var(--gold);
+    border-color: var(--gold);
+    transform: scale(1.02);
+  }
+  .passive-active-badge {
+    position: absolute;
+    top: 26px;
+    right: 8px;
+    background: rgba(255, 50, 50, 0.8);
+    border: 1px solid var(--accent2);
+    color: #fff;
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: 'Orbitron', monospace;
+    z-index: 5;
+    display: none;
+    box-shadow: 0 0 8px var(--accent2);
+    animation: pulse-badge 1.5s infinite alternate;
+  }
+  .passive-active-badge.active { display: block; }
+  @keyframes pulse-badge {
+    from { opacity: 0.8; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.1); }
+  }
+  .damage-flash-overlay {
+    position: absolute; inset: 0; background: rgba(255, 50, 50, 0.7);
+    opacity: 0; animation: damage-flash 0.4s; pointer-events: none;
+  }
+  .effect-overlay {
+    position: absolute; inset: -20px; pointer-events: none; z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .b-unit-img {
+    position: relative;
+    width: 100%;
+    height: 65%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #0d1a2a, #070e18);
+  }
+  .b-unit-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .b-unit-img .char-silhouette {
+    font-size: 72px;
+    filter: drop-shadow(0 0 16px rgba(0,200,255,0.4));
+  }
+  .b-unit-img.enemy-icon-bg {
+    background: linear-gradient(160deg, #2a1a0d, #180e07);
+  }
+  .b-unit-img.enemy-icon-bg .char-silhouette {
+    filter: drop-shadow(0 0 16px rgba(255,107,53,0.4));
+  }
+  .b-unit-info-overlay {
+    display: none;
+  }
+  .b-unit-info {
+    position: relative;
+    z-index: 3;
+    padding: 6px 8px;
+    height: 35%;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+  }
+  .b-unit-name { font-size: 13px; font-weight: 700; color: var(--text-main); text-shadow: 0 1px 3px #000; line-height: 1.3; height: 18px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .b-unit-status-effects {
+    display: flex;
+    gap: 4px;
+    height: 20px;
+    margin-bottom: 2px;
+    align-items: center;
+  }
+  .status-icon {
+    width: 18px;
+    height: 18px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    border: 1px solid #333;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .status-icon .turn-counter { position: absolute; bottom: -3px; right: -3px; background: #000; border-radius: 50%; font-size: 8px; width: 12px; height: 12px; line-height: 12px; text-align: center; color: #fff; border: 1px solid #fff; font-family: 'Orbitron', monospace; }
+  .b-unit-hp-bar-bg { height: 6px; background: rgba(0,0,0,0.5); border-radius: 3px; margin: 4px 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+  .b-unit-hp-bar { height: 100%; background: var(--accent3); border-radius: 3px; transition: width 0.5s; }
+  .b-unit-hp-text { font-size: 11px; font-weight: 700; font-family: 'Orbitron', monospace; text-align: center; color: var(--text-main); text-shadow: 0 1px 2px #000; }
+  .b-unit-level { position: absolute; top: 8px; right: 8px; font-size: 10px; font-family: 'Orbitron', monospace; background: rgba(0,0,0,0.5); color: var(--gold); padding: 1px 5px; border-radius: 3px; z-index: 4; }
+  .battle-log-container { height: 140px; border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 12px; }
+  .battle-log { flex: 1; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 8px; font-size: 11px; overflow-y: auto; color: var(--text-mid); }
+  .battle-log p { margin-bottom: 4px; }
+  .battle-log .damage { color: var(--accent2); }
+  .battle-log .info { color: var(--gold); }
+  .battle-log .heal { color: var(--accent3); }
+  .battle-log .ability { color: var(--accent); font-weight: bold; }
+
+  /* CUT-IN */
+  .cutin-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    overflow: hidden;
+  }
+  .cutin-overlay.active { opacity: 1; }
+  .cutin-char-wrap {
+    position: absolute;
+    right: -50%;
+    height: 100%;
+    width: 60%;
+    display: flex;
+    align-items: center;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+  }
+  .cutin-overlay.active .cutin-char-wrap { transform: translateX(-50vw); opacity: 1; right: 0; }
+  .cutin-text {
+    position: absolute;
+    left: -50%;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 40px;
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent);
+    font-style: italic;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 101;
+  }
+  .cutin-overlay.active .cutin-text { transform: translateX(50vw); left: 0; }
+
+  #battleActionBtn {
+    width: 120px;
+    align-self: stretch;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    background: var(--accent2);
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  #battleActionBtn:disabled { background: var(--text-dim); cursor: not-allowed; }
+
+  .level-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .level-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+  }
+  .level-btn:disabled { background: var(--text-dim); cursor: not-allowed; opacity: 0.5; }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--accent);
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+    z-index: 300;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    box-shadow: 0 0 20px rgba(0,200,255,0.2);
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .char-card {
+    animation: cardIn 0.3s ease both;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+
+  @keyframes shake-hard {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+  }
+
+  @keyframes damage-flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .passive-popup {
+    position: absolute;
+    top: -20px; left: 50%; transform: translateX(-50%);
+    width: 150px; text-align: center;
+    color: var(--gold); font-size: 11px; font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    z-index: 20; pointer-events: none;
+    animation: passiveFloat 1.5s forwards;
+  }
+  @keyframes passiveFloat {
+    0% { opacity: 0; transform: translate(-50%, 0); }
+    20% { opacity: 1; transform: translate(-50%, -15px); }
+    80% { opacity: 1; transform: translate(-50%, -20px); }
+    100% { opacity: 0; transform: translate(-50%, -30px); }
+  }
+
+  /* EFFECT ANIMATIONS */
+  .anim-slash { width: 100%; height: 100%; background: linear-gradient(45deg, transparent 45%, #fff 50%, transparent 55%); animation: eff-slash 0.3s forwards; }
+  @keyframes eff-slash { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 100% { transform: scale(2) rotate(45deg); opacity: 0; } }
+
+  .anim-magic { width: 100px; height: 100px; background: radial-gradient(circle, rgba(0,200,255,0.8) 0%, transparent 70%); border-radius: 50%; animation: eff-magic 0.5s forwards; }
+  @keyframes eff-magic { 0% { transform: scale(0); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.8; } 100% { transform: scale(2); opacity: 0; } }
+
+  .anim-shoot { width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff; animation: eff-shoot 0.3s forwards; }
+  @keyframes eff-shoot { 0% { transform: scale(3); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
+
+  .anim-heal { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+  .anim-heal::before { content: '✚'; font-size: 40px; color: var(--accent3); animation: eff-heal 0.6s forwards; text-shadow: 0 0 10px var(--accent3); }
+  @keyframes eff-heal { 0% { transform: translateY(10px) scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-20px) scale(1.5); opacity: 0; } }
+
+  .anim-impact { width: 100%; height: 100%; background: radial-gradient(circle, transparent 30%, rgba(255,255,255,0.8) 40%, transparent 50%); animation: eff-impact 0.3s forwards; }
+  @keyframes eff-impact { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+
+  .anim-guard-vertical { width: 100%; height: 100%; background: linear-gradient(to top, transparent, rgba(255,255,255,0.8), transparent); animation: eff-guard-v 0.5s forwards; }
+  @keyframes eff-guard-v { 0% { transform: scaleY(0); opacity: 0; } 50% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1.5); opacity: 0; } }
+
+  /* ===== AURA EFFECTS ===== */
+  .char-card.aura-1, .squad-slot.aura-1, .battle-unit.aura-1 { border-color: #e0e0e0 !important; box-shadow: 0 0 15px rgba(224,224,224,0.4), inset 0 0 10px rgba(224,224,224,0.1); }
+  .char-card.aura-2, .squad-slot.aura-2, .battle-unit.aura-2 { border-color: #ffd700 !important; box-shadow: 0 0 20px rgba(255,215,0,0.5), inset 0 0 10px rgba(255,215,0,0.2); }
+  .char-card.aura-3, .squad-slot.aura-3, .battle-unit.aura-3 { border-color: #b9f2ff !important; box-shadow: 0 0 25px rgba(185,242,255,0.6), 0 0 50px rgba(255,255,255,0.3), inset 0 0 15px rgba(185,242,255,0.3); }
+  .char-card.aura-4, .squad-slot.aura-4, .battle-unit.aura-4 { border-color: #888 !important; box-shadow: 0 0 25px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.3) !important; }
+
+  .aura-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+  
+  .aura-overlay::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: aura-sheen 3s infinite;
+  }
+
+  .aura-1 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(192,192,192,0.4), transparent); }
+  .aura-2 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(255,215,0,0.4), transparent); animation-duration: 2.5s; }
+  .aura-3 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(185,242,255,0.6), rgba(255,255,255,0.8), transparent); animation-duration: 2s; }
+  .aura-4 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(0,0,0,0.8), rgba(50,0,50,0.5), transparent); animation-duration: 4s; }
+  
+  .aura-3 .aura-overlay::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(white 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.5;
+    animation: sparkle 4s linear infinite;
+  }
+  
+  /* Adjust aura z-index for battle units so info remains visible */
+  .battle-unit .aura-overlay { z-index: 2; }
+
+  @keyframes aura-sheen {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+  }
+  @keyframes sparkle {
+    0% { background-position: 0 0; }
+    100% { background-position: 20px 20px; }
+  }
+
+  .aura-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    font-size: 9px;
+    font-family: 'Orbitron', monospace;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 900;
+    z-index: 6;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+
+  /* Battle Name Aura Styles */
+  .battle-unit.aura-1 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 8px #c0c0c0;
+    background: linear-gradient(90deg, rgba(192,192,192,0.3), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-1 .b-unit-name::before { content: '✦ '; color: #c0c0c0; font-size: 10px; }
+
+  .battle-unit.aura-2 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 8px #ffd700, 0 0 15px #ffaa00;
+    background: linear-gradient(90deg, rgba(255,215,0,0.3), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-2 .b-unit-name::before { content: '★ '; color: #ffd700; font-size: 10px; }
+
+  .battle-unit.aura-3 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 10px #00c8ff, 0 0 20px #fff;
+    background: linear-gradient(90deg, rgba(0,200,255,0.2), rgba(255,255,255,0.4), rgba(0,200,255,0.2));
+    background-size: 200% 100%;
+    animation: aura-text-shine 3s infinite linear;
+    padding-left: 4px;
+  }
+  .battle-unit.aura-3 .b-unit-name::before { content: '♦ '; color: #b9f2ff; font-size: 10px; }
+
+  .battle-unit.aura-4 .b-unit-name {
+    color: #ddd;
+    text-shadow: 0 0 5px #000, 0 0 10px #ff0000;
+    background: linear-gradient(90deg, rgba(0,0,0,0.8), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-4 .b-unit-name::before { content: '♛ '; color: #888; font-size: 10px; }
+
+  @keyframes aura-text-shine { 0% { background-position: -100% 0; } 100% { background-position: 200% 0; } }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    main { grid-template-columns: 1fr; }
+    aside { position: relative; top: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    .card-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .logo { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="logo">Souken<span>WoF</span></div>
+    <div class="header-divider"></div>
+    <div class="header-subtitle">部隊管理システム</div>
+  </div>
+  <div class="resource-display">
+    <div class="hstat-label" style="margin-right:8px">NIJI-ISHI</div>
+    <div class="hstat-val" style="color:var(--gold)" id="resRainbow">0</div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-label">ROSTER</div>
+      <div class="hstat-val" id="hRosterCount">12</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-label">SQUAD PWR</div>
+      <div class="hstat-val" id="hSquadPower">0</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="squad-section">
+      <div class="section-title">編成スロット（5/5）</div>
+      <div id="squadSlots"></div>
+      <div class="squad-power-total">
+        <div class="squad-power-label">TOTAL POWER</div>
+        <div class="squad-power-val" id="totalPower">0</div>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="section-title">表示切替</div>
+      <button class="filter-btn active" onclick="setView('roster')" id="view-roster">
+        キャラクター一覧
+      </button>
+      <button class="filter-btn" onclick="setView('missions')" id="view-missions">
+        任務
+      </button>
+      <button class="filter-btn" onclick="setView('equipment')" id="view-equipment">
+        装備一覧
+      </button>
+    </div>
+
+    <div class="filter-section">
+      <div class="section-title">フィルター</div>
+      <button class="filter-btn active" onclick="setFilter('all')" id="filter-all">
+        全員 <span class="count" id="cnt-all">12</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('assault')" id="filter-assault">
+        突撃 <span class="count" id="cnt-assault">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('sniper')" id="filter-sniper">
+        狙撃 <span class="count" id="cnt-sniper">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('support')" id="filter-support">
+        支援 <span class="count" id="cnt-support">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('tank')" id="filter-tank">
+        重装 <span class="count" id="cnt-tank">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('medic')" id="filter-medic">
+        医療 <span class="count" id="cnt-medic">-</span>
+      </button>
+    </div>
+
+    <div class="filter-section">
+      <div class="section-title">属性</div>
+      <button class="filter-btn" onclick="setFilter('fire')" id="filter-fire">
+        <span style="color:var(--elem-fire)">●</span> 炎属性 <span class="count" id="cnt-fire">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('water')" id="filter-water">
+        <span style="color:var(--elem-water)">●</span> 水属性 <span class="count" id="cnt-water">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('thunder')" id="filter-thunder">
+        <span style="color:var(--elem-thunder)">●</span> 雷属性 <span class="count" id="cnt-thunder">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('dark')" id="filter-dark">
+        <span style="color:var(--elem-dark)">●</span> 闇属性 <span class="count" id="cnt-dark">-</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('light')" id="filter-light">
+        <span style="color:var(--elem-light)">●</span> 光属性 <span class="count" id="cnt-light">-</span>
+      </button>
+      <div style="margin-top:12px;font-size:9px;color:var(--text-dim);text-align:center;border:1px solid var(--border);padding:4px;border-radius:4px;">
+        <span style="color:var(--elem-water)">水</span> &gt; <span style="color:var(--elem-fire)">炎</span> &gt; <span style="color:var(--elem-thunder)">雷</span> &gt; <span style="color:var(--elem-water)">水</span><br>
+        <span style="color:var(--elem-light)">光</span> ⇔ <span style="color:var(--elem-dark)">闇</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ROSTER PANEL -->
+  <div class="roster-panel" id="rosterPanel">
+    <div class="roster-toolbar">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="roster-title">キャラクター一覧</div>
+        <select class="sort-select" onchange="handleSort(this.value)">
+          <option value="id">ID順</option>
+          <option value="power">戦力順</option>
+          <option value="level">レベル順</option>
+        </select>
+      </div>
+      <div class="search-bar">
+        <input type="text" placeholder="名前・能力で検索..." oninput="handleSearch(this.value)" id="searchInput">
+      </div>
+    </div>
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
+
+  <!-- EQUIPMENT PANEL -->
+  <div class="roster-panel" id="equipPanel" style="display: none;">
+    <div class="roster-toolbar">
+      <div class="roster-title">所持装備一覧</div>
+    </div>
+    <div class="card-grid" id="equipGridDisplay" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));"></div>
+  </div>
+
+  <!-- MISSION PANEL -->
+  <div class="mission-panel" id="missionPanel" style="display: none;">
+    <div class="roster-toolbar" style="align-items: center;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="roster-title" id="missionViewTitle">ストーリー選択</div>
+        <div id="storyCategoryTabs" style="display:flex; gap:8px;">
+            <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 4px 12px; margin:0;">メイン</button>
+            <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 4px 12px; margin:0;">イベント</button>
+        </div>
+      </div>
+      <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 6px 12px; margin: 0;" onclick="renderStoryChapters()">
+        ← 戻る
+      </button>
+    </div>
+    <div class="mission-grid" id="missionGrid"></div>
+  </div>
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalName">-</div>
+        <div class="modal-subtitle" id="modalSubtitle">-</div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-img" id="modalImgWrap"></div>
+    <div class="modal-body">
+      <div class="level-control">
+        <div style="font-size:12px;color:var(--text-main)">Lv.<span id="modalLevelVal" style="font-size:16px;font-weight:700">1</span> <span style="font-size:10px;color:var(--text-dim)">/ 20</span></div>
+        <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()">強化 (虹石 <span id="costVal">100</span>)</button>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">基礎ステータス</div>
+        <div class="modal-stats-grid" id="modalStats"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">装備</div>
+        <div id="modalEquipDisplay"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">アビリティ</div>
+        <div class="modal-abilities" id="modalAbilities"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-add-btn" id="modalActionBtn" onclick="modalToggleSquad()">編成に追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- EQUIPMENT SELECTION MODAL -->
+<div class="modal-overlay" id="equipOverlay" onclick="closeEquipModal(event)">
+  <div class="modal" id="equipBox" style="width: 600px;">
+    <div class="modal-header">
+      <div class="modal-title">装備選択</div>
+      <button class="modal-close" onclick="closeEquipModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="equip-grid" id="equipList" style="grid-template-columns: 1fr 1fr;">
+        <!-- Items injected here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VICTORY MODAL -->
+<div class="modal-overlay" id="victoryOverlay">
+  <div class="modal" id="victoryBox" style="width: 450px; text-align: center;">
+    <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+      <div class="modal-title" style="font-size: 48px; color: var(--gold); font-family: 'Orbitron';">VICTORY</div>
+    </div>
+    <div class="modal-body" style="padding-top: 0;">
+      <p style="color: var(--text-mid); margin-bottom: 20px;">任務完了</p>
+      <div id="victoryRewards">
+        <!-- Rewards will be injected here -->
+      </div>
+      <button class="modal-add-btn" style="margin-top: 24px;" onclick="closeVictoryModal()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- BATTLE MODAL -->
+<div class="battle-overlay" id="battleOverlay">
+  <div class="battle-container">
+    <div class="battle-header">
+      <h2 id="battleTitle">Mission Title</h2>
+      <div class="battle-speed-controls">
+        <span>SPEED</span>
+        <button onclick="setBattleSpeed(1)" id="speed-btn-1">1x</button>
+        <button onclick="setBattleSpeed(2)" id="speed-btn-2" class="active">2x</button>
+        <button onclick="setBattleSpeed(4)" id="speed-btn-4">4x</button>
+      </div>
+      <div class="battle-header-controls">
+        <button class="modal-close" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア" style="font-size: 16px;">🏳️</button>
+        <button class="modal-close" id="closeBattleBtn" onclick="closeBattle()" disabled>✕</button>
+      </div>
+    </div>
+    <div class="battle-field">
+      <div class="battle-team" id="enemyTeam"></div>
+      <div class="battle-team" id="playerTeam"></div>
+      <!-- CUT-IN OVERLAY -->
+      <div class="cutin-overlay" id="cutinOverlay">
+        <div class="cutin-char-wrap" id="cutinChar"></div>
+        <div class="cutin-text" id="cutinText">ABILITY NAME</div>
+      </div>
+    </div>
+    <div class="battle-log-container">
+      <div class="battle-log" id="battleLog"></div>
+      <button id="battleActionBtn" onclick="runBattleSequence()">戦闘開始</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+const units = [
+  {
+    id: 1, name: 'ドラ・クラヴェール', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 950, atk: 98, def: 72, spd: 85 },
+    abilityType: 'slash',
+    abilities: [ // type: slash, magic, shoot, heal, impact
+      { name: 'レーヴァティン', desc: '30%の確率で発動。敵に攻撃力の200%のダメージを与え、3ターンの燃焼を付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 3 } },
+      { name: '炎支配', desc: '自身のHPが50%以下の時、攻撃力が30%上昇し、通常攻撃が敵に2ターンの燃焼を付与する。' },
+    ],
+    useImg: true,
+    img: 'C1.svg',
+  },
+  {
+    id: 2, name: 'ノア・ルナリス', element: 'light', elementJp: '光', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 850, atk: 90, def: 80, spd: 75 },
+    abilityType: 'magic',
+    abilities: [
+      { name: 'クリスタル・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の60%のダメージを与える。', triggerRate: 0.4, timing: 'after_attack' },
+      { name: '再生支配', desc: 'HPが30%以下の時、防御力が10%アップし、スキルが「ハート・ブレイク」に変化する。' },
+      { name: 'ハート・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の120%のダメージを与える。', triggerRate: 0.4, timing: 'after_attack' },
+    ],
+    useImg: true,
+    img: 'C2.svg',
+  },
+  {
+    id: 3, name: '鉄壁 ゴウ', element: 'light', elementJp: '光', role: 'tank', roleJp: '重装',
+    baseStats: { hp: 99, atk: 60, def: 99, spd: 42 },
+    abilityType: 'impact',
+    abilities: [
+      { name: '不動鎧壁', desc: '被ダメージを常時20%軽減する。' },
+      { name: '守護の誓い', desc: '隣接する味方が受けるダメージの20%を肩代わりする。3ターン継続。' },
+    ],
+    useImg: false,
+    img: null,
+  },
+  {
+    id: 4, name: 'いえみけ', element: 'water', elementJp: '水', role: 'tank', roleJp: '重装',
+    baseStats: { hp: 1200, atk: 65, def: 110, spd: 50 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '激流一閃', desc: '30%の確率で発動。被弾時、受けたダメージの100%を相手に返す。', triggerRate: 0.3, timing: 'on_hit' },
+      { name: '水支配', desc: '自身のHPが50%以下の時、防御力が40%上昇する。' },
+    ],
+    useImg: true,
+    img: 'C3.svg',
+  },
+  {
+    id: 5, name: 'ライ・アルバロ', element: 'thunder', elementJp: '雷', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 880, atk: 82, def: 65, spd: 95 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '雷撃斬', desc: '攻撃後、20%の確率で発動。攻撃力の50%のダメージで追撃する。', triggerRate: 0.2, timing: 'after_attack' },
+      { name: '雷支配', desc: '自身のHPが50%以下の時、スキルが「八連雷撃斬」に変化する。' },
+      { name: '八連雷撃斬', desc: '攻撃後、100%の確率で追撃(50%)し、その後確率で最大7回まで連続追撃を行う。', triggerRate: 1.0, timing: 'after_attack' },
+    ],
+    useImg: true,
+    img: 'C4.svg',
+  },
+  {
+    id: 6, name: 'デン・アルバロ', element: 'thunder', elementJp: '雷', role: 'tank', roleJp: '重装',
+    baseStats: { hp: 1300, atk: 75, def: 95, spd: 55 },
+    abilityType: 'impact',
+    abilities: [
+      { name: '雷業壁', desc: '被弾時、40%の確率で発動。ダメージを30%軽減し、相手に麻痺を2ターン付与する。', triggerRate: 0.4, timing: 'on_defense', effect: { type: 'status', status: 'paralysis', turns: 2 } },
+      { name: '支援', desc: '毎ターン、最もHP割合が低い味方のHPを最大値の10%回復する。' }
+    ],
+    useImg: true,
+    img: 'C5.svg',
+  },
+  {
+    id: 7, name: 'カーラム・アブルート', element: 'fire', elementJp: '炎', role: 'medic', roleJp: '医療',
+    baseStats: { hp: 1100, atk: 100, def: 60, spd: 70 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '血液爆発', desc: '被弾時、20%の確率で自身の攻撃力の150%のダメージを相手に与える。', triggerRate: 0.2, timing: 'on_hit' },
+      { name: '完全治療', desc: '味方（自分以外）が倒れた時、1度だけ体力50%で復活させる。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 8, name: 'リカルド・テラエル', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 1500, atk: 120, def: 80, spd: 50 },
+    abilityType: 'impact',
+    abilities: [
+      { name: '土残流', desc: '死亡時、1度だけ攻撃力の300%で反撃し、体力1で耐える。' },
+      { name: '適応力', desc: '状態異常になると状態異常を解除します。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 9, name: 'ベラ・ミルヘン', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 1000, atk: 110, def: 50, spd: 90 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '不可視の炎', desc: '攻撃後、50%の確率で再攻撃を行う。最大5回まで。', triggerRate: 1.0, timing: 'after_attack' },
+      { name: '核分裂', desc: '死亡時、敵全体に攻撃力の150%のダメージを与え、HP1で復活する。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 10, name: 'エマ・シルエイティ', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 1200, atk: 105, def: 60, spd: 65 },
+    abilityType: 'magic',
+    abilities: [
+      { name: 'アストラルファイア', desc: '攻撃前、40%の確率で発動。攻撃力が1.3倍になり、5ターンの燃焼を付与する。', triggerRate: 0.4, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 5 } },
+      { name: '厭世開花', desc: 'HPが減るほどステータスが上昇する（最大1.5倍）。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 11, name: 'ロイド・ハイネス', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 1350, atk: 95, def: 75, spd: 60 },
+    abilityType: 'impact',
+    abilities: [
+      { name: '大地震', desc: '30%の確率で発動。攻撃が敵全体への80%のダメージ攻撃になる。', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.8 },
+      { name: '化学物質汚染', desc: 'HPが50%以下になると発動。敵全体を3ターンの毒状態にする。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 12, name: 'オリバー・ジャック', element: 'water', elementJp: '水', role: 'support', roleJp: '支援',
+    baseStats: { hp: 1150, atk: 100, def: 65, spd: 85 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '睡眠誘いしララバイ', desc: '30%の確率で発動。攻撃前に発動し、攻撃に睡眠(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'sleep', turns: 2 } },
+      { name: 'フォルテ', desc: 'HPが50%以下の時、攻撃力が30%上昇する。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 13, name: 'ギラ・グレゴリオ', element: 'dark', elementJp: '闇', role: 'support', roleJp: '支援',
+    baseStats: { hp: 1400, atk: 110, def: 70, spd: 65 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '圧縮の札', desc: '30%の確率で発動。攻撃時の属性相性を有利として計算する。', triggerRate: 0.3, timing: 'before_attack' },
+      { name: '祟り神の降臨', desc: '死亡時、敵全体に衰弱を3ターン付与し、HP1で復活する。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 14, name: 'ミリア・ルティス', element: 'dark', elementJp: '闇', role: 'tank', roleJp: '重装',
+    baseStats: { hp: 1600, atk: 90, def: 120, spd: 50 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '月輪無双', desc: '攻撃後、50%の確率で威力80%の追撃を行う。最大4回まで。', triggerRate: 0.5, timing: 'after_attack' },
+      { name: '耐え抜く能力', desc: '致死ダメージを受けた際、確率で無効化する（1回目100%、以降20%ずつ低下、最大5回）。' }
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  // Enemies are now part of the same definition
+  {
+    id: 101, name: 'スライム', element: 'water', elementJp: '水', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 750, atk: 70, def: 20, spd: 50 }, icon: '💧', abilities: [], abilityType: 'impact', useImg: false,
+  },
+  {
+    id: 102, name: 'ゴブリン', element: 'dark', elementJp: '闇', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 1250, atk: 90, def: 30, spd: 70 }, icon: '👺', abilityType: 'slash',
+    abilities: [{ name: '毒突き', desc: '15%の確率で強力な攻撃を行い、3ターンの毒を付与する。', triggerRate: 0.15, timing: 'after_attack', effect: { type: 'status', status: 'poison', turns: 3 } }],
+  },
+  {
+    id: 103, name: 'オーク', element: 'fire', elementJp: '炎', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 2500, atk: 110, def: 50, spd: 60 }, icon: '👹', abilityType: 'impact',
+    abilities: [{ name: '渾身の一撃', desc: '強力な一撃を与える。(発動率: 25%)', triggerRate: 0.25, timing: 'before_attack' }],
+  },
+  {
+    id: 104, name: 'サンダーウルフ', element: 'thunder', elementJp: '雷', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 2000, atk: 120, def: 40, spd: 100 }, icon: '🐺', abilities: [], abilityType: 'slash', useImg: false,
+  },
+  {
+    id: 105, name: '光の番人', element: 'light', elementJp: '光', role: 'boss', roleJp: 'ボス',
+    baseStats: { hp: 4000, atk: 150, def: 80, spd: 60 }, icon: '✨', abilityType: 'magic',
+    abilities: [{ name: '聖なる審判', desc: '敵全体にダメージを与える。(発動率: 30%)', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.7 }],
+  },
+  {
+    id: 106, name: 'シャール・ラフレシア', element: 'dark', elementJp: '闇', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 700, atk: 85, def: 40, spd: 60 }, abilityType: 'magic',
+    abilities: [{ name: '闇攻撃強化', desc: '攻撃前に発動。攻撃威力が1.1倍になる。(発動率: 25%)', triggerRate: 0.25, timing: 'before_attack' }],
+    useImg: true, img: 'C301.svg'
+  },
+  {
+    id: 107, name: 'シェリア・ウィステリア', element: 'light', elementJp: '光', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 800, atk: 74, def: 50, spd: 55 }, abilityType: 'magic',
+    abilities: [{ name: '天使の梯子', desc: '被弾時に30%で発動。受けるダメージを10%軽減する。', triggerRate: 0.3, timing: 'on_defense' }],
+    useImg: true, img: 'C302.svg'
+  },
+  {
+    id: 108, name: 'ハイツ・ウォルフ', element: 'water', elementJp: '水', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 675, atk: 87, def: 45, spd: 62 }, abilityType: 'slash',
+    abilities: [{ name: '二段切り', desc: '攻撃後、50%の確率で追加攻撃(威力30%)を行う。', triggerRate: 0.5, timing: 'after_attack' }],
+    useImg: true, img: 'C303.svg'
+  },
+  {
+    id: 109, name: 'ローブ・フォルクス', element: 'fire', elementJp: '炎', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 750, atk: 92, def: 38, spd: 58 }, abilityType: 'magic',
+    abilities: [{ name: 'アートフレア', desc: '攻撃時、30%の確率で発動。攻撃後に燃焼を3ターン付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 3 } }],
+    useImg: true, img: 'C304.svg'
+  },
+  {
+    id: 110, name: 'ジョナサン・グレイザー', element: 'thunder', elementJp: '雷', role: 'sniper', roleJp: '狙撃',
+    baseStats: { hp: 900, atk: 140, def: 40, spd: 80 }, abilityType: 'impact',
+    abilities: [{ name: '大斧落とし', desc: '攻撃前、30%の確率で発動。攻撃後に麻痺を2ターン付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'paralysis', turns: 2 } }],
+    useImg: true, img: 'C305.svg'
+  },
+  {
+    id: 111, name: 'アイス・ヒヤシンス', element: 'water', elementJp: '水', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 1100, atk: 90, def: 70, spd: 50 }, abilityType: 'magic',
+    abilities: [{ name: 'アクアバルーン', desc: '被弾時、20%の確率で発動。受けたダメージの30%を相手に返す。', triggerRate: 0.2, timing: 'on_hit' }],
+    useImg: true, img: 'C306.svg'
+  },
+  {
+    id: 112, name: 'ルイ・ヴォールズ', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 1400, atk: 130, def: 60, spd: 75 }, abilityType: 'slash',
+    abilities: [{ name: '先手必勝', desc: '戦闘開始時、100%の確率で発動。敵全体に攻撃力の60%のダメージを与える。', triggerRate: 1.0, timing: 'on_battle_start' }],
+    useImg: true, img: 'C307.svg'
+  },
+  {
+    id: 113, name: 'ランディア・スクラ', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 1450, atk: 115, def: 85, spd: 70 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '虹斬', desc: '攻撃前に発動し、相性有利で攻撃し、衰弱を2ターン付与。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 2 } },
+      { name: '無能力の意地', desc: 'スキルによる攻撃を受けたときに攻撃を50%ブロックします。', timing: 'on_skill_defense' },
+    ],
+    useImg: true, img: 'C0.svg'
+  },
+  {
+    id: 114, name: 'アスター・エクレア', element: 'thunder', elementJp: '雷', role: 'assault', roleJp: '突撃',
+    baseStats: { hp: 1200, atk: 125, def: 60, spd: 110 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '開闢', desc: '戦闘開始時、対象1人に対して120%で攻撃し、麻痺を3ターン付与する。', triggerRate: 1.0, timing: 'on_battle_start', damageMult: 1.2, effect: { type: 'status', status: 'paralysis', turns: 3 } },
+      { name: '嵐呼ぶ剣戟', desc: 'HP30%以下で発動。攻撃力が30%上昇し、攻撃後、60%の確率で最大3回まで追撃を行う。' },
+    ],
+    useImg: true, img: 'C6.svg'
+  },
+];
+
+// Equipment Data
+const equipmentItems = [
+  { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 }, owned: true },
+  { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 }, owned: true },
+  { id: 3, name: '鉄の胸当て', icon: '🛡️', desc: '防御力が1.2倍になる', effect: { type: 'stat_mult', stat: 'def', val: 1.2 }, owned: true },
+  { id: 4, name: '疾風のブーツ', icon: '👢', desc: '速度が1.2倍になる', effect: { type: 'stat_mult', stat: 'spd', val: 1.2 }, owned: true },
+  { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 }, owned: true },
+  { id: 6, name: '狂戦士の斧', icon: '🪓', desc: '攻撃力が1.4倍になるが、HPが0.8倍になる', effect: { type: 'stat_mult_multi', stats: { atk: 1.4, hp: 0.8 } }, owned: true },
+  { id: 7, name: '重騎士の盾', icon: '🛡️', desc: '防御力が1.4倍になるが、速度が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { def: 1.4, spd: 0.8 } }, owned: true },
+  { id: 8, name: '盗賊のマント', icon: '🧥', desc: '速度が1.3倍になるが、防御力が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { spd: 1.3, def: 0.8 } }, owned: true },
+  { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 }, owned: true },
+  { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 }, owned: true },
+  { id: 11, name: '毒針', icon: '💉', desc: '攻撃時、20%の確率で毒を与える', effect: { type: 'add_status', status: 'poison', chance: 0.2 }, owned: true },
+  { id: 12, name: '幸運のコイン', icon: '🪙', desc: '10%の確率で攻撃を回避する', effect: { type: 'evasion', val: 0.1 }, owned: true },
+  { id: 13, name: '身代わり人形', icon: '🧸', desc: '最初の攻撃を1回だけ無効化する', effect: { type: 'shield_hit', val: 1 }, owned: true },
+  { id: 14, name: 'フェニックスの羽', icon: '🪶', desc: '一度だけ致死ダメージを耐える', effect: { type: 'guts', val: true }, owned: true },
+  { id: 15, name: '賢者の石', icon: '💎', desc: '全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } }, owned: true },
+];
+
+// AI Types
+const AI_TYPES = {
+  LOWEST_HP_DEF: 'weakest', // 体力x防御が低い相手
+  HIGHEST_ATK: 'strongest', // 攻撃力が高い相手
+  RANDOM: 'random'
+};
+
+const chapter1Names = [
+  "訓練①", "訓練②", "訓練③", "訓練④", "竹馬の友",
+  "訓練⑤", "訓練⑥", "雷の属性剣士", "訓練⑦", "心配性の王女",
+];
+
+const chapter2Names = [
+  "第五部隊訓練①", "第五部隊訓練②",
+  "第四部隊訓練①", "第四部隊訓練②",
+  "第三部隊訓練①", "第三部隊訓練②",
+  "第二部隊訓練①", "第二部隊訓練②",
+  "第一部隊訓練①", "第一部隊訓練②",
+  "副隊長訓練", "隊長訓練"
+];
+
+// Helper to generate missions
+function generateMissions(startId, count, baseName, defaultEnemyPool, rewardBase, nameList = [], fixedEnemies = null) {
+  return Array.from({length: count}, (_, i) => {
+    let missionEnemies = [];
+    let level = Math.min(20, 1 + i);
+
+    // Use fixed enemy configuration if provided for this index
+    if (fixedEnemies && fixedEnemies[i]) {
+      missionEnemies = fixedEnemies[i].map(e => ({
+        id: e.id,
+        level: e.level || level,
+        aiType: e.aiType || AI_TYPES.RANDOM
+      }));
+    } else {
+      // Fallback to random generation
+      const enemyCount = 1 + Math.floor(i / 5);
+      for(let j=0; j<enemyCount; j++) {
+        missionEnemies.push({
+          id: defaultEnemyPool[Math.floor(Math.random()*defaultEnemyPool.length)],
+          level: level,
+          aiType: Math.random() > 0.5 ? AI_TYPES.LOWEST_HP_DEF : AI_TYPES.HIGHEST_ATK
+        });
+      }
+    }
+    
+    let totalPower = 0;
+    missionEnemies.forEach(me => {
+      const e = units.find(x => x.id === me.id);
+      if (e) {
+        const m = 1 + (me.level - 1) * 0.1;
+        const hp = Math.floor(e.baseStats.hp * m);
+        const atk = Math.floor(e.baseStats.atk * m);
+        const def = Math.floor(e.baseStats.def * m);
+        const spd = Math.floor(e.baseStats.spd * m);
+        totalPower += Math.floor(hp + atk * 2 + def + spd);
+      }
+    });
+
+    const missionName = nameList[i] || `${baseName} ${i+1}`;
+    return {
+      id: startId + i,
+      name: missionName,
+      description: `レベル${level}の脅威を排除せよ。`,
+      enemies: missionEnemies,
+      recommendedPower: totalPower,
+      reward: (rewardBase + (i * 5)) * 30,
+      firstTimeReward: ((rewardBase + (i * 5)) * 30) * 2
+    };
+  });
+}
+
+// Define specific enemy configurations for Chapter 1
+const chapter1Enemies = [
+  [{ id: 106, level: 3, aiType: AI_TYPES.RANDOM }], // Stage 1 (Shar Rafflesia)
+  [{ id: 107, level: 4, aiType: AI_TYPES.RANDOM }], // Stage 2 (Sheria Wisteria)
+  [{ id: 108, level: 5, aiType: AI_TYPES.RANDOM }], // Stage 3 (Heitz Wolf)
+  [{ id: 109, level: 6, aiType: AI_TYPES.RANDOM }], // Stage 4 (Robe Volks)
+  [{ id: 4, level: 7, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 5 (Iemike)  
+  [{ id: 110, level: 8, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 6 (Jonathan Glazer)
+  [{ id: 111, level: 9, aiType: AI_TYPES.RANDOM }],      // Stage 7 (Ice Hyacinth)
+  [{ id: 5, level: 9, aiType: AI_TYPES.HIGHEST_ATK }],   // Stage 8 (Rai Alvaro)
+  [{ id: 112, level: 10, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 9 (Louis Voules)
+  [{ id: 6, level: 11, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 10 (Den Alvaro)
+  ];
+
+const chapter2Enemies = [
+  [{ id: 7, level: 18, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 1: Callum
+  [{ id: 8, level: 22, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 2: Ricardo
+  [{ id: 9, level: 19, aiType: AI_TYPES.RANDOM }], // Stage 3: Bella
+  [{ id: 10, level: 23, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 4: Emma
+  [{ id: 11, level: 20, aiType: AI_TYPES.RANDOM }], // Stage 5: Lloyd
+  [{ id: 12, level: 24, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 6: Oliver
+  [{ id: 13, level: 21, aiType: AI_TYPES.RANDOM }], // Stage 7: Gira
+  [{ id: 14, level: 25, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 8: Milia
+  [{ id: 113, level: 22, aiType: AI_TYPES.RANDOM }], // Stage 9: Landia
+  [{ id: 114, level: 28, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 10: Aster
+  [ // Stage 11
+    { id: 7, level: 18, aiType: AI_TYPES.RANDOM }, { id: 9, level: 19, aiType: AI_TYPES.RANDOM }, 
+    { id: 11, level: 20, aiType: AI_TYPES.RANDOM }, { id: 13, level: 21, aiType: AI_TYPES.RANDOM }, 
+    { id: 113, level: 22, aiType: AI_TYPES.RANDOM }
+  ],
+  [ // Stage 12
+    { id: 8, level: 22, aiType: AI_TYPES.RANDOM }, { id: 10, level: 23, aiType: AI_TYPES.RANDOM }, 
+    { id: 12, level: 24, aiType: AI_TYPES.RANDOM }, { id: 14, level: 25, aiType: AI_TYPES.RANDOM }, 
+    { id: 114, level: 28, aiType: AI_TYPES.RANDOM }
+  ],
+];
+
+const storyChapters = [
+  { name: '第一章：天からの贈り物', missions: generateMissions(100, 10, 'Stage', [101], 50, chapter1Names, chapter1Enemies) },
+  { name: '第二章：ルディ王国', missions: generateMissions(200, 12, 'Stage', [102, 102, 101], 100, chapter2Names, chapter2Enemies) },
+];
+
+function getMissionById(id) {
+  for (const chapter of storyChapters) {
+    const mission = chapter.missions.find(m => m.id === id);
+    if (mission) return mission;
+  }
+  return null;
+}
+
+const elementalAdvantage = {
+  fire: { water: 0.5, thunder: 1.5 },
+  water: { thunder: 0.5, fire: 1.5 },
+  thunder: { fire: 0.5, water: 1.5 },
+  light: { dark: 1.5 },
+  dark: { light: 1.5 },
+};
+
+const STATUS_EFFECTS = {
+  burn: { icon: '🔥', name: '燃焼' },
+  paralysis: { icon: '⚡', name: '麻痺' },
+  poison: { icon: '☠️', name: '毒' },
+  weakness: { icon: '📉', name: '衰弱' },
+  strengthen: { icon: '💪', name: '強化' },
+  sleep: { icon: '💤', name: '睡眠' },
+};
+
+const AURA_DATA = [
+  { cost: 50000, name: 'Silver', class: 'aura-1', label: 'AURA I', color: '#c0c0c0' },
+  { cost: 100000, name: 'Gold', class: 'aura-2', label: 'AURA II', color: '#ffd700' },
+  { cost: 500000, name: 'Diamond', class: 'aura-3', label: 'AURA III', color: '#b9f2ff' },
+  { cost: 1000000, name: 'Black', class: 'aura-4', label: 'AURA IV', color: '#a0a0a0' }
+];
+
+let playerState = {
+  rainbowStones: 5000,
+  characters: { 1: { level: 1, equippedId: null }, 2: { level: 1, equippedId: null } }, // id: {level, equippedId}
+};
+
+// ===== STATE =====
+const MAX_SQUAD = 5;
+let squad = []; // ids
+let currentView = 'roster';
+let currentFilter = 'all';
+let searchQuery = '';
+let currentSort = 'id';
+let currentStoryTab = 'main';
+let modalCharId = null;
+let missionProgress = new Set(); // Cleared mission IDs
+let battleState = {};
+let battleSpeedMultiplier = 2;
+
+// ===== COMPUTED =====
+function calcStats(baseStats, level, equipment = null) {
+  // レベル1ごとに10%上昇する計算
+  const multiplier = 1 + (level - 1) * 0.1;
+  let s = {
+    hp: Math.floor(baseStats.hp * multiplier),
+    atk: Math.floor(baseStats.atk * multiplier),
+    def: Math.floor(baseStats.def * multiplier),
+    spd: Math.floor(baseStats.spd * multiplier)
+  };
+
+  // Equipment Stat Modifiers
+  if (equipment && equipment.effect) {
+    if (equipment.effect.type === 'stat_mult') {
+      s[equipment.effect.stat] = Math.floor(s[equipment.effect.stat] * equipment.effect.val);
+    } else if (equipment.effect.type === 'stat_mult_multi') {
+      for (const [stat, val] of Object.entries(equipment.effect.stats)) {
+        if (s[stat]) s[stat] = Math.floor(s[stat] * val);
+      }
+    }
+  }
+
+  return s;
+}
+
+function getPower(unit, level) {
+  const equipId = playerState.characters[unit.id] ? playerState.characters[unit.id].equippedId : null;
+  const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+  const s = calcStats(unit.baseStats, level, equip);
+  return Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
+}
+
+function getMaxLevel(aura) {
+  return 20 + (aura || 0) * 5;
+}
+
+function getLevelCost(level) {
+  return level * 100; // Lv1->2 = 100, Lv19->20 = 1900
+}
+
+// ===== RENDER SQUAD SLOTS =====
+function renderSquad() {
+  document.getElementById('resRainbow').textContent = playerState.rainbowStones;
+  const container = document.getElementById('squadSlots');
+  container.innerHTML = '';
+  for (let i = 0; i < MAX_SQUAD; i++) {
+    const id = squad[i];
+    const c = id ? units.find(u => u.id === id) : null;
+    const slot = document.createElement('div');
+    const equipId = id ? playerState.characters[id].equippedId : null;
+    const aura = id ? (playerState.characters[id].aura || 0) : 0;
+    const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+    slot.className = 'squad-slot' + (c ? ' filled' : '') + (aura > 0 ? ` ${AURA_DATA[aura-1].class}` : '');
+    if (c) {
+      slot.innerHTML = `
+        ${aura > 0 ? `<div class="aura-overlay"></div>` : ''}
+        <div class="slot-num">${i+1}</div>
+        <div class="slot-img-wrap"><img src="${c.useImg ? c.img : 'C0.svg'}" alt="${c.name}"></div>
+        <div class="slot-info">
+          <div class="slot-name">${c.name}</div>
+          <div class="slot-role">${c.roleJp}</div>
+        </div>
+        ${equip ? `<div class="squad-equip-icon" title="${equip.name}">${equip.icon}</div>` : ''}
+        <div class="slot-power">${getPower(c, playerState.characters[id].level)}</div>
+      `;
+      slot.onclick = () => openModal(c.id);
+    } else {
+      slot.innerHTML = `
+        <div class="slot-num">${i+1}</div>
+        <div class="slot-img-wrap"><span class="slot-img-empty">＋</span></div>
+        <div class="slot-info"><div class="slot-name" style="color:var(--text-dim)">空きスロット</div></div>
+      `;
+    }
+    container.appendChild(slot);
+  }
+  const total = squad.reduce((s, id) => {
+    const c = units.find(u => u.id === id);
+    return s + (c ? getPower(c, playerState.characters[id].level) : 0);
+  }, 0);
+  document.getElementById('totalPower').textContent = total;
+  document.getElementById('hSquadPower').textContent = total;
+}
+
+// ===== RENDER CARDS =====
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+  const ownedCharIds = Object.keys(playerState.characters);
+  const filtered = units.filter(c => {
+    if (!ownedCharIds.includes(c.id.toString())) return false; // 未所有のキャラは表示しない
+    const matchFilter =
+      currentFilter === 'all' ||
+      currentFilter === c.role ||
+      currentFilter === c.element;
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !q || c.name.includes(q) ||
+      c.roleJp.includes(q) ||
+      c.abilities.some(a => a.name.includes(q) || a.desc.includes(q));
+    return matchFilter && matchSearch;
+  });
+
+  // Sorting
+  filtered.sort((a, b) => {
+    const charA = playerState.characters[a.id];
+    const charB = playerState.characters[b.id];
+    if (!charA || !charB) return 0;
+
+    if (currentSort === 'power') {
+      return getPower(b, charB.level) - getPower(a, charA.level);
+    } else if (currentSort === 'level') {
+      if (charB.level !== charA.level) return charB.level - charA.level;
+      return getPower(b, charB.level) - getPower(a, charA.level); // Tie-break
+    } else {
+      return a.id - b.id;
+    }
+  });
+
+  filtered.forEach((c, idx) => {
+    const inSquad = squad.includes(c.id);
+    const card = document.createElement('div');
+    card.className = 'char-card' + (inSquad ? ' in-squad' : '');
+    card.style.animationDelay = (idx * 0.04) + 's';
+
+    const ab = c.abilities[0];
+    const level = playerState.characters[c.id].level;
+    const equipId = playerState.characters[c.id].equippedId;
+    const aura = playerState.characters[c.id].aura || 0;
+    const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+    const s = calcStats(c.baseStats, level, equip);
+    
+    const auraClass = aura > 0 ? AURA_DATA[aura-1].class : '';
+    const imgSrc = c.useImg ? c.img : 'C0.svg';
+
+    card.innerHTML = `
+      <div class="card-img">
+        <div style="padding:8px;background:linear-gradient(160deg,#0d1a2a,#070e18)"><img src="${imgSrc}" alt="${c.name}" style="width:100%;height:auto"></div>
+        <div class="card-elem-badge elem-${c.element}">${getElemIcon(c.element)}</div>
+      </div>
+      ${aura > 0 ? `<div class="aura-overlay"></div>` : ''}
+      ${aura > 0 ? `<div class="aura-badge" style="background:${AURA_DATA[aura-1].color};color:#000">${AURA_DATA[aura-1].label}</div>` : ''}
+      <div class="card-body">
+        <div class="card-name"><span>${c.name}</span><span style="font-size:10px;color:var(--accent)">Lv.${level}</span></div>
+        <span class="card-role-tag role-${c.role}">${c.roleJp}</span>
+        <div class="stat-bars">
+          ${renderStatBar('HP', s.hp, 'hp')}
+          ${renderStatBar('ATK', s.atk, 'atk')}
+          ${renderStatBar('DEF', s.def, 'def')}
+          ${renderStatBar('SPD', s.spd, 'spd')}
+        </div>
+        <div class="card-ability">
+          <div class="ability-name">◆ ${ab.name}</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${ab.desc.slice(0,30)}${ab.desc.length>30?'…':''}</div>
+        </div>
+        <button class="card-action-btn ${inSquad ? 'remove' : ''}"
+          onclick="toggleSquad(event,${c.id})"
+          ${!inSquad && squad.length >= MAX_SQUAD ? 'disabled' : ''}>
+          ${inSquad ? '編成から外す' : squad.length >= MAX_SQUAD ? '編成満員' : '編成に追加'}
+        </button>
+      </div>
+    `;
+    if (aura > 0) card.classList.add(auraClass);
+    card.onclick = () => openModal(c.id);
+    grid.appendChild(card);
+  });
+
+  updateFilterCounts();
+}
+
+function renderStatBar(label, val, type) {
+  return `<div class="stat-row">
+    <span class="stat-label">${label}</span>
+    <div class="stat-bar-bg"><div class="stat-bar-fill bar-${type}" style="width:${Math.min(100, val / 10)}%"></div></div>
+    <span class="stat-val">${val}</span>
+  </div>`;
+}
+
+// ===== FILTER =====
+function setView(view) {
+  currentView = view;
+  document.getElementById('rosterPanel').style.display = view === 'roster' ? 'block' : 'none';
+  document.getElementById('missionPanel').style.display = view === 'missions' ? 'block' : 'none';
+  document.getElementById('equipPanel').style.display = view === 'equipment' ? 'block' : 'none';
+  document.querySelectorAll('.filter-section button').forEach(b => b.classList.remove('active'));
+  const viewBtn = document.getElementById('view-' + view);
+  if(viewBtn) viewBtn.classList.add('active');
+  if (view === 'roster') {
+    document.getElementById('filter-all').classList.add('active');
+  } else if (view === 'missions') {
+    renderStoryChapters();
+  } else if (view === 'equipment') {
+    renderEquipmentPanel();
+  }
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('#filter-all, #filter-assault, #filter-sniper, #filter-support, #filter-tank, #filter-medic, #filter-fire, #filter-water, #filter-thunder, #filter-dark, #filter-light').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('filter-' + f);
+  if (btn) btn.classList.add('active');
+  renderCards();
+}
+
+function updateFilterCounts() {
+  const ownedChars = units.filter(u => playerState.characters.hasOwnProperty(u.id));
+  const roles = ['assault','sniper','support','tank','medic'];
+  const elems = ['fire','water','thunder','dark','light'];
+  document.getElementById('cnt-all').textContent = ownedChars.length;
+  roles.forEach(r => {
+    const el = document.getElementById('cnt-' + r);
+    if (el) el.textContent = ownedChars.filter(c => c.role === r).length;
+  });
+  elems.forEach(e => {
+    const el = document.getElementById('cnt-' + e);
+    if (el) el.textContent = ownedChars.filter(c => c.element === e).length;
+  });
+}
+
+function renderEquipmentPanel() {
+  const grid = document.getElementById('equipGridDisplay');
+  grid.innerHTML = '';
+  
+  const equippedBy = {};
+  for (const [cid, state] of Object.entries(playerState.characters)) {
+    if (state.equippedId) equippedBy[state.equippedId] = cid;
+  }
+
+  equipmentItems.forEach(item => {
+    if (!item.owned) return;
+    const ownerId = equippedBy[item.id];
+    const owner = ownerId ? units.find(u => u.id == ownerId) : null;
+    
+    const card = document.createElement('div');
+    card.className = 'equip-card';
+    card.innerHTML = `
+      <div class="equip-card-header">
+        <div class="equip-card-icon">${item.icon}</div>
+        <div class="equip-card-info">
+          <div class="equip-card-name">${item.name}</div>
+          <div class="equip-card-desc">${item.desc}</div>
+        </div>
+      </div>
+      <div class="equip-card-owner">
+        ${owner ? `<span>🛡️ ${owner.name} が装備中</span>` : '<span style="color:var(--text-dim)">未装備</span>'}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ===== SEARCH =====
+function handleSearch(v) {
+  searchQuery = v;
+  renderCards();
+}
+
+function handleSort(val) {
+  currentSort = val;
+  renderCards();
+}
+
+// ===== SQUAD TOGGLE =====
+function toggleSquad(e, id) {
+  e.stopPropagation();
+  const idx = squad.indexOf(id);
+  if (idx > -1) {
+    squad.splice(idx, 1);
+    showToast('編成から外しました');
+  } else {
+    if (squad.length >= MAX_SQUAD) return;
+    squad.push(id);
+    const c = units.find(u => u.id === id);
+    showToast(c.name + ' を編成に追加しました');
+  }
+  renderSquad();
+  renderCards();
+  if (modalCharId !== null) updateModal();
+  saveGame();
+}
+
+// ===== MODAL =====
+function openModal(id) {
+  modalCharId = id;
+  updateModal();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function updateModal() {
+  const c = units.find(u => u.id === modalCharId);
+  if (!c) return;
+  const inSquad = squad.includes(c.id);
+
+  document.getElementById('modalName').textContent = c.name;
+  document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span> &nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.roleJp}</span>`;
+
+  const imgSrc = c.useImg ? c.img : 'C0.svg';
+  const imgWrap = document.getElementById('modalImgWrap');
+  imgWrap.innerHTML = `<img src="${imgSrc}" alt="${c.name}" style="filter:drop-shadow(0 0 20px rgba(0,200,255,0.4))">`;
+
+  const level = playerState.characters[c.id] ? playerState.characters[c.id].level : 1;
+  const equipId = playerState.characters[c.id] ? playerState.characters[c.id].equippedId : null;
+  const aura = playerState.characters[c.id].aura || 0;
+  const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+  const s = calcStats(c.baseStats, level, equip);
+  document.getElementById('modalStats').innerHTML = `
+    <div class="mstat"><span class="mstat-label">HP</span><span class="mstat-val" style="color:#ff8080">${s.hp}</span></div>
+    <div class="mstat"><span class="mstat-label">ATK</span><span class="mstat-val" style="color:var(--accent2)">${s.atk}</span></div>
+    <div class="mstat"><span class="mstat-label">DEF</span><span class="mstat-val" style="color:var(--accent)">${s.def}</span></div>
+    <div class="mstat"><span class="mstat-label">SPD</span><span class="mstat-val" style="color:var(--accent3)">${s.spd}</span></div>
+  `;
+
+  // Level Control
+  const maxLevel = getMaxLevel(aura);
+  document.getElementById('modalLevelVal').textContent = level;
+  document.querySelector('.level-control span[style*="color:var(--text-dim)"]').textContent = `/ ${maxLevel}`;
+  
+  const cost = getLevelCost(level);
+  const btn = document.getElementById('btnLevelUp');
+  
+  if (level >= maxLevel) {
+    btn.disabled = true;
+    btn.textContent = 'MAX LEVEL';
+  } else {
+    btn.disabled = playerState.rainbowStones < cost;
+    btn.innerHTML = `強化 (虹石 <span id="costVal">${cost}</span>)`;
+  }
+
+  // Aura Upgrade Button
+  const existingAuraBtn = document.getElementById('btnAuraUp');
+  if (existingAuraBtn) existingAuraBtn.remove();
+
+  if (aura < 4) {
+    const nextAura = AURA_DATA[aura];
+    const auraBtn = document.createElement('button');
+    auraBtn.id = 'btnAuraUp';
+    auraBtn.className = 'level-btn';
+    auraBtn.style.cssText = "width:100%; margin-top:8px; background:transparent; border:1px solid var(--gold); color:var(--gold);";
+    auraBtn.innerHTML = `限界突破: ${nextAura.label} (虹石 ${nextAura.cost})`;
+    auraBtn.onclick = () => upgradeAura(c.id);
+    if (playerState.rainbowStones < nextAura.cost) auraBtn.disabled = true;
+    document.querySelector('.level-control').parentNode.insertBefore(auraBtn, document.querySelector('.level-control').nextSibling);
+  }
+
+  // Equipment Section
+  const equipDisplay = document.getElementById('modalEquipDisplay');
+  equipDisplay.innerHTML = `
+    <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer">
+      <div>${equip ? `<div style="font-weight:700;color:var(--gold)">${equip.icon} ${equip.name}</div><div style="font-size:10px;color:var(--text-mid)">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
+      <button class="level-btn" style="font-size:10px;padding:4px 8px">変更</button>
+    </div>`;
+  document.getElementById('modalAbilities').innerHTML = c.abilities.map(a =>
+    `<div class="ability-card">
+      <div class="ability-card-name">◆ ${a.name}</div>
+      <div class="ability-card-desc">${a.desc}</div>
+    </div>`).join('');
+
+  const actionBtn = document.getElementById('modalActionBtn');
+  actionBtn.textContent = inSquad ? '編成から外す' : '編成に追加';
+  actionBtn.className = 'modal-add-btn' + (inSquad ? ' remove-mode' : '');
+  actionBtn.disabled = !inSquad && squad.length >= MAX_SQUAD;
+}
+
+function modalToggleSquad() {
+  if (modalCharId !== null) {
+    toggleSquad({ stopPropagation: ()=>{} }, modalCharId);
+  }
+}
+
+function doLevelUp() {
+  if (modalCharId === null) return;
+  const charState = playerState.characters[modalCharId];
+  const maxLevel = getMaxLevel(charState.aura || 0);
+  if (!charState || charState.level >= maxLevel) return;
+  
+  const cost = getLevelCost(charState.level);
+  if (playerState.rainbowStones >= cost) {
+    playerState.rainbowStones -= cost;
+    charState.level++;
+    showToast(`Lv.${charState.level} にレベルアップ！`);
+    updateModal();
+    renderCards(); // Update list stats
+    renderSquad(); // Update power
+    saveGame();
+  } else {
+    showToast('虹石が足りません');
+  }
+}
+
+function upgradeAura(charId) {
+  const charState = playerState.characters[charId];
+  const currentAura = charState.aura || 0;
+  if (currentAura >= 4) return;
+  
+  const nextAuraData = AURA_DATA[currentAura];
+  if (playerState.rainbowStones >= nextAuraData.cost) {
+    playerState.rainbowStones -= nextAuraData.cost;
+    charState.aura = currentAura + 1;
+    showToast(`限界突破！ ${nextAuraData.label} を獲得！`);
+    updateModal();
+    renderCards(); // Update list stats
+    renderSquad(); // Update power
+    saveGame();
+  } else {
+    showToast('虹石が足りません');
+  }
+}
+
+// ===== EQUIPMENT MODAL =====
+function openEquipModal(charId) {
+  const list = document.getElementById('equipList');
+  list.innerHTML = '';
+  const currentEquipId = playerState.characters[charId].equippedId;
+
+  // Find who has what equipped
+  const equippedBy = {};
+  for (const [cid, state] of Object.entries(playerState.characters)) {
+    if (state.equippedId) equippedBy[state.equippedId] = cid;
+  }
+
+  // Unequip option
+  const unequipDiv = document.createElement('div');
+  unequipDiv.className = `equip-item ${currentEquipId === null ? 'equipped' : ''}`;
+  unequipDiv.style.gridColumn = "1 / -1"; // Make unequip button full width
+  unequipDiv.innerHTML = `<div class="equip-icon-box">🚫</div><div class="equip-name">装備を外す</div>`;
+  unequipDiv.onclick = () => equipItem(charId, null);
+  list.appendChild(unequipDiv);
+
+  equipmentItems.forEach(item => {
+    if (!item.owned) return;
+    
+    const equipperId = equippedBy[item.id];
+    const isEquippedByOther = equipperId && equipperId != charId;
+    const equipperName = isEquippedByOther ? units.find(u => u.id == equipperId).name : '';
+
+    const div = document.createElement('div');
+    div.className = `equip-item ${currentEquipId === item.id ? 'equipped' : ''} ${isEquippedByOther ? 'disabled' : ''}`;
+    div.innerHTML = `
+      <div class="equip-icon-box">${item.icon}</div>
+      <div class="equip-info">
+        <div class="equip-name">${item.name}</div>
+        <div class="equip-desc">${item.desc}</div>
+      </div>
+      ${currentEquipId === item.id ? '<div class="equip-status">E</div>' : ''}
+      ${isEquippedByOther ? `<div class="equip-status other">${equipperName}が装備中</div>` : ''}
+    `;
+    
+    if (!isEquippedByOther) {
+      div.onclick = () => equipItem(charId, item.id);
+    }
+    list.appendChild(div);
+  });
+
+  document.getElementById('equipOverlay').classList.add('open');
+}
+
+function equipItem(charId, itemId) {
+  playerState.characters[charId].equippedId = itemId;
+  closeEquipModalDirect();
+  updateModal(); // Refresh char modal
+  renderCards(); // Refresh list stats
+  renderSquad(); // Refresh squad power
+  saveGame();
+}
+
+function closeEquipModal(e) {
+  if (e.target === document.getElementById('equipOverlay')) closeEquipModalDirect();
+}
+
+function closeEquipModalDirect() {
+  document.getElementById('equipOverlay').classList.remove('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  modalCharId = null;
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ===== EMOJI HELPER =====
+function getEmoji(role) {
+  return { assault:'⚔️', sniper:'🎯', support:'💨', tank:'🛡️', medic:'💊' }[role] || '👤';
+}
+
+function getElemIcon(elem) {
+  return { fire:'🔥', water:'💧', thunder:'⚡', dark:'🌑', light:'✨' }[elem] || '●';
+}
+
+// ===== MISSION & BATTLE =====
+function setStoryTab(tab) {
+  currentStoryTab = tab;
+  document.getElementById('tab-story-main').classList.toggle('active', tab === 'main');
+  document.getElementById('tab-story-event').classList.toggle('active', tab === 'event');
+  renderStoryChapters();
+}
+
+function renderStoryChapters() {
+  const container = document.getElementById('missionGrid');
+  document.getElementById('missionViewTitle').textContent = 'ストーリー選択';
+  document.getElementById('backToStoriesBtn').style.display = 'none';
+  document.getElementById('storyCategoryTabs').style.display = 'flex';
+  container.innerHTML = ''; // Clear previous content
+
+  if (currentStoryTab === 'main') {
+    storyChapters.forEach((chapter, index) => {
+      const lastMissionOfPrevChapter = index > 0 ? storyChapters[index - 1].missions.slice(-1)[0] : null;
+      const isLocked = lastMissionOfPrevChapter && !missionProgress.has(lastMissionOfPrevChapter.id);
+
+      const storyCard = document.createElement('div');
+      storyCard.className = `mission-card ${isLocked ? 'locked' : ''}`;
+      storyCard.innerHTML = `
+        <div class="mission-title">${chapter.name}</div>
+        <div class="mission-desc">${isLocked ? '🔒 前の章をクリアして解放' : 'この章のステージに挑戦します。'}</div>
+        <button class="mission-btn">ステージ選択へ</button>
+      `;
+      if (!isLocked) {
+        storyCard.querySelector('.mission-btn').onclick = () => renderMissionsForChapter(index);
+      }
+      container.appendChild(storyCard);
+    });
+  } else {
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-dim);">
+      現在開催中のイベントはありません。<br>今後のアップデートをお待ちください。
+    </div>`;
+  }
+}
+
+function renderMissionsForChapter(chapterIndex) {
+  const chapter = storyChapters[chapterIndex];
+  const container = document.getElementById('missionGrid');
+  document.getElementById('missionViewTitle').textContent = chapter.name;
+  document.getElementById('backToStoriesBtn').style.display = 'block';
+  document.getElementById('storyCategoryTabs').style.display = 'none';
+  container.innerHTML = ''; // Clear story chapters
+
+  chapter.missions.forEach((m, idx) => {
+    const isCleared = missionProgress.has(m.id);
+    const isLocked = idx > 0 && !missionProgress.has(chapter.missions[idx-1].id);
+    
+    let firstRewardHtml = `初回報酬: 虹石 ${m.firstTimeReward}`;
+    if (m.id === 104) {
+      firstRewardHtml += ` + <span style="color:var(--accent)">いえみけ</span>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = `mission-card ${isLocked ? 'locked' : ''}`;
+    card.innerHTML = `
+      <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${m.name}</div>
+      <div class="mission-desc">${isLocked ? '🔒 前のステージをクリアして解放' : m.description}</div>
+      <div class="mission-info">
+        <span>推奨戦力: ${m.recommendedPower}</span>
+        <div class="mission-reward-info">
+          ${isCleared ? '' : `<div class="first-clear">${firstRewardHtml}</div>`}
+          <div>報酬: 虹石 ${m.reward}</div>
+        </div>
+      </div>
+      <button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function setBattleSpeed(speed) {
+  battleSpeedMultiplier = speed;
+  document.querySelectorAll('.battle-speed-controls button').forEach(b => b.classList.remove('active'));
+  document.getElementById(`speed-btn-${speed}`).classList.add('active');
+}
+
+let sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function startBattle(missionId) {
+  if (squad.length === 0) {
+    showToast('部隊が編成されていません');
+    return;
+  }
+  const mission = getMissionById(missionId);
+  if (!mission) return;
+
+  battleState = {
+    mission: mission,
+    playerUnits: squad.map(id => {
+      const char = units.find(u => u.id === id);
+      const level = playerState.characters[id].level;
+      const equipId = playerState.characters[id].equippedId;
+      const aura = playerState.characters[id].aura || 0;
+      const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+      const stats = calcStats(char.baseStats, level, equip);
+      
+      // Init battle props
+      let unit = { ...char, stats, currentHp: stats.hp, level, aura, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip };
+      if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
+      if (equip && equip.effect.type === 'guts') unit.guts = true;
+      
+      return unit;
+    }),
+    enemyUnits: mission.enemies.map((enemyConfig, i) => {
+      const enemy = units.find(u => u.id === enemyConfig.id);
+      // Enemy Level Scaling
+      const level = enemyConfig.level || 1;
+      
+      // Calculate Enemy Aura based on level
+      let aura = 0;
+      if (level > 20) {
+          aura = Math.min(4, Math.ceil((level - 20) / 5));
+      }
+
+      const multiplier = 1 + (level - 1) * 0.1;
+      const stats = {
+        hp: Math.floor(enemy.baseStats.hp * multiplier),
+        atk: Math.floor(enemy.baseStats.atk * multiplier),
+        def: Math.floor(enemy.baseStats.def * multiplier),
+        spd: Math.floor(enemy.baseStats.spd * multiplier)
+      };
+      return { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [] };
+    }),
+    log: [],
+    isFinished: false,
+    selectedTargetId: null,
+  };
+
+  document.getElementById('battleTitle').textContent = mission.name;
+  renderBattleUnits();
+  logBattleMessage(`<span class="info">戦闘準備完了...</span>`);
+  document.getElementById('battleActionBtn').disabled = false;
+  document.getElementById('battleActionBtn').textContent = '戦闘開始';
+  document.getElementById('retireBattleBtn').disabled = false;
+  document.getElementById('closeBattleBtn').disabled = true;
+  document.getElementById('closeBattleBtn').disabled = false;
+
+  document.getElementById('battleOverlay').classList.add('open');
+}
+
+function renderBattleUnits() {
+  const playerTeam = document.getElementById('playerTeam');
+  const enemyTeam = document.getElementById('enemyTeam');
+  playerTeam.innerHTML = battleState.playerUnits.map(u => renderUnit(u)).join('');
+  enemyTeam.innerHTML = battleState.enemyUnits.map(u => renderUnit(u)).join('');
+}
+
+function renderUnit(unit) {
+  const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100);
+  let unitImageHtml;
+  const bgClass = unit.isPlayer ? '' : 'enemy-icon-bg';
+  const auraClass = unit.aura && unit.aura > 0 ? AURA_DATA[unit.aura-1].class : '';
+  const imgSrc = unit.useImg ? unit.img : 'C0.svg';
+  unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
+
+  return `
+    <div 
+      class="battle-unit ${unit.isPlayer ? 'player-unit' : 'enemy-unit'} ${unit.currentHp <= 0 ? 'defeated' : ''} ${auraClass}" 
+      id="unit-${unit.battleId}"
+      ${!unit.isPlayer ? `onclick="selectTarget('${unit.battleId}')"` : ''}
+    >
+      ${unit.aura && unit.aura > 0 ? `<div class="aura-overlay"></div>` : ''}
+      ${unitImageHtml}
+      <div class="b-unit-level">Lv.${unit.level}</div>
+      <div class="passive-active-badge">PASSIVE</div>
+      <div class="b-unit-info-overlay"></div>
+      <div class="b-unit-info">
+        <div class="b-unit-name" ${!unit.isPlayer ? `style="cursor:pointer;"` : ''}>${unit.name}</div>
+        <div class="b-unit-status-effects"></div>
+        <div class="b-unit-hp-bar-bg"><div class="b-unit-hp-bar" style="width: ${hpPercent}%"></div></div>
+        <div class="b-unit-hp-text">${unit.currentHp} / ${unit.stats.hp}</div>
+      </div>
+      <div class="damage-flash-overlay" style="display:none;"></div>
+      <div class="effect-overlay"></div>
+    </div>
+  `;
+}
+
+function logBattleMessage(msg) {
+  const log = document.getElementById('battleLog');
+  log.innerHTML += `<p>${msg}</p>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function retireBattle() {
+  if (battleState.isFinished) return;
+  if (confirm('戦闘をリタイアしますか？')) {
+    battleState.isFinished = true; // Stop the battle loop
+    logBattleMessage(`<span class="info">戦闘をリタイアしました。</span>`);
+    document.getElementById('battleActionBtn').disabled = true;
+    document.getElementById('retireBattleBtn').disabled = true;
+    document.getElementById('closeBattleBtn').disabled = false;
+    
+    // Remove active turn highlights
+    document.querySelectorAll('.battle-unit.is-turn-active').forEach(el => el.classList.remove('is-turn-active'));
+  }
+}
+
+async function handleUnitDeath(unit) {
+  if (!unit) return;
+  const unitEl = document.getElementById(`unit-${unit.battleId}`);
+  
+  // Gira (ID: 13) Passive: 祟り神の降臨
+  if (unit.id === 13 && !unit.passiveUsed) {
+      unit.passiveUsed = true;
+      await showCutIn(unit, '祟り神の降臨');
+      unit.currentHp = 1;
+      logBattleMessage(`${unit.name}に祟り神が降臨した...！`);
+      updateUnitUI(unit);
+      if (unitEl) {
+          unitEl.classList.remove('defeated');
+          playEffect(unitEl, 'dark');
+      }
+      
+      const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+      for (const e of enemies) {
+          if (e.currentHp > 0) addStatusEffect(e, 'weakness', 3);
+      }
+      return;
+  }
+
+  // Bella (ID: 9) Passive: Nuclear Fission
+  if (unit.id === 9 && !unit.passiveUsed) {
+      unit.passiveUsed = true;
+      updateUnitUI(unit);
+      await sleep(400 / battleSpeedMultiplier);
+
+      await showCutIn(unit, '核分裂');
+      unit.currentHp = 1;
+      logBattleMessage(`${unit.name}は核分裂を起こした！`);
+      updateUnitUI(unit);
+      if (unitEl) {
+          unitEl.classList.remove('defeated');
+          playEffect(unitEl, 'impact');
+      }
+      
+      const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+      for (const enemy of enemies) {
+          if (enemy.currentHp > 0) {
+              const dmg = Math.floor(unit.stats.atk * 1.5);
+              enemy.currentHp = Math.max(0, enemy.currentHp - dmg);
+              logBattleMessage(`${enemy.name}に<span class="damage">${dmg}</span>の爆発ダメージ！`);
+              updateUnitUI(enemy);
+              playEffect(document.getElementById(`unit-${enemy.battleId}`), 'impact');
+          }
+      }
+      return;
+  }
+
+  // Standard Death
+  logBattleMessage(`<span class="info">${unit.name} は倒れた！</span>`);
+  if (unitEl) unitEl.classList.add('defeated');
+  if (unit.battleId === battleState.selectedTargetId) {
+      battleState.selectedTargetId = null;
+  }
+}
+
+async function runBattleSequence() {
+  document.getElementById('battleActionBtn').disabled = true;
+  document.getElementById('retireBattleBtn').disabled = true; // Disable during sequence execution to prevent race conditions
+  document.getElementById('closeBattleBtn').disabled = true;
+  logBattleMessage(`<span class="info">戦闘開始！</span>`);
+
+  await triggerOnBattleStartAbilities();
+  if (battleState.isFinished) return;
+
+  const turnQueue = [...battleState.playerUnits, ...battleState.enemyUnits].sort((a, b) => b.stats.spd - a.stats.spd);
+  let turnCount = 1;
+
+  while (!battleState.isFinished) {
+    logBattleMessage(`<span class="info">--- ターン ${turnCount} ---</span>`);
+
+    for (const attacker of turnQueue) {
+      if (battleState.isFinished || attacker.currentHp <= 0) continue;
+      let canAct = true;
+      attacker.isAdvantageForced = false; // Reset flag for Gira
+
+      // Equipment: Conditional Heal (Regen if low HP)
+      if (attacker.equipment && attacker.equipment.effect.type === 'conditional_heal') {
+        if (attacker.currentHp <= attacker.stats.hp * attacker.equipment.effect.threshold) {
+           const healAmt = Math.floor(attacker.stats.hp * attacker.equipment.effect.val);
+           attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + healAmt);
+           logBattleMessage(`${attacker.name}はロザリオの光で ${healAmt} 回復した。`);
+           updateUnitUI(attacker);
+        }
+      }
+
+      const attackerEl = document.getElementById(`unit-${attacker.battleId}`);
+      try {
+        attackerEl.classList.add('is-turn-active');
+        logBattleMessage(`${attacker.name} のターン。`);
+        await sleep(400 / battleSpeedMultiplier);
+
+        // --- STATUS EFFECT HANDLING (START OF TURN) ---
+        const effectsCopy = [...attacker.statusEffects]; // Iterate over a copy
+        for (const effect of effectsCopy) {
+            switch (effect.type) {
+                case 'burn': // Fallthrough
+                case 'poison':
+                    const effectInfo = STATUS_EFFECTS[effect.type];
+                    const dotDamage = Math.floor(attacker.stats.hp / 8);
+                    attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
+                    logBattleMessage(`${attacker.name}は<span class="damage">${effectInfo.name}</span>で ${dotDamage} のダメージを受けた！`);
+                    updateUnitUI(attacker);
+                    const attackerElForDot = document.getElementById(`unit-${attacker.battleId}`);
+                    if (attackerElForDot) {
+                        attackerElForDot.classList.add('is-taking-damage');
+                        setTimeout(() => attackerElForDot.classList.remove('is-taking-damage'), 400);
+                    }
+                    break;
+                case 'paralysis':
+                    if (Math.random() < 0.3) {
+                        logBattleMessage(`${attacker.name}は<span class="info">麻痺</span>で動けない！`);
+                        canAct = false;
+                    }
+                    break;
+                case 'sleep':
+                    logBattleMessage(`${attacker.name}は<span class="info">睡眠</span>で眠っている...`);
+                    canAct = false;
+                    break;
+            }
+        }
+
+        // Equipment: Regen
+        if (attacker.equipment && attacker.equipment.effect.type === 'regen') {
+            const regenAmt = Math.floor(attacker.stats.hp * attacker.equipment.effect.val);
+            attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + regenAmt);
+            // logBattleMessage(`${attacker.name}は徐々に回復している... (+${regenAmt})`);
+            updateUnitUI(attacker);
+        }
+
+        if (attacker.currentHp <= 0 && canAct) { // canAct check prevents logging death twice if paralyzed and burned
+            logBattleMessage(`<span class="info">${attacker.name} は倒れた！</span>`);
+            document.getElementById(`unit-${attacker.battleId}`).classList.add('defeated');
+            canAct = false;
+        }
+
+        attacker.statusEffects.forEach(effect => effect.turns--);
+        attacker.statusEffects = attacker.statusEffects.filter(effect => effect.turns > 0);
+        updateUnitUI(attacker);
+
+        if (checkWinLoss()) break;
+
+        if (!canAct) {
+            await sleep(800 / battleSpeedMultiplier);
+            continue;
+        }
+
+        // Passive: Den Alvaro (ID: 6) Support
+        if (attacker.id === 6) {
+            const allies = attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+            const livingAllies = allies.filter(u => u.currentHp > 0);
+            if (livingAllies.length > 0) {
+                let targetAlly = livingAllies[0];
+                let minPct = targetAlly.currentHp / targetAlly.stats.hp;
+                for (const ally of livingAllies) {
+                    const pct = ally.currentHp / ally.stats.hp;
+                    if (pct < minPct) {
+                        minPct = pct;
+                        targetAlly = ally;
+                    }
+                }
+                const healAmt = Math.floor(targetAlly.stats.hp * 0.1);
+                if (healAmt > 0 && targetAlly.currentHp < targetAlly.stats.hp) {
+                    targetAlly.currentHp = Math.min(targetAlly.stats.hp, targetAlly.currentHp + healAmt);
+                    logBattleMessage(`${attacker.name}の支援！${targetAlly.name}のHPが回復！`);
+                    updateUnitUI(targetAlly);
+                    playEffect(document.getElementById(`unit-${targetAlly.battleId}`), 'heal');
+                }
+            }
+        }
+
+        // --- ATTACK SEQUENCE ---
+        
+        // 1. Check for 'before_attack' ability
+        let activeAbility = null;
+        if (attacker.abilities) {
+          for (const ab of attacker.abilities) {
+            if (ab.timing === 'before_attack' && Math.random() < (ab.triggerRate || 0)) {
+              activeAbility = ab;
+              break; // 1ターンに1つの攻撃スキルのみ発動と仮定
+            }
+          }
+        }
+
+        // Check for AoE
+        if (activeAbility && activeAbility.isAoe) {
+            // --- AOE LOGIC ---
+            attackerEl.classList.add('is-attacking');
+            await showCutIn(attacker, activeAbility.name);
+            await sleep(600 / battleSpeedMultiplier);
+
+            const aoeTargets = (attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits).filter(u => u.currentHp > 0);
+            for (const aoeTarget of aoeTargets) {
+                if (aoeTarget.currentHp <= 0) continue;
+
+                const damage = Math.floor(calculateDamage(attacker, aoeTarget) * (activeAbility.damageMult || 0.8));
+                let actualDamage = damage;
+                
+                // Simplified defense check for AoE
+                if (aoeTarget.abilities && actualDamage > 0) {
+                    for (const ab of aoeTarget.abilities) {
+                        if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
+                            if (aoeTarget.id === 6) { // Den Alvaro
+                                actualDamage = Math.floor(actualDamage * 0.7);
+                            } else {
+                                actualDamage = Math.floor(actualDamage * 0.9);
+                            }
+                            if (ab.effect?.type === 'status') {
+                                addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
+                            }
+                        }
+                    }
+                }
+
+                aoeTarget.currentHp = Math.max(0, aoeTarget.currentHp - actualDamage);
+                
+                const adv = getElementalMultiplier(attacker.element, aoeTarget.element);
+                let advText = adv > 1.0 ? ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>' : adv < 1.0 ? ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>' : '';
+
+                logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に<span class="damage">${actualDamage}</span>${advText}のダメージ！`);
+                updateUnitUI(aoeTarget);
+                const targetEl = document.getElementById(`unit-${aoeTarget.battleId}`);
+                playEffect(targetEl, attacker.abilityType || 'magic');
+                targetEl.classList.add('is-taking-skill-damage');
+                setTimeout(() => targetEl.classList.remove('is-taking-skill-damage'), 500);
+
+                if (aoeTarget.currentHp <= 0) {
+                    await handleUnitDeath(aoeTarget);
+                }
+                await sleep(150 / battleSpeedMultiplier);
+            }
+        } else {
+            // --- SINGLE TARGET LOGIC ---
+        const targets = (attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits).filter(u => u.currentHp > 0);
+        if (targets.length === 0) continue;
+        
+        let target;
+        if (attacker.isPlayer) {
+          if (battleState.selectedTargetId) {
+              const preferredTarget = targets.find(u => u.battleId === battleState.selectedTargetId);
+              if (preferredTarget) {
+                  target = preferredTarget;
+              }
+          }
+          if (!target) {
+              // Fallback to random if no target selected or selected target is dead
+              target = targets[Math.floor(Math.random() * targets.length)];
+          }
+        } else {
+          // Enemy AI Targeting
+          if (attacker.aiType === AI_TYPES.LOWEST_HP_DEF) {
+            // Target lowest HP * DEF (Simulating "weakest")
+            target = targets.reduce((prev, curr) => {
+              const prevVal = prev.currentHp * prev.stats.def;
+              const currVal = curr.currentHp * curr.stats.def;
+              return prevVal < currVal ? prev : curr;
+            });
+          } else if (attacker.aiType === AI_TYPES.HIGHEST_ATK) {
+            // Target highest ATK
+            target = targets.reduce((prev, curr) => {
+              return prev.stats.atk > curr.stats.atk ? prev : curr;
+            });
+          } else {
+            // Random
+            target = targets[Math.floor(Math.random() * targets.length)];
+          }
+      }
+      
+        const targetEl = document.getElementById(`unit-${target.battleId}`);
+        attackerEl.classList.add('is-attacking');
+        await sleep(600 / battleSpeedMultiplier);
+
+        // Passive Activation Check (Visual)
+      const isDoraPassiveConditionMet = attacker.id === 1 && attacker.currentHp <= attacker.stats.hp * 0.5;
+      if (attacker.id === 1) {
+          if (isDoraPassiveConditionMet && !attacker.isPassiveActive) {
+            attacker.isPassiveActive = true;
+            if (attacker.abilities && attacker.abilities.length > 1) {
+              showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
+              await sleep(1200 / battleSpeedMultiplier);
+            }
+          } else if (!isDoraPassiveConditionMet && attacker.isPassiveActive) {
+            attacker.isPassiveActive = false;
+          }
+      }
+
+      const isNoaPassiveConditionMet = attacker.id === 2 && attacker.currentHp <= attacker.stats.hp * 0.3;
+      if (attacker.id === 2) {
+          if (isNoaPassiveConditionMet && !attacker.isPassiveActive) {
+            attacker.isPassiveActive = true;
+            if (attacker.abilities && attacker.abilities.length > 1) {
+              showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
+              await sleep(1200 / battleSpeedMultiplier);
+            }
+          } else if (!isNoaPassiveConditionMet && attacker.isPassiveActive) {
+            attacker.isPassiveActive = false;
+          }
+      }
+      
+      const isRaiPassiveConditionMet = attacker.id === 5 && attacker.currentHp <= attacker.stats.hp * 0.5;
+      if (attacker.id === 5) {
+          if (isRaiPassiveConditionMet && !attacker.isPassiveActive) {
+            attacker.isPassiveActive = true;
+            if (attacker.abilities && attacker.abilities.length > 1) {
+              showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
+              await sleep(1200 / battleSpeedMultiplier);
+            }
+          } else if (!isRaiPassiveConditionMet && attacker.isPassiveActive) {
+            attacker.isPassiveActive = false;
+          }
+      }
+      
+      const isAsterPassiveConditionMet = attacker.id === 114 && attacker.currentHp <= attacker.stats.hp * 0.3;
+      if (attacker.id === 114) {
+          if (isAsterPassiveConditionMet && !attacker.isPassiveActive) {
+            attacker.isPassiveActive = true;
+            if (attacker.abilities && attacker.abilities.length > 1) {
+              showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
+              await sleep(1200 / battleSpeedMultiplier);
+            }
+          } else if (!isAsterPassiveConditionMet && attacker.isPassiveActive) {
+            attacker.isPassiveActive = false;
+          }
+      }
+
+
+      // Lloyd (ID: 11) Chemical Contamination
+      if (attacker.id === 11 && attacker.currentHp <= attacker.stats.hp * 0.5 && !attacker.passiveUsed) {
+          attacker.passiveUsed = true;
+          await showCutIn(attacker, '化学物質汚染');
+          const enemies = attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+          for (const e of enemies) {
+              if (e.currentHp > 0) addStatusEffect(e, 'poison', 3);
+          }
+          logBattleMessage(`${attacker.name}は化学物質を撒き散らした！`);
+          await sleep(600 / battleSpeedMultiplier);
+      }
+
+        // 2. Execute Attack (Normal or Ability)
+        let damageMultiplier = 1.0;
+        let attackName = '攻撃';
+        
+      if (activeAbility) {
+        await showCutIn(attacker, activeAbility.name);
+        attackName = activeAbility.name;
+        // スキルごとの倍率設定 (簡易的にIDや名前で分岐、本来はデータに持たせるべき)
+        if (attacker.id === 1) damageMultiplier = 2.0;
+        if (attacker.id === 103) damageMultiplier = 1.5;
+        if (attacker.id === 106) damageMultiplier = 1.1;
+        if (attacker.id === 10) damageMultiplier = 1.3;
+        if (attacker.id === 13 && activeAbility.name === '圧縮の札') {
+            attacker.isAdvantageForced = true;
+        }
+        if (attacker.id === 113 && activeAbility.name === '虹斬') {
+            attacker.isAdvantageForced = true;
+        }
+      }
+
+        const damage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
+        
+        // Apply Damage to Target
+        let actualDamage = damage;
+        
+        // ミリア・ルティス (ID: 14) Passive: 耐え抜く能力
+        if (target.id === 14 && actualDamage >= target.currentHp) {
+            if (target.endureCount === undefined) target.endureCount = 0;
+            if (target.endureCount < 5) {
+                const endureChance = 1.0 - (target.endureCount * 0.2);
+                if (Math.random() < endureChance) {
+                    actualDamage = 0;
+                    target.endureCount++;
+                    logBattleMessage(`${target.name}は耐え抜いた！(残り回数: ${5 - target.endureCount})`);
+                    showPassivePopup(document.getElementById(`unit-${target.battleId}`), "ENDURE");
+                }
+            }
+        }
+
+        // Equipment: Evasion
+      if (target.equipment && target.equipment.effect.type === 'evasion' && Math.random() < target.equipment.effect.val) {
+          actualDamage = 0;
+          logBattleMessage(`${target.name}は攻撃をひらりと回避した！`);
+          showPassivePopup(document.getElementById(`unit-${target.battleId}`), "MISS");
+      }
+      // Equipment: Shield (Nullify Hit)
+      else if (target.shieldHits > 0) {
+          actualDamage = 0;
+          target.shieldHits--;
+          logBattleMessage(`${target.name}の人形が身代わりになった！`);
+          showPassivePopup(document.getElementById(`unit-${target.battleId}`), "BLOCK");
+      }
+      // Equipment: Guts
+      else if (target.equipment && target.equipment.effect.type === 'guts' && target.guts && actualDamage >= target.currentHp) {
+          actualDamage = target.currentHp - 1;
+          target.guts = false; // Consume guts
+          logBattleMessage(`${target.name}はフェニックスの加護で耐えた！`);
+      }
+      
+        // Landia (ID: 113) Passive: 無能力の意地
+        const landiaPassive = target.abilities.find(ab => ab.timing === 'on_skill_defense');
+        if (activeAbility && target.id === 113 && landiaPassive) {
+            actualDamage = Math.floor(actualDamage * 0.5);
+            logBattleMessage(`${target.name}は<span class="ability">${landiaPassive.name}</span>でダメージを50%ブロックした！`);
+            playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
+        }
+
+        // Ability: Defense (on_defense)
+        if (target.abilities && actualDamage > 0) {
+        for (const ab of target.abilities) {
+          if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
+             await showCutIn(target, ab.name);
+             
+             if (target.id === 6) { // Den Alvaro
+                 actualDamage = Math.floor(actualDamage * 0.7); // 30% Block
+                 logBattleMessage(`${target.name}の${ab.name}！ダメージ軽減＆麻痺付与！`);
+             } else {
+                 actualDamage = Math.floor(actualDamage * 0.9); // 10% Cut
+                 logBattleMessage(`${target.name}の${ab.name}！ダメージを軽減！`);
+             }
+             
+             if (ab.effect?.type === 'status') {
+                addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
+             }
+             playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
+          }
+        }
+      }
+
+        target.currentHp = Math.max(0, target.currentHp - actualDamage);
+
+        // Ricardo (ID: 8) Earth Residue Flow
+        if (target.id === 8 && target.currentHp === 0 && !target.gutsUsed) {
+            target.gutsUsed = true;
+            updateUnitUI(target); // Show 0 HP
+            await sleep(400 / battleSpeedMultiplier);
+
+            await showCutIn(target, '土残流');
+            
+            target.currentHp = 1;
+            logBattleMessage(`${target.name}は土残流で蘇った！`);
+            updateUnitUI(target);
+            playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
+            await sleep(400 / battleSpeedMultiplier);
+
+            const counterDmg = Math.floor(target.stats.atk * 3.0);
+            attacker.currentHp = Math.max(0, attacker.currentHp - counterDmg);
+            
+            const attackerEl = document.getElementById(`unit-${attacker.battleId}`);
+            playEffect(attackerEl, 'impact');
+            attackerEl.classList.add('is-taking-skill-damage');
+            setTimeout(() => attackerEl.classList.remove('is-taking-skill-damage'), 500);
+
+            logBattleMessage(`${target.name}の反撃！${attacker.name}に<span class="damage">${counterDmg}</span>のダメージ！`);
+            updateUnitUI(attacker);
+        }
+
+        // 属性相性エフェクト
+      const advantage = getElementalMultiplier(attacker.element, target.element);
+      let advText = '';
+      if (advantage > 1.0) {
+        advText = ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>';
+        showPassivePopup(targetEl, "WEAK!"); // 簡易エフェクト
+      } else if (advantage < 1.0) {
+        advText = ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>';
+        showPassivePopup(targetEl, "RESIST"); // 簡易エフェクト
+      }
+
+        // スキルによる追加効果
+        if (activeAbility && activeAbility.effect?.type === 'status') {
+            addStatusEffect(target, activeAbility.effect.status, activeAbility.effect.turns);
+        }
+
+      // パッシブ効果: 炎支配 (通常攻撃時)
+      if (!activeAbility && attacker.id === 1 && attacker.isPassiveActive) addStatusEffect(target, 'burn', 2);
+
+      // 装備による追加効果
+      if (attacker.equipment && attacker.equipment.effect.type === 'add_status') {
+          if (Math.random() < attacker.equipment.effect.chance) {
+              addStatusEffect(target, attacker.equipment.effect.status, 3);
+          }
+      }
+        // Equipment: Drain
+      if (actualDamage > 0 && attacker.equipment && attacker.equipment.effect.type === 'drain') {
+          const drainAmt = Math.floor(actualDamage * attacker.equipment.effect.val);
+          attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drainAmt);
+          updateUnitUI(attacker);
+      }
+
+        playEffect(targetEl, activeAbility ? (attacker.abilityType || 'magic') : 'impact');
+        logBattleMessage(`${attacker.name} の ${attackName}！ ${target.name} に <span class="damage">${damage}</span>${advText} のダメージ！`);
+        updateUnitUI(target);
+        const damageClass = activeAbility ? 'is-taking-skill-damage' : 'is-taking-damage';
+        const animDuration = activeAbility ? 500 : 400;
+        targetEl.classList.add(damageClass);
+        setTimeout(() => targetEl.classList.remove(damageClass), animDuration);
+
+        // Counter Attack (on_hit)
+      if (target.currentHp > 0 && actualDamage > 0 && target.abilities) {
+        for (const ab of target.abilities) {
+          if (ab.timing === 'on_hit' && Math.random() < (ab.triggerRate || 0)) {
+             await showCutIn(target, ab.name);
+             
+             let counterDmg = 0;
+             if (target.id === 7) { // Callum: Blood Explosion
+                 counterDmg = Math.floor(target.stats.atk * 1.5);
+             } else {
+                 let reflectPct = 1.0;
+                 if (target.id === 111) reflectPct = 0.3; // アクアバルーン 30%
+                 counterDmg = Math.floor(actualDamage * reflectPct);
+             }
+
+             attacker.currentHp = Math.max(0, attacker.currentHp - counterDmg);
+             logBattleMessage(`<span class="ability">反撃！</span> ${ab.name}！ ${attacker.name} に <span class="damage">${counterDmg}</span> のダメージ！`);
+             updateUnitUI(attacker);
+             const originalAttackerEl = document.getElementById(`unit-${attacker.battleId}`);
+             playEffect(originalAttackerEl, 'slash');
+             if (originalAttackerEl) {
+                originalAttackerEl.classList.add('is-taking-damage');
+                setTimeout(() => originalAttackerEl.classList.remove('is-taking-damage'), 400);
+             }
+             if (attacker.currentHp <= 0) {
+               // Check for Callum's Perfect Cure (ID: 7) on attacker side
+               const allies = attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+               const callum = allies.find(u => u.id === 7 && u.currentHp > 0 && !u.passiveUsed);
+               if (callum && callum.battleId !== attacker.battleId) {
+                   await showCutIn(callum, '完全治療');
+                   attacker.currentHp = Math.floor(attacker.stats.hp * 0.5);
+                   logBattleMessage(`${callum.name}の完全治療！${attacker.name}が復活した！`);
+                   updateUnitUI(attacker);
+                   playEffect(originalAttackerEl, 'heal');
+                   callum.passiveUsed = true;
+               } else {
+                   logBattleMessage(`<span class="info">${attacker.name} は倒れた！</span>`);
+                   originalAttackerEl.classList.add('defeated');
+               }
+             }
+             await sleep(600 / battleSpeedMultiplier);
+          }
+        }
+      }
+
+        await sleep(600 / battleSpeedMultiplier);
+
+        // 3. Check for 'after_attack' ability (追撃)
+        if (target.currentHp > 0 && attacker.abilities) {
+          let chaseAbility = null;
+          // ライ・アルバロ (ID:5) の特殊処理
+          if (attacker.id === 5) {
+            if (attacker.isPassiveActive) { // 八連雷撃斬
+              chaseAbility = attacker.abilities[2]; // 八連雷撃斬
+            } else { // 雷撃斬
+              if (Math.random() < attacker.abilities[0].triggerRate) {
+                chaseAbility = attacker.abilities[0]; // 雷撃斬
+              }
+            }
+          }
+          // ノアの特殊処理
+          else if (attacker.id === 2) {
+            const abIndex = attacker.isPassiveActive ? 2 : 0; // ハート・ブレイク or クリスタル・ブレイク
+            const ab = attacker.abilities[abIndex];
+            if (ab && ab.timing === 'after_attack' && Math.random() < (ab.triggerRate || 0)) {
+              chaseAbility = ab;
+            }
+          } else if (attacker.id === 114 && attacker.isPassiveActive) {
+            if (Math.random() < 0.6) { // 嵐呼ぶ剣戟
+              chaseAbility = attacker.abilities[1];
+            }
+          } else {
+            // 汎用処理
+            for (const ab of attacker.abilities) {
+              if (ab.timing === 'after_attack' && Math.random() < (ab.triggerRate || 0)) {
+                chaseAbility = ab;
+                break;
+              }
+            }
+          }
+
+          if (chaseAbility) {
+            if (attacker.id === 5 && attacker.isPassiveActive) { // 八連雷撃斬
+              await showCutIn(attacker, chaseAbility.name);
+              const chaseProbs = [0.86, 0.74, 0.64, 0.56, 0.50, 0.46];
+              for (let i = 0; i < 7; i++) {
+                if (target.currentHp <= 0) break;
+
+                const chaseDamage = Math.floor(calculateDamage(attacker, target) * 0.5);
+                target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+                
+                playEffect(targetEl, 'slash');
+                logBattleMessage(`<span class="ability">追撃 ${i+1}発目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
+                updateUnitUI(target);
+                targetEl.classList.add('is-taking-damage');
+                setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+                await sleep(400 / battleSpeedMultiplier);
+
+                if (i < 6 && Math.random() > chaseProbs[i]) {
+                  break; // Chain broken
+                }
+              }
+            } else if (attacker.id === 114 && attacker.isPassiveActive) { // 嵐呼ぶ剣戟
+              await showCutIn(attacker, chaseAbility.name);
+              for (let i = 0; i < 3; i++) {
+                  if (target.currentHp <= 0) break;
+                  const chaseDamage = Math.floor(calculateDamage(attacker, target) * 0.6);
+                  target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+                  playEffect(targetEl, 'slash');
+                  logBattleMessage(`<span class="ability">追撃 ${i+1}発目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
+                  updateUnitUI(target);
+                  targetEl.classList.add('is-taking-damage');
+                  setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+                  await sleep(400 / battleSpeedMultiplier);
+                  if (Math.random() > 0.6) break;
+              }
+            } else if (attacker.id === 14 && chaseAbility.name === '月輪無双') {
+              await showCutIn(attacker, chaseAbility.name);
+              for (let i = 0; i < 4; i++) {
+                  if (target.currentHp <= 0) break;
+                  const chaseDamage = Math.floor(calculateDamage(attacker, target) * 0.8);
+                  target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+                  playEffect(targetEl, 'slash');
+                  logBattleMessage(`<span class="ability">月輪無双 ${i+1}撃目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
+                  updateUnitUI(target);
+                  targetEl.classList.add('is-taking-damage');
+                  setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+                  await sleep(400 / battleSpeedMultiplier);
+                  if (Math.random() > 0.5) break; // 50% chance to continue
+              }
+            } else { // Single chase attacks
+              await showCutIn(attacker, chaseAbility.name);
+              let chaseMult = 0.6; // Default for クリスタル・ブレイク
+              if (chaseAbility.name === 'ハート・ブレイク') chaseMult = 1.2;
+              if (chaseAbility.name === '二段切り') chaseMult = 0.3;
+              if (chaseAbility.name === '毒突き') chaseMult = 0.5;
+              if (chaseAbility.name === '雷撃斬') chaseMult = 0.5;
+
+              const chaseDamage = Math.floor(calculateDamage(attacker, target) * chaseMult);
+              target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+
+              if (chaseAbility && chaseAbility.effect?.type === 'status') {
+                  addStatusEffect(target, chaseAbility.effect.status, chaseAbility.effect.turns);
+              }
+              playEffect(targetEl, 'slash');
+              logBattleMessage(`<span class="ability">追撃！</span> ${chaseAbility.name}！ ${target.name} に <span class="damage">${chaseDamage}</span>${advText} のダメージ！`);
+              updateUnitUI(target);
+              targetEl.classList.add('is-taking-damage');
+              setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+              await sleep(600 / battleSpeedMultiplier);
+            }
+          }
+        }
+
+        // 4. Death Check & Cleanup
+        if (target.currentHp <= 0) {
+          // Check for Callum's Perfect Cure (ID: 7) on target side
+          const allies = target.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+          const callum = allies.find(u => u.id === 7 && u.currentHp > 0 && !u.passiveUsed);
+          
+          if (callum && callum.battleId !== target.battleId) {
+              await showCutIn(callum, '完全治療');
+              target.currentHp = Math.floor(target.stats.hp * 0.5);
+              logBattleMessage(`${callum.name}の完全治療！${target.name}が復活した！`);
+              updateUnitUI(target);
+              playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
+              callum.passiveUsed = true;
+          } else {
+              await handleUnitDeath(target);
+          }
+        }
+
+        } // End of single target logic block
+        if (checkWinLoss()) break;
+        await sleep(400 / battleSpeedMultiplier);
+
+      } finally {
+        if (attackerEl) attackerEl.classList.remove('is-turn-active');
+      }
+    }
+    turnCount++;
+    // For simplicity, this simulation runs until one side is defeated.
+    // In a real game, this might represent one "round" and the loop would continue.
+  }
+
+  document.getElementById('retireBattleBtn').disabled = false;
+  document.querySelectorAll('.battle-unit').forEach(el => el.classList.remove('is-attacking'));
+
+  document.getElementById('closeBattleBtn').disabled = false;
+}
+
+function checkWinLoss() {
+    if (battleState.isFinished) return true;
+
+    const livingEnemies = battleState.enemyUnits.filter(u => u.currentHp > 0).length;
+    const livingPlayers = battleState.playerUnits.filter(u => u.currentHp > 0).length;
+
+    let isGameOver = false;
+
+    if (livingEnemies === 0) {
+        battleState.isFinished = true;
+        isGameOver = true;
+        logBattleMessage(`<span class="info">勝利！</span>`);
+        
+        const mission = battleState.mission;
+        const isFirstClear = !missionProgress.has(mission.id);
+        const rewardAmount = isFirstClear ? mission.firstTimeReward : mission.reward;
+
+        if (isFirstClear) {
+            missionProgress.add(mission.id);
+        }
+        
+        let unlockedCharName = null;
+        // Stage 5 (ID: 104) Clear Reward: Iemike (ID: 4)
+        if (mission.id === 104 && !playerState.characters[4]) {
+            playerState.characters[4] = { level: 1, equippedId: null };
+            unlockedCharName = 'いえみけ';
+            showToast('「いえみけ」が仲間になりました！');
+        }
+        // Stage 8 (ID: 107) Clear Reward: Rai Alvaro (ID: 5)
+        if (mission.id === 107 && !playerState.characters[5]) {
+            playerState.characters[5] = { level: 1, equippedId: null };
+            unlockedCharName = 'ライ・アルバロ';
+            showToast('「ライ・アルバロ」が仲間になりました！');
+        }
+        // Stage 10 (ID: 109) Clear Reward: Den Alvaro (ID: 6)
+        if (mission.id === 109 && !playerState.characters[6]) {
+            playerState.characters[6] = { level: 1, equippedId: null };
+            unlockedCharName = 'デン・アルバロ';
+            showToast('「デン・アルバロ」が仲間になりました！');
+        }
+
+        playerState.rainbowStones += rewardAmount;
+        showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName);
+    } else if (livingPlayers === 0) {
+        battleState.isFinished = true;
+        isGameOver = true;
+        logBattleMessage(`<span class="info">敗北...</span>`);
+        document.getElementById('battleActionBtn').textContent = '閉じる';
+        document.getElementById('retireBattleBtn').disabled = true;
+        document.getElementById('battleActionBtn').disabled = false;
+        document.getElementById('battleActionBtn').onclick = closeBattle;
+    }
+
+    if (isGameOver && livingPlayers === 0) document.getElementById('closeBattleBtn').disabled = false;
+    return isGameOver;
+}
+
+async function showCutIn(unit, abilityName) {
+  const overlay = document.getElementById('cutinOverlay');
+  const charWrap = document.getElementById('cutinChar');
+  const text = document.getElementById('cutinText');
+
+  const imgSrc = unit.useImg ? unit.img : 'C0.svg';
+  charWrap.innerHTML = `<img src="${imgSrc}" style="height:100%;width:auto;filter:drop-shadow(0 0 20px var(--accent))">`;
+  
+  text.textContent = abilityName;
+
+  overlay.classList.add('active');
+  await sleep(2400 / battleSpeedMultiplier);
+  overlay.classList.remove('active');
+  await sleep(400 / battleSpeedMultiplier);
+}
+
+function addStatusEffect(target, type, turns) {
+    if (!target || target.currentHp <= 0) return;
+
+    // Ricardo (ID: 8) Passive: Adaptability
+    if (target.id === 8) {
+        logBattleMessage(`${target.name}は適応力で状態異常を無効化した！`);
+        return;
+    }
+
+    const existingEffect = target.statusEffects.find(e => e.type === type);
+    if (existingEffect) {
+        existingEffect.turns = Math.max(existingEffect.turns, turns);
+    } else {
+        target.statusEffects.push({ type, turns });
+    }
+    
+    const effectInfo = STATUS_EFFECTS[type];
+    if (effectInfo) {
+        logBattleMessage(`${target.name}は<span class="info">${effectInfo.name}</span>状態になった！`);
+    }
+
+    updateUnitUI(target);
+}
+
+function selectTarget(battleId) {
+    if (battleState.isFinished) return;
+
+    const targetUnit = battleState.enemyUnits.find(u => u.battleId === battleId);
+    if (!targetUnit || targetUnit.currentHp <= 0) return;
+
+    // Toggle selection if clicking the same target
+    if (battleState.selectedTargetId === battleId) {
+        const prevTargetEl = document.getElementById(`unit-${battleState.selectedTargetId}`);
+        if (prevTargetEl) prevTargetEl.classList.remove('is-targeted');
+        battleState.selectedTargetId = null;
+        return;
+    }
+
+    // Remove previous target highlight
+    if (battleState.selectedTargetId) {
+        const prevTargetEl = document.getElementById(`unit-${battleState.selectedTargetId}`);
+        if (prevTargetEl) prevTargetEl.classList.remove('is-targeted');
+    }
+
+    // Set new target
+    battleState.selectedTargetId = battleId;
+    const newTargetEl = document.getElementById(`unit-${battleId}`);
+    if (newTargetEl) {
+        newTargetEl.classList.add('is-targeted');
+    }
+}
+
+function showPassivePopup(el, text) {
+  const p = document.createElement('div');
+
+  p.className = 'passive-popup';
+  p.textContent = text;
+  el.appendChild(p);
+  setTimeout(() => p.remove(), 1500);
+}
+
+function playEffect(targetEl, type) {
+  const overlay = targetEl.querySelector('.effect-overlay');
+  overlay.innerHTML = `<div class="anim-${type}"></div>`;
+  setTimeout(() => {
+    overlay.innerHTML = '';
+  }, 600);
+}
+
+
+// 戦闘中の動的ステータス計算（パッシブ反映）
+function getBattleStats(unit) {
+  const s = { ...unit.stats };
+  
+  // パッシブ: ドラ (ID:1) HP50%以下で攻撃力30%UP
+  if (unit.id === 1 && unit.currentHp <= unit.stats.hp * 0.5) {
+    s.atk = Math.floor(s.atk * 1.3);
+  }
+
+  // パッシブ: ノア (ID:2) HP30%以下で防御力10%UP
+  if (unit.id === 2 && unit.currentHp <= unit.stats.hp * 0.3) {
+    s.def = Math.floor(s.def * 1.1);
+  }
+
+  // パッシブ: 鉄壁 ゴウ (ID:3) 常時ダメージ20%カット
+  if (unit.id === 3) {
+    s.def = Math.floor(s.def * 1.2); // A different way to think about it
+  }
+
+  // パッシブ: いえみけ (ID:4) HP50%以下で防御力40%UP
+  if (unit.id === 4 && unit.currentHp <= unit.stats.hp * 0.5) {
+    s.def = Math.floor(s.def * 1.4);
+  }
+
+  // パッシブ: エマ (ID:10) 厭世開花
+  if (unit.id === 10) {
+    const lostHpRatio = 1 - (unit.currentHp / unit.stats.hp);
+    const multiplier = 1 + (lostHpRatio * 0.5); // Max 1.5x at 0 HP
+    s.atk = Math.floor(s.atk * multiplier);
+    s.def = Math.floor(s.def * multiplier);
+    s.spd = Math.floor(s.spd * multiplier);
+  }
+
+  // パッシブ: オリバー (ID:12) フォルテ
+  if (unit.id === 12 && unit.currentHp <= unit.stats.hp * 0.5) {
+    s.atk = Math.floor(s.atk * 1.3);
+  }
+
+  // パッシブ: アスター (ID:114) 嵐呼ぶ剣戟
+  if (unit.id === 114 && unit.currentHp <= unit.stats.hp * 0.3) {
+    s.atk = Math.floor(s.atk * 1.3);
+  }
+
+  // ステータス効果: 衰弱 (HP以外20%ダウン)
+  if (unit.statusEffects.some(e => e.type === 'weakness')) {
+    s.atk = Math.floor(s.atk * 0.8);
+    s.def = Math.floor(s.def * 0.8);
+    s.spd = Math.floor(s.spd * 0.8);
+  }
+  // ステータス効果: 強化 (HP以外20%アップ)
+  if (unit.statusEffects.some(e => e.type === 'strengthen')) {
+    s.atk = Math.floor(s.atk * 1.2);
+    s.def = Math.floor(s.def * 1.2);
+    s.spd = Math.floor(s.spd * 1.2);
+  }
+  
+  return s;
+}
+
+function getElementalMultiplier(atkElem, defElem) {
+  let advantage = 1.0;
+  const advantageRules = elementalAdvantage[atkElem];
+  if (advantageRules && advantageRules[defElem]) {
+    advantage = advantageRules[defElem];
+  } else {
+    const disadvantageRules = elementalAdvantage[defElem];
+    if (disadvantageRules && disadvantageRules[atkElem]) {
+      advantage = 1 / disadvantageRules[atkElem];
+    }
+  }
+  return advantage;
+}
+
+function calculateDamage(attacker, defender) {
+  // パッシブ補正後のステータスを取得
+  const atkStats = getBattleStats(attacker);
+  const defStats = getBattleStats(defender);
+
+  const advantage = getElementalMultiplier(attacker.element, defender.element);
+  
+  // 圧縮の札 (ID: 13)
+  if (attacker.isAdvantageForced) {
+      return Math.floor((atkStats.atk * atkStats.atk) / Math.max(1, defStats.def) * 1.5);
+  }
+
+  // ダメージ計算式: 攻撃 * 攻撃 / 防御 * 属性相性
+  let damage = Math.floor((atkStats.atk * atkStats.atk) / Math.max(1, defStats.def) * advantage);
+  
+  // 燃焼による被ダメージ増加
+  if (defender.statusEffects.some(e => e.type === 'burn' || e.type === 'poison')) {
+    damage = Math.floor(damage * 1.1);
+  }
+
+  // Equipment: Damage Cut
+  if (defender.equipment && defender.equipment.effect.type === 'dmg_cut') {
+      damage = Math.floor(damage * defender.equipment.effect.val);
+  }
+  // Equipment: Elemental Resistance
+  if (defender.equipment && defender.equipment.effect.type === 'elem_res' && defender.equipment.effect.element === attacker.element) {
+      damage = Math.floor(damage * defender.equipment.effect.val);
+  }
+
+  // パッシブ: 鉄壁 ゴウ (ID:3) 常時ダメージ20%カット
+  if (defender.id === 3) {
+    damage = Math.floor(damage * 0.8);
+  }
+
+  return damage;
+}
+
+function updateUnitUI(unit) {
+  const unitEl = document.getElementById(`unit-${unit.battleId}`);
+  if (!unitEl) return;
+  const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100);
+  unitEl.querySelector('.b-unit-hp-bar').style.width = `${hpPercent}%`;
+  unitEl.querySelector('.b-unit-hp-text').textContent = `${unit.currentHp} / ${unit.stats.hp}`;
+
+  // Status effect icons
+  const statusContainer = unitEl.querySelector('.b-unit-status-effects');
+  if (statusContainer) {
+      statusContainer.innerHTML = unit.statusEffects.map(effect => {
+          const effectInfo = STATUS_EFFECTS[effect.type];
+          if (!effectInfo) return '';
+          return `<div class="status-icon" title="${effectInfo.name}: 残り${effect.turns}ターン">
+                    ${effectInfo.icon}<span class="turn-counter">${effect.turns}</span>
+                  </div>`;
+      }).join('');
+  }
+
+  // Passive Status Badge Update
+  const passiveBadge = unitEl.querySelector('.passive-active-badge');
+  if (passiveBadge) {
+    let activeText = null;
+    // ドラ (ID:1): HP50%以下で覚醒
+    if (unit.id === 1 && unit.currentHp <= unit.stats.hp * 0.5) {
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `🔥 ${unit.abilities[1].name}`;
+      }
+    } else if (unit.id === 2 && unit.currentHp <= unit.stats.hp * 0.3) {
+      // ノア (ID:2): HP30%以下で再生支配
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `💧 ${unit.abilities[1].name}`;
+      }
+    } else if (unit.id === 4 && unit.currentHp <= unit.stats.hp * 0.5) {
+      // いえみけ (ID:4): HP50%以下で水支配
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `💧 ${unit.abilities[1].name}`;
+      }
+    } else if (unit.id === 5 && unit.currentHp <= unit.stats.hp * 0.5) {
+      // ライ・アルバロ (ID:5): HP50%以下で雷支配
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `⚡ ${unit.abilities[1].name}`;
+      }
+    } else if (unit.id === 114 && unit.currentHp <= unit.stats.hp * 0.3) {
+      // アスター (ID:114): HP30%以下で嵐呼ぶ剣戟
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `⚡ ${unit.abilities[1].name}`;
+      }
+    }
+    if (activeText) {
+      passiveBadge.textContent = activeText;
+      passiveBadge.classList.add('active');
+    } else {
+      passiveBadge.classList.remove('active');
+    }
+  }
+}
+
+async function triggerOnBattleStartAbilities() {
+    const allUnits = [...battleState.playerUnits, ...battleState.enemyUnits];
+    const actionQueue = [];
+
+    // 1. Build the action queue
+    for (const unit of allUnits) {
+        if (unit.abilities) {
+            const startAbility = unit.abilities.find(ab => ab.timing === 'on_battle_start');
+            if (startAbility && Math.random() < (startAbility.triggerRate || 0)) {
+                actionQueue.push({ unit, ab: startAbility });
+            }
+        }
+    }
+
+    // 2. Sort the queue by speed
+    actionQueue.sort((a, b) => b.unit.stats.spd - a.unit.stats.spd);
+
+    // 3. Execute actions
+    for (const action of actionQueue) {
+        const { unit, ab } = action;
+        await showCutIn(unit, ab.name);
+        logBattleMessage(`${unit.name}の「${ab.name}」！`);
+
+        const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+        const livingTargets = targets.filter(t => t.currentHp > 0);
+        if (livingTargets.length === 0) continue;
+
+        if (unit.id === 112) { // ルイ・ヴォールズの「先手必勝」 (AoE)
+            for (const targetUnit of livingTargets) {
+                const damage = Math.floor(calculateDamage(unit, targetUnit) * 0.6);
+                targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
+                logBattleMessage(`${targetUnit.name}に<span class="damage">${damage}</span>のダメージ！`);
+                updateUnitUI(targetUnit);
+                const targetEl = document.getElementById(`unit-${targetUnit.battleId}`);
+                if (targetEl) {
+                    targetEl.classList.add('is-taking-skill-damage');
+                    setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
+                }
+            }
+        } else if (unit.id === 114) { // アスター・エクレアの「開闢」 (Single Target)
+            const targetUnit = livingTargets[Math.floor(Math.random() * livingTargets.length)];
+            const damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult || 1.2));
+            targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
+            logBattleMessage(`${targetUnit.name}に<span class="damage">${damage}</span>のダメージ！`);
+            if (ab.effect?.type === 'status') {
+                addStatusEffect(targetUnit, ab.effect.status, ab.effect.turns);
+            }
+            updateUnitUI(targetUnit);
+            const targetEl = document.getElementById(`unit-${targetUnit.battleId}`);
+            if (targetEl) {
+                targetEl.classList.add('is-taking-skill-damage');
+                setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
+            }
+        }
+        // Check for deaths after each ability
+        livingTargets.forEach(t => { if (t.currentHp <= 0) handleUnitDeath(t); });
+    }
+
+    checkWinLoss();
+}
+
+
+function closeBattle() {
+  document.getElementById('battleOverlay').classList.remove('open');
+  // Reset button for next battle
+  document.getElementById('retireBattleBtn').disabled = true;
+  document.getElementById('battleActionBtn').onclick = runBattleSequence;
+  renderMissionsForChapter(storyChapters.findIndex(c => c.missions.some(m => m.id === battleState.mission.id))); // Update mission list with clear status
+  renderCards();
+  renderSquad();
+  saveGame();
+}
+
+// ===== SAVE & LOAD =====
+function saveGame() {
+  const saveData = {
+    playerState: playerState,
+    missionProgress: [...missionProgress], // Convert Set to Array
+    squad: squad,
+  };
+  localStorage.setItem('soukenWoF_saveData', JSON.stringify(saveData));
+  console.log('Game saved!');
+}
+
+function loadGame() {
+  const savedJSON = localStorage.getItem('soukenWoF_saveData');
+  if (savedJSON) {
+    const savedData = JSON.parse(savedJSON);
+    
+    const defaultPlayerState = {
+        rainbowStones: 5000,
+        characters: { 1: { level: 1, equippedId: null }, 2: { level: 1, equippedId: null } },
+    };
+    
+    playerState.rainbowStones = savedData.playerState.rainbowStones !== undefined ? savedData.playerState.rainbowStones : defaultPlayerState.rainbowStones;
+    playerState.characters = savedData.playerState.characters || defaultPlayerState.characters;
+    
+    // Migration for Aura
+    for (let id in playerState.characters) {
+        if (playerState.characters[id].aura === undefined) playerState.characters[id].aura = 0;
+    }
+    
+    missionProgress = new Set(savedData.missionProgress || []);
+    squad = savedData.squad || [];
+    
+    console.log('Game loaded from localStorage.');
+    showToast('セーブデータをロードしました');
+  } else {
+    console.log('No save data found. Starting a new game.');
+  }
+}
+
+function showVictoryScreen(reward, isFirstClear, unlockedCharName = null) {
+  const rewardsContainer = document.getElementById('victoryRewards');
+  rewardsContainer.innerHTML = `
+    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+      <div style="font-size: 14px; color: var(--text-mid); margin-bottom: 8px;">獲得報酬</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--gold); font-family: 'Orbitron';">
+        💎 ${reward}
+      </div>
+      ${unlockedCharName ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border);color:var(--accent);font-weight:bold;">${unlockedCharName} が加入！</div>` : ''}
+      ${isFirstClear ? '<div style="font-size: 12px; color: var(--accent3); margin-top: 8px;">初回クリアボーナス！</div>' : ''}
+    </div>
+  `;
+  document.getElementById('victoryOverlay').classList.add('open');
+}
+
+function closeVictoryModal() {
+  document.getElementById('victoryOverlay').classList.remove('open');
+  closeBattle();
+}
+
+// ===== INIT =====
+function initializeGame() {
+    loadGame();
+    setView('roster');
+    renderSquad();
+    renderCards();
+}
+
+initializeGame();
+</script>
+</body>
+</html>
