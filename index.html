@@ -1170,8 +1170,8 @@
     animation: shake-hard 0.5s;
   }
   .battle-unit.is-targeted {
-    border-color: var(--gold);
-    box-shadow: 0 0 12px var(--gold);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   .battle-unit.is-turn-active {
     box-shadow: 0 0 16px var(--gold), 0 0 24px var(--gold);
@@ -1270,6 +1270,22 @@
   .b-unit-hp-bar { height: 100%; background: var(--accent3); border-radius: 3px; transition: width 0.5s; }
   .b-unit-hp-text { font-size: 11px; font-weight: 700; font-family: 'Orbitron', monospace; text-align: center; color: var(--text-main); text-shadow: 0 1px 2px #000; }
   .b-unit-level { position: absolute; top: 8px; right: 8px; font-size: 10px; font-family: 'Orbitron', monospace; background: rgba(0,0,0,0.5); color: var(--gold); padding: 1px 5px; border-radius: 3px; z-index: 4; }
+  .b-unit-equip {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 22px;
+    height: 22px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    z-index: 4;
+    cursor: help;
+  }
   .battle-log-container { height: 140px; border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 12px; }
   .battle-log { flex: 1; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 8px; font-size: 11px; overflow-y: auto; color: var(--text-mid); }
   .battle-log p { margin-bottom: 4px; }
@@ -1421,7 +1437,26 @@
     80% { opacity: 1; transform: translate(-50%, -20px); }
     100% { opacity: 0; transform: translate(-50%, -30px); }
   }
-
+  .damage-popup {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 24px;
+    font-weight: 900;
+    color: #ff4d4d;
+    text-shadow: 0 0 5px #000, 0 0 10px #ff0000;
+    pointer-events: none;
+    z-index: 25;
+    animation: damageFloat 1s forwards;
+  }
+  .damage-popup.heal { color: var(--accent3); text-shadow: 0 0 5px #000, 0 0 10px var(--accent3); }
+  .damage-popup.weak { color: var(--gold); text-shadow: 0 0 5px #000, 0 0 10px var(--gold); }
+  @keyframes damageFloat {
+    0% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -50px); }
+  }
   /* EFFECT ANIMATIONS */
   .anim-slash { width: 100%; height: 100%; background: linear-gradient(45deg, transparent 45%, #fff 50%, transparent 55%); animation: eff-slash 0.3s forwards; }
   @keyframes eff-slash { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 100% { transform: scale(2) rotate(45deg); opacity: 0; } }
@@ -1881,7 +1916,7 @@ const units = [
       { name: '土残流', desc: '死亡時、1度だけ攻撃力の300%で反撃し、体力1で耐える。' },
       { name: '適応力', desc: '状態異常になると状態異常を解除します。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C10.svg'
   },
   {
     id: 9, name: 'ベラ・ミルヘン', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
@@ -1901,7 +1936,7 @@ const units = [
       { name: 'アストラルファイア', desc: '攻撃前、40%の確率で発動。攻撃力が1.3倍になり、5ターンの燃焼を付与する。', triggerRate: 0.4, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 5 } },
       { name: '厭世開花', desc: 'HPが減るほどステータスが上昇する（最大1.5倍）。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C9.svg'
   },
   {
     id: 11, name: 'ロイド・ハイネス', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
@@ -1921,7 +1956,7 @@ const units = [
       { name: '睡眠誘いしララバイ', desc: '30%の確率で発動。攻撃前に発動し、攻撃に睡眠(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'sleep', turns: 2 } },
       { name: 'フォルテ', desc: 'HPが50%以下の時、攻撃力が30%上昇する。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C8.svg'
   },
   {
     id: 13, name: 'ギラ・グレゴリオ', element: 'dark', elementJp: '闇', role: 'support', roleJp: '支援',
@@ -1941,7 +1976,7 @@ const units = [
       { name: '月輪無双', desc: '攻撃後、50%の確率で威力80%の追撃を行う。最大4回まで。', triggerRate: 0.5, timing: 'after_attack' },
       { name: '耐え抜く能力', desc: '致死ダメージを受けた際、確率で無効化する（1回目100%、以降20%ずつ低下、最大5回）。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C7.svg'
   },
   // Enemies are now part of the same definition
   {
@@ -2063,12 +2098,21 @@ const chapter1Names = [
 ];
 
 const chapter2Names = [
-  "第五部隊訓練①", "第五部隊訓練②",
-  "第四部隊訓練①", "第四部隊訓練②",
-  "第三部隊訓練①", "第三部隊訓練②",
-  "第二部隊訓練①", "第二部隊訓練②",
-  "第一部隊訓練①", "第一部隊訓練②",
-  "副隊長訓練", "隊長訓練"
+  "第五部隊訓練①",
+  "第四部隊訓練①",
+  "第三部隊訓練①",
+  "第二部隊訓練①",
+  "第一部隊訓練①",
+  "副隊長訓練"
+];
+
+const chapter3Names = [
+  "第五部隊訓練②",
+  "第四部隊訓練②",
+  "第三部隊訓練②",
+  "第二部隊訓練②",
+  "第一部隊訓練②",
+  "隊長訓練"
 ];
 
 // Helper to generate missions
@@ -2137,22 +2181,25 @@ const chapter1Enemies = [
   ];
 
 const chapter2Enemies = [
-  [{ id: 7, level: 18, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 1: Callum
-  [{ id: 8, level: 22, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 2: Ricardo
-  [{ id: 9, level: 19, aiType: AI_TYPES.RANDOM }], // Stage 3: Bella
-  [{ id: 10, level: 23, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 4: Emma
-  [{ id: 11, level: 20, aiType: AI_TYPES.RANDOM }], // Stage 5: Lloyd
-  [{ id: 12, level: 24, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 6: Oliver
-  [{ id: 13, level: 21, aiType: AI_TYPES.RANDOM }], // Stage 7: Gira
-  [{ id: 14, level: 25, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 8: Milia
-  [{ id: 113, level: 22, aiType: AI_TYPES.RANDOM }], // Stage 9: Landia
-  [{ id: 114, level: 28, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 10: Aster
-  [ // Stage 11
+  [{ id: 7, level: 18, aiType: AI_TYPES.HIGHEST_ATK }], // Callum
+  [{ id: 9, level: 19, aiType: AI_TYPES.RANDOM }], // Bella
+  [{ id: 11, level: 20, aiType: AI_TYPES.RANDOM }], // Lloyd
+  [{ id: 13, level: 21, aiType: AI_TYPES.RANDOM }], // Gira
+  [{ id: 113, level: 22, aiType: AI_TYPES.RANDOM }], // Landia
+  [ // Vice Captains
     { id: 7, level: 18, aiType: AI_TYPES.RANDOM }, { id: 9, level: 19, aiType: AI_TYPES.RANDOM }, 
     { id: 11, level: 20, aiType: AI_TYPES.RANDOM }, { id: 13, level: 21, aiType: AI_TYPES.RANDOM }, 
     { id: 113, level: 22, aiType: AI_TYPES.RANDOM }
   ],
-  [ // Stage 12
+];
+
+const chapter3Enemies = [
+  [{ id: 8, level: 22, aiType: AI_TYPES.LOWEST_HP_DEF }], // Ricardo
+  [{ id: 10, level: 23, aiType: AI_TYPES.LOWEST_HP_DEF }], // Emma
+  [{ id: 12, level: 24, aiType: AI_TYPES.HIGHEST_ATK }], // Oliver
+  [{ id: 14, level: 25, aiType: AI_TYPES.LOWEST_HP_DEF }], // Milia
+  [{ id: 114, level: 28, aiType: AI_TYPES.HIGHEST_ATK }], // Aster
+  [ // Captains
     { id: 8, level: 22, aiType: AI_TYPES.RANDOM }, { id: 10, level: 23, aiType: AI_TYPES.RANDOM }, 
     { id: 12, level: 24, aiType: AI_TYPES.RANDOM }, { id: 14, level: 25, aiType: AI_TYPES.RANDOM }, 
     { id: 114, level: 28, aiType: AI_TYPES.RANDOM }
@@ -2161,7 +2208,8 @@ const chapter2Enemies = [
 
 const storyChapters = [
   { name: '第一章：天からの贈り物', missions: generateMissions(100, 10, 'Stage', [101], 50, chapter1Names, chapter1Enemies) },
-  { name: '第二章：ルディ王国', missions: generateMissions(200, 12, 'Stage', [102, 102, 101], 100, chapter2Names, chapter2Enemies) },
+  { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [102, 102, 101], 100, chapter2Names, chapter2Enemies) },
+  { name: '第三章：ルディ王国 (後編)', missions: generateMissions(300, 6, 'Stage', [102, 102, 101], 150, chapter3Names, chapter3Enemies) },
 ];
 
 function getMissionById(id) {
@@ -2869,6 +2917,7 @@ function renderUnit(unit) {
   const auraClass = unit.aura && unit.aura > 0 ? AURA_DATA[unit.aura-1].class : '';
   const imgSrc = unit.useImg ? unit.img : 'C0.svg';
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
+  const equipHtml = unit.equipment ? `<div class="b-unit-equip" title="${unit.equipment.name}\n${unit.equipment.desc}">${unit.equipment.icon}</div>` : '';
 
   return `
     <div 
@@ -2879,6 +2928,7 @@ function renderUnit(unit) {
       ${unit.aura && unit.aura > 0 ? `<div class="aura-overlay"></div>` : ''}
       ${unitImageHtml}
       <div class="b-unit-level">Lv.${unit.level}</div>
+      ${equipHtml}
       <div class="passive-active-badge">PASSIVE</div>
       <div class="b-unit-info-overlay"></div>
       <div class="b-unit-info">
@@ -2913,8 +2963,71 @@ function retireBattle() {
   }
 }
 
-async function handleUnitDeath(unit) {
-  if (!unit) return;
+function getTarget(attacker, potentialTargets) {
+    // 1. Player Selection
+    if (attacker.isPlayer && battleState.selectedTargetId) {
+        const selected = potentialTargets.find(u => u.battleId === battleState.selectedTargetId);
+        if (selected) return selected;
+    }
+
+    // 2. Elemental Advantage Filter
+    const advantageTargets = potentialTargets.filter(t => getElementalMultiplier(attacker.element, t.element) > 1.0);
+    const candidates = advantageTargets.length > 0 ? advantageTargets : potentialTargets;
+
+    // 3. Selection Logic
+    if (attacker.isPlayer) {
+        // Player Auto: Random among candidates
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    } else {
+        // Enemy AI
+        if (attacker.aiType === AI_TYPES.LOWEST_HP_DEF) {
+            return candidates.reduce((p, c) => (p.currentHp * p.stats.def < c.currentHp * c.stats.def ? p : c));
+        } else if (attacker.aiType === AI_TYPES.HIGHEST_ATK) {
+            return candidates.reduce((p, c) => (p.stats.atk > c.stats.atk ? p : c));
+        } else {
+            return candidates[Math.floor(Math.random() * candidates.length)];
+        }
+    }
+}
+
+async function processUnitDeath(unit) {
+    if (unit.currentHp > 0) return;
+
+    // 1. Check Self-Revive / Death Skills
+    const revived = await checkDeathAbilities(unit);
+    if (revived) return;
+
+    // 2. Check External Revive (Perfect Cure)
+    const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+    const callum = allies.find(u => u.id === 7 && u.currentHp > 0 && !u.passiveUsed);
+    
+    if (callum && callum.battleId !== unit.battleId) {
+        await showCutIn(callum, '完全治療');
+        const healAmount = Math.floor(unit.stats.hp * 0.5);
+        unit.currentHp = Math.floor(unit.stats.hp * 0.5);
+        logBattleMessage(`${callum.name}の完全治療！${unit.name}が復活した！`);
+        updateUnitUI(unit);
+        const unitEl = document.getElementById(`unit-${unit.battleId}`);
+        playEffect(unitEl, 'heal');
+        showDamageNumber(unitEl, healAmount, 'heal');
+        callum.passiveUsed = true;
+        if (unitEl) unitEl.classList.remove('defeated');
+        return;
+    }
+
+    // 3. Final Death
+    logBattleMessage(`<span class="info">${unit.name} は倒れた！</span>`);
+    const unitEl = document.getElementById(`unit-${unit.battleId}`);
+    if (unitEl) unitEl.classList.add('defeated');
+    if (unit.battleId === battleState.selectedTargetId) {
+        battleState.selectedTargetId = null;
+        // ターゲットが死んだら、ターゲット表示を消す
+        if (unitEl) unitEl.classList.remove('is-targeted');
+    }
+}
+
+async function checkDeathAbilities(unit) {
+  if (!unit) return false;
   const unitEl = document.getElementById(`unit-${unit.battleId}`);
   
   // Gira (ID: 13) Passive: 祟り神の降臨
@@ -2931,9 +3044,9 @@ async function handleUnitDeath(unit) {
       
       const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
       for (const e of enemies) {
-          if (e.currentHp > 0) addStatusEffect(e, 'weakness', 3);
+          if (e.currentHp > 0) await addStatusEffect(e, 'weakness', 3);
       }
-      return;
+      return true;
   }
 
   // Bella (ID: 9) Passive: Nuclear Fission
@@ -2952,24 +3065,27 @@ async function handleUnitDeath(unit) {
       }
       
       const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+      const deathQueue = [];
       for (const enemy of enemies) {
           if (enemy.currentHp > 0) {
+              const enemyEl = document.getElementById(`unit-${enemy.battleId}`);
               const dmg = Math.floor(unit.stats.atk * 1.5);
               enemy.currentHp = Math.max(0, enemy.currentHp - dmg);
               logBattleMessage(`${enemy.name}に<span class="damage">${dmg}</span>の爆発ダメージ！`);
               updateUnitUI(enemy);
-              playEffect(document.getElementById(`unit-${enemy.battleId}`), 'impact');
+              showDamageNumber(enemyEl, dmg);
+              playEffect(enemyEl, 'impact');
+              if (enemy.currentHp <= 0) {
+                  deathQueue.push(enemy);
+              }
           }
       }
-      return;
+      for (const deadUnit of deathQueue) {
+          await processUnitDeath(deadUnit);
+      }
+      return true;
   }
-
-  // Standard Death
-  logBattleMessage(`<span class="info">${unit.name} は倒れた！</span>`);
-  if (unitEl) unitEl.classList.add('defeated');
-  if (unit.battleId === battleState.selectedTargetId) {
-      battleState.selectedTargetId = null;
-  }
+  return false;
 }
 
 async function runBattleSequence() {
@@ -3019,6 +3135,7 @@ async function runBattleSequence() {
                     attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
                     logBattleMessage(`${attacker.name}は<span class="damage">${effectInfo.name}</span>で ${dotDamage} のダメージを受けた！`);
                     updateUnitUI(attacker);
+                    showDamageNumber(document.getElementById(`unit-${attacker.battleId}`), dotDamage);
                     const attackerElForDot = document.getElementById(`unit-${attacker.battleId}`);
                     if (attackerElForDot) {
                         attackerElForDot.classList.add('is-taking-damage');
@@ -3044,6 +3161,7 @@ async function runBattleSequence() {
             attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + regenAmt);
             // logBattleMessage(`${attacker.name}は徐々に回復している... (+${regenAmt})`);
             updateUnitUI(attacker);
+            showDamageNumber(attackerEl, regenAmt, 'heal');
         }
 
         if (attacker.currentHp <= 0 && canAct) { // canAct check prevents logging death twice if paralyzed and burned
@@ -3080,9 +3198,11 @@ async function runBattleSequence() {
                 const healAmt = Math.floor(targetAlly.stats.hp * 0.1);
                 if (healAmt > 0 && targetAlly.currentHp < targetAlly.stats.hp) {
                     targetAlly.currentHp = Math.min(targetAlly.stats.hp, targetAlly.currentHp + healAmt);
+                    const targetAllyEl = document.getElementById(`unit-${targetAlly.battleId}`);
                     logBattleMessage(`${attacker.name}の支援！${targetAlly.name}のHPが回復！`);
                     updateUnitUI(targetAlly);
-                    playEffect(document.getElementById(`unit-${targetAlly.battleId}`), 'heal');
+                    playEffect(targetAllyEl, 'heal');
+                    showDamageNumber(targetAllyEl, healAmt, 'heal');
                 }
             }
         }
@@ -3124,7 +3244,7 @@ async function runBattleSequence() {
                                 actualDamage = Math.floor(actualDamage * 0.9);
                             }
                             if (ab.effect?.type === 'status') {
-                                addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
+                                await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
                             }
                         }
                     }
@@ -3136,14 +3256,15 @@ async function runBattleSequence() {
                 let advText = adv > 1.0 ? ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>' : adv < 1.0 ? ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>' : '';
 
                 logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に<span class="damage">${actualDamage}</span>${advText}のダメージ！`);
-                updateUnitUI(aoeTarget);
                 const targetEl = document.getElementById(`unit-${aoeTarget.battleId}`);
+                updateUnitUI(aoeTarget);
                 playEffect(targetEl, attacker.abilityType || 'magic');
+                showDamageNumber(targetEl, actualDamage, adv > 1.0 ? 'weak' : 'damage');
                 targetEl.classList.add('is-taking-skill-damage');
                 setTimeout(() => targetEl.classList.remove('is-taking-skill-damage'), 500);
 
                 if (aoeTarget.currentHp <= 0) {
-                    await handleUnitDeath(aoeTarget);
+                    await processUnitDeath(aoeTarget);
                 }
                 await sleep(150 / battleSpeedMultiplier);
             }
@@ -3152,37 +3273,7 @@ async function runBattleSequence() {
         const targets = (attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits).filter(u => u.currentHp > 0);
         if (targets.length === 0) continue;
         
-        let target;
-        if (attacker.isPlayer) {
-          if (battleState.selectedTargetId) {
-              const preferredTarget = targets.find(u => u.battleId === battleState.selectedTargetId);
-              if (preferredTarget) {
-                  target = preferredTarget;
-              }
-          }
-          if (!target) {
-              // Fallback to random if no target selected or selected target is dead
-              target = targets[Math.floor(Math.random() * targets.length)];
-          }
-        } else {
-          // Enemy AI Targeting
-          if (attacker.aiType === AI_TYPES.LOWEST_HP_DEF) {
-            // Target lowest HP * DEF (Simulating "weakest")
-            target = targets.reduce((prev, curr) => {
-              const prevVal = prev.currentHp * prev.stats.def;
-              const currVal = curr.currentHp * curr.stats.def;
-              return prevVal < currVal ? prev : curr;
-            });
-          } else if (attacker.aiType === AI_TYPES.HIGHEST_ATK) {
-            // Target highest ATK
-            target = targets.reduce((prev, curr) => {
-              return prev.stats.atk > curr.stats.atk ? prev : curr;
-            });
-          } else {
-            // Random
-            target = targets[Math.floor(Math.random() * targets.length)];
-          }
-      }
+        const target = getTarget(attacker, targets);
       
         const targetEl = document.getElementById(`unit-${target.battleId}`);
         attackerEl.classList.add('is-attacking');
@@ -3248,7 +3339,7 @@ async function runBattleSequence() {
           await showCutIn(attacker, '化学物質汚染');
           const enemies = attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
           for (const e of enemies) {
-              if (e.currentHp > 0) addStatusEffect(e, 'poison', 3);
+              if (e.currentHp > 0) await addStatusEffect(e, 'poison', 3);
           }
           logBattleMessage(`${attacker.name}は化学物質を撒き散らした！`);
           await sleep(600 / battleSpeedMultiplier);
@@ -3285,10 +3376,11 @@ async function runBattleSequence() {
             if (target.endureCount < 5) {
                 const endureChance = 1.0 - (target.endureCount * 0.2);
                 if (Math.random() < endureChance) {
+                    await showCutIn(target, '耐え抜く能力');
                     actualDamage = 0;
                     target.endureCount++;
                     logBattleMessage(`${target.name}は耐え抜いた！(残り回数: ${5 - target.endureCount})`);
-                    showPassivePopup(document.getElementById(`unit-${target.battleId}`), "ENDURE");
+                    playEffect(targetEl, 'guard-vertical');
                 }
             }
         }
@@ -3336,7 +3428,7 @@ async function runBattleSequence() {
              }
              
              if (ab.effect?.type === 'status') {
-                addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
+                await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
              }
              playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
           }
@@ -3369,14 +3461,19 @@ async function runBattleSequence() {
 
             logBattleMessage(`${target.name}の反撃！${attacker.name}に<span class="damage">${counterDmg}</span>のダメージ！`);
             updateUnitUI(attacker);
+            if (attacker.currentHp <= 0) {
+                await processUnitDeath(attacker);
+            }
         }
 
         // 属性相性エフェクト
       const advantage = getElementalMultiplier(attacker.element, target.element);
       let advText = '';
+      let damageType = 'damage';
       if (advantage > 1.0) {
         advText = ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>';
         showPassivePopup(targetEl, "WEAK!"); // 簡易エフェクト
+        damageType = 'weak';
       } else if (advantage < 1.0) {
         advText = ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>';
         showPassivePopup(targetEl, "RESIST"); // 簡易エフェクト
@@ -3384,16 +3481,16 @@ async function runBattleSequence() {
 
         // スキルによる追加効果
         if (activeAbility && activeAbility.effect?.type === 'status') {
-            addStatusEffect(target, activeAbility.effect.status, activeAbility.effect.turns);
+            await addStatusEffect(target, activeAbility.effect.status, activeAbility.effect.turns);
         }
 
       // パッシブ効果: 炎支配 (通常攻撃時)
-      if (!activeAbility && attacker.id === 1 && attacker.isPassiveActive) addStatusEffect(target, 'burn', 2);
+      if (!activeAbility && attacker.id === 1 && attacker.isPassiveActive) await addStatusEffect(target, 'burn', 2);
 
       // 装備による追加効果
       if (attacker.equipment && attacker.equipment.effect.type === 'add_status') {
           if (Math.random() < attacker.equipment.effect.chance) {
-              addStatusEffect(target, attacker.equipment.effect.status, 3);
+              await addStatusEffect(target, attacker.equipment.effect.status, 3);
           }
       }
         // Equipment: Drain
@@ -3401,6 +3498,7 @@ async function runBattleSequence() {
           const drainAmt = Math.floor(actualDamage * attacker.equipment.effect.val);
           attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drainAmt);
           updateUnitUI(attacker);
+          showDamageNumber(attackerEl, drainAmt, 'heal');
       }
 
         playEffect(targetEl, activeAbility ? (attacker.abilityType || 'magic') : 'impact');
@@ -3408,6 +3506,7 @@ async function runBattleSequence() {
         updateUnitUI(target);
         const damageClass = activeAbility ? 'is-taking-skill-damage' : 'is-taking-damage';
         const animDuration = activeAbility ? 500 : 400;
+        showDamageNumber(targetEl, actualDamage, damageType);
         targetEl.classList.add(damageClass);
         setTimeout(() => targetEl.classList.remove(damageClass), animDuration);
 
@@ -3430,26 +3529,14 @@ async function runBattleSequence() {
              logBattleMessage(`<span class="ability">反撃！</span> ${ab.name}！ ${attacker.name} に <span class="damage">${counterDmg}</span> のダメージ！`);
              updateUnitUI(attacker);
              const originalAttackerEl = document.getElementById(`unit-${attacker.battleId}`);
+             showDamageNumber(originalAttackerEl, counterDmg);
              playEffect(originalAttackerEl, 'slash');
              if (originalAttackerEl) {
                 originalAttackerEl.classList.add('is-taking-damage');
                 setTimeout(() => originalAttackerEl.classList.remove('is-taking-damage'), 400);
              }
              if (attacker.currentHp <= 0) {
-               // Check for Callum's Perfect Cure (ID: 7) on attacker side
-               const allies = attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
-               const callum = allies.find(u => u.id === 7 && u.currentHp > 0 && !u.passiveUsed);
-               if (callum && callum.battleId !== attacker.battleId) {
-                   await showCutIn(callum, '完全治療');
-                   attacker.currentHp = Math.floor(attacker.stats.hp * 0.5);
-                   logBattleMessage(`${callum.name}の完全治療！${attacker.name}が復活した！`);
-                   updateUnitUI(attacker);
-                   playEffect(originalAttackerEl, 'heal');
-                   callum.passiveUsed = true;
-               } else {
-                   logBattleMessage(`<span class="info">${attacker.name} は倒れた！</span>`);
-                   originalAttackerEl.classList.add('defeated');
-               }
+               await processUnitDeath(attacker);
              }
              await sleep(600 / battleSpeedMultiplier);
           }
@@ -3459,7 +3546,7 @@ async function runBattleSequence() {
         await sleep(600 / battleSpeedMultiplier);
 
         // 3. Check for 'after_attack' ability (追撃)
-        if (target.currentHp > 0 && attacker.abilities) {
+        if (target.currentHp > 0 && attacker.currentHp > 0 && attacker.abilities) {
           let chaseAbility = null;
           // ライ・アルバロ (ID:5) の特殊処理
           if (attacker.id === 5) {
@@ -3505,6 +3592,7 @@ async function runBattleSequence() {
                 playEffect(targetEl, 'slash');
                 logBattleMessage(`<span class="ability">追撃 ${i+1}発目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
                 updateUnitUI(target);
+                showDamageNumber(targetEl, chaseDamage);
                 targetEl.classList.add('is-taking-damage');
                 setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
                 await sleep(400 / battleSpeedMultiplier);
@@ -3522,6 +3610,7 @@ async function runBattleSequence() {
                   playEffect(targetEl, 'slash');
                   logBattleMessage(`<span class="ability">追撃 ${i+1}発目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
                   updateUnitUI(target);
+                  showDamageNumber(targetEl, chaseDamage);
                   targetEl.classList.add('is-taking-damage');
                   setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
                   await sleep(400 / battleSpeedMultiplier);
@@ -3536,6 +3625,7 @@ async function runBattleSequence() {
                   playEffect(targetEl, 'slash');
                   logBattleMessage(`<span class="ability">月輪無双 ${i+1}撃目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
                   updateUnitUI(target);
+                  showDamageNumber(targetEl, chaseDamage);
                   targetEl.classList.add('is-taking-damage');
                   setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
                   await sleep(400 / battleSpeedMultiplier);
@@ -3553,11 +3643,12 @@ async function runBattleSequence() {
               target.currentHp = Math.max(0, target.currentHp - chaseDamage);
 
               if (chaseAbility && chaseAbility.effect?.type === 'status') {
-                  addStatusEffect(target, chaseAbility.effect.status, chaseAbility.effect.turns);
+                  await addStatusEffect(target, chaseAbility.effect.status, chaseAbility.effect.turns);
               }
               playEffect(targetEl, 'slash');
               logBattleMessage(`<span class="ability">追撃！</span> ${chaseAbility.name}！ ${target.name} に <span class="damage">${chaseDamage}</span>${advText} のダメージ！`);
               updateUnitUI(target);
+              showDamageNumber(targetEl, chaseDamage, advText.includes('WEAK') ? 'weak' : 'damage');
               targetEl.classList.add('is-taking-damage');
               setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
               await sleep(600 / battleSpeedMultiplier);
@@ -3567,20 +3658,7 @@ async function runBattleSequence() {
 
         // 4. Death Check & Cleanup
         if (target.currentHp <= 0) {
-          // Check for Callum's Perfect Cure (ID: 7) on target side
-          const allies = target.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
-          const callum = allies.find(u => u.id === 7 && u.currentHp > 0 && !u.passiveUsed);
-          
-          if (callum && callum.battleId !== target.battleId) {
-              await showCutIn(callum, '完全治療');
-              target.currentHp = Math.floor(target.stats.hp * 0.5);
-              logBattleMessage(`${callum.name}の完全治療！${target.name}が復活した！`);
-              updateUnitUI(target);
-              playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
-              callum.passiveUsed = true;
-          } else {
-              await handleUnitDeath(target);
-          }
+          await processUnitDeath(target);
         }
 
         } // End of single target logic block
@@ -3675,12 +3753,14 @@ async function showCutIn(unit, abilityName) {
   await sleep(400 / battleSpeedMultiplier);
 }
 
-function addStatusEffect(target, type, turns) {
+async function addStatusEffect(target, type, turns) {
     if (!target || target.currentHp <= 0) return;
 
     // Ricardo (ID: 8) Passive: Adaptability
     if (target.id === 8) {
+        await showCutIn(target, '適応力');
         logBattleMessage(`${target.name}は適応力で状態異常を無効化した！`);
+        playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
         return;
     }
 
@@ -3736,6 +3816,22 @@ function showPassivePopup(el, text) {
   setTimeout(() => p.remove(), 1500);
 }
 
+function showDamageNumber(targetEl, damage, type = 'damage') {
+  if (!targetEl || damage <= 0) return;
+  const popup = document.createElement('div');
+  popup.className = 'damage-popup';
+  popup.textContent = damage;
+
+  if (type === 'heal') {
+    popup.classList.add('heal');
+    popup.textContent = `+${damage}`;
+  } else if (type === 'weak') {
+    popup.classList.add('weak');
+  }
+
+  targetEl.appendChild(popup);
+  setTimeout(() => popup.remove(), 1000);
+}
 function playEffect(targetEl, type) {
   const overlay = targetEl.querySelector('.effect-overlay');
   overlay.innerHTML = `<div class="anim-${type}"></div>`;
@@ -3947,6 +4043,7 @@ async function triggerOnBattleStartAbilities() {
                 logBattleMessage(`${targetUnit.name}に<span class="damage">${damage}</span>のダメージ！`);
                 updateUnitUI(targetUnit);
                 const targetEl = document.getElementById(`unit-${targetUnit.battleId}`);
+                showDamageNumber(targetEl, damage);
                 if (targetEl) {
                     targetEl.classList.add('is-taking-skill-damage');
                     setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
@@ -3958,17 +4055,18 @@ async function triggerOnBattleStartAbilities() {
             targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
             logBattleMessage(`${targetUnit.name}に<span class="damage">${damage}</span>のダメージ！`);
             if (ab.effect?.type === 'status') {
-                addStatusEffect(targetUnit, ab.effect.status, ab.effect.turns);
+                await addStatusEffect(targetUnit, ab.effect.status, ab.effect.turns);
             }
             updateUnitUI(targetUnit);
             const targetEl = document.getElementById(`unit-${targetUnit.battleId}`);
+            showDamageNumber(targetEl, damage);
             if (targetEl) {
                 targetEl.classList.add('is-taking-skill-damage');
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
         // Check for deaths after each ability
-        livingTargets.forEach(t => { if (t.currentHp <= 0) handleUnitDeath(t); });
+        for (const t of livingTargets) { if (t.currentHp <= 0) await processUnitDeath(t); }
     }
 
     checkWinLoss();
@@ -3980,7 +4078,12 @@ function closeBattle() {
   // Reset button for next battle
   document.getElementById('retireBattleBtn').disabled = true;
   document.getElementById('battleActionBtn').onclick = runBattleSequence;
-  renderMissionsForChapter(storyChapters.findIndex(c => c.missions.some(m => m.id === battleState.mission.id))); // Update mission list with clear status
+  const chapterIndex = storyChapters.findIndex(c => c.missions.some(m => m.id === battleState.mission.id));
+  if (chapterIndex > -1) {
+    renderMissionsForChapter(chapterIndex); // Update mission list with clear status
+  } else {
+    renderStoryChapters(); // Fallback to main chapter view if something went wrong
+  }
   renderCards();
   renderSquad();
   saveGame();
