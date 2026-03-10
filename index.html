@@ -2097,6 +2097,13 @@ const units = [
     ],
     useImg: true, img: 'C6.svg'
   },
+  {
+    id: 115, name: '衛兵', element: 'none', elementJp: '無', role: 'mob', roleJp: 'モンスター',
+    baseStats: { hp: 1500, atk: 80, def: 150, spd: 40 },
+    abilities: [],
+    abilityType: 'impact',
+    useImg: true, img: 'C308.svg'
+  },
 ];
 
 // Equipment Data
@@ -2214,11 +2221,11 @@ const chapter1Enemies = [
   ];
 
 const chapter2Enemies = [
-  [{ id: 7, level: 18, aiType: AI_TYPES.HIGHEST_ATK }], // Callum
-  [{ id: 9, level: 19, aiType: AI_TYPES.RANDOM }], // Bella
-  [{ id: 11, level: 20, aiType: AI_TYPES.RANDOM }], // Lloyd
-  [{ id: 13, level: 21, aiType: AI_TYPES.RANDOM }], // Gira
-  [{ id: 113, level: 22, aiType: AI_TYPES.RANDOM }], // Landia
+  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 7, level: 18, aiType: AI_TYPES.HIGHEST_ATK }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Callum + Guards
+  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 9, level: 19, aiType: AI_TYPES.RANDOM }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Bella + Guards
+  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 11, level: 20, aiType: AI_TYPES.RANDOM }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Lloyd + Guards
+  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 13, level: 21, aiType: AI_TYPES.RANDOM }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Gira + Guards
+  [{ id: 115, level: 12 }, { id: 115, level: 12 }, { id: 113, level: 22, aiType: AI_TYPES.RANDOM }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Landia + Guards
   [ // Vice Captains
     { id: 7, level: 18, aiType: AI_TYPES.RANDOM }, { id: 9, level: 19, aiType: AI_TYPES.RANDOM }, 
     { id: 11, level: 20, aiType: AI_TYPES.RANDOM }, { id: 13, level: 21, aiType: AI_TYPES.RANDOM }, 
@@ -2227,11 +2234,11 @@ const chapter2Enemies = [
 ];
 
 const chapter3Enemies = [
-  [{ id: 8, level: 22, aiType: AI_TYPES.LOWEST_HP_DEF }], // Ricardo
-  [{ id: 10, level: 23, aiType: AI_TYPES.LOWEST_HP_DEF }], // Emma
-  [{ id: 12, level: 24, aiType: AI_TYPES.HIGHEST_ATK }], // Oliver
-  [{ id: 14, level: 25, aiType: AI_TYPES.LOWEST_HP_DEF }], // Milia
-  [{ id: 114, level: 28, aiType: AI_TYPES.HIGHEST_ATK }], // Aster
+  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 8, level: 22, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Ricardo + Guards
+  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 10, level: 23, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Emma + Guards
+  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 12, level: 24, aiType: AI_TYPES.HIGHEST_ATK }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Oliver + Guards
+  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 14, level: 25, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Milia + Guards
+  [{ id: 115, level: 12 }, { id: 115, level: 12 }, { id: 114, level: 28, aiType: AI_TYPES.HIGHEST_ATK }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Aster + Guards
   [ // Captains
     { id: 8, level: 22, aiType: AI_TYPES.RANDOM }, { id: 10, level: 23, aiType: AI_TYPES.RANDOM }, 
     { id: 12, level: 24, aiType: AI_TYPES.RANDOM }, { id: 14, level: 25, aiType: AI_TYPES.RANDOM }, 
