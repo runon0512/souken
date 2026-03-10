@@ -1478,10 +1478,24 @@
   @keyframes eff-guard-v { 0% { transform: scaleY(0); opacity: 0; } 50% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1.5); opacity: 0; } }
 
   /* ===== AURA EFFECTS ===== */
-  .char-card.aura-1, .squad-slot.aura-1, .battle-unit.aura-1 { border-color: #e0e0e0 !important; box-shadow: 0 0 15px rgba(224,224,224,0.4), inset 0 0 10px rgba(224,224,224,0.1); }
-  .char-card.aura-2, .squad-slot.aura-2, .battle-unit.aura-2 { border-color: #ffd700 !important; box-shadow: 0 0 20px rgba(255,215,0,0.5), inset 0 0 10px rgba(255,215,0,0.2); }
-  .char-card.aura-3, .squad-slot.aura-3, .battle-unit.aura-3 { border-color: #b9f2ff !important; box-shadow: 0 0 25px rgba(185,242,255,0.6), 0 0 50px rgba(255,255,255,0.3), inset 0 0 15px rgba(185,242,255,0.3); }
-  .char-card.aura-4, .squad-slot.aura-4, .battle-unit.aura-4 { border-color: #888 !important; box-shadow: 0 0 25px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.3) !important; }
+  .char-card.aura-1, .squad-slot.aura-1, .battle-unit.aura-1 {
+    border: 2px solid #e0e0e0 !important;
+    box-shadow: 0 0 15px rgba(224,224,224,0.4), inset 0 0 10px rgba(224,224,224,0.1);
+  }
+  .char-card.aura-2, .squad-slot.aura-2, .battle-unit.aura-2 {
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 0 20px rgba(255,215,0,0.5), inset 0 0 10px rgba(255,215,0,0.2), 0 0 30px rgba(255,215,0,0.3);
+  }
+  .char-card.aura-3, .squad-slot.aura-3, .battle-unit.aura-3 {
+    border: 3px solid transparent !important;
+    border-image: linear-gradient(45deg, #b9f2ff, #ffffff, #b9f2ff) 1;
+    box-shadow: 0 0 25px rgba(185,242,255,0.6), 0 0 50px rgba(255,255,255,0.3), inset 0 0 15px rgba(185,242,255,0.3);
+  }
+  .char-card.aura-4, .squad-slot.aura-4, .battle-unit.aura-4 {
+    border: 3px solid transparent !important;
+    border-image: linear-gradient(45deg, #555, #ff0000, #555) 1;
+    box-shadow: 0 0 25px rgba(0,0,0,0.9), 0 0 40px rgba(255,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.9);
+  }
 
   .aura-overlay {
     position: absolute;
@@ -1583,6 +1597,25 @@
     aside { position: relative; top: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
     .card-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
     .logo { font-size: 16px; }
+  }
+
+  /* スマホ横画面用の調整 */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .battle-unit {
+      width: 110px;
+      height: 150px;
+    }
+    .b-unit-name {
+      font-size: 11px;
+      height: 15px;
+    }
+    .b-unit-hp-text { font-size: 10px; }
+    .b-unit-img .char-silhouette { font-size: 56px; }
+    .battle-log-container { height: 110px; }
+    .battle-log { font-size: 10px; }
+    .battle-header h2 { font-size: 14px; }
+    .battle-field { padding: 12px; gap: 12px; }
+    .modal { max-height: 95vh; }
   }
 </style>
 </head>
@@ -1906,7 +1939,7 @@ const units = [
       { name: '血液爆発', desc: '被弾時、20%の確率で自身の攻撃力の150%のダメージを相手に与える。', triggerRate: 0.2, timing: 'on_hit' },
       { name: '完全治療', desc: '味方（自分以外）が倒れた時、1度だけ体力50%で復活させる。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C15.svg'
   },
   {
     id: 8, name: 'リカルド・テラエル', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
@@ -1926,7 +1959,7 @@ const units = [
       { name: '不可視の炎', desc: '攻撃後、50%の確率で再攻撃を行う。最大5回まで。', triggerRate: 1.0, timing: 'after_attack' },
       { name: '核分裂', desc: '死亡時、敵全体に攻撃力の150%のダメージを与え、HP1で復活する。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C14.svg'
   },
   {
     id: 10, name: 'エマ・シルエイティ', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
@@ -1946,7 +1979,7 @@ const units = [
       { name: '大地震', desc: '30%の確率で発動。攻撃が敵全体への80%のダメージ攻撃になる。', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.8 },
       { name: '化学物質汚染', desc: 'HPが50%以下になると発動。敵全体を3ターンの毒状態にする。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C13.svg'
   },
   {
     id: 12, name: 'オリバー・ジャック', element: 'water', elementJp: '水', role: 'support', roleJp: '支援',
@@ -1966,7 +1999,7 @@ const units = [
       { name: '圧縮の札', desc: '30%の確率で発動。攻撃時の属性相性を有利として計算する。', triggerRate: 0.3, timing: 'before_attack' },
       { name: '祟り神の降臨', desc: '死亡時、敵全体に衰弱を3ターン付与し、HP1で復活する。' }
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C12.svg'
   },
   {
     id: 14, name: 'ミリア・ルティス', element: 'dark', elementJp: '闇', role: 'tank', roleJp: '重装',
@@ -2052,7 +2085,7 @@ const units = [
       { name: '虹斬', desc: '攻撃前に発動し、相性有利で攻撃し、衰弱を2ターン付与。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 2 } },
       { name: '無能力の意地', desc: 'スキルによる攻撃を受けたときに攻撃を50%ブロックします。', timing: 'on_skill_defense' },
     ],
-    useImg: true, img: 'C0.svg'
+    useImg: true, img: 'C11.svg'
   },
   {
     id: 114, name: 'アスター・エクレア', element: 'thunder', elementJp: '雷', role: 'assault', roleJp: '突撃',
@@ -2592,7 +2625,7 @@ function updateModal() {
   const existingAuraBtn = document.getElementById('btnAuraUp');
   if (existingAuraBtn) existingAuraBtn.remove();
 
-  if (aura < 4) {
+  if (aura < 4 && level >= maxLevel) {
     const nextAura = AURA_DATA[aura];
     const auraBtn = document.createElement('button');
     auraBtn.id = 'btnAuraUp';
@@ -2600,7 +2633,9 @@ function updateModal() {
     auraBtn.style.cssText = "width:100%; margin-top:8px; background:transparent; border:1px solid var(--gold); color:var(--gold);";
     auraBtn.innerHTML = `限界突破: ${nextAura.label} (虹石 ${nextAura.cost})`;
     auraBtn.onclick = () => upgradeAura(c.id);
-    if (playerState.rainbowStones < nextAura.cost) auraBtn.disabled = true;
+    if (playerState.rainbowStones < nextAura.cost) {
+      auraBtn.disabled = true;
+    }
     document.querySelector('.level-control').parentNode.insertBefore(auraBtn, document.querySelector('.level-control').nextSibling);
   }
 
@@ -2653,6 +2688,12 @@ function upgradeAura(charId) {
   const charState = playerState.characters[charId];
   const currentAura = charState.aura || 0;
   if (currentAura >= 4) return;
+
+  const maxLevel = getMaxLevel(currentAura);
+  if (charState.level < maxLevel) {
+    showToast(`限界突破にはレベルを ${maxLevel} にする必要があります`);
+    return;
+  }
   
   const nextAuraData = AURA_DATA[currentAura];
   if (playerState.rainbowStones >= nextAuraData.cost) {
@@ -3164,10 +3205,11 @@ async function runBattleSequence() {
             showDamageNumber(attackerEl, regenAmt, 'heal');
         }
 
-        if (attacker.currentHp <= 0 && canAct) { // canAct check prevents logging death twice if paralyzed and burned
-            logBattleMessage(`<span class="info">${attacker.name} は倒れた！</span>`);
-            document.getElementById(`unit-${attacker.battleId}`).classList.add('defeated');
-            canAct = false;
+        if (attacker.currentHp <= 0) {
+            await processUnitDeath(attacker);
+            if (attacker.currentHp <= 0) { // Still dead after revive checks
+                canAct = false;
+            }
         }
 
         attacker.statusEffects.forEach(effect => effect.turns--);
