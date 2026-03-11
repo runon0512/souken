@@ -2002,6 +2002,14 @@
       <button class="modal-close" onclick="closeCodeViewerDirect()">✕</button>
     </div>
     <div class="modal-body">
+      <div class="squad-manager-io-section">
+        <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">
+          他のプレイヤーの編成コードを貼り付けて、内容を確認できます。
+        </p>
+        <textarea id="squadCodeTextarea" placeholder="ここに編成コードを貼り付け..."></textarea>
+        <button class="mission-btn" onclick="viewSquadFromCode()">編成をプレビュー</button>
+      </div>
+      <div id="squadViewerResult"></div>
     </div>
   </div>
 </div>
@@ -4452,6 +4460,23 @@ function closeCodeViewerDirect() {
 }
 
 function getSquadData() {
+  const details = {};
+  squad.forEach(id => {
+    if (playerState.characters[id]) {
+      details[id] = {
+        level: playerState.characters[id].level,
+        aura: playerState.characters[id].aura || 0,
+        equippedId: playerState.characters[id].equippedId || null
+      };
+    }
+  });
+  return {
+    squad: squad,
+    details: details,
+  };
+}
+
+function downloadSquadDataFile() {
   const data = getSquadData();
   const jsonString = JSON.stringify(data);
   const blob = new Blob([jsonString], { type: 'application/json' });
@@ -4488,7 +4513,7 @@ function copySquadCode() {
 }
 
 function viewSquadFromCode() {
-  const code = document.getElementById('squadCodeViewerTextarea').value.trim();
+  const code = document.getElementById('squadCodeTextarea').value.trim();
   const resultContainer = document.getElementById('squadViewerResult');
   resultContainer.innerHTML = '';
   if (!code) {
@@ -4508,19 +4533,36 @@ function viewSquadFromCode() {
       const char = units.find(u => u.id === charId);
       if (!char) return;
 
-      // The code doesn't contain level/aura, so we display basic info.
-      const equipId = data.equipment ? data.equipment[charId] : null;
+      // New: Get level, aura, and equip from 'details' if it exists.
+      // Fallback to old 'equipment' for backward compatibility.
+      let level = 1;
+      let aura = 0;
+      let equipId = null;
+
+      if (data.details && data.details[charId]) {
+        const detail = data.details[charId];
+        level = detail.level || 1;
+        aura = detail.aura || 0;
+        equipId = detail.equippedId || null;
+      } else if (data.equipment) { // Backward compatibility
+        equipId = data.equipment[charId] || null;
+      }
+
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+      const auraData = aura > 0 ? AURA_DATA[aura - 1] : null;
+      const auraClass = auraData ? auraData.class : '';
       
       html += `
-        <div class="squad-slot filled" style="margin-bottom: 6px; cursor: default;">
+        <div class="squad-slot filled ${auraClass}" style="margin-bottom: 6px; cursor: default;">
+          ${auraData ? `<div class="aura-overlay"></div>` : ''}
           <div class="slot-num">${i+1}</div>
           <div class="slot-img-wrap"><img src="${char.useImg ? char.img : 'C0.svg'}" alt="${char.name}"></div>
           <div class="slot-info">
-            <div class="slot-name">${char.name}</div>
+            <div class="slot-name">${char.name} <span style="font-size:10px;color:var(--accent)">(Lv.${level})</span></div>
             <div class="slot-role">${char.roleJp}</div>
           </div>
           ${equip ? `<div class="squad-equip-icon" title="${equip.name}">${equip.icon}</div>` : ''}
+          ${auraData ? `<div class="aura-badge" style="background:${auraData.color};color:#000;">${auraData.label}</div>` : ''}
         </div>
       `;
     });
@@ -4601,5 +4643,4 @@ function initializeGame() {
 initializeGame();
 </script>
 </body>
-
 </html>
