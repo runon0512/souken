@@ -747,7 +747,7 @@
     inset: 0;
     background: rgba(0,0,0,0.75);
     backdrop-filter: blur(4px);
-    z-index: 200;
+    z-index: 260;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -895,6 +895,15 @@
     font-size: 11px;
     color: var(--text-mid);
     line-height: 1.5;
+  }
+
+  .ability-card-details {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    line-height: 1.4;
   }
 
   .modal-footer {
@@ -1714,6 +1723,9 @@
 
   /* スマホ横画面用の調整 */
   @media (max-height: 500px) and (orientation: landscape) {
+    main { grid-template-columns: 1fr; }
+    aside { position: relative; top: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+
     .battle-unit {
       width: 110px;
       height: 150px;
@@ -1961,8 +1973,12 @@
         <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()">強化 (虹石 <span id="costVal">100</span>)</button>
       </div>
       <div class="modal-section">
-        <div class="modal-section-title">基礎ステータス</div>
+        <div class="modal-section-title" id="modalCurrentStatsTitle">基礎ステータス</div>
         <div class="modal-stats-grid" id="modalStats"></div>
+      </div>
+      <div class="modal-section" id="modalBaseStatsSection">
+        <div class="modal-section-title">基礎ステータス (Lv.1)</div>
+        <div class="modal-stats-grid" id="modalBaseStats"></div>
       </div>
       <div class="modal-section">
         <div class="modal-section-title">装備</div>
@@ -2632,7 +2648,8 @@ function renderCards() {
   grid.innerHTML = '';
   const ownedCharIds = Object.keys(playerState.characters);
   const filtered = units.filter(c => {
-    if (!ownedCharIds.includes(c.id.toString())) return false; // 未所有のキャラは表示しない
+    // モンスター/ボスはキャラクター一覧に表示しない
+    if (c.role === 'mob' || c.role === 'boss') return false;
     const matchFilter =
       currentFilter === 'all' ||
       currentFilter === c.role ||
@@ -2661,15 +2678,17 @@ function renderCards() {
   });
 
   filtered.forEach((c, idx) => {
-    const inSquad = squad.includes(c.id);
+    const isOwned = ownedCharIds.includes(c.id.toString());
+    const inSquad = isOwned && squad.includes(c.id);
     const card = document.createElement('div');
-    card.className = 'char-card' + (inSquad ? ' in-squad' : '');
+    card.className = 'char-card' + (inSquad ? ' in-squad' : '') + (!isOwned ? ' not-owned' : '');
     card.style.animationDelay = (idx * 0.04) + 's';
 
     const ab = c.abilities[0];
-    const level = playerState.characters[c.id].level;
-    const equipId = playerState.characters[c.id].equippedId;
-    const aura = playerState.characters[c.id].aura || 0;
+    const charState = isOwned ? playerState.characters[c.id] : null;
+    const level = isOwned ? charState.level : 1;
+    const equipId = isOwned ? charState.equippedId : null;
+    const aura = isOwned ? (charState.aura || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
     const s = calcStats(c.baseStats, level, equip);
     
@@ -2698,7 +2717,7 @@ function renderCards() {
         </div>
         <button class="card-action-btn ${inSquad ? 'remove' : ''}"
           onclick="toggleSquad(event,${c.id})"
-          ${!inSquad && squad.length >= MAX_SQUAD ? 'disabled' : ''}>
+          ${!isOwned || (!inSquad && squad.length >= MAX_SQUAD) ? 'disabled' : ''}>
           ${inSquad ? '編成から外す' : squad.length >= MAX_SQUAD ? '編成満員' : '編成に追加'}
         </button>
       </div>
@@ -2823,16 +2842,48 @@ function toggleSquad(e, id) {
 }
 
 // ===== MODAL =====
-function openModal(id) {
+function openModal(id, isBattleContext = false, battleUnit = null) {
   modalCharId = id;
-  updateModal();
+  updateModal(isBattleContext, battleUnit);
   document.getElementById('modalOverlay').classList.add('open');
 }
 
-function updateModal() {
+function formatAbilityDetails(ability) {
+  let details = [];
+  if (ability.triggerRate) {
+    details.push(`発動率: ${ability.triggerRate * 100}%`);
+  }
+  if (ability.timing) {
+    const timingJp = {
+      'before_attack': '攻撃前',
+      'after_attack': '攻撃後',
+      'on_hit': '被弾時',
+      'on_defense': '防御時',
+      'on_battle_start': '戦闘開始時',
+      'on_skill_defense': 'スキル防御時'
+    }[ability.timing];
+    if (timingJp) details.push(`タイミング: ${timingJp}`);
+  }
+  if (ability.isAoe) {
+    details.push('範囲: 敵全体');
+  }
+  if (ability.damageMult) {
+    details.push(`威力: ${ability.damageMult * 100}%`);
+  }
+  if (ability.effect) {
+    const effect = ability.effect;
+    if (effect.type === 'status') {
+      const statusName = STATUS_EFFECTS[effect.status]?.name || effect.status;
+      details.push(`効果: ${statusName} (${effect.turns}ターン)`);
+    }
+  }
+  if (details.length === 0) return '';
+  return `<div class="ability-card-details">${details.join(' / ')}</div>`;
+}
+
+  function updateModal(isBattleContext = false, battleUnit = null) {
   const c = units.find(u => u.id === modalCharId);
   if (!c) return;
-  const inSquad = squad.includes(c.id);
 
   document.getElementById('modalName').textContent = c.name;
   document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span> &nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.roleJp}</span>`;
@@ -2841,11 +2892,34 @@ function updateModal() {
   const imgWrap = document.getElementById('modalImgWrap');
   imgWrap.innerHTML = `<img src="${imgSrc}" alt="${c.name}" style="filter:drop-shadow(0 0 20px rgba(0,200,255,0.4))">`;
 
-  const level = playerState.characters[c.id] ? playerState.characters[c.id].level : 1;
-  const equipId = playerState.characters[c.id] ? playerState.characters[c.id].equippedId : null;
-  const aura = playerState.characters[c.id].aura || 0;
-  const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-  const s = calcStats(c.baseStats, level, equip);
+    let level, equipId, aura, s, equip;
+
+    const charState = playerState.characters[c.id];
+    const isOwned = !!charState;
+
+    if (isBattleContext && battleUnit) {
+      level = battleUnit.level;
+      equipId = battleUnit.equipment ? battleUnit.equipment.id : null;
+      aura = battleUnit.aura || 0;
+      s = getBattleStats(battleUnit); // Use dynamically calculated battle stats to reflect passives/effects
+      equip = battleUnit.equipment;
+    } else if (isOwned) {
+      level = charState.level;
+      equipId = charState.equippedId;
+      aura = charState.aura || 0;
+      equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+      s = calcStats(c.baseStats, level, equip);
+    } else {
+      // Not owned, not in battle -> show base Lv1 stats
+      level = 1;
+      equipId = null;
+      aura = 0;
+      equip = null;
+      s = c.baseStats;
+    }
+
+  document.getElementById('modalCurrentStatsTitle').textContent = isBattleContext ? '戦闘中ステータス' : (isOwned ? '現在のステータス' : '基礎ステータス (Lv.1)');
+
   document.getElementById('modalStats').innerHTML = `
     <div class="mstat"><span class="mstat-label">HP</span><span class="mstat-val" style="color:#ff8080">${s.hp}</span></div>
     <div class="mstat"><span class="mstat-label">ATK</span><span class="mstat-val" style="color:var(--accent2)">${s.atk}</span></div>
@@ -2853,7 +2927,18 @@ function updateModal() {
     <div class="mstat"><span class="mstat-label">SPD</span><span class="mstat-val" style="color:var(--accent3)">${s.spd}</span></div>
   `;
 
+  // Base Stats
+  document.getElementById('modalBaseStatsSection').style.display = (isOwned && !isBattleContext) ? 'block' : 'none';
+  document.getElementById('modalBaseStats').innerHTML = `
+    <div class="mstat"><span class="mstat-label">HP</span><span class="mstat-val" style="color:#ff8080">${c.baseStats.hp}</span></div>
+    <div class="mstat"><span class="mstat-label">ATK</span><span class="mstat-val" style="color:var(--accent2)">${c.baseStats.atk}</span></div>
+    <div class="mstat"><span class="mstat-label">DEF</span><span class="mstat-val" style="color:var(--accent)">${c.baseStats.def}</span></div>
+    <div class="mstat"><span class="mstat-label">SPD</span><span class="mstat-val" style="color:var(--accent3)">${c.baseStats.spd}</span></div>
+  `;
+
   // Level Control
+  const levelControl = document.querySelector('.level-control');
+  levelControl.style.display = (isOwned && !isBattleContext) ? 'flex' : 'none';
   const maxLevel = getMaxLevel(aura);
   document.getElementById('modalLevelVal').textContent = level;
   document.querySelector('.level-control span[style*="color:var(--text-dim)"]').textContent = `/ ${maxLevel}`;
@@ -2872,8 +2957,9 @@ function updateModal() {
   // Aura Upgrade Button
   const existingAuraBtn = document.getElementById('btnAuraUp');
   if (existingAuraBtn) existingAuraBtn.remove();
+  if (isBattleContext && existingAuraBtn) existingAuraBtn.style.display = 'none';
 
-  if (aura < 10 && level >= maxLevel) {
+  if (isOwned && !isBattleContext && aura < 10 && level >= maxLevel) {
     const nextAura = AURA_DATA[aura];
     const auraBtn = document.createElement('button');
     auraBtn.id = 'btnAuraUp';
@@ -2888,22 +2974,51 @@ function updateModal() {
   }
 
   // Equipment Section
+    const equipSection = document.getElementById('modalEquipDisplay').parentNode;
+    equipSection.style.display = (isOwned && !isBattleContext) ? 'block' : 'none';
   const equipDisplay = document.getElementById('modalEquipDisplay');
   equipDisplay.innerHTML = `
     <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer">
       <div>${equip ? `<div style="font-weight:700;color:var(--gold)">${equip.icon} ${equip.name}</div><div style="font-size:10px;color:var(--text-mid)">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
       <button class="level-btn" style="font-size:10px;padding:4px 8px">変更</button>
     </div>`;
+
   document.getElementById('modalAbilities').innerHTML = c.abilities.map(a =>
     `<div class="ability-card">
       <div class="ability-card-name">◆ ${a.name}</div>
       <div class="ability-card-desc">${a.desc}</div>
+      ${formatAbilityDetails(a)}
     </div>`).join('');
 
+    // Footer buttons
+    const footer = document.querySelector('.modal-footer');
   const actionBtn = document.getElementById('modalActionBtn');
-  actionBtn.textContent = inSquad ? '編成から外す' : '編成に追加';
-  actionBtn.className = 'modal-add-btn' + (inSquad ? ' remove-mode' : '');
-  actionBtn.disabled = !inSquad && squad.length >= MAX_SQUAD;
+    const existingTargetBtn = document.getElementById('modalTargetBtn');
+    if (existingTargetBtn) existingTargetBtn.remove();
+
+    if (isBattleContext) {
+      actionBtn.style.display = 'none';
+      if (battleUnit && !battleUnit.isPlayer) {
+        const targetBtn = document.createElement('button');
+        targetBtn.id = 'modalTargetBtn';
+        targetBtn.className = 'modal-add-btn';
+        if (battleState.selectedTargetId === battleUnit.battleId) {
+            targetBtn.textContent = 'ターゲットを解除';
+        } else {
+            targetBtn.textContent = 'この敵をターゲットにする';
+        }
+        targetBtn.onclick = () => setBattleTargetAndClose(battleUnit.battleId);
+        footer.appendChild(targetBtn);
+      }
+    } else if (isOwned) {
+      actionBtn.style.display = 'block';
+      const inSquad = squad.includes(c.id);
+      actionBtn.textContent = inSquad ? '編成から外す' : '編成に追加';
+      actionBtn.className = 'modal-add-btn' + (inSquad ? ' remove-mode' : '');
+      actionBtn.disabled = !inSquad && squad.length >= MAX_SQUAD;
+    } else {
+      actionBtn.style.display = 'none';
+    }
 }
 
 function modalToggleSquad() {
@@ -3029,6 +3144,8 @@ function closeModal(e) {
 function closeModalDirect() {
   document.getElementById('modalOverlay').classList.remove('open');
   modalCharId = null;
+  const existingTargetBtn = document.getElementById('modalTargetBtn');
+  if (existingTargetBtn) existingTargetBtn.remove();
 }
 
 
@@ -3218,6 +3335,7 @@ async function startBattle(missionId) {
     isFinished: false,
     selectedTargetId: null,
   };
+  battleState.isStarted = false;
 
   document.getElementById('battleTitle').textContent = mission.name;
   renderBattleUnits();
@@ -3229,6 +3347,13 @@ async function startBattle(missionId) {
   document.getElementById('closeBattleBtn').disabled = false;
 
   document.getElementById('battleOverlay').classList.add('open');
+}
+
+function openBattleUnitModal(battleId) {
+  const unit = [...battleState.playerUnits, ...battleState.enemyUnits].find(u => u.battleId === battleId);
+  if (!unit || unit.currentHp <= 0) return; // Do not open for defeated units
+
+  openModal(unit.id, true, unit);
 }
 
 function renderBattleUnits() {
@@ -3246,12 +3371,16 @@ function renderUnit(unit) {
   const imgSrc = unit.useImg ? unit.img : 'C0.svg';
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
   const equipHtml = unit.equipment ? `<div class="b-unit-equip" title="${unit.equipment.name}\n${unit.equipment.desc}">${unit.equipment.icon}</div>` : '';
+  const clickAction = battleState.isStarted
+    ? (!unit.isPlayer ? `onclick="selectTarget('${unit.battleId}')"` : '')
+    : `onclick="openBattleUnitModal('${unit.battleId}')"`;
 
   return `
     <div 
       class="battle-unit ${unit.isPlayer ? 'player-unit' : 'enemy-unit'} ${unit.currentHp <= 0 ? 'defeated' : ''} ${auraClass}" 
       id="unit-${unit.battleId}"
-      ${!unit.isPlayer ? `onclick="selectTarget('${unit.battleId}')"` : ''}
+      ${clickAction}
+      style="cursor: pointer;"
     >
       ${unit.aura && unit.aura > 0 ? `<div class="aura-overlay"></div>` : ''}
       ${unitImageHtml}
@@ -3260,7 +3389,7 @@ function renderUnit(unit) {
       <div class="passive-active-badge">PASSIVE</div>
       <div class="b-unit-info-overlay"></div>
       <div class="b-unit-info">
-        <div class="b-unit-name" ${!unit.isPlayer ? `style="cursor:pointer;"` : ''}>${unit.name}</div>
+        <div class="b-unit-name">${unit.name}</div>
         <div class="b-unit-status-effects"></div>
         <div class="b-unit-hp-bar-bg"><div class="b-unit-hp-bar" style="width: ${hpPercent}%"></div></div>
         <div class="b-unit-hp-text">${unit.currentHp} / ${unit.stats.hp}</div>
@@ -3289,6 +3418,11 @@ function retireBattle() {
     // Remove active turn highlights
     document.querySelectorAll('.battle-unit.is-turn-active').forEach(el => el.classList.remove('is-turn-active'));
   }
+}
+
+function setBattleTargetAndClose(battleId) {
+  selectTarget(battleId);
+  closeModalDirect();
 }
 
 function getTarget(attacker, potentialTargets) {
@@ -3417,6 +3551,9 @@ async function checkDeathAbilities(unit) {
 }
 
 async function runBattleSequence() {
+  battleState.isStarted = true;
+  renderBattleUnits();
+
   document.getElementById('battleActionBtn').disabled = true;
   document.getElementById('retireBattleBtn').disabled = true; // Disable during sequence execution to prevent race conditions
   document.getElementById('closeBattleBtn').disabled = true;
