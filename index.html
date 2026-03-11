@@ -1493,8 +1493,40 @@
   }
   .char-card.aura-4, .squad-slot.aura-4, .battle-unit.aura-4 {
     border: 3px solid transparent !important;
-    border-image: linear-gradient(45deg, #555, #ff0000, #555) 1;
-    box-shadow: 0 0 25px rgba(0,0,0,0.9), 0 0 40px rgba(255,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.9);
+    border-image: linear-gradient(45deg, #ff4d4d, #ff8080, #ff4d4d) 1;
+    box-shadow: 0 0 25px rgba(255,77,77,0.7), 0 0 40px rgba(255,0,0,0.5), inset 0 0 20px rgba(255,77,77,0.4);
+  }
+  .char-card.aura-5, .squad-slot.aura-5, .battle-unit.aura-5 {
+    border: 3px solid transparent !important;
+    border-image: linear-gradient(45deg, #50C878, #A8FF3E, #50C878) 1;
+    box-shadow: 0 0 30px rgba(80,200,120,0.7), 0 0 50px rgba(168,255,62,0.5), inset 0 0 25px rgba(80,200,120,0.4);
+  }
+  .char-card.aura-6, .squad-slot.aura-6, .battle-unit.aura-6 {
+    border: 3px solid transparent !important;
+    border-image: linear-gradient(45deg, #0F52BA, #4d90ff, #0F52BA) 1;
+    box-shadow: 0 0 30px rgba(15,82,186,0.8), 0 0 60px rgba(77,144,255,0.6), inset 0 0 30px rgba(15,82,186,0.5);
+  }
+  .char-card.aura-7, .squad-slot.aura-7, .battle-unit.aura-7 {
+    border: 4px solid transparent !important;
+    border-image: linear-gradient(45deg, #9966CC, #b388ff, #9966CC) 1;
+    box-shadow: 0 0 35px rgba(153,102,204,0.8), 0 0 70px rgba(179,136,255,0.6), inset 0 0 35px rgba(153,102,204,0.5);
+  }
+  .char-card.aura-8, .squad-slot.aura-8, .battle-unit.aura-8 {
+    border: 4px solid transparent !important;
+    border-image: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet) 1;
+    animation: rainbow-border-flow 4s infinite linear;
+    box-shadow: 0 0 40px rgba(255,255,255,0.5), inset 0 0 10px rgba(255,255,255,0.2);
+  }
+  .char-card.aura-9, .squad-slot.aura-9, .battle-unit.aura-9 {
+    border: 4px solid #C9ADA7 !important;
+    background: linear-gradient(135deg, #0d1520, #232942, #4A4E69);
+    box-shadow: 0 0 50px rgba(201,173,167,0.5), inset 0 0 20px rgba(35,41,66,0.8);
+  }
+  .char-card.aura-10, .squad-slot.aura-10, .battle-unit.aura-10 {
+    border: 5px solid transparent !important;
+    border-image: linear-gradient(135deg, #4d004d, #1a001a, #000000, #1a001a, #4d004d) 1;
+    background: #000;
+    box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1);
   }
 
   .aura-overlay {
@@ -1518,7 +1550,13 @@
   .aura-1 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(192,192,192,0.4), transparent); }
   .aura-2 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(255,215,0,0.4), transparent); animation-duration: 2.5s; }
   .aura-3 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(185,242,255,0.6), rgba(255,255,255,0.8), transparent); animation-duration: 2s; }
-  .aura-4 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(0,0,0,0.8), rgba(50,0,50,0.5), transparent); animation-duration: 4s; }
+  .aura-4 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(255,77,77,0.5), transparent); animation-duration: 3s; }
+  .aura-5 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(80,200,120,0.6), transparent); animation-duration: 2.8s; }
+  .aura-6 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(77,144,255,0.7), transparent); animation-duration: 2.6s; }
+  .aura-7 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(179,136,255,0.8), transparent); animation-duration: 2.4s; }
+  .aura-8 .aura-overlay::before { background: linear-gradient(to right, rgba(255,0,0,0.5), rgba(0,255,0,0.5), rgba(0,0,255,0.5)); animation: aura-sheen 2s infinite; }
+  .aura-9 .aura-overlay::before { display: none; } /* No sheen, use particles */
+  .aura-10 .aura-overlay::before { display: none; }
   
   .aura-3 .aura-overlay::after {
     content: ''; position: absolute; inset: 0;
@@ -1526,6 +1564,22 @@
     background-size: 20px 20px;
     opacity: 0.5;
     animation: sparkle 4s linear infinite;
+  }
+  .aura-9 .aura-overlay::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(white 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.8;
+    animation: sparkle 3s linear infinite;
+  }
+  .aura-10 .aura-overlay::after {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.8) 0.5px, transparent 0.5px),
+      radial-gradient(rgba(179,136,255,0.5) 0.5px, transparent 0.5px);
+    background-size: 40px 40px, 60px 60px;
+    background-position: 0 0, 30px 30px;
+    animation: sparkle-deep-space 5s linear infinite;
   }
   
   /* Adjust aura z-index for battle units so info remains visible */
@@ -1582,12 +1636,63 @@
   .battle-unit.aura-3 .b-unit-name::before { content: '♦ '; color: #b9f2ff; font-size: 10px; }
 
   .battle-unit.aura-4 .b-unit-name {
-    color: #ddd;
+    color: #fff;
     text-shadow: 0 0 5px #000, 0 0 10px #ff0000;
-    background: linear-gradient(90deg, rgba(0,0,0,0.8), transparent);
+    background: linear-gradient(90deg, rgba(255,77,77,0.4), transparent);
     padding-left: 4px;
   }
-  .battle-unit.aura-4 .b-unit-name::before { content: '♛ '; color: #888; font-size: 10px; }
+  .battle-unit.aura-4 .b-unit-name::before { content: '♛ '; color: #ff4d4d; font-size: 10px; }
+
+  .battle-unit.aura-5 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 10px #50C878, 0 0 20px #A8FF3E;
+    background: linear-gradient(90deg, rgba(80,200,120,0.4), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-5 .b-unit-name::before { content: '☘ '; color: #50C878; font-size: 10px; }
+
+  .battle-unit.aura-6 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 12px #0F52BA, 0 0 24px #4d90ff;
+    background: linear-gradient(90deg, rgba(15,82,186,0.5), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-6 .b-unit-name::before { content: '💧 '; color: #4d90ff; font-size: 10px; }
+
+  .battle-unit.aura-7 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 14px #9966CC, 0 0 28px #b388ff;
+    background: linear-gradient(90deg, rgba(153,102,204,0.5), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-7 .b-unit-name::before { content: '🔮 '; color: #b388ff; font-size: 10px; }
+
+  .battle-unit.aura-8 .b-unit-name {
+    font-weight: 900;
+    background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-text-flow 4s infinite linear;
+    padding-left: 4px;
+  }
+  .battle-unit.aura-8 .b-unit-name::before { content: '🌈 '; -webkit-text-fill-color: initial; } /* Reset for emoji */
+
+  .battle-unit.aura-9 .b-unit-name {
+    color: #F2E9E4;
+    text-shadow: 0 0 15px #9A8C98, 0 0 30px #fff;
+    background: linear-gradient(90deg, rgba(201,173,167,0.2), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-9 .b-unit-name::before { content: '✨ '; color: #F2E9E4; }
+
+  .battle-unit.aura-10 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 20px #b388ff, 0 0 40px #fff;
+    background: linear-gradient(90deg, rgba(77,0,77,0.5), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-10 .b-unit-name::before { content: '🌌 '; color: #b388ff; }
 
   @keyframes aura-text-shine { 0% { background-position: -100% 0; } 100% { background-position: 200% 0; } }
 
@@ -1616,6 +1721,23 @@
     .battle-header h2 { font-size: 14px; }
     .battle-field { padding: 12px; gap: 12px; }
     .modal { max-height: 95vh; }
+  }
+
+  @keyframes rainbow-border-flow {
+    0% { border-image-source: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet); }
+    25% { border-image-source: linear-gradient(45deg, violet, red, orange, yellow, green, blue, indigo); }
+    50% { border-image-source: linear-gradient(45deg, indigo, violet, red, orange, yellow, green, blue); }
+    75% { border-image-source: linear-gradient(45deg, blue, indigo, violet, red, orange, yellow, green); }
+    100% { border-image-source: linear-gradient(45deg, green, blue, indigo, violet, red, orange, yellow); }
+  }
+  @keyframes rainbow-text-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes sparkle-deep-space {
+    0% { background-position: 0 0, 30px 30px; }
+    100% { background-position: -40px -40px, -30px -30px; }
   }
 </style>
 </head>
@@ -1910,7 +2032,7 @@ const units = [
   },
   {
     id: 5, name: 'ライ・アルバロ', element: 'thunder', elementJp: '雷', role: 'assault', roleJp: '突撃',
-    baseStats: { hp: 880, atk: 82, def: 65, spd: 95 },
+    baseStats: { hp: 980, atk: 82, def: 65, spd: 95 },
     abilityType: 'slash',
     abilities: [
       { name: '雷撃斬', desc: '攻撃後、20%の確率で発動。攻撃力の50%のダメージで追撃する。', triggerRate: 0.2, timing: 'after_attack' },
@@ -2099,7 +2221,7 @@ const units = [
   },
   {
     id: 115, name: '衛兵', element: 'none', elementJp: '無', role: 'mob', roleJp: 'モンスター',
-    baseStats: { hp: 1500, atk: 80, def: 150, spd: 40 },
+    baseStats: { hp: 800, atk: 60, def: 60, spd: 60 },
     abilities: [],
     abilityType: 'impact',
     useImg: true, img: 'C308.svg'
@@ -2215,9 +2337,9 @@ const chapter1Enemies = [
   [{ id: 4, level: 7, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 5 (Iemike)  
   [{ id: 110, level: 8, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 6 (Jonathan Glazer)
   [{ id: 111, level: 9, aiType: AI_TYPES.RANDOM }],      // Stage 7 (Ice Hyacinth)
-  [{ id: 5, level: 9, aiType: AI_TYPES.HIGHEST_ATK }],   // Stage 8 (Rai Alvaro)
-  [{ id: 112, level: 10, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 9 (Louis Voules)
-  [{ id: 6, level: 11, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 10 (Den Alvaro)
+  [{ id: 115, level: 5 },{ id: 5, level: 9, aiType: AI_TYPES.HIGHEST_ATK },{ id: 115, level: 3 }],   // Stage 8 (Rai Alvaro)
+  [{ id: 115, level: 4 },{ id: 112, level: 10, aiType: AI_TYPES.HIGHEST_ATK },{ id: 115, level: 5 }], // Stage 9 (Louis Voules)
+  [{ id: 115, level: 6 },{ id: 115, level: 7 },{ id: 6, level: 11, aiType: AI_TYPES.LOWEST_HP_DEF },{ id: 115, level: 5 },{ id: 115, level: 6 }], // Stage 10 (Den Alvaro)
   ];
 
 const chapter2Enemies = [
@@ -2278,10 +2400,16 @@ const STATUS_EFFECTS = {
 };
 
 const AURA_DATA = [
-  { cost: 50000, name: 'Silver', class: 'aura-1', label: 'AURA I', color: '#c0c0c0' },
-  { cost: 100000, name: 'Gold', class: 'aura-2', label: 'AURA II', color: '#ffd700' },
-  { cost: 500000, name: 'Diamond', class: 'aura-3', label: 'AURA III', color: '#b9f2ff' },
-  { cost: 1000000, name: 'Black', class: 'aura-4', label: 'AURA IV', color: '#a0a0a0' }
+  { cost: 10000, name: 'Silver', class: 'aura-1', label: 'AURA I', color: '#c0c0c0' },
+  { cost: 15000, name: 'Gold', class: 'aura-2', label: 'AURA II', color: '#ffd700' },
+  { cost: 25000, name: 'Diamond', class: 'aura-3', label: 'AURA III', color: '#b9f2ff' },
+  { cost: 50000, name: 'Crimson', class: 'aura-4', label: 'AURA IV', color: '#ff4d4d' },
+  { cost: 100000, name: 'Emerald', class: 'aura-5', label: 'AURA V', color: '#50C878' },
+  { cost: 200000, name: 'Sapphire', class: 'aura-6', label: 'AURA VI', color: '#4d90ff' },
+  { cost: 400000, name: 'Amethyst', class: 'aura-7', label: 'AURA VII', color: '#b388ff' },
+  { cost: 800000, name: 'Rainbow', class: 'aura-8', label: 'AURA VIII', color: '#ff7f00' },
+  { cost: 1500000, name: 'Cosmic', class: 'aura-9', label: 'AURA IX', color: '#C9ADA7' },
+  { cost: 3000000, name: 'Galactic', class: 'aura-10', label: 'AURA X', color: '#4d004d' }
 ];
 
 let playerState = {
@@ -2632,7 +2760,7 @@ function updateModal() {
   const existingAuraBtn = document.getElementById('btnAuraUp');
   if (existingAuraBtn) existingAuraBtn.remove();
 
-  if (aura < 4 && level >= maxLevel) {
+  if (aura < 10 && level >= maxLevel) {
     const nextAura = AURA_DATA[aura];
     const auraBtn = document.createElement('button');
     auraBtn.id = 'btnAuraUp';
@@ -2694,7 +2822,7 @@ function doLevelUp() {
 function upgradeAura(charId) {
   const charState = playerState.characters[charId];
   const currentAura = charState.aura || 0;
-  if (currentAura >= 4) return;
+  if (currentAura >= 10) return;
 
   const maxLevel = getMaxLevel(currentAura);
   if (charState.level < maxLevel) {
