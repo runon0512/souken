@@ -1617,6 +1617,29 @@
     100% { background-position: 20px 20px; }
   }
 
+  #rotate-device-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-deep);
+    color: var(--text-main);
+    z-index: 9999;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Show overlay only on mobile-like devices in portrait mode */
+  @media (max-width: 1024px) and (orientation: portrait) {
+    #rotate-device-overlay {
+      display: flex;
+    }
+    /* Hide the main app content */
+    header, main {
+      display: none !important;
+    }
+  }
   .aura-badge {
     position: absolute;
     bottom: 8px;
@@ -1729,9 +1752,6 @@
 
   /* スマホ横画面用の調整 */
   @media (max-height: 500px) and (orientation: landscape) {
-    main { grid-template-columns: 1fr; }
-    aside { position: relative; top: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-
     .battle-unit {
       width: 110px;
       height: 150px;
@@ -2253,6 +2273,15 @@
   </div>
 </div>
 
+<!-- ROTATE DEVICE OVERLAY -->
+<div id="rotate-device-overlay">
+  <div style="font-size: 48px; margin-bottom: 20px;">🔄</div>
+  <div>
+    <div style="font-family: 'Orbitron', monospace; font-size: 18px; letter-spacing: 2px;">PLEASE ROTATE YOUR DEVICE</div>
+    <div style="font-size: 12px; color: var(--text-dim); margin-top: 8px;">This experience is designed for landscape mode.</div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -2337,7 +2366,7 @@ const units = [
     useImg: true, img: 'C10.svg'
   },
   {
-    id: 7, name: 'カーラム・アブルート', element: 'fire', elementJp: '炎', type: 'ルディ王国',
+    id: 9, name: 'ベラ・アブルート', element: 'fire', elementJp: '炎', type: 'ルディ王国',
     baseStats: { hp: 1000, atk: 110, def: 50, spd: 90 },
     abilityType: 'magic',
     abilities: [
@@ -2730,7 +2759,6 @@ const chapter4Enemies = [
 
 const storyChapters = [
   { name: '第一章：天からの贈り物', missions: generateMissions(100, 10, 'Stage', [101], 50, chapter1Names, chapter1Enemies) },
-  { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [102, 102, 101], 100, chapter2Names, chapter2Enemies) },
   { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [302, 302, 301], 100, chapter2Names, chapter2Enemies) },
   { name: '第三章：ルディ王国 (後編)', missions: generateMissions(300, 6, 'Stage', [102, 102, 101], 150, chapter3Names, chapter3Enemies) },
   { name: '第四章：世界の真実', missions: generateMissions(400, 6, 'Stage', [302, 303, 305], 200, chapter4Names, chapter4Enemies) },
@@ -2762,11 +2790,11 @@ const eventChapters = [
         name: 'prog1248からの挑戦状！',
         description: '強力な装備で武装した部隊からの挑戦状が届いた。心してかかろう。',
         enemies: [
-          { id: 1, level: 40, aura: 4, aiType: AI_TYPES.HIGHEST_ATK, equipment: { name: '雷神の籠手', icon: '🥊', desc: 'SPD+15', stats: { spd: 15 } } },
-          { id: 2, level: 35, aura: 3, aiType: AI_TYPES.RANDOM, equipment: { name: 'ミカエルの聖盾', icon: '🛡️', desc: 'HP+200, 被ダメージ0.8倍', stats: { hp: 200 }, effect: { type: 'dmg_cut', val: 0.8 } } },
-          { id: 4, level: 35, aura: 3, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { name: '竜鱗の鎧', icon: '👕', desc: 'HP+100, DEF+20', stats: { hp: 100, def: 20 } } },
-          { id: 5, level: 35, aura: 3, aiType: AI_TYPES.HIGHEST_ATK, equipment: { name: 'フェニックスの尾', icon: '🪶', desc: '死亡時に1度だけHP1で耐える', effect: { type: 'guts', val: true } } },
-          { id: 6, level: 35, aura: 3, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { name: '魔導師の指輪', icon: '💍', desc: 'ATK+15, SPD+5', stats: { atk: 15, spd: 5 } } }
+          { id: 1, level: 40, aura: 4, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 } } },
+          { id: 2, level: 35, aura: 3, aiType: AI_TYPES.RANDOM, equipment: { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 } } },
+          { id: 4, level: 35, aura: 3, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } },
+          { id: 5, level: 35, aura: 3, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 } } },
+          { id: 6, level: 35, aura: 3, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 } } }
         ],
         recommendedPower: 25000,
         reward: 800,
