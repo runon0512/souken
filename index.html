@@ -2566,6 +2566,17 @@ const units = [
     useImg: true, img: 'C17.svg'
   },
   {
+    id: 21, name: 'エギル・ラブリュス', element: 'none', elementJp: '無', type: 'ルディ王国',
+    baseStats: { hp: 1378, atk: 115, def: 70, spd: 55 },
+    abilityType: 'impact',
+    abilities: [
+      { name: 'フェイスクラッシャー', desc: '60%の確率で発動。攻撃に衰弱(1ターン)を付与する。', triggerRate: 0.6, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 1 } },
+      { name: '筋肉の美', desc: '被弾時、受けたダメージの40%を相手に返す。', triggerRate: 1.0, timing: 'on_hit' },
+    ],
+    useImg: true,
+    img: 'C23.svg',
+  },
+  {
     id: 317, name: 'リディン・イルカイ', element: 'thunder', elementJp: '雷',
     baseStats: { hp: 1300, atk: 140, def: 90, spd: 95 },
     abilityType: 'impact',
@@ -2588,11 +2599,32 @@ const units = [
     useImg: true, img: 'C22.svg'
   },
   {
+    id: 321, name: 'ルピナス', element: 'none', elementJp: '無',
+    baseStats: { hp: 1400, atk: 100, def: 75, spd: 70 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '星降る大海', desc: '20%の確率で発動。攻撃を70%のダメージの全体攻撃に変化させます。', triggerRate: 0.2, timing: 'before_attack', isAoe: true, damageMult: 0.7 }
+    ],
+    useImg: true,
+    img: 'C25.svg',
+  },
+  {
+    id: 320, name: 'キツドウ', element: 'none', elementJp: '無',
+    baseStats: { hp: 1350, atk: 110, def: 80, spd: 65 },
+    abilityType: 'impact',
+    abilities: [
+      { name: '精神統一', desc: '状態異常になると状態異常を解除します。' },
+      { name: '格闘技の道', desc: '攻撃時に30%の確率で麻痺(2ターン)を付与します。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'paralysis', turns: 2 } }
+    ],
+    useImg: true,
+    img: 'C24.svg',
+  },
+  {
     id: 318, name: 'アンドラス', element: 'dark', elementJp: '闇',
     baseStats: { hp: 1500, atk: 150, def: 100, spd: 80 },
     abilityType: 'magic',
     abilities: [
-      { name: '完全破壊', desc: '攻撃後、30%の確率で発動。さらに50%の確率で相手のHPを最大値の30%にする。', triggerRate: 0.3, timing: 'after_attack' },
+      { name: '完全破壊', desc: '攻撃後、15%の確率で発動。相手のHPを最大値の30%にする。', triggerRate: 0.15, timing: 'after_attack' },
       { name: '反転', desc: '被弾時、20%の確率でダメージを無効化し、相手に与える。', triggerRate: 0.2, timing: 'on_hit' }
     ],
     useImg: true, img: 'C21.svg'
@@ -2757,11 +2789,51 @@ const chapter4Enemies = [
   [{ id: 319, level: 45, aiType: AI_TYPES.RANDOM }, { id: 318, level: 42, aiType: AI_TYPES.HIGHEST_ATK }, { id: 20, level: 35, aiType: AI_TYPES.HIGHEST_ATK }, { id: 18, level: 32, aiType: AI_TYPES.RANDOM }, { id: 19, level: 32, aiType: AI_TYPES.HIGHEST_ATK }],
 ];
 
+const chapter5Names = [
+  "筋肉戦士", "異国の格闘家", "星屑の剣士", "合同訓練"
+];
+
+const chapter5Enemies = [
+  [{ id: 315, level: 12 }, { id: 315, level: 12 }, { id: 21, level: 44, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 13 }, { id: 315, level: 12 }],
+  [{ id: 315, level: 12 }, { id: 315, level: 13 }, { id: 320, level: 45, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 13 }, { id: 315, level: 13 }],
+  [{ id: 315, level: 14 }, { id: 315, level: 13 }, { id: 321, level: 46, aiType: AI_TYPES.RANDOM }, { id: 315, level: 13 }, { id: 315, level: 11 }],
+  [{ id: 315, level: 18 }, { id: 320, level: 45 }, { id: 21, level: 44, aiType: AI_TYPES.HIGHEST_ATK }, { id: 321, level: 46 }, { id: 315, level: 18 }],
+];
+
+const chapter6Names = [
+  "第五部隊訓練・本気", "第四部隊訓練・本気", "第三部隊訓練・本気", "第二部隊訓練・本気", "第一部隊訓練・本気", "副隊長訓練・本気"
+];
+
+const chapter6Enemies = [
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 7, level: 45, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 9, level: 46, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 11, level: 47, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 13, level: 48, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 16, level: 49, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 7, level: 45, aiType: AI_TYPES.RANDOM }, { id: 9, level: 46, aiType: AI_TYPES.RANDOM }, { id: 11, level: 47, aiType: AI_TYPES.RANDOM }, { id: 13, level: 48, aiType: AI_TYPES.RANDOM }, { id: 16, level: 49, aiType: AI_TYPES.RANDOM }]
+];
+
+const chapter7Names = [
+  "第五部隊訓練・本気②", "第四部隊訓練・本気②", "第三部隊訓練・本気②", "第二部隊訓練・本気②", "第一部隊訓練・本気②", "隊長訓練・本気"
+];
+
+const chapter7Enemies = [
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 8, level: 50, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 10, level: 51, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 12, level: 52, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 14, level: 53, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 17, level: 57, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 20 }, { id: 315, level: 20 }],
+  [{ id: 8, level: 50, aiType: AI_TYPES.RANDOM }, { id: 10, level: 51, aiType: AI_TYPES.RANDOM }, { id: 12, level: 52, aiType: AI_TYPES.RANDOM }, { id: 14, level: 53, aiType: AI_TYPES.RANDOM }, { id: 17, level: 57, aiType: AI_TYPES.RANDOM }]
+];
+
 const storyChapters = [
   { name: '第一章：天からの贈り物', missions: generateMissions(100, 10, 'Stage', [101], 50, chapter1Names, chapter1Enemies) },
   { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [302, 302, 301], 100, chapter2Names, chapter2Enemies) },
   { name: '第三章：ルディ王国 (後編)', missions: generateMissions(300, 6, 'Stage', [102, 102, 101], 150, chapter3Names, chapter3Enemies) },
   { name: '第四章：世界の真実', missions: generateMissions(400, 6, 'Stage', [302, 303, 305], 200, chapter4Names, chapter4Enemies) },
+  { name: '第五章：大会参加者', missions: generateMissions(500, 6, 'Stage', [302, 303, 305], 250, chapter5Names, chapter5Enemies) },
+  { name: '第六章：副隊長訓練・本気', missions: generateMissions(600, 6, 'Stage', [302, 303, 305], 300, chapter6Names, chapter6Enemies) },
+  { name: '第七章：隊長訓練・本気', missions: generateMissions(700, 6, 'Stage', [302, 303, 305], 350, chapter7Names, chapter7Enemies) },
 ];
 
 const eventChapters = [
@@ -4432,6 +4504,7 @@ async function runBattleSequence() {
              } else {
                  let reflectPct = 1.0; // Default for 激流一閃
                  if (target.id === 311) reflectPct = 0.3; // アクアバルーン 30%
+                 if (target.id === 21) reflectPct = 0.4; // 筋肉の美 40%
                  counterDmg = Math.floor(actualDamage * reflectPct);
              }
 
@@ -4571,19 +4644,15 @@ async function runBattleSequence() {
               }
             } else if (attacker.id === 318 && chaseAbility.name === '完全破壊') {
               await showCutIn(attacker, chaseAbility.name);
-              if (Math.random() < 0.5) {
-                  const newHp = Math.floor(target.stats.hp * 0.3);
-                  const damageDealt = target.currentHp - newHp;
-                  if (damageDealt > 0) {
-                      target.currentHp = newHp;
-                      logBattleMessage(`${attacker.name}の完全破壊！ ${target.name}の体力が強制的に減少！`);
-                      updateUnitUI(target);
-                      showDamageNumber(targetEl, damageDealt);
-                      playEffect(targetEl, 'magic');
-                      if (target.currentHp <= 0) await processUnitDeath(target);
-                  }
-              } else {
-                  logBattleMessage(`${attacker.name}の完全破壊は発動しなかった...`);
+              const newHp = Math.floor(target.stats.hp * 0.3);
+              const damageDealt = target.currentHp - newHp;
+              if (damageDealt > 0) {
+                  target.currentHp = newHp;
+                  logBattleMessage(`${attacker.name}の完全破壊！ ${target.name}の体力が強制的に減少！`);
+                  updateUnitUI(target);
+                  showDamageNumber(targetEl, damageDealt);
+                  playEffect(targetEl, 'magic');
+                  if (target.currentHp <= 0) await processUnitDeath(target);
               }
             } else { // Single chase attacks
               await showCutIn(attacker, chaseAbility.name);
@@ -4716,10 +4785,11 @@ async function showCutIn(unit, abilityName) {
 async function addStatusEffect(target, type, turns) {
     if (!target || target.currentHp <= 0) return;
 
-    // Ricardo (ID: 8) Passive: Adaptability
-    if (target.id === 8) {
-        await showCutIn(target, '適応力');
-        logBattleMessage(`${target.name}は適応力で状態異常を無効化した！`);
+    // Ricardo (ID: 8) or Kitsudou (ID: 320) Passive: Status Immunity
+    if (target.id === 8 || target.id === 320) {
+        const abilityName = target.id === 8 ? '適応力' : '精神統一';
+        await showCutIn(target, abilityName);
+        logBattleMessage(`${target.name}は${abilityName}で状態異常を無効化した！`);
         playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
         return;
     }
