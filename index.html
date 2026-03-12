@@ -1815,6 +1815,72 @@
     100% { background-position: -40px -40px, -30px -30px; }
   }
 </style>
+<style>
+  /* GACHA */
+  .gacha-banner-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .gacha-banner-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .gacha-banner-desc {
+    font-size: 12px;
+    color: var(--text-mid);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .gacha-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  }
+  .gacha-btn {
+    padding: 12px 24px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: rgba(0,200,255,0.1);
+    color: var(--accent);
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+    max-width: 200px;
+  }
+  .gacha-btn:hover:not(:disabled) {
+    background: rgba(0,200,255,0.2);
+    box-shadow: var(--glow);
+  }
+  .gacha-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .gacha-btn span {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .gacha-result-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; text-align: center; padding-bottom: 8px; position: relative; }
+  .gacha-result-item.is-new .gacha-result-new-tag { display: block; }
+  .gacha-result-img { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #0d1a2a, #070e18); }
+  .gacha-result-img img { width: 90%; height: auto; }
+  .gacha-result-name { font-size: 12px; font-weight: 700; margin-top: 8px; }
+  .gacha-result-info { font-size: 10px; color: var(--gold); font-family: 'Orbitron', monospace; margin-top: 4px; }
+  .gacha-result-new-tag { position: absolute; top: 8px; left: 8px; background: var(--accent2); color: #000; font-size: 9px; font-family: 'Orbitron', monospace; padding: 2px 6px; border-radius: 3px; font-weight: 700; letter-spacing: 1px; display: none; }
+</style>
 </head>
 <body>
 
@@ -1869,6 +1935,9 @@
       </button>
       <button class="filter-btn" onclick="setView('equipment')" id="view-equipment">
         装備一覧
+      </button>
+      <button class="filter-btn" onclick="setView('gacha')" id="view-gacha">
+        ガチャ
       </button>
     </div>
 
@@ -1945,6 +2014,16 @@
     </div>
     <div class="mission-grid" id="missionGrid"></div>
   </div>
+
+  <!-- GACHA PANEL -->
+  <div class="roster-panel" id="gachaPanel" style="display: none;">
+    <div class="roster-toolbar">
+      <div class="roster-title">ガチャ</div>
+    </div>
+    <div id="gachaContainer">
+      <!-- Gacha banners will be rendered here -->
+    </div>
+  </div>
 </main>
 
 <!-- DETAIL MODAL -->
@@ -2017,6 +2096,24 @@
         <button class="mission-btn" onclick="viewSquadFromCode()">編成をプレビュー</button>
       </div>
       <div id="squadViewerResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- GACHA RESULT MODAL -->
+<div class="modal-overlay" id="gachaResultOverlay" onclick="closeGachaResultModal(event)">
+  <div class="modal" id="gachaResultBox" style="width: 800px; max-width: 95vw;">
+    <div class="modal-header">
+      <div class="modal-title">ガチャ結果</div>
+      <button class="modal-close" onclick="closeGachaResultModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="card-grid" id="gachaResultGrid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+        <!-- Gacha result cards will be injected here -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-add-btn" onclick="closeGachaResultModalDirect()">確認</button>
     </div>
   </div>
 </div>
@@ -2280,7 +2377,7 @@ const units = [
   },
   {
     id: 16, name: 'ランディア・スクラ', element: 'none', elementJp: '無', type: 'ルディ王国',
-    baseStats: { hp: 1450, atk: 115, def: 85, spd: 70 },
+    baseStats: { hp: 1342, atk: 107, def: 78, spd: 66 },
     abilityType: 'slash',
     abilities: [
       { name: '虹斬', desc: '攻撃前に発動し、相性有利で攻撃し、衰弱を2ターン付与。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 2 } },
@@ -2290,7 +2387,7 @@ const units = [
   },
   {
     id: 17, name: 'アスター・エクレア', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 1200, atk: 125, def: 60, spd: 110 },
+    baseStats: { hp: 1259, atk: 132, def: 62, spd: 116 },
     abilityType: 'slash',
     abilities: [
       { name: '開闢', desc: '戦闘開始時、対象1人に対して120%で攻撃し、麻痺を3ターン付与する。', triggerRate: 1.0, timing: 'on_battle_start', damageMult: 1.2, effect: { type: 'status', status: 'paralysis', turns: 3 } },
@@ -2300,7 +2397,7 @@ const units = [
   },
   {
     id: 15, name: 'リディン・イルカイ(過去)', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 1350, atk: 120, def: 65, spd: 92 },
+    baseStats: { hp: 1312, atk: 118, def: 62, spd: 90 },
     abilityType: 'slash',
     abilities: [
       { name: '電滅乱れ斬り', desc: '攻撃前、30%の確率で発動。威力が80%になるが全体攻撃となり、麻痺(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.8, effect: { type: 'status', status: 'paralysis', turns: 2 } },
@@ -2324,7 +2421,7 @@ const units = [
   },
   {
     id: 18, name: 'シオン・アンドラス', element: 'none', elementJp: '無', type: 'ロベリア',
-    baseStats: { hp: 1600, atk: 110, def: 70, spd: 75 },
+    baseStats: { hp: 1383, atk: 96, def: 59, spd: 66 },
     abilityType: 'magic',
     abilities: [
       { name: '五色の魔法', desc: '攻撃前に40%の確率で発動。攻撃を相性有利なものとして計算する。', triggerRate: 0.4, timing: 'before_attack' },
@@ -2334,7 +2431,7 @@ const units = [
   },
   {
     id: 19, name: 'ソルン・アンドラス', element: 'fire', elementJp: '炎', type: 'ロベリア',
-    baseStats: { hp: 1500, atk: 130, def: 60, spd: 80 },
+    baseStats: { hp: 1341, atk: 117, def: 53, spd: 72 },
     abilityType: 'slash',
     abilities: [
       { name: '情報操作', desc: '攻撃後、20%の確率で発動。敵に衰弱(4ターン)と睡眠(2ターン)を付与する。', triggerRate: 0.2, timing: 'after_attack' },
@@ -2344,13 +2441,45 @@ const units = [
   },
   {
     id: 20, name: 'キティー・スカイレット', element: 'water', elementJp: '水', type: 'ロベリア',
-    baseStats: { hp: 1800, atk: 120, def: 80, spd: 100 },
+    baseStats: { hp: 1378, atk: 92, def: 60, spd: 77 },
     abilityType: 'slash',
     abilities: [
       { name: '運操作', desc: '被弾時、20%の確率で攻撃を無効化する。', triggerRate: 0.2, timing: 'on_defense' },
       { name: '透明化', desc: 'HPが40%以下になると発動。運操作の発動率が2倍になる。' }
     ],
     useImg: true, img: 'C17.svg'
+  },
+  {
+    id: 317, name: 'リディン・イルカイ', element: 'thunder', elementJp: '雷',
+    baseStats: { hp: 2200, atk: 140, def: 90, spd: 95 },
+    abilityType: 'impact',
+    abilities: [
+      { name: 'スプレッドスパークブレス', desc: '攻撃前に40%で発動し、攻撃を90%の全体攻撃に変化させます。', triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.9 },
+      { name: '破壊拳', desc: '攻撃後に20%で発動し、現在体力の50%のダメージを与えます。', triggerRate: 0.2, timing: 'after_attack' }
+    ],
+    useImg: true, img: 'C20.svg'
+  },
+  {
+    id: 319, name: 'グルディー・ヴァーナク', element: 'dark', elementJp: '闇',
+    baseStats: { hp: 3000, atk: 160, def: 120, spd: 90 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '威力操作', desc: 'HPが50%以上の時、被弾時に80%の確率でダメージを75%カットする。', triggerRate: 0.8, timing: 'on_defense' },
+      { name: '大罪支配【色欲】', desc: 'HPが50%以下になると発動。アビリティが変化する。' },
+      { name: 'エターナルクリムゾン', desc: '【色欲】HP50%以下で発動。攻撃後に60%で敵全体に燃焼(2ターン)を付与。', triggerRate: 0.6, timing: 'after_attack' },
+      { name: '永遠の肉体', desc: '【色欲】HP50%以下で発動。ターン開始時、最大HPの10%を回復する。' }
+    ],
+    useImg: true, img: 'C22.svg'
+  },
+  {
+    id: 318, name: 'アンドラス', element: 'dark', elementJp: '闇',
+    baseStats: { hp: 2500, atk: 150, def: 100, spd: 80 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '完全破壊', desc: '攻撃後、30%の確率で発動。さらに50%の確率で相手のHPを最大値の30%にする。', triggerRate: 0.3, timing: 'after_attack' },
+      { name: '反転', desc: '被弾時、20%の確率でダメージを無効化し、相手に与える。', triggerRate: 0.2, timing: 'on_hit' }
+    ],
+    useImg: true, img: 'C21.svg'
   },
 ];
 
@@ -2506,15 +2635,16 @@ const chapter3Enemies = [
 const chapter4Enemies = [
   [{ id: 316, level: 15 }, { id: 316, level: 15 }, { id: 18, level: 32, aiType: AI_TYPES.RANDOM }, { id: 19, level: 32, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 15 }],
   [{ id: 316, level: 16 }, { id: 316, level: 16 }, { id: 20, level: 35, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 16 }, { id: 316, level: 16 }],
-  null,
-  null,
-  null,
-  null,
+  [{ id: 316, level: 16 }, { id: 316, level: 17 }, { id: 317, level: 38, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 15 }, { id: 316, level: 16 }],
+  [{ id: 316, level: 17 }, { id: 317, level: 38 }, { id: 318, level: 42, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 16 }, { id: 316, level: 18 }],
+  [{ id: 316, level: 18 }, { id: 316, level: 18 }, { id: 319, level: 45, aiType: AI_TYPES.RANDOM }, { id: 316, level: 18 }, { id: 316, level: 18 }],
+  [{ id: 319, level: 45, aiType: AI_TYPES.RANDOM }, { id: 318, level: 42, aiType: AI_TYPES.HIGHEST_ATK }, { id: 20, level: 35, aiType: AI_TYPES.HIGHEST_ATK }, { id: 18, level: 32, aiType: AI_TYPES.RANDOM }, { id: 19, level: 32, aiType: AI_TYPES.HIGHEST_ATK }],
 ];
 
 const storyChapters = [
   { name: '第一章：天からの贈り物', missions: generateMissions(100, 10, 'Stage', [101], 50, chapter1Names, chapter1Enemies) },
   { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [102, 102, 101], 100, chapter2Names, chapter2Enemies) },
+  { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [302, 302, 301], 100, chapter2Names, chapter2Enemies) },
   { name: '第三章：ルディ王国 (後編)', missions: generateMissions(300, 6, 'Stage', [102, 102, 101], 150, chapter3Names, chapter3Enemies) },
   { name: '第四章：世界の真実', missions: generateMissions(400, 6, 'Stage', [302, 303, 305], 200, chapter4Names, chapter4Enemies) },
 ];
@@ -2580,7 +2710,7 @@ const AURA_DATA = [
 
 let playerState = {
   rainbowStones: 5000,
-  characters: { 1: { level: 1, equippedId: null }, 2: { level: 1, equippedId: null } }, // id: {level, equippedId}
+  characters: { 1: { level: 1, equippedId: null, fragments: 0 }, 2: { level: 1, equippedId: null, fragments: 0 } }, // id: {level, equippedId, fragments}
 };
 
 // ===== STATE =====
@@ -2780,6 +2910,7 @@ function setView(view) {
   document.getElementById('rosterPanel').style.display = view === 'roster' ? 'block' : 'none';
   document.getElementById('missionPanel').style.display = view === 'missions' ? 'block' : 'none';
   document.getElementById('equipPanel').style.display = view === 'equipment' ? 'block' : 'none';
+  document.getElementById('gachaPanel').style.display = view === 'gacha' ? 'block' : 'none';
   document.querySelectorAll('.filter-section button').forEach(b => b.classList.remove('active'));
   const viewBtn = document.getElementById('view-' + view);
   if(viewBtn) viewBtn.classList.add('active');
@@ -2787,6 +2918,8 @@ function setView(view) {
     document.getElementById('filter-all').classList.add('active');
   } else if (view === 'missions') {
     renderStoryChapters();
+  } else if (view === 'gacha') {
+    renderGachaPanel();
   } else if (view === 'equipment') {
     renderEquipmentPanel();
   }
@@ -3433,6 +3566,10 @@ function logBattleMessage(msg) {
   log.scrollTop = log.scrollHeight;
 }
 
+function addUnitToSquad(unitId) {
+  squad.push(unitId);
+}
+
 function retireBattle() {
   if (battleState.isFinished) return;
   if (confirm('戦闘をリタイアしますか？')) {
@@ -3602,6 +3739,17 @@ async function runBattleSequence() {
   document.getElementById('closeBattleBtn').disabled = true;
   logBattleMessage(`<span class="info">戦闘開始！</span>`);
 
+  // Reset passive flags for re-battles
+  battleState.playerUnits.forEach(u => {
+    u.isPassiveActive = false;
+    u.passiveUsed = false;
+  });
+  battleState.enemyUnits.forEach(u => {
+    u.isPassiveActive = false;
+    u.passiveUsed = false;
+  });
+
+
   await triggerOnBattleStartAbilities();
   if (battleState.isFinished) return;
 
@@ -3615,6 +3763,17 @@ async function runBattleSequence() {
       if (battleState.isFinished || attacker.currentHp <= 0) continue;
       let canAct = true;
       attacker.isAdvantageForced = false; // Reset flag for Gira
+
+      // Guldie (ID: 319) Passive: Eternal Body
+      if (attacker.id === 319 && attacker.isPassiveActive) {
+          const healAmt = Math.floor(attacker.stats.hp * 0.1);
+          if (attacker.currentHp < attacker.stats.hp) {
+              attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + healAmt);
+              logBattleMessage(`${attacker.name}は永遠の肉体でHPを<span class="heal">${healAmt}</span>回復した！`);
+              updateUnitUI(attacker);
+              showDamageNumber(document.getElementById(`unit-${attacker.battleId}`), healAmt, 'heal');
+          }
+      }
 
       // Equipment: Conditional Heal (Regen if low HP)
       if (attacker.equipment && attacker.equipment.effect.type === 'conditional_heal') {
@@ -3889,6 +4048,26 @@ async function runBattleSequence() {
                             actualDamage = 0;
                             logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
                             showPassivePopup(targetEl, "VOID");
+                            break;
+                        } else if (target.id === 319 && !target.isPassiveActive && ab.name === '威力操作') {
+                            actualDamage = Math.floor(actualDamage * 0.25); // 75% cut
+                            logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
+                            showPassivePopup(targetEl, "GUARD");
+                            break;
+                        } else if (target.id === 318 && ab.name === '反転') {
+                            await showCutIn(target, ab.name);
+                            logBattleMessage(`${target.name}はダメージを反転させた！`);
+                            const reflectDamage = actualDamage;
+                            actualDamage = 0;
+                            
+                            attacker.currentHp = Math.max(0, attacker.currentHp - reflectDamage);
+                            updateUnitUI(attacker);
+                            const originalAttackerEl = document.getElementById(`unit-${attacker.battleId}`);
+                            showDamageNumber(originalAttackerEl, reflectDamage);
+                            playEffect(originalAttackerEl, 'magic');
+                            showPassivePopup(targetEl, "REFLECT");
+
+                            if (attacker.currentHp <= 0) await processUnitDeath(attacker);
                             break; 
                         } else if (target.id === 6) { // Den Alvaro
                             actualDamage = Math.floor(actualDamage * 0.7);
@@ -4061,6 +4240,21 @@ async function runBattleSequence() {
                 }
             }
         }
+
+        // Guldie (ID: 319) Passive Activation
+        if (target.id === 319 && !target.isPassiveActive && target.currentHp <= target.stats.hp * 0.5) {
+            target.isPassiveActive = true;
+            const passiveAbility = target.abilities.find(a => a.name === '大罪支配【色欲】');
+            if (passiveAbility) {
+                await showCutIn(target, passiveAbility.name);
+                logBattleMessage(`${target.name}は大罪の力を解放した！`);
+                const passiveBadge = document.querySelector(`#unit-${target.battleId} .passive-active-badge`);
+                if (passiveBadge) {
+                    passiveBadge.textContent = '色欲';
+                    passiveBadge.classList.add('active');
+                }
+            }
+        }
         setTimeout(() => targetEl.classList.remove(damageClass), animDuration);
 
         // Counter Attack (on_hit)
@@ -4190,6 +4384,44 @@ async function runBattleSequence() {
               await addStatusEffect(target, 'sleep', 2);
               logBattleMessage(`${target.name}は情報を操作され、弱体化した...`);
               playEffect(targetEl, 'magic');
+            } else if (attacker.id === 317 && chaseAbility.name === '破壊拳') { // Ridin
+              await showCutIn(attacker, chaseAbility.name);
+              const hakaiDamage = Math.floor(target.currentHp * 0.5);
+              target.currentHp -= hakaiDamage;
+              logBattleMessage(`${attacker.name}の破壊拳！ ${target.name}に<span class="damage">${hakaiDamage}</span>のダメージ！`);
+              updateUnitUI(target);
+              showDamageNumber(targetEl, hakaiDamage);
+              playEffect(targetEl, 'impact');
+              if (target.currentHp <= 0) {
+                await processUnitDeath(target);
+              }
+            } else if (attacker.id === 319 && attacker.isPassiveActive && chaseAbility.name === 'エターナルクリムゾン') {
+              await showCutIn(attacker, chaseAbility.name);
+              logBattleMessage(`${attacker.name}のエターナルクリムゾンが敵全体を焼き尽くす！`);
+              const enemies = attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+              for (const enemy of enemies) {
+                  if (enemy.currentHp > 0) {
+                      await addStatusEffect(enemy, 'burn', 2);
+                      const enemyEl = document.getElementById(`unit-${enemy.battleId}`);
+                      playEffect(enemyEl, 'magic');
+                  }
+              }
+            } else if (attacker.id === 318 && chaseAbility.name === '完全破壊') {
+              await showCutIn(attacker, chaseAbility.name);
+              if (Math.random() < 0.5) {
+                  const newHp = Math.floor(target.stats.hp * 0.3);
+                  const damageDealt = target.currentHp - newHp;
+                  if (damageDealt > 0) {
+                      target.currentHp = newHp;
+                      logBattleMessage(`${attacker.name}の完全破壊！ ${target.name}の体力が強制的に減少！`);
+                      updateUnitUI(target);
+                      showDamageNumber(targetEl, damageDealt);
+                      playEffect(targetEl, 'magic');
+                      if (target.currentHp <= 0) await processUnitDeath(target);
+                  }
+              } else {
+                  logBattleMessage(`${attacker.name}の完全破壊は発動しなかった...`);
+              }
             } else { // Single chase attacks
               await showCutIn(attacker, chaseAbility.name);
               let chaseMult = 0.6; // Default for クリスタル・ブレイク
@@ -4666,6 +4898,88 @@ function closeBattle() {
   saveGame();
 }
 
+// ===== GACHA =====
+function renderGachaPanel() {
+  const container = document.getElementById('gachaContainer');
+  const canAfford1 = playerState.rainbowStones >= 10000;
+  const canAfford10 = playerState.rainbowStones >= 90000;
+
+  container.innerHTML = `
+    <div class="gacha-banner-card">
+      <div class="gacha-banner-title">ルディ王国ガチャ</div>
+      <div class="gacha-banner-desc">
+        ルディ王国に所属するキャラクターが出現します。<br>
+        既に仲間にしているキャラクターが出現した場合、そのキャラクターの欠片x10に変換されます。
+      </div>
+      <div class="gacha-buttons">
+        <button class="gacha-btn" onclick="performGacha(1)" ${!canAfford1 ? 'disabled' : ''}>
+          1回引く
+          <span>💎 10000</span>
+        </button>
+        <button class="gacha-btn" onclick="performGacha(10)" ${!canAfford10 ? 'disabled' : ''}>
+          10回引く
+          <span>💎 90000</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function performGacha(count) {
+  const cost = count === 10 ? 90000 : 10000 * count;
+  if (playerState.rainbowStones < cost) {
+    showToast('虹石が足りません。');
+    return;
+  }
+
+  playerState.rainbowStones -= cost;
+  
+  const gachaPool = units.filter(u => u.type === 'ルディ王国');
+  const results = [];
+
+  for (let i = 0; i < count; i++) {
+    const pulledChar = gachaPool[Math.floor(Math.random() * gachaPool.length)];
+    const isNew = !playerState.characters[pulledChar.id];
+
+    if (isNew) {
+      playerState.characters[pulledChar.id] = { level: 1, equippedId: null, fragments: 0, aura: 0 };
+    } else {
+      playerState.characters[pulledChar.id].fragments += 10;
+    }
+    results.push({ char: pulledChar, isNew: isNew });
+  }
+
+  openGachaResultModal(results);
+  renderGachaPanel(); // Update button disabled state
+  renderSquad(); // Update header resource
+  renderCards(); // Update roster if new char
+  saveGame();
+}
+
+function openGachaResultModal(results) {
+  const grid = document.getElementById('gachaResultGrid');
+  grid.innerHTML = '';
+  results.forEach(res => {
+    const item = document.createElement('div');
+    item.className = 'gacha-result-item' + (res.isNew ? ' is-new' : '');
+    item.innerHTML = `
+      <div class="gacha-result-new-tag">NEW</div>
+      <div class="gacha-result-img"><img src="${res.char.img}" alt="${res.char.name}"></div>
+      <div class="gacha-result-name">${res.char.name}</div>
+      ${!res.isNew ? `<div class="gacha-result-info">欠片 x10</div>` : ''}
+    `;
+    grid.appendChild(item);
+  });
+  document.getElementById('gachaResultOverlay').classList.add('open');
+}
+
+function closeGachaResultModal(e) {
+  if (e.target === document.getElementById('gachaResultOverlay')) closeGachaResultModalDirect();
+}
+function closeGachaResultModalDirect() {
+  document.getElementById('gachaResultOverlay').classList.remove('open');
+}
+
 // ===== SQUAD MANAGER =====
 function openCodeViewer() {
   document.getElementById('codeViewerOverlay').classList.add('open');
@@ -4811,12 +5125,17 @@ function loadGame() {
     
     const defaultPlayerState = {
         rainbowStones: 5000,
-        characters: { 1: { level: 1, equippedId: null }, 2: { level: 1, equippedId: null } },
+        characters: { 1: { level: 1, equippedId: null, fragments: 0 }, 2: { level: 1, equippedId: null, fragments: 0 } },
     };
     
     playerState.rainbowStones = savedData.playerState.rainbowStones !== undefined ? savedData.playerState.rainbowStones : defaultPlayerState.rainbowStones;
     playerState.characters = savedData.playerState.characters || defaultPlayerState.characters;
     
+    // Migration for Fragments
+    for (let id in playerState.characters) {
+        if (playerState.characters[id].fragments === undefined) playerState.characters[id].fragments = 0;
+    }
+
     // Migration for Aura
     for (let id in playerState.characters) {
         if (playerState.characters[id].aura === undefined) playerState.characters[id].aura = 0;
