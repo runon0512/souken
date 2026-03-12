@@ -2753,6 +2753,26 @@ const eventChapters = [
         firstTimeReward: 1000
       }
     ]
+  },
+  {
+    name: 'イベント：挑戦状',
+    missions: [
+      {
+        id: 902,
+        name: 'prog1248からの挑戦状！',
+        description: '強力な装備で武装した部隊からの挑戦状が届いた。心してかかろう。',
+        enemies: [
+          { id: 1, level: 40, aura: 4, aiType: AI_TYPES.HIGHEST_ATK, equipment: { name: '雷神の籠手', icon: '🥊', desc: 'SPD+15', stats: { spd: 15 } } },
+          { id: 2, level: 35, aura: 3, aiType: AI_TYPES.RANDOM, equipment: { name: 'ミカエルの聖盾', icon: '🛡️', desc: 'HP+200, 被ダメージ0.8倍', stats: { hp: 200 }, effect: { type: 'dmg_cut', val: 0.8 } } },
+          { id: 4, level: 35, aura: 3, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { name: '竜鱗の鎧', icon: '👕', desc: 'HP+100, DEF+20', stats: { hp: 100, def: 20 } } },
+          { id: 5, level: 35, aura: 3, aiType: AI_TYPES.HIGHEST_ATK, equipment: { name: 'フェニックスの尾', icon: '🪶', desc: '死亡時に1度だけHP1で耐える', effect: { type: 'guts', val: true } } },
+          { id: 6, level: 35, aura: 3, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { name: '魔導師の指輪', icon: '💍', desc: 'ATK+15, SPD+5', stats: { atk: 15, spd: 5 } } }
+        ],
+        recommendedPower: 25000,
+        reward: 800,
+        firstTimeReward: 1500
+      }
+    ]
   }
 ];
 
@@ -2834,6 +2854,11 @@ function calcStats(baseStats, level, equipment = null) {
       for (const [stat, val] of Object.entries(equipment.effect.stats)) {
         if (s[stat]) s[stat] = Math.floor(s[stat] * val);
       }
+    }
+  }
+  if (equipment && equipment.stats) {
+    for (const [stat, val] of Object.entries(equipment.stats)) {
+      if (s[stat] !== undefined) s[stat] += val;
     }
   }
 
@@ -3582,14 +3607,15 @@ async function startBattle(missionId) {
           aura = Math.min(10, Math.ceil((level - 20) / 5));
       }
 
-      const multiplier = 1 + (level - 1) * 0.1;
-      const stats = {
-        hp: Math.floor(enemy.baseStats.hp * multiplier),
-        atk: Math.floor(enemy.baseStats.atk * multiplier),
-        def: Math.floor(enemy.baseStats.def * multiplier),
-        spd: Math.floor(enemy.baseStats.spd * multiplier)
-      };
-      return { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [] };
+      // Enemy Equipment
+      const equip = enemyConfig.equipment || null;
+      const stats = calcStats(enemy.baseStats, level, equip);
+
+      let unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip };
+      if (equip && equip.effect && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
+      if (equip && equip.effect && equip.effect.type === 'guts') unit.guts = true;
+      
+      return unit;
     }),
     log: [],
     isFinished: false,
@@ -4216,9 +4242,17 @@ async function runBattleSequence() {
       }
       // Equipment: Guts
       else if (target.equipment && target.equipment.effect.type === 'guts' && target.guts && actualDamage >= target.currentHp) {
-          actualDamage = target.currentHp - 1;
+          const val = target.equipment.effect.val;
+          // If val is a specific percentage (< 1), revive with that amount. Otherwise survive with 1 HP.
+          if (typeof val === 'number' && val < 1) {
+            const reviveHp = Math.floor(target.stats.hp * val);
+            actualDamage = target.currentHp - reviveHp; // Adjust damage so HP becomes reviveHp
+            logBattleMessage(`${target.name}はフェニックスの加護で復活した！`);
+          } else {
+            actualDamage = target.currentHp - 1;
+            logBattleMessage(`${target.name}はフェニックスの加護で耐えた！`);
+          }
           target.guts = false; // Consume guts
-          logBattleMessage(`${target.name}はフェニックスの加護で耐えた！`);
       }
       
         // Landia (ID: 16) Passive: 無能力の意地
