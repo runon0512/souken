@@ -603,14 +603,20 @@
     letter-spacing: 1px;
     margin-bottom: 8px;
   }
-
-  .role-assault { background: rgba(255,107,53,0.2); color: var(--accent2); border: 1px solid rgba(255,107,53,0.4); }
-  .role-sniper { background: rgba(0,200,255,0.1); color: var(--accent); border: 1px solid rgba(0,200,255,0.3); }
-  .role-support { background: rgba(168,255,62,0.1); color: var(--accent3); border: 1px solid rgba(168,255,62,0.3); }
-  .role-tank { background: rgba(150,80,255,0.1); color: #c080ff; border: 1px solid rgba(150,80,255,0.3); }
-  .role-medic { background: rgba(255,80,120,0.1); color: #ff80a0; border: 1px solid rgba(255,80,120,0.3); }
-
   /* STAT BARS */
+  .card-type-tag {
+    display: inline-block;
+    font-size: 8px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    margin-left: 4px;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-mid);
+    border: 1px solid var(--border);
+  }
   .stat-bars { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
 
   .stat-row {
@@ -1871,21 +1877,6 @@
       <button class="filter-btn active" onclick="setFilter('all')" id="filter-all">
         全員 <span class="count" id="cnt-all">12</span>
       </button>
-      <button class="filter-btn" onclick="setFilter('assault')" id="filter-assault">
-        突撃 <span class="count" id="cnt-assault">-</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('sniper')" id="filter-sniper">
-        狙撃 <span class="count" id="cnt-sniper">-</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('support')" id="filter-support">
-        支援 <span class="count" id="cnt-support">-</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('tank')" id="filter-tank">
-        重装 <span class="count" id="cnt-tank">-</span>
-      </button>
-      <button class="filter-btn" onclick="setFilter('medic')" id="filter-medic">
-        医療 <span class="count" id="cnt-medic">-</span>
-      </button>
     </div>
 
     <div class="filter-section">
@@ -2085,7 +2076,7 @@
 // ===== DATA =====
 const units = [
   {
-    id: 1, name: 'ドラ・クラヴェール', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
+    id: 1, name: 'ドラ・クラヴェール', element: 'fire', elementJp: '炎', type: 'ルディ王国',
     baseStats: { hp: 950, atk: 98, def: 72, spd: 85 },
     abilityType: 'slash',
     abilities: [ // type: slash, magic, shoot, heal, impact
@@ -2096,7 +2087,7 @@ const units = [
     img: 'C1.svg',
   },
   {
-    id: 2, name: 'ノア・ルナリス', element: 'light', elementJp: '光', role: 'assault', roleJp: '突撃',
+    id: 2, name: 'ノア・ルナリス', element: 'light', elementJp: '光', type: 'ルディ王国',
     baseStats: { hp: 850, atk: 90, def: 80, spd: 75 },
     abilityType: 'magic',
     abilities: [
@@ -2108,18 +2099,7 @@ const units = [
     img: 'C2.svg',
   },
   {
-    id: 3, name: '鉄壁 ゴウ', element: 'light', elementJp: '光', role: 'tank', roleJp: '重装',
-    baseStats: { hp: 99, atk: 60, def: 99, spd: 42 },
-    abilityType: 'impact',
-    abilities: [
-      { name: '不動鎧壁', desc: '被ダメージを常時20%軽減する。' },
-      { name: '守護の誓い', desc: '隣接する味方が受けるダメージの20%を肩代わりする。3ターン継続。' },
-    ],
-    useImg: false,
-    img: null,
-  },
-  {
-    id: 4, name: 'いえみけ', element: 'water', elementJp: '水', role: 'tank', roleJp: '重装',
+    id: 4, name: 'いえみけ', element: 'water', elementJp: '水', type: 'ルディ王国',
     baseStats: { hp: 1200, atk: 65, def: 110, spd: 50 },
     abilityType: 'slash',
     abilities: [
@@ -2130,7 +2110,7 @@ const units = [
     img: 'C3.svg',
   },
   {
-    id: 5, name: 'ライ・アルバロ', element: 'thunder', elementJp: '雷', role: 'assault', roleJp: '突撃',
+    id: 5, name: 'ライ・アルバロ', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
     baseStats: { hp: 980, atk: 82, def: 65, spd: 95 },
     abilityType: 'slash',
     abilities: [
@@ -2142,7 +2122,7 @@ const units = [
     img: 'C4.svg',
   },
   {
-    id: 6, name: 'デン・アルバロ', element: 'thunder', elementJp: '雷', role: 'tank', roleJp: '重装',
+    id: 6, name: 'デン・アルバロ', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
     baseStats: { hp: 1300, atk: 75, def: 95, spd: 55 },
     abilityType: 'impact',
     abilities: [
@@ -2163,7 +2143,7 @@ const units = [
     useImg: true, img: 'C15.svg'
   },
   {
-    id: 8, name: 'リカルド・テラエル', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    id: 8, name: 'リカルド・テラエル', element: 'none', elementJp: '無', type: 'ルディ王国',
     baseStats: { hp: 1500, atk: 120, def: 80, spd: 50 },
     abilityType: 'impact',
     abilities: [
@@ -2173,7 +2153,7 @@ const units = [
     useImg: true, img: 'C10.svg'
   },
   {
-    id: 9, name: 'ベラ・ミルヘン', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
+    id: 7, name: 'カーラム・アブルート', element: 'fire', elementJp: '炎', type: 'ルディ王国',
     baseStats: { hp: 1000, atk: 110, def: 50, spd: 90 },
     abilityType: 'magic',
     abilities: [
@@ -2183,7 +2163,7 @@ const units = [
     useImg: true, img: 'C14.svg'
   },
   {
-    id: 10, name: 'エマ・シルエイティ', element: 'fire', elementJp: '炎', role: 'assault', roleJp: '突撃',
+    id: 10, name: 'エマ・シルエイティ', element: 'fire', elementJp: '炎', type: 'ルディ王国',
     baseStats: { hp: 1200, atk: 105, def: 60, spd: 65 },
     abilityType: 'magic',
     abilities: [
@@ -2193,7 +2173,7 @@ const units = [
     useImg: true, img: 'C9.svg'
   },
   {
-    id: 11, name: 'ロイド・ハイネス', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    id: 11, name: 'ロイド・ハイネス', element: 'none', elementJp: '無', type: 'ルディ王国',
     baseStats: { hp: 1350, atk: 95, def: 75, spd: 60 },
     abilityType: 'impact',
     abilities: [
@@ -2203,7 +2183,7 @@ const units = [
     useImg: true, img: 'C13.svg'
   },
   {
-    id: 12, name: 'オリバー・ジャック', element: 'water', elementJp: '水', role: 'support', roleJp: '支援',
+    id: 12, name: 'オリバー・ジャック', element: 'water', elementJp: '水', type: 'ルディ王国',
     baseStats: { hp: 1150, atk: 100, def: 65, spd: 85 },
     abilityType: 'magic',
     abilities: [
@@ -2213,7 +2193,7 @@ const units = [
     useImg: true, img: 'C8.svg'
   },
   {
-    id: 13, name: 'ギラ・グレゴリオ', element: 'dark', elementJp: '闇', role: 'support', roleJp: '支援',
+    id: 13, name: 'ギラ・グレゴリオ', element: 'dark', elementJp: '闇', type: 'ルディ王国',
     baseStats: { hp: 1400, atk: 110, def: 70, spd: 65 },
     abilityType: 'magic',
     abilities: [
@@ -2223,7 +2203,7 @@ const units = [
     useImg: true, img: 'C12.svg'
   },
   {
-    id: 14, name: 'ミリア・ルティス', element: 'dark', elementJp: '闇', role: 'tank', roleJp: '重装',
+    id: 14, name: 'ミリア・ルティス', element: 'dark', elementJp: '闇', type: 'ルディ王国',
     baseStats: { hp: 1600, atk: 90, def: 120, spd: 50 },
     abilityType: 'slash',
     abilities: [
@@ -2234,72 +2214,72 @@ const units = [
   },
   // Enemies are now part of the same definition
   {
-    id: 101, name: 'スライム', element: 'water', elementJp: '水', role: 'mob', roleJp: 'モンスター',
+    id: 301, name: 'スライム', element: 'water', elementJp: '水',
     baseStats: { hp: 750, atk: 70, def: 20, spd: 50 }, icon: '💧', abilities: [], abilityType: 'impact', useImg: false,
   },
   {
-    id: 102, name: 'ゴブリン', element: 'dark', elementJp: '闇', role: 'mob', roleJp: 'モンスター',
+    id: 302, name: 'ゴブリン', element: 'dark', elementJp: '闇',
     baseStats: { hp: 1250, atk: 90, def: 30, spd: 70 }, icon: '👺', abilityType: 'slash',
     abilities: [{ name: '毒突き', desc: '15%の確率で強力な攻撃を行い、3ターンの毒を付与する。', triggerRate: 0.15, timing: 'after_attack', effect: { type: 'status', status: 'poison', turns: 3 } }],
   },
   {
-    id: 103, name: 'オーク', element: 'fire', elementJp: '炎', role: 'mob', roleJp: 'モンスター',
+    id: 303, name: 'オーク', element: 'fire', elementJp: '炎',
     baseStats: { hp: 2500, atk: 110, def: 50, spd: 60 }, icon: '👹', abilityType: 'impact',
     abilities: [{ name: '渾身の一撃', desc: '強力な一撃を与える。(発動率: 25%)', triggerRate: 0.25, timing: 'before_attack' }],
   },
   {
-    id: 104, name: 'サンダーウルフ', element: 'thunder', elementJp: '雷', role: 'mob', roleJp: 'モンスター',
+    id: 304, name: 'サンダーウルフ', element: 'thunder', elementJp: '雷',
     baseStats: { hp: 2000, atk: 120, def: 40, spd: 100 }, icon: '🐺', abilities: [], abilityType: 'slash', useImg: false,
   },
   {
-    id: 105, name: '光の番人', element: 'light', elementJp: '光', role: 'boss', roleJp: 'ボス',
+    id: 305, name: '光の番人', element: 'light', elementJp: '光',
     baseStats: { hp: 4000, atk: 150, def: 80, spd: 60 }, icon: '✨', abilityType: 'magic',
     abilities: [{ name: '聖なる審判', desc: '敵全体にダメージを与える。(発動率: 30%)', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.7 }],
   },
   {
-    id: 106, name: 'シャール・ラフレシア', element: 'dark', elementJp: '闇', role: 'mob', roleJp: 'モンスター',
+    id: 306, name: 'シャール・ラフレシア', element: 'dark', elementJp: '闇',
     baseStats: { hp: 700, atk: 85, def: 40, spd: 60 }, abilityType: 'magic',
     abilities: [{ name: '闇攻撃強化', desc: '戦闘開始時、闇属性の味方と自分に5ターンの強化を付与する。', timing: 'on_battle_start' }],
     useImg: true, img: 'C301.svg'
   },
   {
-    id: 107, name: 'シェリア・ウィステリア', element: 'light', elementJp: '光', role: 'mob', roleJp: 'モンスター',
+    id: 307, name: 'シェリア・ウィステリア', element: 'light', elementJp: '光',
     baseStats: { hp: 800, atk: 74, def: 50, spd: 55 }, abilityType: 'magic',
     abilities: [{ name: '天使の梯子', desc: '被弾時に30%で発動。受けるダメージを10%軽減する。', triggerRate: 0.3, timing: 'on_defense' }],
     useImg: true, img: 'C302.svg'
   },
   {
-    id: 108, name: 'ハイツ・ウォルフ', element: 'water', elementJp: '水', role: 'mob', roleJp: 'モンスター',
+    id: 308, name: 'ハイツ・ウォルフ', element: 'water', elementJp: '水',
     baseStats: { hp: 675, atk: 87, def: 45, spd: 62 }, abilityType: 'slash',
     abilities: [{ name: '二段切り', desc: '攻撃後、50%の確率で追加攻撃(威力30%)を行う。', triggerRate: 0.5, timing: 'after_attack' }],
     useImg: true, img: 'C303.svg'
   },
   {
-    id: 109, name: 'ローブ・フォルクス', element: 'fire', elementJp: '炎', role: 'mob', roleJp: 'モンスター',
+    id: 309, name: 'ローブ・フォルクス', element: 'fire', elementJp: '炎',
     baseStats: { hp: 750, atk: 92, def: 38, spd: 58 }, abilityType: 'magic',
     abilities: [{ name: 'アートフレア', desc: '攻撃時、30%の確率で発動。攻撃後に燃焼を3ターン付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 3 } }],
     useImg: true, img: 'C304.svg'
   },
   {
-    id: 110, name: 'ジョナサン・グレイザー', element: 'thunder', elementJp: '雷', role: 'sniper', roleJp: '狙撃',
+    id: 310, name: 'ジョナサン・グレイザー', element: 'thunder', elementJp: '雷',
     baseStats: { hp: 900, atk: 140, def: 40, spd: 80 }, abilityType: 'impact',
     abilities: [{ name: '大斧落とし', desc: '攻撃前、30%の確率で発動。攻撃後に麻痺を2ターン付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'paralysis', turns: 2 } }],
     useImg: true, img: 'C305.svg'
   },
   {
-    id: 111, name: 'アイス・ヒヤシンス', element: 'water', elementJp: '水', role: 'mob', roleJp: 'モンスター',
+    id: 311, name: 'アイス・ヒヤシンス', element: 'water', elementJp: '水',
     baseStats: { hp: 1100, atk: 90, def: 70, spd: 50 }, abilityType: 'magic',
     abilities: [{ name: 'アクアバルーン', desc: '被弾時、20%の確率で発動。受けたダメージの30%を相手に返す。', triggerRate: 0.2, timing: 'on_hit' }],
     useImg: true, img: 'C306.svg'
   },
   {
-    id: 112, name: 'ルイ・ヴォールズ', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    id: 312, name: 'ルイ・ヴォールズ', element: 'none', elementJp: '無',
     baseStats: { hp: 1400, atk: 130, def: 60, spd: 75 }, abilityType: 'slash',
     abilities: [{ name: '先手必勝', desc: '戦闘開始時、100%の確率で発動。敵全体に攻撃力の60%のダメージを与える。', triggerRate: 1.0, timing: 'on_battle_start' }],
     useImg: true, img: 'C307.svg'
   },
   {
-    id: 113, name: 'ランディア・スクラ', element: 'none', elementJp: '無', role: 'assault', roleJp: '突撃',
+    id: 16, name: 'ランディア・スクラ', element: 'none', elementJp: '無', type: 'ルディ王国',
     baseStats: { hp: 1450, atk: 115, def: 85, spd: 70 },
     abilityType: 'slash',
     abilities: [
@@ -2309,7 +2289,7 @@ const units = [
     useImg: true, img: 'C11.svg'
   },
   {
-    id: 114, name: 'アスター・エクレア', element: 'thunder', elementJp: '雷', role: 'assault', roleJp: '突撃',
+    id: 17, name: 'アスター・エクレア', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
     baseStats: { hp: 1200, atk: 125, def: 60, spd: 110 },
     abilityType: 'slash',
     abilities: [
@@ -2319,7 +2299,7 @@ const units = [
     useImg: true, img: 'C6.svg'
   },
   {
-    id: 16, name: 'リディン・イルカイ(過去)', element: 'thunder', elementJp: '雷', role: 'assault', roleJp: '突撃',
+    id: 15, name: 'リディン・イルカイ(過去)', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
     baseStats: { hp: 1350, atk: 120, def: 65, spd: 92 },
     abilityType: 'slash',
     abilities: [
@@ -2329,11 +2309,48 @@ const units = [
     useImg: true, img: 'C16.svg'
   },
   {
-    id: 115, name: '衛兵', element: 'none', elementJp: '無', role: 'mob', roleJp: 'モンスター',
+    id: 315, name: '衛兵', element: 'none', elementJp: '無',
     baseStats: { hp: 800, atk: 60, def: 60, spd: 60 },
     abilities: [],
     abilityType: 'impact',
     useImg: true, img: 'C308.svg'
+  },
+  {
+    id: 316, name: '傀儡', element: 'none', elementJp: '無',
+    baseStats: { hp: 800, atk: 60, def: 60, spd: 60 },
+    abilities: [],
+    abilityType: 'impact',
+    useImg: true, img: 'C309.svg'
+  },
+  {
+    id: 18, name: 'シオン・アンドラス', element: 'none', elementJp: '無', type: 'ロベリア',
+    baseStats: { hp: 1600, atk: 110, def: 70, spd: 75 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '五色の魔法', desc: '攻撃前に40%の確率で発動。攻撃を相性有利なものとして計算する。', triggerRate: 0.4, timing: 'before_attack' },
+      { name: '運命支配', desc: '死亡時、1度だけ体力を10%回復し、弱化効果をすべて解除する。' }
+    ],
+    useImg: true, img: 'C18.svg'
+  },
+  {
+    id: 19, name: 'ソルン・アンドラス', element: 'fire', elementJp: '炎', type: 'ロベリア',
+    baseStats: { hp: 1500, atk: 130, def: 60, spd: 80 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '情報操作', desc: '攻撃後、20%の確率で発動。敵に衰弱(4ターン)と睡眠(2ターン)を付与する。', triggerRate: 0.2, timing: 'after_attack' },
+      { name: '烈火斬', desc: '攻撃前、40%の確率で発動。威力が140%になり、燃焼(4ターン)を付与する。', triggerRate: 0.4, timing: 'before_attack', damageMult: 1.4, effect: { type: 'status', status: 'burn', turns: 4 } }
+    ],
+    useImg: true, img: 'C19.svg'
+  },
+  {
+    id: 20, name: 'キティー・スカイレット', element: 'water', elementJp: '水', type: 'ロベリア',
+    baseStats: { hp: 1800, atk: 120, def: 80, spd: 100 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '運操作', desc: '被弾時、20%の確率で攻撃を無効化する。', triggerRate: 0.2, timing: 'on_defense' },
+      { name: '透明化', desc: 'HPが40%以下になると発動。運操作の発動率が2倍になる。' }
+    ],
+    useImg: true, img: 'C17.svg'
   },
 ];
 
@@ -2384,6 +2401,15 @@ const chapter3Names = [
   "第二部隊訓練②",
   "第一部隊訓練②",
   "隊長訓練"
+];
+
+const chapter4Names = [
+  "造反の兄妹",
+  "透明な刺客",
+  "狂った旧友",
+  "純悪",
+  "大罪を侵したもの",
+  "総力戦"
 ];
 
 // Helper to generate missions
@@ -2439,48 +2465,58 @@ function generateMissions(startId, count, baseName, defaultEnemyPool, rewardBase
 
 // Define specific enemy configurations for Chapter 1
 const chapter1Enemies = [
-  [{ id: 106, level: 3, aiType: AI_TYPES.RANDOM }], // Stage 1 (Shar Rafflesia)
-  [{ id: 107, level: 4, aiType: AI_TYPES.RANDOM }], // Stage 2 (Sheria Wisteria)
-  [{ id: 108, level: 5, aiType: AI_TYPES.RANDOM }], // Stage 3 (Heitz Wolf)
-  [{ id: 109, level: 6, aiType: AI_TYPES.RANDOM }], // Stage 4 (Robe Volks)
+  [{ id: 306, level: 3, aiType: AI_TYPES.RANDOM }], // Stage 1 (Shar Rafflesia)
+  [{ id: 307, level: 4, aiType: AI_TYPES.RANDOM }], // Stage 2 (Sheria Wisteria)
+  [{ id: 308, level: 5, aiType: AI_TYPES.RANDOM }], // Stage 3 (Heitz Wolf)
+  [{ id: 309, level: 6, aiType: AI_TYPES.RANDOM }], // Stage 4 (Robe Volks)
   [{ id: 4, level: 7, aiType: AI_TYPES.LOWEST_HP_DEF }], // Stage 5 (Iemike)  
-  [{ id: 110, level: 8, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 6 (Jonathan Glazer)
-  [{ id: 111, level: 9, aiType: AI_TYPES.RANDOM }],      // Stage 7 (Ice Hyacinth)
-  [{ id: 115, level: 5 },{ id: 5, level: 9, aiType: AI_TYPES.HIGHEST_ATK },{ id: 115, level: 3 }],   // Stage 8 (Rai Alvaro)
-  [{ id: 115, level: 4 },{ id: 112, level: 10, aiType: AI_TYPES.HIGHEST_ATK },{ id: 115, level: 5 }], // Stage 9 (Louis Voules)
-  [{ id: 115, level: 6 },{ id: 115, level: 7 },{ id: 6, level: 11, aiType: AI_TYPES.LOWEST_HP_DEF },{ id: 115, level: 5 },{ id: 115, level: 6 }], // Stage 10 (Den Alvaro)
+  [{ id: 310, level: 8, aiType: AI_TYPES.HIGHEST_ATK }], // Stage 6 (Jonathan Glazer)
+  [{ id: 311, level: 9, aiType: AI_TYPES.RANDOM }],      // Stage 7 (Ice Hyacinth)
+  [{ id: 315, level: 5 },{ id: 5, level: 9, aiType: AI_TYPES.HIGHEST_ATK },{ id: 315, level: 3 }],   // Stage 8 (Rai Alvaro)
+  [{ id: 315, level: 4 },{ id: 312, level: 10, aiType: AI_TYPES.HIGHEST_ATK },{ id: 315, level: 5 }], // Stage 9 (Louis Voules)
+  [{ id: 315, level: 6 },{ id: 315, level: 7 },{ id: 6, level: 11, aiType: AI_TYPES.LOWEST_HP_DEF },{ id: 315, level: 5 },{ id: 315, level: 6 }], // Stage 10 (Den Alvaro)
   ];
 
 const chapter2Enemies = [
-  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 7, level: 18, aiType: AI_TYPES.HIGHEST_ATK }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Callum + Guards
-  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 9, level: 19, aiType: AI_TYPES.RANDOM }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Bella + Guards
-  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 11, level: 20, aiType: AI_TYPES.RANDOM }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Lloyd + Guards
-  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 13, level: 21, aiType: AI_TYPES.RANDOM }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Gira + Guards
-  [{ id: 115, level: 12 }, { id: 115, level: 12 }, { id: 113, level: 22, aiType: AI_TYPES.RANDOM }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Landia + Guards
+  [{ id: 315, level: 10 }, { id: 315, level: 10 }, { id: 7, level: 18, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 11 }, { id: 315, level: 11 }], // Callum + Guards
+  [{ id: 315, level: 10 }, { id: 315, level: 10 }, { id: 9, level: 19, aiType: AI_TYPES.RANDOM }, { id: 315, level: 11 }, { id: 315, level: 11 }], // Bella + Guards
+  [{ id: 315, level: 11 }, { id: 315, level: 11 }, { id: 11, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 12 }, { id: 315, level: 12 }], // Lloyd + Guards
+  [{ id: 315, level: 11 }, { id: 315, level: 11 }, { id: 13, level: 21, aiType: AI_TYPES.RANDOM }, { id: 315, level: 12 }, { id: 315, level: 12 }], // Gira + Guards
+  [{ id: 315, level: 12 }, { id: 315, level: 12 }, { id: 16, level: 22, aiType: AI_TYPES.RANDOM }, { id: 315, level: 12 }, { id: 315, level: 12 }], // Landia + Guards
   [ // Vice Captains
     { id: 7, level: 18, aiType: AI_TYPES.RANDOM }, { id: 9, level: 19, aiType: AI_TYPES.RANDOM }, 
     { id: 11, level: 20, aiType: AI_TYPES.RANDOM }, { id: 13, level: 21, aiType: AI_TYPES.RANDOM }, 
-    { id: 113, level: 22, aiType: AI_TYPES.RANDOM }
+    { id: 16, level: 22, aiType: AI_TYPES.RANDOM }
   ],
 ];
 
 const chapter3Enemies = [
-  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 8, level: 22, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Ricardo + Guards
-  [{ id: 115, level: 10 }, { id: 115, level: 10 }, { id: 10, level: 23, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 115, level: 11 }, { id: 115, level: 11 }], // Emma + Guards
-  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 12, level: 24, aiType: AI_TYPES.HIGHEST_ATK }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Oliver + Guards
-  [{ id: 115, level: 11 }, { id: 115, level: 11 }, { id: 14, level: 25, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Milia + Guards
-  [{ id: 115, level: 12 }, { id: 115, level: 12 }, { id: 114, level: 28, aiType: AI_TYPES.HIGHEST_ATK }, { id: 115, level: 12 }, { id: 115, level: 12 }], // Aster + Guards
+  [{ id: 315, level: 10 }, { id: 315, level: 10 }, { id: 8, level: 22, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 315, level: 11 }, { id: 315, level: 11 }], // Ricardo + Guards
+  [{ id: 315, level: 10 }, { id: 315, level: 10 }, { id: 10, level: 23, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 315, level: 11 }, { id: 315, level: 11 }], // Emma + Guards
+  [{ id: 315, level: 11 }, { id: 315, level: 11 }, { id: 12, level: 24, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 12 }, { id: 315, level: 12 }], // Oliver + Guards
+  [{ id: 315, level: 11 }, { id: 315, level: 11 }, { id: 14, level: 25, aiType: AI_TYPES.LOWEST_HP_DEF }, { id: 315, level: 12 }, { id: 315, level: 12 }], // Milia + Guards
+  [{ id: 315, level: 12 }, { id: 315, level: 12 }, { id: 17, level: 28, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 12 }, { id: 315, level: 12 }], // Aster + Guards
   [ // Captains
     { id: 8, level: 22, aiType: AI_TYPES.RANDOM }, { id: 10, level: 23, aiType: AI_TYPES.RANDOM }, 
     { id: 12, level: 24, aiType: AI_TYPES.RANDOM }, { id: 14, level: 25, aiType: AI_TYPES.RANDOM }, 
-    { id: 114, level: 28, aiType: AI_TYPES.RANDOM }
+    { id: 17, level: 28, aiType: AI_TYPES.RANDOM }
   ],
+];
+
+const chapter4Enemies = [
+  [{ id: 316, level: 30 }, { id: 316, level: 30 }, { id: 18, level: 32, aiType: AI_TYPES.RANDOM }, { id: 19, level: 32, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 30 }],
+  [{ id: 316, level: 33 }, { id: 316, level: 33 }, { id: 20, level: 35, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 33 }, { id: 316, level: 33 }],
+  null,
+  null,
+  null,
+  null,
 ];
 
 const storyChapters = [
   { name: '第一章：天からの贈り物', missions: generateMissions(100, 10, 'Stage', [101], 50, chapter1Names, chapter1Enemies) },
   { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [102, 102, 101], 100, chapter2Names, chapter2Enemies) },
   { name: '第三章：ルディ王国 (後編)', missions: generateMissions(300, 6, 'Stage', [102, 102, 101], 150, chapter3Names, chapter3Enemies) },
+  { name: '第四章：世界の真実', missions: generateMissions(400, 6, 'Stage', [302, 303, 305], 200, chapter4Names, chapter4Enemies) },
 ];
 
 const eventChapters = [
@@ -2492,8 +2528,8 @@ const eventChapters = [
         name: '約束',
         description: '過去の幻影との対峙。強敵を撃破し、彼を仲間にしよう。',
         enemies: [
-          { id: 114, level: 60, aiType: AI_TYPES.HIGHEST_ATK }, // Aster
-          { id: 16, level: 60, aiType: AI_TYPES.RANDOM }      // Ridin
+          { id: 17, level: 60, aiType: AI_TYPES.HIGHEST_ATK }, // Aster
+          { id: 15, level: 60, aiType: AI_TYPES.RANDOM }      // Ridin
         ],
         recommendedPower: 18000,
         reward: 500,
@@ -2619,7 +2655,6 @@ function renderSquad() {
         <div class="slot-img-wrap"><img src="${c.useImg ? c.img : 'C0.svg'}" alt="${c.name}"></div>
         <div class="slot-info">
           <div class="slot-name">${c.name}</div>
-          <div class="slot-role">${c.roleJp}</div>
         </div>
         ${equip ? `<div class="squad-equip-icon" title="${equip.name}">${equip.icon}</div>` : ''}
         <div class="slot-power">${getPower(c, playerState.characters[id].level)}</div>
@@ -2648,11 +2683,12 @@ function renderCards() {
   grid.innerHTML = '';
   const ownedCharIds = Object.keys(playerState.characters);
   const filtered = units.filter(c => {
-    // モンスター/ボスはキャラクター一覧に表示しない
-    if (c.role === 'mob' || c.role === 'boss') return false;
+    // プレイヤーが獲得できないキャラクター（敵専用など、ID 300以上）は表示しない
+    const isPlayerCharacter = c.id < 300;
+    if (!isPlayerCharacter) return false;
+
     const matchFilter =
-      currentFilter === 'all' ||
-      currentFilter === c.role ||
+      currentFilter === 'all' ||      
       currentFilter === c.element;
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || c.name.includes(q) ||
@@ -2704,7 +2740,7 @@ function renderCards() {
       ${aura > 0 ? `<div class="aura-badge" style="background:${AURA_DATA[aura-1].color};color:#000">${AURA_DATA[aura-1].label}</div>` : ''}
       <div class="card-body">
         <div class="card-name"><span>${c.name}</span><span style="font-size:10px;color:var(--accent)">Lv.${level}</span></div>
-        <span class="card-role-tag role-${c.role}">${c.roleJp}</span>
+        ${c.type ? `<span class="card-type-tag">${c.type}</span>` : ''}
         <div class="stat-bars">
           ${renderStatBar('HP', s.hp, 'hp')}
           ${renderStatBar('ATK', s.atk, 'atk')}
@@ -2758,7 +2794,7 @@ function setView(view) {
 
 function setFilter(f) {
   currentFilter = f;
-  document.querySelectorAll('#filter-all, #filter-assault, #filter-sniper, #filter-support, #filter-tank, #filter-medic, #filter-fire, #filter-water, #filter-thunder, #filter-dark, #filter-light').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#filter-all, #filter-fire, #filter-water, #filter-thunder, #filter-dark, #filter-light').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('filter-' + f);
   if (btn) btn.classList.add('active');
   renderCards();
@@ -2766,13 +2802,8 @@ function setFilter(f) {
 
 function updateFilterCounts() {
   const ownedChars = units.filter(u => playerState.characters.hasOwnProperty(u.id));
-  const roles = ['assault','sniper','support','tank','medic'];
   const elems = ['fire','water','thunder','dark','light'];
   document.getElementById('cnt-all').textContent = ownedChars.length;
-  roles.forEach(r => {
-    const el = document.getElementById('cnt-' + r);
-    if (el) el.textContent = ownedChars.filter(c => c.role === r).length;
-  });
   elems.forEach(e => {
     const el = document.getElementById('cnt-' + e);
     if (el) el.textContent = ownedChars.filter(c => c.element === e).length;
@@ -2885,8 +2916,9 @@ function formatAbilityDetails(ability) {
   const c = units.find(u => u.id === modalCharId);
   if (!c) return;
 
+  const typeHtml = c.type ? `&nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.type}</span>` : '';
   document.getElementById('modalName').textContent = c.name;
-  document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span> &nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.roleJp}</span>`;
+  document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span>${typeHtml}`;
 
   const imgSrc = c.useImg ? c.img : 'C0.svg';
   const imgWrap = document.getElementById('modalImgWrap');
@@ -3158,11 +3190,6 @@ function showToast(msg) {
   t.classList.add('show');
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-// ===== EMOJI HELPER =====
-function getEmoji(role) {
-  return { assault:'⚔️', sniper:'🎯', support:'💨', tank:'🛡️', medic:'💊' }[role] || '👤';
 }
 
 function getElemIcon(elem) {
@@ -3547,6 +3574,22 @@ async function checkDeathAbilities(unit) {
       }
       return true;
   }
+
+  // Shion (ID: 18) Passive: Fate Control
+  if (unit.id === 18 && !unit.passiveUsed) {
+      unit.passiveUsed = true;
+      await showCutIn(unit, '運命支配');
+      unit.currentHp = Math.floor(unit.stats.hp * 0.1);
+      unit.statusEffects = []; // Clear all debuffs
+      logBattleMessage(`${unit.name}は運命を支配し、死を拒絶した！`);
+      updateUnitUI(unit);
+      if (unitEl) {
+          unitEl.classList.remove('defeated');
+          playEffect(unitEl, 'heal');
+      }
+      return true;
+  }
+
   return false;
 }
 
@@ -3759,21 +3802,8 @@ async function runBattleSequence() {
           }
       }
 
-      const isNoaPassiveConditionMet = attacker.id === 2 && attacker.currentHp <= attacker.stats.hp * 0.3;
-      if (attacker.id === 2) {
-          if (isNoaPassiveConditionMet && !attacker.isPassiveActive) {
-            attacker.isPassiveActive = true;
-            if (attacker.abilities && attacker.abilities.length > 1) {
-              showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
-              await sleep(1200 / battleSpeedMultiplier);
-            }
-          } else if (!isNoaPassiveConditionMet && attacker.isPassiveActive) {
-            attacker.isPassiveActive = false;
-          }
-      }
-      
-      const isRaiPassiveConditionMet = attacker.id === 5 && attacker.currentHp <= attacker.stats.hp * 0.5;
-      if (attacker.id === 5) {
+      const isRaiPassiveConditionMet = attacker.id === 5 && attacker.currentHp <= attacker.stats.hp * 0.5; // ライ
+      if (attacker.id === 5) { // ライ
           if (isRaiPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
             if (attacker.abilities && attacker.abilities.length > 1) {
@@ -3785,8 +3815,8 @@ async function runBattleSequence() {
           }
       }
       
-      const isAsterPassiveConditionMet = attacker.id === 114 && attacker.currentHp <= attacker.stats.hp * 0.3;
-      if (attacker.id === 114) {
+      const isAsterPassiveConditionMet = attacker.id === 17 && attacker.currentHp <= attacker.stats.hp * 0.3; // アスター
+      if (attacker.id === 17) { // アスター
           if (isAsterPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
             if (attacker.abilities && attacker.abilities.length > 1) {
@@ -3826,8 +3856,14 @@ async function runBattleSequence() {
         if (attacker.id === 13 && activeAbility.name === '圧縮の札') {
             attacker.isAdvantageForced = true;
         }
-        if (attacker.id === 113 && activeAbility.name === '虹斬') {
+        if (attacker.id === 18 && activeAbility.name === '五色の魔法') {
             attacker.isAdvantageForced = true;
+        }
+        if (attacker.id === 16 && activeAbility.name === '虹斬') {
+            attacker.isAdvantageForced = true;
+        }
+        if (activeAbility.damageMult) {
+            damageMultiplier = activeAbility.damageMult;
         }
       }
 
@@ -3835,6 +3871,41 @@ async function runBattleSequence() {
         
         // Apply Damage to Target
         let actualDamage = damage;
+        
+        // Ability: Defense (on_defense)
+        if (target.abilities && actualDamage > 0) {
+            for (const ab of target.abilities) {
+                if (ab.timing === 'on_defense') {
+                    let currentTriggerRate = ab.triggerRate || 0;
+                    // Kitty's passive check
+                    if (target.id === 20 && ab.name === '運操作' && target.isPassiveActive) {
+                        currentTriggerRate *= 2;
+                    }
+
+                    if (Math.random() < currentTriggerRate) {
+                        await showCutIn(target, ab.name);
+
+                        if (target.id === 20 && ab.name === '運操作') { // Kitty
+                            actualDamage = 0;
+                            logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
+                            showPassivePopup(targetEl, "VOID");
+                            break; 
+                        } else if (target.id === 6) { // Den Alvaro
+                            actualDamage = Math.floor(actualDamage * 0.7);
+                            logBattleMessage(`${target.name}の${ab.name}！ダメージ軽減＆麻痺付与！`);
+                            if (ab.effect?.type === 'status') {
+                                await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
+                            }
+                            playEffect(targetEl, 'guard-vertical');
+                        } else if (target.id === 307) { // Sheria Wisteria
+                            actualDamage = Math.floor(actualDamage * 0.9);
+                            logBattleMessage(`${target.name}の${ab.name}！ダメージを10%軽減！`);
+                            playEffect(targetEl, 'guard-vertical');
+                        }
+                    }
+                }
+            }
+        }
         
         // ミリア・ルティス (ID: 14) Passive: 耐え抜く能力
         if (target.id === 14 && actualDamage >= target.currentHp) {
@@ -3871,9 +3942,9 @@ async function runBattleSequence() {
           logBattleMessage(`${target.name}はフェニックスの加護で耐えた！`);
       }
       
-        // Landia (ID: 113) Passive: 無能力の意地
+        // Landia (ID: 16) Passive: 無能力の意地
         const landiaPassive = target.abilities.find(ab => ab.timing === 'on_skill_defense');
-        if (activeAbility && target.id === 113 && landiaPassive) {
+        if (activeAbility && target.id === 16 && landiaPassive) {
             actualDamage = Math.floor(actualDamage * 0.5);
             logBattleMessage(`${target.name}は<span class="ability">${landiaPassive.name}</span>でダメージを50%ブロックした！`);
             playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
@@ -3976,6 +4047,22 @@ async function runBattleSequence() {
         targetEl.classList.add(damageClass);
         setTimeout(() => targetEl.classList.remove(damageClass), animDuration);
 
+        // Kitty's Passive Activation
+        if (target.id === 20 && !target.isPassiveActive && target.currentHp <= target.stats.hp * 0.4) {
+            target.isPassiveActive = true;
+            const passiveAbility = target.abilities.find(a => a.name === '透明化');
+            if (passiveAbility) {
+                await showCutIn(target, passiveAbility.name);
+                logBattleMessage(`${target.name}は透明化した！運操作の発動率が上昇！`);
+                const passiveBadge = document.querySelector(`#unit-${target.battleId} .passive-active-badge`);
+                if (passiveBadge) {
+                    passiveBadge.textContent = '透明化';
+                    passiveBadge.classList.add('active');
+                }
+            }
+        }
+        setTimeout(() => targetEl.classList.remove(damageClass), animDuration);
+
         // Counter Attack (on_hit)
       if (target.currentHp > 0 && actualDamage > 0 && target.abilities) {
         for (const ab of target.abilities) {
@@ -3986,8 +4073,8 @@ async function runBattleSequence() {
              if (target.id === 7) { // Callum: Blood Explosion
                  counterDmg = Math.floor(target.stats.atk * 1.5);
              } else {
-                 let reflectPct = 1.0;
-                 if (target.id === 111) reflectPct = 0.3; // アクアバルーン 30%
+                 let reflectPct = 1.0; // Default for 激流一閃
+                 if (target.id === 311) reflectPct = 0.3; // アクアバルーン 30%
                  counterDmg = Math.floor(actualDamage * reflectPct);
              }
 
@@ -4031,7 +4118,7 @@ async function runBattleSequence() {
             if (ab && ab.timing === 'after_attack' && Math.random() < (ab.triggerRate || 0)) {
               chaseAbility = ab;
             }
-          } else if (attacker.id === 114 && attacker.isPassiveActive) {
+          } else if (attacker.id === 17 && attacker.isPassiveActive) {
             if (Math.random() < 0.6) { // 嵐呼ぶ剣戟
               chaseAbility = attacker.abilities[1];
             }
@@ -4067,7 +4154,7 @@ async function runBattleSequence() {
                   break; // Chain broken
                 }
               }
-            } else if (attacker.id === 114 && attacker.isPassiveActive) { // 嵐呼ぶ剣戟
+            } else if (attacker.id === 17 && attacker.isPassiveActive) { // 嵐呼ぶ剣戟
               await showCutIn(attacker, chaseAbility.name);
               for (let i = 0; i < 3; i++) {
                   if (target.currentHp <= 0) break;
@@ -4097,6 +4184,12 @@ async function runBattleSequence() {
                   await sleep(400 / battleSpeedMultiplier);
                   if (Math.random() > 0.5) break; // 50% chance to continue
               }
+            } else if (attacker.id === 19 && chaseAbility.name === '情報操作') { // Soln
+              await showCutIn(attacker, chaseAbility.name);
+              await addStatusEffect(target, 'weakness', 4);
+              await addStatusEffect(target, 'sleep', 2);
+              logBattleMessage(`${target.name}は情報を操作され、弱体化した...`);
+              playEffect(targetEl, 'magic');
             } else { // Single chase attacks
               await showCutIn(attacker, chaseAbility.name);
               let chaseMult = 0.6; // Default for クリスタル・ブレイク
@@ -4168,27 +4261,27 @@ function checkWinLoss() {
         }
         
         let unlockedCharName = null;
-        // Stage 5 (ID: 104) Clear Reward: Iemike (ID: 4)
+        // Stage 5 (Mission ID: 104) Clear Reward: Iemike (ID: 4)
         if (mission.id === 104 && !playerState.characters[4]) {
             playerState.characters[4] = { level: 1, equippedId: null };
             unlockedCharName = 'いえみけ';
             showToast('「いえみけ」が仲間になりました！');
         }
-        // Stage 8 (ID: 107) Clear Reward: Rai Alvaro (ID: 5)
+        // Stage 8 (Mission ID: 107) Clear Reward: Rai Alvaro (ID: 5)
         if (mission.id === 107 && !playerState.characters[5]) {
             playerState.characters[5] = { level: 1, equippedId: null };
             unlockedCharName = 'ライ・アルバロ';
             showToast('「ライ・アルバロ」が仲間になりました！');
         }
-        // Stage 10 (ID: 109) Clear Reward: Den Alvaro (ID: 6)
+        // Stage 10 (Mission ID: 109) Clear Reward: Den Alvaro (ID: 6)
         if (mission.id === 109 && !playerState.characters[6]) {
             playerState.characters[6] = { level: 1, equippedId: null };
             unlockedCharName = 'デン・アルバロ';
             showToast('「デン・アルバロ」が仲間になりました！');
         }
-        // Event Stage (ID: 901) Clear Reward: Ridin (ID: 16)
-        if (mission.id === 901 && !playerState.characters[16]) {
-            playerState.characters[16] = { level: 1, equippedId: null };
+        // Event Stage (ID: 901) Clear Reward: Ridin (ID: 15)
+        if (mission.id === 901 && !playerState.characters[15]) {
+            playerState.characters[15] = { level: 1, equippedId: null };
             unlockedCharName = 'リディン・イルカイ(過去)';
             showToast('「リディン」が仲間になりました！');
         }
@@ -4327,11 +4420,6 @@ function getBattleStats(unit) {
     s.def = Math.floor(s.def * 1.1);
   }
 
-  // パッシブ: 鉄壁 ゴウ (ID:3) 常時ダメージ20%カット
-  if (unit.id === 3) {
-    s.def = Math.floor(s.def * 1.2); // A different way to think about it
-  }
-
   // パッシブ: いえみけ (ID:4) HP50%以下で防御力40%UP
   if (unit.id === 4 && unit.currentHp <= unit.stats.hp * 0.5) {
     s.def = Math.floor(s.def * 1.4);
@@ -4351,8 +4439,8 @@ function getBattleStats(unit) {
     s.atk = Math.floor(s.atk * 1.3);
   }
 
-  // パッシブ: アスター (ID:114) 嵐呼ぶ剣戟
-  if (unit.id === 114 && unit.currentHp <= unit.stats.hp * 0.3) {
+  // パッシブ: アスター (ID:17) 嵐呼ぶ剣戟
+  if (unit.id === 17 && unit.currentHp <= unit.stats.hp * 0.3) {
     s.atk = Math.floor(s.atk * 1.3);
   }
 
@@ -4394,7 +4482,7 @@ function calculateDamage(attacker, defender) {
   const advantage = getElementalMultiplier(attacker.element, defender.element);
   
   // 圧縮の札 (ID: 13)
-  if (attacker.isAdvantageForced) {
+  if (attacker.isAdvantageForced) { // Gira (13) or Landia (16)
       return Math.floor((atkStats.atk * atkStats.atk) / Math.max(1, defStats.def) * 1.5);
   }
 
@@ -4413,11 +4501,6 @@ function calculateDamage(attacker, defender) {
   // Equipment: Elemental Resistance
   if (defender.equipment && defender.equipment.effect.type === 'elem_res' && defender.equipment.effect.element === attacker.element) {
       damage = Math.floor(damage * defender.equipment.effect.val);
-  }
-
-  // パッシブ: 鉄壁 ゴウ (ID:3) 常時ダメージ20%カット
-  if (defender.id === 3) {
-    damage = Math.floor(damage * 0.8);
   }
 
   return damage;
@@ -4466,8 +4549,8 @@ function updateUnitUI(unit) {
       if (unit.abilities && unit.abilities.length > 1) {
         activeText = `⚡ ${unit.abilities[1].name}`;
       }
-    } else if (unit.id === 114 && unit.currentHp <= unit.stats.hp * 0.3) {
-      // アスター (ID:114): HP30%以下で嵐呼ぶ剣戟
+    } else if (unit.id === 17 && unit.currentHp <= unit.stats.hp * 0.3) {
+      // アスター (ID:17): HP30%以下で嵐呼ぶ剣戟
       if (unit.abilities && unit.abilities.length > 1) {
         activeText = `⚡ ${unit.abilities[1].name}`;
       }
@@ -4512,7 +4595,7 @@ async function triggerOnBattleStartAbilities() {
         const livingTargets = targets.filter(t => t.currentHp > 0);
         if (livingTargets.length === 0) continue;
 
-        if (unit.id === 112) { // ルイ・ヴォールズの「先手必勝」 (AoE)
+        if (unit.id === 312) { // ルイ・ヴォールズの「先手必勝」 (AoE)
             for (const targetUnit of livingTargets) {
                 const damage = Math.floor(calculateDamage(unit, targetUnit) * 0.6);
                 targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
@@ -4525,7 +4608,7 @@ async function triggerOnBattleStartAbilities() {
                     setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
                 }
             }
-        } else if (unit.id === 114) { // アスター・エクレアの「開闢」 (Single Target)
+        } else if (unit.id === 17) { // アスター・エクレアの「開闢」 (Single Target)
             const targetUnit = livingTargets[Math.floor(Math.random() * livingTargets.length)];
             const damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult || 1.2));
             targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
@@ -4541,9 +4624,9 @@ async function triggerOnBattleStartAbilities() {
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
-        else if (unit.id === 16 || unit.id === 106) { // リディン(雷) or シャール(闇) の属性攻撃強化
-            const targetElement = unit.id === 16 ? 'thunder' : 'dark';
-            const skillName = unit.id === 16 ? '雷攻撃強化' : '闇攻撃強化';
+        else if (unit.id === 15 || unit.id === 306) { // リディン(雷) or シャール(闇) の属性攻撃強化
+            const targetElement = unit.id === 15 ? 'thunder' : 'dark';
+            const skillName = unit.id === 15 ? '雷攻撃強化' : '闇攻撃強化';
             
             // 味方全体（自分含む）で、指定属性のキャラを対象にする
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
