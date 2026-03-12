@@ -1816,6 +1816,70 @@
   }
 </style>
 <style>
+  /* GACHA ANIMATION */
+  .gacha-animation-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 270;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    overflow: hidden;
+  }
+  .gacha-animation-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .gacha-anim-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(0,200,255,0.2) 0%, transparent 60%);
+    animation: gacha-bg-pulse 2s infinite alternate;
+    display: none;
+  }
+  @keyframes gacha-bg-pulse {
+    from { transform: scale(0.8); opacity: 0.5; }
+    to { transform: scale(1.2); opacity: 1; }
+  }
+
+  .gacha-anim-container {
+    position: relative;
+    width: 800px;
+    max-width: 95vw;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 16px;
+  }
+
+  .gacha-anim-card {
+    opacity: 0;
+    transform: scale(0.5) translateY(50px);
+    animation: gacha-card-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes gacha-card-in {
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .gacha-anim-card.is-new {
+    animation-name: gacha-card-in-new;
+    animation-duration: 0.8s;
+  }
+
+  @keyframes gacha-card-in-new {
+    0% { opacity: 0; transform: scale(0.5) translateY(50px); }
+    50% { transform: scale(1.2); box-shadow: 0 0 40px var(--gold), 0 0 80px var(--gold); }
+    100% { opacity: 1; transform: scale(1) translateY(0); box-shadow: none; }
+  }
+</style>
+<style>
   /* GACHA */
   .gacha-banner-card {
     background: var(--bg-card);
@@ -1879,7 +1943,21 @@
   .gacha-result-img img { width: 90%; height: auto; }
   .gacha-result-name { font-size: 12px; font-weight: 700; margin-top: 8px; }
   .gacha-result-info { font-size: 10px; color: var(--gold); font-family: 'Orbitron', monospace; margin-top: 4px; }
-  .gacha-result-new-tag { position: absolute; top: 8px; left: 8px; background: var(--accent2); color: #000; font-size: 9px; font-family: 'Orbitron', monospace; padding: 2px 6px; border-radius: 3px; font-weight: 700; letter-spacing: 1px; display: none; }
+  .gacha-result-new-tag { position: absolute; top: 8px; left: 8px; background: var(--accent2); color: #000; font-size: 9px; font-family: 'Orbitron', monospace; padding: 2px 6px; border-radius: 3px; font-weight: 700; letter-spacing: 1px; display: none; }  
+  #skipGachaAnimationBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    z-index: 10;
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -2098,6 +2176,15 @@
       <div id="squadViewerResult"></div>
     </div>
   </div>
+</div>
+
+<!-- GACHA ANIMATION OVERLAY -->
+<div class="gacha-animation-overlay" id="gachaAnimationOverlay">
+  <div class="gacha-anim-bg"></div>
+  <div class="gacha-anim-container" id="gachaAnimContainer">
+    <!-- Animated cards will be injected here -->
+  </div>
+  <button id="skipGachaAnimationBtn" onclick="skipGachaAnimation()">SKIP</button>
 </div>
 
 <!-- GACHA RESULT MODAL -->
@@ -2451,7 +2538,7 @@ const units = [
   },
   {
     id: 317, name: 'リディン・イルカイ', element: 'thunder', elementJp: '雷',
-    baseStats: { hp: 2200, atk: 140, def: 90, spd: 95 },
+    baseStats: { hp: 1300, atk: 140, def: 90, spd: 95 },
     abilityType: 'impact',
     abilities: [
       { name: 'スプレッドスパークブレス', desc: '攻撃前に40%で発動し、攻撃を90%の全体攻撃に変化させます。', triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.9 },
@@ -2461,7 +2548,7 @@ const units = [
   },
   {
     id: 319, name: 'グルディー・ヴァーナク', element: 'dark', elementJp: '闇',
-    baseStats: { hp: 3000, atk: 160, def: 120, spd: 90 },
+    baseStats: { hp: 1400, atk: 160, def: 120, spd: 90 },
     abilityType: 'magic',
     abilities: [
       { name: '威力操作', desc: 'HPが50%以上の時、被弾時に80%の確率でダメージを75%カットする。', triggerRate: 0.8, timing: 'on_defense' },
@@ -2473,7 +2560,7 @@ const units = [
   },
   {
     id: 318, name: 'アンドラス', element: 'dark', elementJp: '闇',
-    baseStats: { hp: 2500, atk: 150, def: 100, spd: 80 },
+    baseStats: { hp: 1500, atk: 150, def: 100, spd: 80 },
     abilityType: 'magic',
     abilities: [
       { name: '完全破壊', desc: '攻撃後、30%の確率で発動。さらに50%の確率で相手のHPを最大値の30%にする。', triggerRate: 0.3, timing: 'after_attack' },
@@ -2722,6 +2809,9 @@ let searchQuery = '';
 let currentSort = 'id';
 let modalCharId = null;
 let missionProgress = new Set(); // Cleared mission IDs
+let gachaAnimationTimeout;
+let currentGachaResults = null;
+
 let battleState = {};
 let battleSpeedMultiplier = 2;
 
@@ -2829,18 +2919,28 @@ function renderCards() {
 
   // Sorting
   filtered.sort((a, b) => {
-    const charA = playerState.characters[a.id];
-    const charB = playerState.characters[b.id];
-    if (!charA || !charB) return 0;
+    const isOwnedA = playerState.characters.hasOwnProperty(a.id);
+    const isOwnedB = playerState.characters.hasOwnProperty(b.id);
 
-    if (currentSort === 'power') {
-      return getPower(b, charB.level) - getPower(a, charA.level);
-    } else if (currentSort === 'level') {
-      if (charB.level !== charA.level) return charB.level - charA.level;
-      return getPower(b, charB.level) - getPower(a, charA.level); // Tie-break
-    } else {
-      return a.id - b.id;
+    // 1. Ownership primary sort: owned characters first
+    if (isOwnedA && !isOwnedB) return -1;
+    if (!isOwnedA && isOwnedB) return 1;
+
+    // 2. Secondary sort for owned characters
+    if (isOwnedA && isOwnedB) {
+      const charA = playerState.characters[a.id];
+      const charB = playerState.characters[b.id];
+
+      if (currentSort === 'power') {
+        return getPower(b, charB.level) - getPower(a, charA.level);
+      } else if (currentSort === 'level') {
+        if (charB.level !== charA.level) return charB.level - charA.level;
+        return getPower(b, charB.level) - getPower(a, charA.level); // Tie-break
+      }
     }
+
+    // Default sort (by ID) for unowned characters or when sorting by ID
+    return a.id - b.id;
   });
 
   filtered.forEach((c, idx) => {
@@ -3476,10 +3576,10 @@ async function startBattle(missionId) {
       // Enemy Level Scaling
       const level = enemyConfig.level || 1;
       
-      // Calculate Enemy Aura based on level
-      let aura = 0;
-      if (level > 20) {
-          aura = Math.min(4, Math.ceil((level - 20) / 5));
+      // Calculate Enemy Aura based on level or config
+      let aura = enemyConfig.aura || 0;
+      if (aura === 0 && level > 20) {
+          aura = Math.min(10, Math.ceil((level - 20) / 5));
       }
 
       const multiplier = 1 + (level - 1) * 0.1;
@@ -4898,6 +4998,59 @@ function closeBattle() {
   saveGame();
 }
 
+// ===== GACHA ANIMATION =====
+async function startGachaAnimation() {
+  const overlay = document.getElementById('gachaAnimationOverlay');
+  const container = document.getElementById('gachaAnimContainer');
+  const skipBtn = document.getElementById('skipGachaAnimationBtn');
+  const bg = document.querySelector('.gacha-anim-bg');
+
+  container.innerHTML = '';
+  skipBtn.style.display = 'block';
+  bg.style.display = 'block';
+  overlay.classList.add('open');
+
+  await sleep(1500); // Gate animation
+
+  bg.style.display = 'none';
+
+  for (let i = 0; i < currentGachaResults.length; i++) {
+    const res = currentGachaResults[i];
+    const item = document.createElement('div');
+    // Use the same card structure as the result modal for consistency
+    item.className = 'gacha-result-item gacha-anim-card' + (res.isNew ? ' is-new' : '');
+    item.style.animationDelay = `${i * 0.15}s`;
+    item.innerHTML = `
+      <div class="gacha-result-new-tag">NEW</div>
+      <div class="gacha-result-img"><img src="${res.char.img}" alt="${res.char.name}"></div>
+      <div class="gacha-result-name">${res.char.name}</div>
+      ${!res.isNew ? `<div class="gacha-result-info">欠片 x10</div>` : ''}
+    `;
+    container.appendChild(item);
+    await sleep(20);
+  }
+
+  const totalAnimTime = (currentGachaResults.length * 150) + 1000;
+  gachaAnimationTimeout = setTimeout(finishGachaAnimation, totalAnimTime);
+}
+
+function skipGachaAnimation() {
+  clearTimeout(gachaAnimationTimeout);
+  finishGachaAnimation();
+}
+
+function finishGachaAnimation() {
+  if (!currentGachaResults) return;
+  const overlay = document.getElementById('gachaAnimationOverlay');
+  if (overlay.classList.contains('open')) {
+      document.getElementById('gachaAnimationOverlay').classList.remove('open');
+      openGachaResultModal(currentGachaResults);
+      renderCards();
+  }
+  currentGachaResults = null;
+}
+
+
 // ===== GACHA =====
 function renderGachaPanel() {
   const container = document.getElementById('gachaContainer');
@@ -4949,10 +5102,11 @@ function performGacha(count) {
     results.push({ char: pulledChar, isNew: isNew });
   }
 
-  openGachaResultModal(results);
+  currentGachaResults = results;
+  startGachaAnimation();
+
   renderGachaPanel(); // Update button disabled state
   renderSquad(); // Update header resource
-  renderCards(); // Update roster if new char
   saveGame();
 }
 
