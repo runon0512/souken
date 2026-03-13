@@ -1530,52 +1530,45 @@
 
   /* ===== AURA EFFECTS ===== */
   .char-card.aura-1, .squad-slot.aura-1, .battle-unit.aura-1 {
-    border: 2px solid #e0e0e0 !important;
+    outline: 2px solid #e0e0e0;
     box-shadow: 0 0 15px rgba(224,224,224,0.4), inset 0 0 10px rgba(224,224,224,0.1);
   }
   .char-card.aura-2, .squad-slot.aura-2, .battle-unit.aura-2 {
-    border: 2px solid #ffd700 !important;
+    outline: 2px solid #ffd700;
     box-shadow: 0 0 20px rgba(255,215,0,0.5), inset 0 0 10px rgba(255,215,0,0.2), 0 0 30px rgba(255,215,0,0.3);
   }
   .char-card.aura-3, .squad-slot.aura-3, .battle-unit.aura-3 {
-    border: 3px solid transparent !important;
-    border-image: linear-gradient(45deg, #b9f2ff, #ffffff, #b9f2ff) 1;
+    outline: 3px solid #b9f2ff;
     box-shadow: 0 0 25px rgba(185,242,255,0.6), 0 0 50px rgba(255,255,255,0.3), inset 0 0 15px rgba(185,242,255,0.3);
   }
   .char-card.aura-4, .squad-slot.aura-4, .battle-unit.aura-4 {
-    border: 3px solid transparent !important;
-    border-image: linear-gradient(45deg, #ff4d4d, #ff8080, #ff4d4d) 1;
+    outline: 3px solid #ff4d4d;
     box-shadow: 0 0 25px rgba(255,77,77,0.7), 0 0 40px rgba(255,0,0,0.5), inset 0 0 20px rgba(255,77,77,0.4);
   }
   .char-card.aura-5, .squad-slot.aura-5, .battle-unit.aura-5 {
-    border: 3px solid transparent !important;
-    border-image: linear-gradient(45deg, #50C878, #A8FF3E, #50C878) 1;
+    outline: 3px solid #50C878;
     box-shadow: 0 0 30px rgba(80,200,120,0.7), 0 0 50px rgba(168,255,62,0.5), inset 0 0 25px rgba(80,200,120,0.4);
   }
   .char-card.aura-6, .squad-slot.aura-6, .battle-unit.aura-6 {
-    border: 3px solid transparent !important;
-    border-image: linear-gradient(45deg, #0F52BA, #4d90ff, #0F52BA) 1;
+    outline: 3px solid #0F52BA;
     box-shadow: 0 0 30px rgba(15,82,186,0.8), 0 0 60px rgba(77,144,255,0.6), inset 0 0 30px rgba(15,82,186,0.5);
   }
   .char-card.aura-7, .squad-slot.aura-7, .battle-unit.aura-7 {
-    border: 4px solid transparent !important;
-    border-image: linear-gradient(45deg, #9966CC, #b388ff, #9966CC) 1;
+    outline: 4px solid #9966CC;
     box-shadow: 0 0 35px rgba(153,102,204,0.8), 0 0 70px rgba(179,136,255,0.6), inset 0 0 35px rgba(153,102,204,0.5);
   }
   .char-card.aura-8, .squad-slot.aura-8, .battle-unit.aura-8 {
-    border: 4px solid transparent !important;
-    border-image: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet) 1;
-    animation: rainbow-border-flow 4s infinite linear;
+    outline: 4px solid red;
+    animation: rainbow-outline-flow 4s infinite linear;
     box-shadow: 0 0 40px rgba(255,255,255,0.5), inset 0 0 10px rgba(255,255,255,0.2);
   }
   .char-card.aura-9, .squad-slot.aura-9, .battle-unit.aura-9 {
-    border: 4px solid #C9ADA7 !important;
+    outline: 4px solid #C9ADA7;
     background: linear-gradient(135deg, #0d1520, #232942, #4A4E69);
     box-shadow: 0 0 50px rgba(201,173,167,0.5), inset 0 0 20px rgba(35,41,66,0.8);
   }
   .char-card.aura-10, .squad-slot.aura-10, .battle-unit.aura-10 {
-    border: 5px solid transparent !important;
-    border-image: linear-gradient(135deg, #4d004d, #1a001a, #000000, #1a001a, #4d004d) 1;
+    outline: 5px solid #4d004d;
     background: #000;
     box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1);
   }
@@ -1796,12 +1789,15 @@
   #squadViewerResult h4 { font-size: 0.8125rem; color: var(--accent); margin-bottom: 0.5rem; }
 
 
-  @keyframes rainbow-border-flow {
-    0% { border-image-source: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet); }
-    25% { border-image-source: linear-gradient(45deg, violet, red, orange, yellow, green, blue, indigo); }
-    50% { border-image-source: linear-gradient(45deg, indigo, violet, red, orange, yellow, green, blue); }
-    75% { border-image-source: linear-gradient(45deg, blue, indigo, violet, red, orange, yellow, green); }
-    100% { border-image-source: linear-gradient(45deg, green, blue, indigo, violet, red, orange, yellow); }
+  @keyframes rainbow-outline-flow {
+    0% { outline-color: red; }
+    14% { outline-color: orange; }
+    28% { outline-color: yellow; }
+    42% { outline-color: green; }
+    57% { outline-color: blue; }
+    71% { outline-color: indigo; }
+    85% { outline-color: violet; }
+    100% { outline-color: red; }
   }
   @keyframes rainbow-text-flow {
     0% { background-position: 0% 50%; }
@@ -2264,7 +2260,7 @@
 const units = [
   {
     id: 1, name: 'ドラ・クラヴェール', element: 'fire', elementJp: '炎', type: 'ルディ王国',
-    baseStats: { hp: 950, atk: 98, def: 72, spd: 85 },
+    baseStats: { hp: 1150, atk: 98, def: 72, spd: 85 },
     abilityType: 'slash',
     abilities: [ // type: slash, magic, shoot, heal, impact
       { name: 'レーヴァティン', desc: '30%の確率で発動。敵に攻撃力の200%のダメージを与え、3ターンの燃焼を付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 3 } },
@@ -2275,7 +2271,7 @@ const units = [
   },
   {
     id: 2, name: 'ノア・ルナリス', element: 'light', elementJp: '光', type: 'ルディ王国',
-    baseStats: { hp: 850, atk: 90, def: 80, spd: 75 },
+    baseStats: { hp: 1250, atk: 90, def: 80, spd: 75 },
     abilityType: 'magic',
     abilities: [
       { name: 'クリスタル・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の60%のダメージを与える。', triggerRate: 0.4, timing: 'after_attack' },
@@ -2287,7 +2283,7 @@ const units = [
   },
   {
     id: 4, name: 'いえみけ', element: 'water', elementJp: '水', type: 'ルディ王国',
-    baseStats: { hp: 1200, atk: 65, def: 110, spd: 50 },
+    baseStats: { hp: 1300, atk: 65, def: 110, spd: 50 },
     abilityType: 'slash',
     abilities: [
       { name: '激流一閃', desc: '30%の確率で発動。被弾時、受けたダメージの100%を相手に返す。', triggerRate: 0.3, timing: 'on_hit' },
@@ -2298,7 +2294,7 @@ const units = [
   },
   {
     id: 5, name: 'ライ・アルバロ', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 980, atk: 82, def: 65, spd: 95 },
+    baseStats: { hp: 1180, atk: 82, def: 65, spd: 95 },
     abilityType: 'slash',
     abilities: [
       { name: '雷撃斬', desc: '攻撃後、20%の確率で発動。攻撃力の50%のダメージで追撃する。', triggerRate: 0.2, timing: 'after_attack' },
@@ -2603,6 +2599,26 @@ const units = [
     ],
     useImg: true, img: 'C21.svg'
   },
+  {
+    id: 22, name: 'キャル・エクレア', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
+    baseStats: { hp: 1350, atk: 105, def: 80, spd: 88 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '多重障壁', desc: '戦闘開始時、味方全員に2ターンの「障壁(防御+50%)」を付与する。', triggerRate: 1.0, timing: 'on_battle_start' },
+      { name: '多重詠唱', desc: '攻撃後、確率(60%→40%→20%)で威力70%の追撃を行う。', timing: 'after_attack' }
+    ],
+    useImg: true, img: 'C26.svg'
+  },
+  {
+    id: 23, name: 'シャム・グレゴリオ', element: 'dark', elementJp: '闇', type: 'ルディ王国',
+    baseStats: { hp: 1300, atk: 100, def: 65, spd: 60 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '圧縮の札', desc: '30%の確率で発動。攻撃時の属性相性を有利として計算する。', triggerRate: 0.3, timing: 'before_attack' },
+      { name: '監魂葬災', desc: '死亡時、敵全体に衰弱・燃焼・毒・呪いを2ターン付与し、HP1で復活する。' }
+    ],
+    useImg: true, img: 'C27.svg'
+  },
 ];
 
 // Equipment Data
@@ -2867,6 +2883,23 @@ const eventChapters = [
         firstTimeReward: 1200
       }
     ]
+  },
+  {
+    name: 'イベント：厭悪',
+    missions: [
+      {
+        id: 904,
+        name: '厭悪',
+        description: '王国の暗部に触れる戦い。',
+        enemies: [
+          { id: 22, level: 65, aiType: AI_TYPES.HIGHEST_ATK }, // Cal
+          { id: 23, level: 65, aiType: AI_TYPES.RANDOM }      // Sham
+        ],
+        recommendedPower: 30000,
+        reward: 900,
+        firstTimeReward: 1800
+      }
+    ]
   }
 ];
 
@@ -2894,6 +2927,8 @@ const STATUS_EFFECTS = {
   weakness: { icon: '📉', name: '衰弱' },
   strengthen: { icon: '💪', name: '強化' },
   sleep: { icon: '💤', name: '睡眠' },
+  barrier: { icon: '🛡️', name: '障壁' },
+  curse: { icon: '🤐', name: '呪い' },
 };
 
 const AURA_DATA = [
@@ -3947,6 +3982,29 @@ async function checkDeathAbilities(unit) {
       return true;
   }
 
+  // Sham (ID: 23) Passive: 監魂葬災
+  if (unit.id === 23 && !unit.passiveUsed) {
+      unit.passiveUsed = true;
+      await showCutIn(unit, '監魂葬災');
+      unit.currentHp = 1;
+      logBattleMessage(`${unit.name}の呪いが戦場を覆う...`);
+      updateUnitUI(unit);
+      if (unitEl) {
+          unitEl.classList.remove('defeated');
+          playEffect(unitEl, 'dark');
+      }
+      const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+      for (const e of enemies) {
+          if (e.currentHp > 0) {
+              await addStatusEffect(e, 'weakness', 2);
+              await addStatusEffect(e, 'burn', 2);
+              await addStatusEffect(e, 'poison', 2);
+              await addStatusEffect(e, 'curse', 2);
+          }
+      }
+      return true;
+  }
+
   return false;
 }
 
@@ -4101,11 +4159,16 @@ async function runBattleSequence() {
         // 1. Check for 'before_attack' ability
         let activeAbility = null;
         if (attacker.abilities) {
+          // 呪い状態ならスキル発動不可
+          if (attacker.statusEffects.some(e => e.type === 'curse')) {
+             // スキル発動なし
+          } else {
           for (const ab of attacker.abilities) {
             if (ab.timing === 'before_attack' && Math.random() < (ab.triggerRate || 0)) {
               activeAbility = ab;
               break; // 1ターンに1つの攻撃スキルのみ発動と仮定
             }
+          }
           }
         }
 
@@ -4125,6 +4188,8 @@ async function runBattleSequence() {
                 
                 // Simplified defense check for AoE
                 if (aoeTarget.abilities && actualDamage > 0) {
+                    // 呪い状態なら防御スキルも発動しない
+                    if (!aoeTarget.statusEffects.some(e => e.type === 'curse')) {
                     for (const ab of aoeTarget.abilities) {
                         if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
                             if (aoeTarget.id === 6) { // Den Alvaro
@@ -4136,6 +4201,7 @@ async function runBattleSequence() {
                                 await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
                             }
                         }
+                    }
                     }
                 }
 
@@ -4254,6 +4320,8 @@ async function runBattleSequence() {
         
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0) {
+            // 呪い状態なら防御スキル発動不可
+            if (!target.statusEffects.some(e => e.type === 'curse')) {
             for (const ab of target.abilities) {
                 if (ab.timing === 'on_defense') {
                     let currentTriggerRate = ab.triggerRate || 0;
@@ -4305,9 +4373,12 @@ async function runBattleSequence() {
                     }
                 }
             }
+            }
         }
         
         // ミリア・ルティス (ID: 14) Passive: 耐え抜く能力
+        // パッシブなので呪いの影響を受けるか微妙だが、スキル枠なので受けると判定
+        if (!target.statusEffects.some(e => e.type === 'curse')) {
         if (target.id === 14 && actualDamage >= target.currentHp) {
             if (target.endureCount === undefined) target.endureCount = 0;
             if (target.endureCount < 5) {
@@ -4320,6 +4391,7 @@ async function runBattleSequence() {
                     playEffect(targetEl, 'guard-vertical');
                 }
             }
+        }
         }
 
         // Equipment: Evasion
@@ -4352,7 +4424,7 @@ async function runBattleSequence() {
       
         // Landia (ID: 16) Passive: 無能力の意地
         const landiaPassive = target.abilities.find(ab => ab.timing === 'on_skill_defense');
-        if (activeAbility && target.id === 16 && landiaPassive) {
+        if (activeAbility && target.id === 16 && landiaPassive && !target.statusEffects.some(e => e.type === 'curse')) {
             actualDamage = Math.floor(actualDamage * 0.5);
             logBattleMessage(`${target.name}は<span class="ability">${landiaPassive.name}</span>でダメージを50%ブロックした！`);
             playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
@@ -4360,6 +4432,8 @@ async function runBattleSequence() {
 
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0) {
+        // 呪いチェック
+        if (!target.statusEffects.some(e => e.type === 'curse')) {
         for (const ab of target.abilities) {
           if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
              await showCutIn(target, ab.name);
@@ -4378,12 +4452,13 @@ async function runBattleSequence() {
              playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
           }
         }
+        }
       }
 
         target.currentHp = Math.max(0, target.currentHp - actualDamage);
 
         // Ricardo (ID: 8) Earth Residue Flow
-        if (target.id === 8 && target.currentHp === 0 && !target.gutsUsed) {
+        if (target.id === 8 && target.currentHp === 0 && !target.gutsUsed && !target.statusEffects.some(e => e.type === 'curse')) {
             target.gutsUsed = true;
             updateUnitUI(target); // Show 0 HP
             await sleep(400 / battleSpeedMultiplier);
@@ -4488,6 +4563,7 @@ async function runBattleSequence() {
 
         // Counter Attack (on_hit)
       if (target.currentHp > 0 && actualDamage > 0 && target.abilities) {
+        if (!target.statusEffects.some(e => e.type === 'curse')) {
         for (const ab of target.abilities) {
           if (ab.timing === 'on_hit' && Math.random() < (ab.triggerRate || 0)) {
              await showCutIn(target, ab.name);
@@ -4518,12 +4594,15 @@ async function runBattleSequence() {
              await sleep(600 / battleSpeedMultiplier);
           }
         }
+        }
       }
 
         await sleep(600 / battleSpeedMultiplier);
 
         // 3. Check for 'after_attack' ability (追撃)
         if (target.currentHp > 0 && attacker.currentHp > 0 && attacker.abilities) {
+          // 呪いなら追撃不可
+          if (!attacker.statusEffects.some(e => e.type === 'curse')) {
           let chaseAbility = null;
           // ライ・アルバロ (ID:5) の特殊処理
           if (attacker.id === 5) {
@@ -4546,6 +4625,8 @@ async function runBattleSequence() {
             if (Math.random() < 0.6) { // 嵐呼ぶ剣戟
               chaseAbility = attacker.abilities[1];
             }
+          } else if (attacker.id === 22) { // キャル・エクレア
+             chaseAbility = attacker.abilities[1]; // 多重詠唱
           } else {
             // 汎用処理
             for (const ab of attacker.abilities) {
@@ -4607,6 +4688,25 @@ async function runBattleSequence() {
                   setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
                   await sleep(400 / battleSpeedMultiplier);
                   if (Math.random() > 0.5) break; // 50% chance to continue
+              }
+            } else if (attacker.id === 22 && chaseAbility.name === '多重詠唱') { // キャル: 多重詠唱
+              // 1回目:60%, 2回目:40%, 3回目:20%, 4回目:0%
+              const castProbs = [0.6, 0.4, 0.2];
+              for (let i = 0; i < 3; i++) {
+                  if (Math.random() > castProbs[i]) break;
+                  if (target.currentHp <= 0) break;
+                  if (i === 0) await showCutIn(attacker, chaseAbility.name);
+                  
+                  const chaseDamage = Math.floor(calculateDamage(attacker, target) * 0.7);
+                  target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+                  
+                  playEffect(targetEl, 'magic');
+                  logBattleMessage(`<span class="ability">多重詠唱 ${i+1}回目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
+                  updateUnitUI(target);
+                  showDamageNumber(targetEl, chaseDamage);
+                  targetEl.classList.add('is-taking-damage');
+                  setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+                  await sleep(400 / battleSpeedMultiplier);
               }
             } else if (attacker.id === 19 && chaseAbility.name === '情報操作') { // Soln
               await showCutIn(attacker, chaseAbility.name);
@@ -4670,6 +4770,7 @@ async function runBattleSequence() {
               setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
               await sleep(600 / battleSpeedMultiplier);
             }
+          }
           }
         }
 
@@ -4915,6 +5016,10 @@ function getBattleStats(unit) {
     s.def = Math.floor(s.def * 1.2);
     s.spd = Math.floor(s.spd * 1.2);
   }
+  // ステータス効果: 障壁 (防御50%アップ)
+  if (unit.statusEffects.some(e => e.type === 'barrier')) {
+    s.def = Math.floor(s.def * 1.5);
+  }
   
   return s;
 }
@@ -4941,7 +5046,7 @@ function calculateDamage(attacker, defender) {
   const advantage = getElementalMultiplier(attacker.element, defender.element);
   
   // 圧縮の札 (ID: 13)
-  if (attacker.isAdvantageForced) { // Gira (13) or Landia (16)
+  if (attacker.isAdvantageForced) { // Gira (13), Sham (23), or Landia (16)
       return Math.floor((atkStats.atk * atkStats.atk) / Math.max(1, defStats.def) * 1.5);
   }
 
@@ -5098,6 +5203,20 @@ async function triggerOnBattleStartAbilities() {
                     playEffect(tEl, 'heal'); // バフエフェクトとしてhealを代用
                 }
                 logBattleMessage(`${skillName}！味方の${targetElement === 'thunder' ? '雷' : '闇'}属性ユニットが強化された！`);
+            }
+        }
+        else if (unit.id === 22) { // キャル・エクレア「多重障壁」
+            // 味方全員
+            const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+            const targets = allies.filter(u => u.currentHp > 0);
+            
+            if (targets.length > 0) {
+                for (const t of targets) {
+                    await addStatusEffect(t, 'barrier', 2);
+                    const tEl = document.getElementById(`unit-${t.battleId}`);
+                    playEffect(tEl, 'guard-vertical');
+                }
+                logBattleMessage(`${ab.name}！味方全員に強固な障壁が展開された！`);
             }
         }
         
