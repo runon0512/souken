@@ -33,12 +33,32 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html {
+    background: #000;
+    width: 100%; height: 100%; overflow: hidden;
+    /* ゲーム画面幅の約 0.9% を 1rem とする基準サイズ設定 */
+    /* 1920pxのとき約17.4px、スマホ横画面800pxのとき約7.2px */
+    font-size: calc(min(100vw, 177.78vh) / 110);
+  }
+
   body {
     background: var(--bg-deep);
     color: var(--text-main);
     font-family: 'Noto Sans JP', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
+    
+    /* 16:9 のアスペクト比で画面中央に固定 */
+    width: 100vw;
+    height: 56.25vw; /* 100 * 9/16 */
+    max-width: 177.78vh; /* 100 * 16/9 */
+    max-height: 100vh;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 2rem rgba(0,0,0,0.5);
   }
 
   body::before {
@@ -67,14 +87,14 @@
 
   /* ===== HEADER ===== */
   header {
-    position: sticky;
-    top: 0;
+    position: relative;
+    flex-shrink: 0;
     z-index: 100;
     background: rgba(6,10,15,0.92);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-bright);
     padding: 0 24px;
-    height: 64px;
+    height: 4rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -89,10 +109,10 @@
   .logo {
     font-family: 'Orbitron', monospace;
     font-weight: 900;
-    font-size: 20px;
-    letter-spacing: 4px;
+    font-size: 1rem; /* mobileでは16px, desktopでは20pxでした。1rem = 16px相当のベース */
+    letter-spacing: 0.25rem;
     color: var(--accent);
-    text-shadow: 0 0 20px rgba(0,200,255,0.6);
+    text-shadow: 0 0 1.25rem rgba(0,200,255,0.6);
   }
 
   .logo span {
@@ -101,21 +121,21 @@
 
   .header-divider {
     width: 1px;
-    height: 28px;
+    height: 1.75rem;
     background: var(--border-bright);
   }
 
   .header-subtitle {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
+    font-size: 0.625rem;
+    letter-spacing: 0.1875rem;
     color: var(--text-dim);
     text-transform: uppercase;
   }
 
   .header-stats {
     display: flex;
-    gap: 24px;
+    gap: 0.75rem; /* 12pxでした */
     align-items: center;
   }
 
@@ -124,8 +144,8 @@
   }
 
   .hstat-label {
-    font-size: 9px;
-    letter-spacing: 2px;
+    font-size: 0.5625rem;
+    letter-spacing: 0.125rem;
     color: var(--text-dim);
     text-transform: uppercase;
     font-family: 'Orbitron', monospace;
@@ -133,7 +153,7 @@
 
   .hstat-val {
     font-family: 'Orbitron', monospace;
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--accent);
   }
@@ -141,8 +161,8 @@
   .resource-display {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-right: 24px;
+    gap: 0.5rem;
+    margin-right: 1.5rem;
   }
 
   /* ===== MAIN LAYOUT ===== */
@@ -150,18 +170,19 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: 280px 1fr;
-    min-height: calc(100vh - 64px);
+    /* サイドバー幅を画面比率で決定 (18rem ≈ 画面幅の16%) */
+    grid-template-columns: 18rem 1fr;
+    flex: 1;
+    min-height: 0; /* Flexアイテム内でのスクロールに必須 */
+    overflow: hidden;
   }
 
   /* ===== SIDEBAR ===== */
   aside {
     border-right: 1px solid var(--border);
-    padding: 24px 16px;
+    padding: 1.5rem 1rem;
     background: rgba(13,21,32,0.6);
-    position: sticky;
-    top: 64px;
-    height: calc(100vh - 64px);
+    height: 100%;
     overflow-y: auto;
   }
 
@@ -171,37 +192,37 @@
 
   .section-title {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
+    font-size: 0.625rem;
+    letter-spacing: 0.1875rem;
     color: var(--text-dim);
     text-transform: uppercase;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border);
   }
 
   .section-title button {
     background: transparent; border: 1px solid var(--border); color: var(--text-dim);
-    font-size: 10px; padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+    font-size: 0.625rem; padding: 0.125rem 0.5rem; border-radius: 0.25rem; cursor: pointer; transition: all 0.2s;
   }
   .section-title button:hover { color: var(--accent); border-color: var(--accent); }
 
 
   /* SQUAD SLOTS */
-  .squad-section { margin-bottom: 28px; }
+  .squad-section { margin-bottom: 1.75rem; }
 
   .squad-slot {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin-bottom: 6px;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    margin-bottom: 0.375rem;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 0.375rem;
     background: rgba(255,255,255,0.02);
     cursor: pointer;
     transition: all 0.2s;
-    min-height: 52px;
+    min-height: 3.25rem;
     position: relative;
     overflow: hidden;
   }
@@ -226,16 +247,16 @@
 
   .slot-num {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--text-dim);
-    width: 16px;
+    width: 1rem;
     flex-shrink: 0;
   }
 
   .slot-img-wrap {
-    width: 32px;
-    height: 40px;
-    border-radius: 3px;
+    width: 2rem;
+    height: 2.5rem;
+    border-radius: 0.1875rem;
     overflow: hidden;
     background: rgba(0,200,255,0.05);
     border: 1px solid var(--border);
@@ -246,17 +267,17 @@
   }
 
   .squad-equip-icon {
-    width: 24px;
-    height: 24px;
+    width: 1.5rem;
+    height: 1.5rem;
     background: rgba(0,0,0,0.5);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 0.875rem;
     margin-left: auto;
-    margin-right: 8px;
+    margin-right: 0.5rem;
   }
 
   .slot-img-wrap img {
@@ -266,14 +287,14 @@
   }
 
   .slot-img-empty {
-    font-size: 16px;
+    font-size: 1rem;
     color: var(--text-dim);
   }
 
   .slot-info { flex: 1; min-width: 0; }
 
   .slot-name {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--text-main);
     white-space: nowrap;
@@ -282,57 +303,57 @@
   }
 
   .slot-role {
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--text-dim);
     margin-top: 1px;
   }
 
   .slot-power {
     font-family: 'Orbitron', monospace;
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--accent);
   }
 
   .squad-power-total {
-    padding: 12px;
+    padding: 0.75rem;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 0.375rem;
     background: rgba(0,200,255,0.03);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 8px;
+    margin-top: 0.5rem;
   }
 
   .squad-power-label {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
-    letter-spacing: 2px;
+    font-size: 0.5625rem;
+    letter-spacing: 0.125rem;
     color: var(--text-dim);
   }
 
   .squad-power-val {
     font-family: 'Orbitron', monospace;
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: 700;
     color: var(--accent);
-    text-shadow: 0 0 12px rgba(0,200,255,0.5);
+    text-shadow: 0 0 0.75rem rgba(0,200,255,0.5);
   }
 
   /* FILTER */
-  .filter-section { margin-bottom: 24px; }
+  .filter-section { margin-bottom: 1.5rem; }
 
   .filter-btn {
     display: block;
     width: 100%;
-    padding: 8px 12px;
-    margin-bottom: 4px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.25rem;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     background: transparent;
     color: var(--text-mid);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 12px;
+    font-size: 0.75rem;
     cursor: pointer;
     text-align: left;
     transition: all 0.2s;
@@ -348,7 +369,7 @@
   .filter-btn .count {
     float: right;
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--text-dim);
   }
 
@@ -356,8 +377,9 @@
 
   /* ===== ROSTER PANEL ===== */
   .roster-panel {
-    padding: 24px;
+    padding: 1.5rem;
     overflow-y: auto;
+    height: 100%;
   }
 
   .roster-panel::-webkit-scrollbar { width: 6px; }
@@ -369,32 +391,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
-    gap: 16px;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
   }
 
   .roster-title {
     font-family: 'Orbitron', monospace;
-    font-size: 13px;
-    letter-spacing: 3px;
+    font-size: 0.8125rem;
+    letter-spacing: 0.1875rem;
     color: var(--text-main);
   }
 
   .search-bar {
     flex: 1;
-    max-width: 240px;
+    max-width: 15rem;
     position: relative;
   }
 
   .search-bar input {
     width: 100%;
-    padding: 8px 12px 8px 32px;
+    padding: 0.5rem 0.75rem 0.5rem 2rem;
     background: rgba(255,255,255,0.04);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     color: var(--text-main);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 12px;
+    font-size: 0.75rem;
     outline: none;
     transition: border-color 0.2s;
   }
@@ -405,22 +427,22 @@
   .search-bar::before {
     content: '⌕';
     position: absolute;
-    left: 10px;
+    left: 0.625rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: 0.875rem;
     pointer-events: none;
   }
 
   .sort-select {
     background: rgba(255,255,255,0.04);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     color: var(--text-main);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 12px;
-    padding: 6px 12px;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
     outline: none;
     cursor: pointer;
   }
@@ -430,14 +452,14 @@
   /* ===== CHARACTER CARDS ===== */
   .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 1rem;
   }
 
   .char-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 0.625rem;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.25s;
@@ -448,7 +470,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 10px;
+    border-radius: 0.625rem;
     opacity: 0;
     transition: opacity 0.25s;
     background: linear-gradient(135deg, rgba(0,200,255,0.08), transparent);
@@ -457,28 +479,28 @@
 
   .char-card:hover {
     border-color: var(--border-bright);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0,200,255,0.15);
+    transform: translateY(-0.1875rem);
+    box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.4), 0 0 1.25rem rgba(0,200,255,0.15);
   }
 
   .char-card:hover::before { opacity: 1; }
 
   .char-card.in-squad {
     border-color: rgba(0,200,255,0.45);
-    box-shadow: 0 0 16px rgba(0,200,255,0.15);
+    box-shadow: 0 0 1rem rgba(0,200,255,0.15);
   }
 
   .char-card.in-squad::after {
     content: '✓ 編成中';
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 0.5rem;
+    right: 0.5rem;
     background: var(--accent);
     color: #000;
-    font-size: 9px;
+    font-size: 0.5625rem;
     font-family: 'Orbitron', monospace;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.1875rem;
     font-weight: 700;
     letter-spacing: 1px;
 }
@@ -505,14 +527,14 @@
 .char-card.not-owned::after {
     content: '未所有';
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 0.5rem;
+    right: 0.5rem;
     background: var(--accent);
     color: #000;
-    font-size: 9px;
+    font-size: 0.5625rem;
     font-family: 'Orbitron', monospace;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.1875rem;
     font-weight: 700;
     letter-spacing: 1px;
   }
@@ -535,7 +557,7 @@
 
   .card-img-placeholder {
     width: 100%;
-    height: 160px;
+    height: 10rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -553,22 +575,22 @@
   .char-silhouette {
     position: relative;
     z-index: 1;
-    font-size: 72px;
-    filter: drop-shadow(0 0 16px rgba(0,200,255,0.4));
+    font-size: 4.5rem;
+    filter: drop-shadow(0 0 1rem rgba(0,200,255,0.4));
   }
 
   .card-elem-badge {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 28px;
-    height: 28px;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Orbitron', monospace;
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 900;
     border: 2px solid currentColor;
     z-index: 2;
@@ -583,41 +605,47 @@
 
   /* CARD BODY */
   .card-body {
-    padding: 10px;
+    padding: 0.625rem; /* 10px */
   }
 
   .card-name {
     font-weight: 700;
-    font-size: 13px;
+    font-size: 0.8125rem; /* 13px */
     color: var(--text-main);
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 2px;
+    margin-bottom: 0.125rem; /* 2px */
+  }
+  .card-name span:last-child {
+    /* Level display */
+    font-size: 0.625rem;
+    color: var(--accent);
+    font-weight: normal;
   }
 
   .card-role-tag {
     display: inline-block;
-    font-size: 8px;
-    padding: 1px 5px;
-    border-radius: 3px;
+    font-size: 0.5rem;
+    padding: 0.0625rem 0.3125rem;
+    border-radius: 0.1875rem;
     font-family: 'Orbitron', monospace;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
+    letter-spacing: 0.0625rem;
+    margin-bottom: 0.5rem;
   }
   /* STAT BARS */
   .card-type-tag {
     display: inline-block;
-    font-size: 8px;
-    padding: 1px 5px;
-    border-radius: 3px;
+    font-size: 0.5rem;
+    padding: 0.0625rem 0.3125rem;
+    border-radius: 0.1875rem;
     font-family: 'Orbitron', monospace;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    margin-left: 4px;
+    letter-spacing: 0.0625rem;
+    margin-bottom: 0.5rem;
+    margin-left: 0.25rem;
     background: rgba(255,255,255,0.1);
     color: var(--text-mid);
     border: 1px solid var(--border);
   }
-  .stat-bars { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .stat-bars { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem; }
 
   .stat-row {
     display: flex;
@@ -626,16 +654,16 @@
   }
 
   .stat-label {
-    font-size: 9px;
+    font-size: 0.5625rem;
     color: var(--text-dim);
-    width: 20px;
+    width: 1.25rem;
     flex-shrink: 0;
     font-family: 'Orbitron', monospace;
   }
 
   .stat-bar-bg {
     flex: 1;
-    height: 4px;
+    height: 0.25rem;
     background: rgba(255,255,255,0.06);
     border-radius: 2px;
     overflow: hidden;
@@ -654,9 +682,9 @@
 
   .stat-val {
     font-family: 'Orbitron', monospace;
-    font-size: 8px;
+    font-size: 0.5rem;
     color: var(--text-mid);
-    width: 24px;
+    width: 1.5rem;
     text-align: right;
     flex-shrink: 0;
   }
@@ -666,45 +694,45 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 8px;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--border);
   }
 
   .potential-label {
-    font-size: 9px;
+    font-size: 0.5625rem;
     color: var(--text-dim);
     font-family: 'Orbitron', monospace;
-    letter-spacing: 1px;
+    letter-spacing: 0.0625rem;
   }
 
   .potential-stars {
     display: flex;
-    gap: 2px;
+    gap: 0.125rem;
   }
 
   .star {
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--text-dim);
     transition: color 0.2s;
   }
 
-  .star.lit { color: var(--gold); text-shadow: 0 0 6px rgba(255,215,0,0.6); }
+  .star.lit { color: var(--gold); text-shadow: 0 0 0.375rem rgba(255,215,0,0.6); }
 
   /* CARD ABILITY */
   .card-ability {
-    margin-top: 8px;
-    padding: 6px 8px;
+    margin-top: 0.5rem;
+    padding: 0.375rem 0.5rem;
     background: rgba(0,0,0,0.3);
     border-radius: 4px;
     border-left: 2px solid var(--accent);
-    font-size: 9px;
+    font-size: 0.5625rem;
     color: var(--text-mid);
     line-height: 1.4;
   }
 
   .ability-name {
     color: var(--accent);
-    font-size: 9px;
+    font-size: 0.5625rem;
     font-weight: 700;
     margin-bottom: 2px;
   }
@@ -712,14 +740,14 @@
   /* ADD / REMOVE BTN */
   .card-action-btn {
     width: 100%;
-    margin-top: 8px;
-    padding: 7px;
-    border-radius: 5px;
+    margin-top: 0.5rem;
+    padding: 0.4375rem;
+    border-radius: 0.3125rem;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-dim);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 11px;
+    font-size: 0.6875rem;
     cursor: pointer;
     transition: all 0.2s;
     letter-spacing: 1px;
@@ -751,7 +779,7 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.85);
     backdrop-filter: blur(4px);
     z-index: 260;
     display: flex;
@@ -770,13 +798,13 @@
   .modal {
     background: var(--bg-mid);
     border: 1px solid var(--border-bright);
-    border-radius: 12px;
-    width: 480px;
+    border-radius: 0.75rem;
+    width: 30rem;
     max-width: 95vw;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 0 60px rgba(0,200,255,0.15), 0 32px 80px rgba(0,0,0,0.8);
-    transform: translateY(16px);
+    box-shadow: 0 0 3.75rem rgba(0,200,255,0.15), 0 2rem 5rem rgba(0,0,0,0.8);
+    transform: translateY(1rem);
     transition: transform 0.2s;
   }
 
@@ -786,7 +814,7 @@
   .modal::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 
   .modal-header {
-    padding: 20px 20px 16px;
+    padding: 1.25rem 1.25rem 1rem;
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
@@ -794,14 +822,14 @@
   }
 
   .modal-title {
-    font-size: 20px;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-main);
   }
 
   .modal-subtitle {
     font-family: 'Orbitron', monospace;
-    font-size: 11px;
+    font-size: 0.6875rem;
     margin-top: 4px;
   }
 
@@ -809,7 +837,7 @@
     background: none;
     border: 1px solid var(--border);
     color: var(--text-dim);
-    font-size: 18px;
+    font-size: 1.125rem;
     width: 32px;
     height: 32px;
     border-radius: 4px;
@@ -825,58 +853,58 @@
 
   .modal-img {
     width: 100%;
-    max-width: 200px;
+    max-width: 12.5rem;
     margin: 0 auto;
     display: block;
-    padding: 16px;
+    padding: 1rem;
   }
 
   .modal-img img {
     width: 100%;
     height: auto;
-    filter: drop-shadow(0 0 20px rgba(0,200,255,0.3));
+    filter: drop-shadow(0 0 1.25rem rgba(0,200,255,0.3));
   }
 
-  .modal-body { padding: 16px 20px 20px; }
+  .modal-body { padding: 1rem 1.25rem 1.25rem; }
 
-  .modal-section { margin-bottom: 18px; }
+  .modal-section { margin-bottom: 1.125rem; }
 
   .modal-section-title {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
-    letter-spacing: 3px;
+    font-size: 0.5625rem;
+    letter-spacing: 0.1875rem;
     color: var(--text-dim);
     text-transform: uppercase;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
+    margin-bottom: 0.625rem;
+    padding-bottom: 0.375rem;
     border-bottom: 1px solid var(--border);
   }
 
   .modal-stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 0.5rem;
   }
 
   .mstat {
-    padding: 10px;
+    padding: 0.625rem;
     background: rgba(0,0,0,0.2);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 0.375rem;
   }
 
   .mstat-label {
-    font-size: 9px;
+    font-size: 0.5625rem;
     color: var(--text-dim);
     font-family: 'Orbitron', monospace;
-    letter-spacing: 1px;
+    letter-spacing: 0.0625rem;
     display: block;
     margin-bottom: 4px;
   }
 
   .mstat-val {
     font-family: 'Orbitron', monospace;
-    font-size: 20px;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--accent);
   }
@@ -884,42 +912,42 @@
   .modal-abilities { display: flex; flex-direction: column; gap: 8px; }
 
   .ability-card {
-    padding: 10px 12px;
+    padding: 0.625rem 0.75rem;
     background: rgba(0,0,0,0.2);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 0.375rem;
   }
 
   .ability-card-name {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--accent);
     margin-bottom: 4px;
   }
 
   .ability-card-desc {
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--text-mid);
     line-height: 1.5;
   }
 
   .ability-card-details {
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--text-dim);
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--border);
     line-height: 1.4;
   }
 
   .modal-footer {
-    padding: 0 20px 20px;
+    padding: 0 1.25rem 1.25rem;
   }
 
   .modal-add-btn {
     width: 100%;
-    padding: 12px;
-    border-radius: 6px;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
     border: 1px solid var(--accent);
     background: rgba(0,200,255,0.1);
     color: var(--accent);
@@ -946,31 +974,31 @@
     box-shadow: var(--glow-accent2);
   }
 
-  .mission-chapter { margin-bottom: 24px; }
+  .mission-chapter { margin-bottom: 1.5rem; }
   .mission-chapter-title {
-    font-size: 14px; font-weight: 700; color: var(--accent3);
-    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    font-size: 0.875rem; font-weight: 700; color: var(--accent3);
+    margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
   }
 
   /* ===== MISSION & BATTLE ===== */
-  .mission-panel { padding: 24px; }
+  .mission-panel { padding: 1.5rem; }
   .mission-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(18.75rem, 1fr));
+    gap: 1rem;
   }
   .mission-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
+    border-radius: 0.5rem;
+    padding: 1rem;
     transition: all 0.2s;
   }
   .mission-card:hover { border-color: var(--border-bright); background: var(--bg-card-hover); }
   .mission-title { font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
   .mission-title .cleared-check { color: var(--accent3); margin-right: 6px; }
-  .mission-desc { font-size: 11px; color: var(--text-mid); margin-bottom: 12px; line-height: 1.5; }
-  .mission-info { display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; color: var(--text-dim); margin-bottom: 12px; }
+  .mission-desc { font-size: 0.6875rem; color: var(--text-mid); margin-bottom: 0.75rem; line-height: 1.5; }
+  .mission-info { display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.625rem; color: var(--text-dim); margin-bottom: 0.75rem; }
   .mission-reward-info { text-align: right; }
   .mission-reward-info .first-clear { color: var(--gold); font-weight: bold; }
 
@@ -981,8 +1009,8 @@
   }
   .mission-btn {
     width: 100%;
-    padding: 8px;
-    border-radius: 4px;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
     border: 1px solid var(--accent);
     background: rgba(0,200,255,0.1);
     color: var(--accent);
@@ -999,15 +1027,15 @@
   .equip-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 8px;
-    max-height: 400px;
+    gap: 0.5rem;
+    max-height: 25rem;
     overflow-y: auto;
   }
   .equip-item {
     background: rgba(0,0,0,0.3);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -1030,30 +1058,30 @@
   .equip-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0.5rem;
     transition: all 0.2s;
   }
   .equip-card:hover {
     border-color: var(--accent);
     background: var(--bg-card-hover);
-    transform: translateY(-2px);
+    transform: translateY(-0.125rem);
   }
   .equip-card-header {
     display: flex;
-    gap: 10px;
+    gap: 0.625rem;
     align-items: center;
     margin-bottom: 4px;
   }
   .equip-card-icon {
-    font-size: 20px;
-    width: 40px;
-    height: 40px;
+    font-size: 1.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     background: rgba(0,0,0,0.3);
-    border-radius: 6px;
+    border-radius: 0.375rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1061,8 +1089,8 @@
     flex-shrink: 0;
   }
   .equip-card-info { flex: 1; min-width: 0; }
-  .equip-card-name { font-weight: 700; color: var(--text-main); font-size: 13px; margin-bottom: 2px; }
-  .equip-card-desc { font-size: 10px; color: var(--text-mid); line-height: 1.4; }
+  .equip-card-name { font-weight: 700; color: var(--text-main); font-size: 0.8125rem; margin-bottom: 2px; }
+  .equip-card-desc { font-size: 0.625rem; color: var(--text-mid); line-height: 1.4; }
   .equip-card-owner {
     margin-top: auto;
     padding-top: 8px;
@@ -1077,25 +1105,25 @@
   .equip-item.equipped { border-color: var(--gold); background: rgba(255,215,0,0.1); }
   
   .equip-icon-box {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
     background: rgba(0,0,0,0.5);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 1.25rem;
     flex-shrink: 0;
   }
   .equip-info { flex: 1; min-width: 0; }
-  .equip-name { font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
-  .equip-desc { font-size: 10px; color: var(--text-mid); line-height: 1.2; }
-  .equip-status { font-size: 9px; color: var(--gold); font-family: 'Orbitron', monospace; white-space: nowrap; }
+  .equip-name { font-size: 0.75rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
+  .equip-desc { font-size: 0.625rem; color: var(--text-mid); line-height: 1.2; }
+  .equip-status { font-size: 0.5625rem; color: var(--gold); font-family: 'Orbitron', monospace; white-space: nowrap; }
   .equip-status.other { color: var(--accent2); }
   
   .current-equip-display {
-    margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.375rem; background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;
   }
 
   .battle-overlay {
@@ -1114,18 +1142,18 @@
   .battle-container {
     width: 95%;
     height: 95%;
-    max-width: 1200px;
+    max-width: 75rem;
     border: 1px solid var(--border-bright);
-    border-radius: 8px;
+    border-radius: 0.5rem;
     background: var(--bg-mid);
     display: flex;
     flex-direction: column;
   }
-  .battle-header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; }
-  .battle-header h2 { font-size: 16px; color: var(--accent2); }
+  .battle-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
+  .battle-header h2 { font-size: 1rem; color: var(--accent2); }
   .battle-header-controls {
     display: flex;
-    gap: 8px;
+    gap: 0.5rem;
     justify-self: flex-end;
   }
   .battle-speed-controls {
@@ -1133,24 +1161,24 @@
     align-items: center;
     gap: 4px;
     background: rgba(0,0,0,0.3);
-    padding: 4px;
-    border-radius: 4px;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
     justify-self: center;
   }
   .battle-speed-controls span {
-    font-size: 9px;
+    font-size: 0.5625rem;
     color: var(--text-dim);
     font-family: 'Orbitron', monospace;
-    margin: 0 6px;
+    margin: 0 0.375rem;
   }
   .battle-speed-controls button {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-mid);
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 3px;
+    font-size: 0.625rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.1875rem;
     cursor: pointer;
     transition: all 0.2s;
   }
@@ -1164,13 +1192,13 @@
     border-color: var(--accent);
     font-weight: 700;
   }
-  .battle-field { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; gap: 20px; }
-  .battle-team { display: flex; justify-content: center; gap: 16px; }
+  .battle-field { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 1.25rem; gap: 1.25rem; }
+  .battle-team { display: flex; justify-content: center; gap: 1rem; }
   .battle-unit {
-    width: 160px;
-    height: 220px;
+    width: 10rem;
+    height: 13.75rem;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 0.5rem;
     background: var(--bg-card);
     transition: all 0.2s, transform 0.4s ease;
     position: relative;
@@ -1183,7 +1211,7 @@
   .battle-unit.defeated { opacity: 0.4; filter: grayscale(80%); }
   .battle-unit.is-attacking {
     transform: scale(1.05);
-    box-shadow: 0 0 20px var(--gold);
+    box-shadow: 0 0 1.25rem var(--gold);
     z-index: 10;
   }
   .battle-unit.is-taking-damage {
@@ -1194,10 +1222,10 @@
   }
   .battle-unit.is-targeted {
     outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    outline-offset: 0.125rem;
   }
   .battle-unit.is-turn-active {
-    box-shadow: 0 0 16px var(--gold), 0 0 24px var(--gold);
+    box-shadow: 0 0 1rem var(--gold), 0 0 1.5rem var(--gold);
     border-color: var(--gold);
     transform: scale(1.02);
   }
@@ -1208,13 +1236,13 @@
     background: rgba(255, 50, 50, 0.8);
     border: 1px solid var(--accent2);
     color: #fff;
-    font-size: 9px;
-    padding: 2px 5px;
-    border-radius: 3px;
+    font-size: 0.5625rem;
+    padding: 0.125rem 0.3125rem;
+    border-radius: 0.1875rem;
     font-family: 'Orbitron', monospace;
     z-index: 5;
     display: none;
-    box-shadow: 0 0 8px var(--accent2);
+    box-shadow: 0 0 0.5rem var(--accent2);
     animation: pulse-badge 1.5s infinite alternate;
   }
   .passive-active-badge.active { display: block; }
@@ -1227,7 +1255,7 @@
     opacity: 0; animation: damage-flash 0.4s; pointer-events: none;
   }
   .effect-overlay {
-    position: absolute; inset: -20px; pointer-events: none; z-index: 20;
+    position: absolute; inset: -1.25rem; pointer-events: none; z-index: 20;
     display: flex; align-items: center; justify-content: center;
   }
   .b-unit-img {
@@ -1246,14 +1274,14 @@
     object-fit: cover;
   }
   .b-unit-img .char-silhouette {
-    font-size: 72px;
-    filter: drop-shadow(0 0 16px rgba(0,200,255,0.4));
+    font-size: 4.5rem;
+    filter: drop-shadow(0 0 1rem rgba(0,200,255,0.4));
   }
   .b-unit-img.enemy-icon-bg {
     background: linear-gradient(160deg, #2a1a0d, #180e07);
   }
   .b-unit-img.enemy-icon-bg .char-silhouette {
-    filter: drop-shadow(0 0 16px rgba(255,107,53,0.4));
+    filter: drop-shadow(0 0 1rem rgba(255,107,53,0.4));
   }
   .b-unit-info-overlay {
     display: none;
@@ -1261,56 +1289,56 @@
   .b-unit-info {
     position: relative;
     z-index: 3;
-    padding: 6px 8px;
+    padding: 0.375rem 0.5rem;
     height: 35%;
     background: var(--bg-card);
     border-top: 1px solid var(--border);
   }
-  .b-unit-name { font-size: 13px; font-weight: 700; color: var(--text-main); text-shadow: 0 1px 3px #000; line-height: 1.3; height: 18px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .b-unit-name { font-size: 0.8125rem; font-weight: 700; color: var(--text-main); text-shadow: 0 1px 3px #000; line-height: 1.3; height: 1.125rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .b-unit-status-effects {
     display: flex;
     gap: 4px;
-    height: 20px;
+    height: 1.25rem;
     margin-bottom: 2px;
     align-items: center;
   }
   .status-icon {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     background: rgba(0,0,0,0.7);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 0.625rem;
     color: #fff;
     border: 1px solid #333;
     box-shadow: 0 1px 2px rgba(0,0,0,0.5);
     position: relative;
   }
-  .status-icon .turn-counter { position: absolute; bottom: -3px; right: -3px; background: #000; border-radius: 50%; font-size: 8px; width: 12px; height: 12px; line-height: 12px; text-align: center; color: #fff; border: 1px solid #fff; font-family: 'Orbitron', monospace; }
-  .b-unit-hp-bar-bg { height: 6px; background: rgba(0,0,0,0.5); border-radius: 3px; margin: 4px 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+  .status-icon .turn-counter { position: absolute; bottom: -3px; right: -3px; background: #000; border-radius: 50%; font-size: 0.5rem; width: 0.75rem; height: 0.75rem; line-height: 0.75rem; text-align: center; color: #fff; border: 1px solid #fff; font-family: 'Orbitron', monospace; }
+  .b-unit-hp-bar-bg { height: 0.375rem; background: rgba(0,0,0,0.5); border-radius: 3px; margin: 4px 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
   .b-unit-hp-bar { height: 100%; background: var(--accent3); border-radius: 3px; transition: width 0.5s; }
-  .b-unit-hp-text { font-size: 11px; font-weight: 700; font-family: 'Orbitron', monospace; text-align: center; color: var(--text-main); text-shadow: 0 1px 2px #000; }
-  .b-unit-level { position: absolute; top: 8px; right: 8px; font-size: 10px; font-family: 'Orbitron', monospace; background: rgba(0,0,0,0.5); color: var(--gold); padding: 1px 5px; border-radius: 3px; z-index: 4; }
+  .b-unit-hp-text { font-size: 0.6875rem; font-weight: 700; font-family: 'Orbitron', monospace; text-align: center; color: var(--text-main); text-shadow: 0 1px 2px #000; }
+  .b-unit-level { position: absolute; top: 8px; right: 8px; font-size: 0.625rem; font-family: 'Orbitron', monospace; background: rgba(0,0,0,0.5); color: var(--gold); padding: 1px 5px; border-radius: 3px; z-index: 4; }
   .b-unit-equip {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 22px;
-    height: 22px;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 1.375rem;
+    height: 1.375rem;
     background: rgba(0,0,0,0.6);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 0.875rem;
     z-index: 4;
     cursor: help;
   }
-  .battle-log-container { height: 140px; border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 12px; }
-  .battle-log { flex: 1; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 8px; font-size: 11px; overflow-y: auto; color: var(--text-mid); }
+  .battle-log-container { height: 8.75rem; border-top: 1px solid var(--border); padding: 0.75rem; display: flex; gap: 0.75rem; }
+  .battle-log { flex: 1; background: rgba(0,0,0,0.3); border-radius: 0.25rem; padding: 0.5rem; font-size: 0.6875rem; overflow-y: auto; color: var(--text-mid); }
   .battle-log p { margin-bottom: 4px; }
   .battle-log .damage { color: var(--accent2); }
   .battle-log .info { color: var(--gold); }
@@ -1348,10 +1376,10 @@
     position: absolute;
     left: -50%;
     font-family: 'Orbitron', sans-serif;
-    font-size: 40px;
+    font-size: 2.5rem;
     font-weight: 900;
     color: var(--accent);
-    text-shadow: 0 0 20px var(--accent);
+    text-shadow: 0 0 1.25rem var(--accent);
     font-style: italic;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 101;
@@ -1359,14 +1387,14 @@
   .cutin-overlay.active .cutin-text { transform: translateX(50vw); left: 0; }
 
   #battleActionBtn {
-    width: 120px;
+    width: 7.5rem;
     align-self: stretch;
     font-family: 'Orbitron', monospace;
-    font-size: 14px;
+    font-size: 0.875rem;
     background: var(--accent2);
     color: #000;
     border: none;
-    border-radius: 4px;
+    border-radius: 0.25rem;
     cursor: pointer;
   }
   #battleActionBtn:disabled { background: var(--text-dim); cursor: not-allowed; }
@@ -1376,17 +1404,17 @@
     align-items: center;
     justify-content: space-between;
     background: rgba(0,0,0,0.3);
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 12px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    margin-bottom: 0.75rem;
     border: 1px solid var(--border);
   }
   .level-btn {
     background: var(--accent);
     color: #000;
     border: none;
-    padding: 4px 12px;
-    border-radius: 4px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
     font-weight: 700;
     cursor: pointer;
     font-family: 'Orbitron', monospace;
@@ -1396,21 +1424,21 @@
   /* ===== TOAST ===== */
   .toast {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
-    padding: 12px 20px;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1.25rem;
     background: var(--bg-card);
     border: 1px solid var(--border-bright);
-    border-radius: 6px;
-    font-size: 12px;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
     color: var(--accent);
     font-family: 'Orbitron', monospace;
-    letter-spacing: 1px;
+    letter-spacing: 0.0625rem;
     z-index: 300;
-    transform: translateY(80px);
+    transform: translateY(5rem);
     opacity: 0;
     transition: all 0.3s;
-    box-shadow: 0 0 20px rgba(0,200,255,0.2);
+    box-shadow: 0 0 1.25rem rgba(0,200,255,0.2);
   }
 
   .toast.show {
@@ -1420,7 +1448,7 @@
 
   /* ===== ANIMATIONS ===== */
   @keyframes cardIn {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(0.75rem); }
     to { opacity: 1; transform: translateY(0); }
   }
 
@@ -1447,9 +1475,9 @@
 
   .passive-popup {
     position: absolute;
-    top: -20px; left: 50%; transform: translateX(-50%);
-    width: 150px; text-align: center;
-    color: var(--gold); font-size: 11px; font-weight: 700;
+    top: -1.25rem; left: 50%; transform: translateX(-50%);
+    width: 9.375rem; text-align: center;
+    color: var(--gold); font-size: 0.6875rem; font-weight: 700;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     z-index: 20; pointer-events: none;
     animation: passiveFloat 1.5s forwards;
@@ -1466,10 +1494,10 @@
     left: 50%;
     transform: translateX(-50%);
     font-family: 'Orbitron', monospace;
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 900;
     color: #ff4d4d;
-    text-shadow: 0 0 5px #000, 0 0 10px #ff0000;
+    text-shadow: 0 0 0.3125rem #000, 0 0 0.625rem #ff0000;
     pointer-events: none;
     z-index: 25;
     animation: damageFloat 1s forwards;
@@ -1491,7 +1519,7 @@
   @keyframes eff-shoot { 0% { transform: scale(3); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
 
   .anim-heal { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-  .anim-heal::before { content: '✚'; font-size: 40px; color: var(--accent3); animation: eff-heal 0.6s forwards; text-shadow: 0 0 10px var(--accent3); }
+  .anim-heal::before { content: '✚'; font-size: 2.5rem; color: var(--accent3); animation: eff-heal 0.6s forwards; text-shadow: 0 0 0.625rem var(--accent3); }
   @keyframes eff-heal { 0% { transform: translateY(10px) scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-20px) scale(1.5); opacity: 0; } }
 
   .anim-impact { width: 100%; height: 100%; background: radial-gradient(circle, transparent 30%, rgba(255,255,255,0.8) 40%, transparent 50%); animation: eff-impact 0.3s forwards; }
@@ -1558,7 +1586,7 @@
     pointer-events: none;
     z-index: 5;
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 0.625rem;
   }
   
   .aura-overlay::before {
@@ -1617,37 +1645,14 @@
     100% { background-position: 20px 20px; }
   }
 
-  #rotate-device-overlay {
-    position: fixed;
-    inset: 0;
-    background: var(--bg-deep);
-    color: var(--text-main);
-    z-index: 9999;
-    display: none; /* Hidden by default */
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
-
-  /* Show overlay only on mobile-like devices in portrait mode */
-  @media (max-width: 1024px) and (orientation: portrait) {
-    #rotate-device-overlay {
-      display: flex;
-    }
-    /* Hide the main app content */
-    header, main {
-      display: none !important;
-    }
-  }
   .aura-badge {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    font-size: 9px;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.5625rem;
     font-family: 'Orbitron', monospace;
-    padding: 1px 5px;
-    border-radius: 3px;
+    padding: 0.0625rem 0.3125rem;
+    border-radius: 0.1875rem;
     font-weight: 900;
     z-index: 6;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
@@ -1657,29 +1662,29 @@
   /* Battle Name Aura Styles */
   .battle-unit.aura-1 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 8px #c0c0c0;
+    text-shadow: 0 0 0.5rem #c0c0c0;
     background: linear-gradient(90deg, rgba(192,192,192,0.3), transparent);
     padding-left: 4px;
   }
-  .battle-unit.aura-1 .b-unit-name::before { content: '✦ '; color: #c0c0c0; font-size: 10px; }
+  .battle-unit.aura-1 .b-unit-name::before { content: '✦ '; color: #c0c0c0; font-size: 0.625rem; }
 
   .battle-unit.aura-2 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 8px #ffd700, 0 0 15px #ffaa00;
+    text-shadow: 0 0 0.5rem #ffd700, 0 0 0.9375rem #ffaa00;
     background: linear-gradient(90deg, rgba(255,215,0,0.3), transparent);
     padding-left: 4px;
   }
-  .battle-unit.aura-2 .b-unit-name::before { content: '★ '; color: #ffd700; font-size: 10px; }
+  .battle-unit.aura-2 .b-unit-name::before { content: '★ '; color: #ffd700; font-size: 0.625rem; }
 
   .battle-unit.aura-3 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 10px #00c8ff, 0 0 20px #fff;
+    text-shadow: 0 0 0.625rem #00c8ff, 0 0 1.25rem #fff;
     background: linear-gradient(90deg, rgba(0,200,255,0.2), rgba(255,255,255,0.4), rgba(0,200,255,0.2));
     background-size: 200% 100%;
     animation: aura-text-shine 3s infinite linear;
     padding-left: 4px;
   }
-  .battle-unit.aura-3 .b-unit-name::before { content: '♦ '; color: #b9f2ff; font-size: 10px; }
+  .battle-unit.aura-3 .b-unit-name::before { content: '♦ '; color: #b9f2ff; font-size: 0.625rem; }
 
   .battle-unit.aura-4 .b-unit-name {
     color: #fff;
@@ -1687,31 +1692,31 @@
     background: linear-gradient(90deg, rgba(255,77,77,0.4), transparent);
     padding-left: 4px;
   }
-  .battle-unit.aura-4 .b-unit-name::before { content: '♛ '; color: #ff4d4d; font-size: 10px; }
+  .battle-unit.aura-4 .b-unit-name::before { content: '♛ '; color: #ff4d4d; font-size: 0.625rem; }
 
   .battle-unit.aura-5 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 10px #50C878, 0 0 20px #A8FF3E;
+    text-shadow: 0 0 0.625rem #50C878, 0 0 1.25rem #A8FF3E;
     background: linear-gradient(90deg, rgba(80,200,120,0.4), transparent);
     padding-left: 4px;
   }
-  .battle-unit.aura-5 .b-unit-name::before { content: '☘ '; color: #50C878; font-size: 10px; }
+  .battle-unit.aura-5 .b-unit-name::before { content: '☘ '; color: #50C878; font-size: 0.625rem; }
 
   .battle-unit.aura-6 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 12px #0F52BA, 0 0 24px #4d90ff;
+    text-shadow: 0 0 0.75rem #0F52BA, 0 0 1.5rem #4d90ff;
     background: linear-gradient(90deg, rgba(15,82,186,0.5), transparent);
     padding-left: 4px;
   }
-  .battle-unit.aura-6 .b-unit-name::before { content: '💧 '; color: #4d90ff; font-size: 10px; }
+  .battle-unit.aura-6 .b-unit-name::before { content: '💧 '; color: #4d90ff; font-size: 0.625rem; }
 
   .battle-unit.aura-7 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 14px #9966CC, 0 0 28px #b388ff;
+    text-shadow: 0 0 0.875rem #9966CC, 0 0 1.75rem #b388ff;
     background: linear-gradient(90deg, rgba(153,102,204,0.5), transparent);
     padding-left: 4px;
   }
-  .battle-unit.aura-7 .b-unit-name::before { content: '🔮 '; color: #b388ff; font-size: 10px; }
+  .battle-unit.aura-7 .b-unit-name::before { content: '🔮 '; color: #b388ff; font-size: 0.625rem; }
 
   .battle-unit.aura-8 .b-unit-name {
     font-weight: 900;
@@ -1726,7 +1731,7 @@
 
   .battle-unit.aura-9 .b-unit-name {
     color: #F2E9E4;
-    text-shadow: 0 0 15px #9A8C98, 0 0 30px #fff;
+    text-shadow: 0 0 0.9375rem #9A8C98, 0 0 1.875rem #fff;
     background: linear-gradient(90deg, rgba(201,173,167,0.2), transparent);
     padding-left: 4px;
   }
@@ -1734,7 +1739,7 @@
 
   .battle-unit.aura-10 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 20px #b388ff, 0 0 40px #fff;
+    text-shadow: 0 0 1.25rem #b388ff, 0 0 2.5rem #fff;
     background: linear-gradient(90deg, rgba(77,0,77,0.5), transparent);
     padding-left: 4px;
   }
@@ -1742,39 +1747,12 @@
 
   @keyframes aura-text-shine { 0% { background-position: -100% 0; } 100% { background-position: 200% 0; } }
 
-  /* ===== RESPONSIVE ===== */
-  @media (max-width: 768px) {
-    main { grid-template-columns: 1fr; }
-    aside { position: relative; top: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-    .card-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-    .logo { font-size: 16px; }
-  }
-
-  /* スマホ横画面用の調整 */
-  @media (max-height: 500px) and (orientation: landscape) {
-    .battle-unit {
-      width: 110px;
-      height: 150px;
-    }
-    .b-unit-name {
-      font-size: 11px;
-      height: 15px;
-    }
-    .b-unit-hp-text { font-size: 10px; }
-    .b-unit-img .char-silhouette { font-size: 56px; }
-    .battle-log-container { height: 110px; }
-    .battle-log { font-size: 10px; }
-    .battle-header h2 { font-size: 14px; }
-    .battle-field { padding: 12px; gap: 12px; }
-    .modal { max-height: 95vh; }
-  }
-  
   /* Squad Manager Modal */
   .squad-manager-tabs {
     display: flex;
     border-bottom: 1px solid var(--border);
-    margin: -20px -20px 20px -20px;
-    padding: 0 20px;
+    margin: -1.25rem -1.25rem 1.25rem -1.25rem;
+    padding: 0 1.25rem;
   }
   .squad-manager-tab {
     padding: 10px 16px;
@@ -1792,30 +1770,30 @@
   .squad-manager-content.active { display: block; }
   .squad-slot-item {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 12px; border: 1px solid var(--border); border-radius: 6px;
-    margin-bottom: 10px; background: rgba(0,0,0,0.2);
+    padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.375rem;
+    margin-bottom: 0.625rem; background: rgba(0,0,0,0.2);
   }
-  .squad-slot-info { font-size: 12px; color: var(--text-mid); }
+  .squad-slot-info { font-size: 0.75rem; color: var(--text-mid); }
   .squad-slot-info.empty { color: var(--text-dim); }
-  .squad-slot-actions { display: flex; gap: 8px; }
+  .squad-slot-actions { display: flex; gap: 0.5rem; }
   .squad-manager-io-section {
     display: flex; flex-direction: column; gap: 12px;
-    padding: 20px; border: 1px solid var(--border); border-radius: 6px;
+    padding: 1.25rem; border: 1px solid var(--border); border-radius: 0.375rem;
     background: rgba(0,0,0,0.2);
   }
   #squadCodeTextarea {
-    width: 100%; height: 80px; background: rgba(0,0,0,0.4); border: 1px solid var(--border);
-    border-radius: 4px; color: var(--text-main); padding: 8px; font-family: monospace;
-    font-size: 11px; resize: vertical;
+    width: 100%; height: 5rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+    border-radius: 0.25rem; color: var(--text-main); padding: 0.5rem; font-family: monospace;
+    font-size: 0.6875rem; resize: vertical;
   }
 
   #squadViewerResult {
-    margin-top: 16px;
-    font-size: 12px;
+    margin-top: 1rem;
+    font-size: 0.75rem;
     color: var(--text-mid);
     line-height: 1.6;
   }
-  #squadViewerResult h4 { font-size: 13px; color: var(--accent); margin-bottom: 8px; }
+  #squadViewerResult h4 { font-size: 0.8125rem; color: var(--accent); margin-bottom: 0.5rem; }
 
 
   @keyframes rainbow-border-flow {
@@ -1875,7 +1853,7 @@
     flex-wrap: wrap;
     justify-content: center;
     align-content: center;
-    gap: 16px;
+    gap: 1rem;
   }
 
   .gacha-anim-card {
@@ -1904,29 +1882,29 @@
   .gacha-banner-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 24px;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
     text-align: center;
-    max-width: 500px;
+    max-width: 31.25rem;
     margin: 0 auto;
   }
   .gacha-banner-title {
     font-family: 'Orbitron', monospace;
-    font-size: 20px;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--accent);
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
   }
   .gacha-banner-desc {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--text-mid);
-    margin-bottom: 24px;
+    margin-bottom: 1.5rem;
     line-height: 1.6;
   }
   .gacha-buttons {
     display: flex;
     justify-content: center;
-    gap: 16px;
+    gap: 1rem;
   }
   .gacha-btn {
     padding: 12px 24px;
@@ -1935,12 +1913,12 @@
     background: rgba(0,200,255,0.1);
     color: var(--accent);
     font-family: 'Orbitron', monospace;
-    font-size: 12px;
+    font-size: 0.75rem;
     letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.2s;
     flex: 1;
-    max-width: 200px;
+    max-width: 12.5rem;
   }
   .gacha-btn:hover:not(:disabled) {
     background: rgba(0,200,255,0.2);
@@ -1952,27 +1930,27 @@
   }
   .gacha-btn span {
     display: block;
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--text-dim);
     margin-top: 4px;
   }
 
-  .gacha-result-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; text-align: center; padding-bottom: 8px; position: relative; }
+  .gacha-result-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; text-align: center; padding-bottom: 0.5rem; position: relative; }
   .gacha-result-item.is-new .gacha-result-new-tag { display: block; }
   .gacha-result-img { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #0d1a2a, #070e18); }
   .gacha-result-img img { width: 90%; height: auto; }
-  .gacha-result-name { font-size: 12px; font-weight: 700; margin-top: 8px; }
-  .gacha-result-info { font-size: 10px; color: var(--gold); font-family: 'Orbitron', monospace; margin-top: 4px; }
-  .gacha-result-new-tag { position: absolute; top: 8px; left: 8px; background: var(--accent2); color: #000; font-size: 9px; font-family: 'Orbitron', monospace; padding: 2px 6px; border-radius: 3px; font-weight: 700; letter-spacing: 1px; display: none; }  
+  .gacha-result-name { font-size: 0.75rem; font-weight: 700; margin-top: 0.5rem; }
+  .gacha-result-info { font-size: 0.625rem; color: var(--gold); font-family: 'Orbitron', monospace; margin-top: 0.25rem; }
+  .gacha-result-new-tag { position: absolute; top: 0.5rem; left: 0.5rem; background: var(--accent2); color: #000; font-size: 0.5625rem; font-family: 'Orbitron', monospace; padding: 0.125rem 0.375rem; border-radius: 0.1875rem; font-weight: 700; letter-spacing: 0.0625rem; display: none; }  
   #skipGachaAnimationBtn {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 1.25rem;
+    right: 1.25rem;
     background: rgba(255,255,255,0.1);
     border: 1px solid var(--border);
     color: var(--text-dim);
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
     cursor: pointer;
     font-family: 'Orbitron', monospace;
     z-index: 10;
@@ -2063,7 +2041,7 @@
       <button class="filter-btn" onclick="setFilter('light')" id="filter-light">
         <span style="color:var(--elem-light)">●</span> 光属性 <span class="count" id="cnt-light">-</span>
       </button>
-      <div style="margin-top:12px;font-size:9px;color:var(--text-dim);text-align:center;border:1px solid var(--border);padding:4px;border-radius:4px;">
+      <div style="margin-top:0.75rem;font-size:0.5625rem;color:var(--text-dim);text-align:center;border:1px solid var(--border);padding:0.25rem;border-radius:0.25rem;">
         <span style="color:var(--elem-water)">水</span> &gt; <span style="color:var(--elem-fire)">炎</span> &gt; <span style="color:var(--elem-thunder)">雷</span> &gt; <span style="color:var(--elem-water)">水</span><br>
         <span style="color:var(--elem-light)">光</span> ⇔ <span style="color:var(--elem-dark)">闇</span>
       </div>
@@ -2073,7 +2051,7 @@
   <!-- ROSTER PANEL -->
   <div class="roster-panel" id="rosterPanel">
     <div class="roster-toolbar">
-      <div style="display:flex; align-items:center; gap:16px;">
+      <div style="display:flex; align-items:center; gap:1rem;">
         <div class="roster-title">キャラクター一覧</div>
         <select class="sort-select" onchange="handleSort(this.value)">
           <option value="id">ID順</option>
@@ -2099,14 +2077,14 @@
   <!-- MISSION PANEL -->
   <div class="mission-panel" id="missionPanel" style="display: none;">
     <div class="roster-toolbar" style="align-items: center;">
-      <div style="display:flex; align-items:center; gap:16px;">
+      <div style="display:flex; align-items:center; gap:1rem;">
         <div class="roster-title" id="missionViewTitle">ストーリー選択</div>
-        <div id="storyCategoryTabs" style="display:none; gap:8px;">
-            <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 4px 12px; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
-            <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 4px 12px; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
+        <div id="storyCategoryTabs" style="display:none; gap:0.5rem;">
+            <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.25rem 0.75rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
+            <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.25rem 0.75rem; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
         </div>
       </div>
-      <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 6px 12px; margin: 0;" onclick="renderStoryChapters()">
+      <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.375rem 0.75rem; margin: 0;" onclick="renderStoryChapters()">
         ← 戻る
       </button>
     </div>
@@ -2137,7 +2115,7 @@
     <div class="modal-img" id="modalImgWrap"></div>
     <div class="modal-body">
       <div class="level-control">
-        <div style="font-size:12px;color:var(--text-main)">Lv.<span id="modalLevelVal" style="font-size:16px;font-weight:700">1</span> <span style="font-size:10px;color:var(--text-dim)">/ 20</span></div>
+        <div style="font-size:0.75rem;color:var(--text-main)">Lv.<span id="modalLevelVal" style="font-size:1rem;font-weight:700">1</span> <span style="font-size:0.625rem;color:var(--text-dim)">/ 20</span></div>
         <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()">強化 (虹石 <span id="costVal">100</span>)</button>
       </div>
       <div class="modal-section">
@@ -2165,13 +2143,13 @@
 
 <!-- EQUIPMENT SELECTION MODAL -->
 <div class="modal-overlay" id="equipOverlay" onclick="closeEquipModal(event)">
-  <div class="modal" id="equipBox" style="width: 600px;">
+  <div class="modal" id="equipBox" style="width: 37.5rem;">
     <div class="modal-header">
       <div class="modal-title">装備選択</div>
       <button class="modal-close" onclick="closeEquipModalDirect()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="equip-grid" id="equipList" style="grid-template-columns: 1fr 1fr;">
+      <div class="equip-grid" id="equipList" style="grid-template-columns: 1fr 1fr; gap: 0.5rem;">
         <!-- Items injected here -->
       </div>
     </div>
@@ -2180,14 +2158,14 @@
 
 <!-- CODE VIEWER MODAL -->
 <div class="modal-overlay" id="codeViewerOverlay" onclick="closeCodeViewer(event)">
-  <div class="modal" id="codeViewerBox" style="width: 500px;">
+  <div class="modal" id="codeViewerBox" style="width: 31.25rem;">
     <div class="modal-header">
       <div class="modal-title">編成コード閲覧</div>
       <button class="modal-close" onclick="closeCodeViewerDirect()">✕</button>
     </div>
     <div class="modal-body">
       <div class="squad-manager-io-section">
-        <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">
+        <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">
           他のプレイヤーの編成コードを貼り付けて、内容を確認できます。
         </p>
         <textarea id="squadCodeTextarea" placeholder="ここに編成コードを貼り付け..."></textarea>
@@ -2209,13 +2187,13 @@
 
 <!-- GACHA RESULT MODAL -->
 <div class="modal-overlay" id="gachaResultOverlay" onclick="closeGachaResultModal(event)">
-  <div class="modal" id="gachaResultBox" style="width: 800px; max-width: 95vw;">
+  <div class="modal" id="gachaResultBox" style="width: 50rem; max-width: 95vw;">
     <div class="modal-header">
       <div class="modal-title">ガチャ結果</div>
       <button class="modal-close" onclick="closeGachaResultModalDirect()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="card-grid" id="gachaResultGrid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+      <div class="card-grid" id="gachaResultGrid" style="grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr));">
         <!-- Gacha result cards will be injected here -->
       </div>
     </div>
@@ -2226,16 +2204,16 @@
 </div>
 <!-- VICTORY MODAL -->
 <div class="modal-overlay" id="victoryOverlay">
-  <div class="modal" id="victoryBox" style="width: 450px; text-align: center;">
+  <div class="modal" id="victoryBox" style="width: 28.125rem; text-align: center;">
     <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
-      <div class="modal-title" style="font-size: 48px; color: var(--gold); font-family: 'Orbitron';">VICTORY</div>
+      <div class="modal-title" style="font-size: 3rem; color: var(--gold); font-family: 'Orbitron';">VICTORY</div>
     </div>
     <div class="modal-body" style="padding-top: 0;">
-      <p style="color: var(--text-mid); margin-bottom: 20px;">任務完了</p>
+      <p style="color: var(--text-mid); margin-bottom: 1.25rem;">任務完了</p>
       <div id="victoryRewards">
         <!-- Rewards will be injected here -->
       </div>
-      <button class="modal-add-btn" style="margin-top: 24px;" onclick="closeVictoryModal()">確認</button>
+      <button class="modal-add-btn" style="margin-top: 1.5rem;" onclick="closeVictoryModal()">確認</button>
     </div>
   </div>
 </div>
@@ -2253,7 +2231,7 @@
         <button onclick="setBattleSpeed(8)" id="speed-btn-8">8x</button>
       </div>
       <div class="battle-header-controls">
-        <button class="modal-close" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア" style="font-size: 16px;">🏳️</button>
+        <button class="modal-close" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア" style="font-size: 1rem;">🏳️</button>
         <button class="modal-close" id="closeBattleBtn" onclick="closeBattle()" disabled>✕</button>
       </div>
     </div>
@@ -2273,17 +2251,13 @@
   </div>
 </div>
 
-<!-- ROTATE DEVICE OVERLAY -->
-<div id="rotate-device-overlay">
-  <div style="font-size: 48px; margin-bottom: 20px;">🔄</div>
-  <div>
-    <div style="font-family: 'Orbitron', monospace; font-size: 18px; letter-spacing: 2px;">PLEASE ROTATE YOUR DEVICE</div>
-    <div style="font-size: 12px; color: var(--text-dim); margin-top: 8px;">This experience is designed for landscape mode.</div>
-  </div>
-</div>
-
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!--
+  削除された要素：
+  - #rotate-device-overlay
+-->
 
 <script>
 // ===== DATA =====
@@ -2784,9 +2758,9 @@ const chapter4Enemies = [
   [{ id: 316, level: 15 }, { id: 316, level: 15 }, { id: 18, level: 32, aiType: AI_TYPES.RANDOM }, { id: 19, level: 32, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 15 }],
   [{ id: 316, level: 16 }, { id: 316, level: 16 }, { id: 20, level: 35, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 16 }, { id: 316, level: 16 }],
   [{ id: 316, level: 16 }, { id: 316, level: 17 }, { id: 317, level: 38, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 15 }, { id: 316, level: 16 }],
-  [{ id: 316, level: 17 }, { id: 317, level: 38 }, { id: 318, level: 42, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 16 }, { id: 316, level: 18 }],
-  [{ id: 316, level: 18 }, { id: 316, level: 18 }, { id: 319, level: 45, aiType: AI_TYPES.RANDOM }, { id: 316, level: 18 }, { id: 316, level: 18 }],
-  [{ id: 319, level: 45, aiType: AI_TYPES.RANDOM }, { id: 318, level: 42, aiType: AI_TYPES.HIGHEST_ATK }, { id: 20, level: 35, aiType: AI_TYPES.HIGHEST_ATK }, { id: 18, level: 32, aiType: AI_TYPES.RANDOM }, { id: 19, level: 32, aiType: AI_TYPES.HIGHEST_ATK }],
+  [{ id: 316, level: 17 }, { id: 317, level: 38 }, { id: 318, level: 40, aiType: AI_TYPES.HIGHEST_ATK }, { id: 316, level: 16 }, { id: 316, level: 18 }],
+  [{ id: 316, level: 18 }, { id: 316, level: 18 }, { id: 319, level: 42, aiType: AI_TYPES.RANDOM }, { id: 316, level: 18 }, { id: 316, level: 18 }],
+  [{ id: 319, level: 42, aiType: AI_TYPES.RANDOM }, { id: 318, level: 40, aiType: AI_TYPES.HIGHEST_ATK }, { id: 20, level: 35, aiType: AI_TYPES.HIGHEST_ATK }, { id: 18, level: 32, aiType: AI_TYPES.RANDOM }, { id: 19, level: 32, aiType: AI_TYPES.HIGHEST_ATK }],
 ];
 
 const chapter5Names = [
@@ -3094,7 +3068,7 @@ function renderCards() {
       ${aura > 0 ? `<div class="aura-overlay"></div>` : ''}
       ${aura > 0 ? `<div class="aura-badge" style="background:${AURA_DATA[aura-1].color};color:#000">${AURA_DATA[aura-1].label}</div>` : ''}
       <div class="card-body">
-        <div class="card-name"><span>${c.name}</span><span style="font-size:10px;color:var(--accent)">Lv.${level}</span></div>
+        <div class="card-name"><span>${c.name}</span><span>Lv.${level}</span></div>
         ${c.type ? `<span class="card-type-tag">${c.type}</span>` : ''}
         <div class="stat-bars">
           ${renderStatBar('HP', s.hp, 'hp')}
