@@ -5304,27 +5304,41 @@ function renderGachaPanel() {
   const canAfford10 = playerState.rainbowStones >= 90000;
 
   container.innerHTML = `
-    <div class="gacha-banner-card">
-      <div class="gacha-banner-title">ルディ王国ガチャ</div>
-      <div class="gacha-banner-desc">
-        ルディ王国に所属するキャラクターが出現します。<br>
-        既に仲間にしているキャラクターが出現した場合、そのキャラクターの欠片x10に変換されます。
+    <div style="display: flex; flex-direction: column; gap: 2rem; padding-bottom: 2rem; align-items: center;">
+      <!-- REGULAR BANNER WITH NEW HERO FEATURE -->
+      <div class="gacha-banner-card" style="max-width: 35rem;">
+        <div class="gacha-banner-title">ルディ王国ガチャ</div>
+        
+        <div style="position: relative; width: 100%; height: 9rem; margin-bottom: 1rem; border-radius: 0.5rem; overflow: hidden; background: linear-gradient(135deg, #1a2a3a, #0d1520); border: 1px solid var(--border);">
+           <img src="C26.svg" style="position: absolute; right: 1rem; top: 0.5rem; height: 8rem; width: auto; filter: drop-shadow(0 0 10px rgba(255,215,0,0.5));">
+           <div style="position: absolute; left: 1.5rem; top: 2rem; z-index: 2;">
+              <div style="color: var(--gold); font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 5px rgba(0,0,0,0.8); font-family: 'Orbitron';">NEW HERO</div>
+              <div style="font-size: 1rem; margin-top: 0.25rem; font-weight: bold;">キャル・エクレア</div>
+           </div>
+           <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, transparent 100%); pointer-events: none;"></div>
+        </div>
+
+        <div class="gacha-banner-desc">
+          ルディ王国に所属するキャラクターが出現します。<br>
+          新英雄<strong style="color:var(--accent)">「キャル・エクレア」</strong>が登場！<br>
+          <span style="font-size: 0.7rem; color: var(--text-dim); display:block; margin-top:0.5rem;">※「シャム・グレゴリオ」はイベント「厭悪」の報酬でのみ獲得可能です。</span>
+        </div>
+        
+        <div class="gacha-buttons">
+          <button class="gacha-btn" onclick="performGacha('rudy', 1)" ${!canAfford1 ? 'disabled' : ''}>
+            1回引く
+            <span>💎 10000</span>
+          </button>
+          <button class="gacha-btn" onclick="performGacha('rudy', 10)" ${!canAfford10 ? 'disabled' : ''}>
+            10回引く
+            <span>💎 90000</span>
+          </button>
+        </div>
       </div>
-      <div class="gacha-buttons">
-        <button class="gacha-btn" onclick="performGacha(1)" ${!canAfford1 ? 'disabled' : ''}>
-          1回引く
-          <span>💎 10000</span>
-        </button>
-        <button class="gacha-btn" onclick="performGacha(10)" ${!canAfford10 ? 'disabled' : ''}>
-          10回引く
-          <span>💎 90000</span>
-        </button>
-      </div>
-    </div>
   `;
 }
 
-function performGacha(count) {
+function performGacha(type, count) {
   const cost = count === 10 ? 90000 : 10000 * count;
   if (playerState.rainbowStones < cost) {
     showToast('虹石が足りません。');
@@ -5333,7 +5347,13 @@ function performGacha(count) {
 
   playerState.rainbowStones -= cost;
   
-  const gachaPool = units.filter(u => u.type === 'ルディ王国');
+  let gachaPool = [];
+  
+  if (type === 'rudy') {
+    // ルディ王国所属のみ (シャム ID:23 はイベント報酬のため除外)
+    gachaPool = units.filter(u => u.type === 'ルディ王国' && u.id < 300 && u.id !== 23);
+  }
+
   const results = [];
 
   for (let i = 0; i < count; i++) {
