@@ -2444,6 +2444,16 @@ const units = [
     useImg: true, img: 'C304.svg'
   },
   {
+    id: 313, name: 'パール・リリスコート', element: 'water', elementJp: '水',
+    baseStats: { hp: 1800, atk: 100, def: 80, spd: 70 }, abilityType: 'magic',
+    abilities: [
+      { name: 'アクアリウム', desc: '攻撃後、40%の確率で発動し相手に「溺没」（燃焼や独と同じ効果）を３Ｔ付与します。', triggerRate: 0.4, timing: 'after_attack', effect: { type: 'status', status: 'drown', turns: 3 } },
+      { name: '防御の構え', desc: '被弾時に30%で20%のダメージをカットします。', triggerRate: 0.3, timing: 'on_defense', damageCut: 0.2 }
+    ],
+    useImg: true, img: 'C310.svg',
+    isPlayable: false //not playable
+  },
+  {
     id: 310, name: 'ジョナサン・グレイザー', element: 'thunder', elementJp: '雷',
     baseStats: { hp: 900, atk: 140, def: 40, spd: 80 }, abilityType: 'impact',
     abilities: [{ name: '大斧落とし', desc: '攻撃前、30%の確率で発動。攻撃後に麻痺を2ターン付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'paralysis', turns: 2 } }],
@@ -2788,7 +2798,8 @@ const chapter5Enemies = [
   [{ id: 315, level: 12 }, { id: 315, level: 13 }, { id: 320, level: 45, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 13 }, { id: 315, level: 13 }],
   [{ id: 315, level: 14 }, { id: 315, level: 13 }, { id: 321, level: 46, aiType: AI_TYPES.RANDOM }, { id: 315, level: 13 }, { id: 315, level: 11 }],
   [{ id: 315, level: 18 }, { id: 320, level: 45 }, { id: 21, level: 44, aiType: AI_TYPES.HIGHEST_ATK }, { id: 321, level: 46 }, { id: 315, level: 18 }],
-];
+]
+
 
 const chapter6Names = [
   "第五部隊訓練・本気", "第四部隊訓練・本気", "第三部隊訓練・本気", "第二部隊訓練・本気", "第一部隊訓練・本気", "副隊長訓練・本気"
@@ -2929,6 +2940,7 @@ const STATUS_EFFECTS = {
   sleep: { icon: '💤', name: '睡眠' },
   barrier: { icon: '🛡️', name: '障壁' },
   curse: { icon: '🤐', name: '呪い' },
+  drown: {icon: '🌊', name: '溺没'},
 };
 
 const AURA_DATA = [
@@ -4292,13 +4304,15 @@ async function runBattleSequence() {
         let damageMultiplier = 1.0;
         let attackName = '攻撃';
         
+        // 2-1. Active Ability Check (on before_attack)
       if (activeAbility) {
         await showCutIn(attacker, activeAbility.name);
         attackName = activeAbility.name;
         // スキルごとの倍率設定 (簡易的にIDや名前で分岐、本来はデータに持たせるべき)
         if (attacker.id === 1) damageMultiplier = 2.0;
         if (attacker.id === 103) damageMultiplier = 1.5;
-        if (attacker.id === 106) damageMultiplier = 1.1;
+      if (attacker.id === 106) damageMultiplier = 1.1;
+        
         if (attacker.id === 10) damageMultiplier = 1.3;
         if (attacker.id === 13 && activeAbility.name === '圧縮の札') {
             attacker.isAdvantageForced = true;
@@ -4798,7 +4812,7 @@ function checkWinLoss() {
             missionProgress.add(mission.id);
         }
         
-        let unlockedCharName = null;
+        let unlockedCharName = null
         // Stage 5 (Mission ID: 104) Clear Reward: Iemike (ID: 4)
         if (mission.id === 104 && !playerState.characters[4]) {
             playerState.characters[4] = { level: 1, equippedId: null };
@@ -4823,10 +4837,15 @@ function checkWinLoss() {
             unlockedCharName = 'リディン・イルカイ(過去)';
             showToast('「リディン」が仲間になりました！');
         }
-
+        if (mission.id === 904 && !playerState.characters[23]) {
+            playerState.characters[23] = { level: 1, equippedId: null };
+            unlockedCharName = 'シャム・グレゴリオ';
+            showToast('「シャム・グレゴリオ」が仲間になりました！');
+        }
         playerState.rainbowStones += rewardAmount;
         showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName);
     } else if (livingPlayers === 0) {
+
         battleState.isFinished = true;
         isGameOver = true;
         logBattleMessage(`<span class="info">敗北...</span>`);
@@ -4837,6 +4856,7 @@ function checkWinLoss() {
     }
 
     if (isGameOver && livingPlayers === 0) document.getElementById('closeBattleBtn').disabled = false;
+
     return isGameOver;
 }
 
@@ -5578,10 +5598,11 @@ function initializeGame() {
     loadGame();
     setView('roster');
     renderSquad();
-    renderCards();
+    renderCards();    
 }
 
 initializeGame();
 </script>
+
 </body>
 </html>
