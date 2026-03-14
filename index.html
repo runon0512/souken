@@ -2564,7 +2564,7 @@ const units = [
       { name: '威力操作', desc: 'HPが50%以上の時、被弾時に80%の確率でダメージを75%カットする。', triggerRate: 0.8, timing: 'on_defense' },
       { name: '大罪支配【色欲】', desc: 'HPが50%以下になると発動。アビリティが変化する。' },
       { name: 'エターナルクリムゾン', desc: '【色欲】HP50%以下で発動。攻撃後に60%で敵全体に燃焼(2ターン)を付与。', triggerRate: 0.6, timing: 'after_attack' },
-      { name: '永遠の肉体', desc: '【色欲】HP50%以下で発動。ターン開始時、最大HPの10%を回復する。' }
+      { name: '永遠の肉体', desc: '【色欲】HP50%以下で発動。ターン開始時、最大HPの5%を回復する。' }
     ],
     useImg: true, img: 'C22.svg'
   },
@@ -3609,6 +3609,7 @@ function renderStoryChapters() {
           const isCleared = missionProgress.has(m.id);
           let firstRewardHtml = `初回報酬: 虹石 ${m.firstTimeReward}`;
           if (m.id === 901) firstRewardHtml += ` + <span style="color:var(--accent)">リディン</span>`;
+          if (m.id === 904) firstRewardHtml += ` + <span style="color:var(--accent)">シャム・グレゴリオ</span>`;
  
           const card = document.createElement('div');
           card.className = `mission-card`;
@@ -4043,8 +4044,8 @@ async function runBattleSequence() {
       attacker.isAdvantageForced = false; // Reset flag for Gira
 
       // Guldie (ID: 319) Passive: Eternal Body
-      if (attacker.id === 319 && attacker.isPassiveActive) {
-          const healAmt = Math.floor(attacker.stats.hp * 0.1);
+      if (attacker.id === 319 && attacker.currentHp <= attacker.stats.hp * 0.5) {
+          const healAmt = Math.floor(attacker.stats.hp * 0.05);
           if (attacker.currentHp < attacker.stats.hp) {
               attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + healAmt);
               logBattleMessage(`${attacker.name}は永遠の肉体でHPを<span class="heal">${healAmt}</span>回復した！`);
@@ -4338,7 +4339,7 @@ async function runBattleSequence() {
                             logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
                             showPassivePopup(targetEl, "VOID");
                             break;
-                        } else if (target.id === 319 && !target.isPassiveActive && ab.name === '威力操作') {
+                        } else if (target.id === 319 && target.currentHp > target.stats.hp * 0.5 && ab.name === '威力操作') {
                             actualDamage = Math.floor(actualDamage * 0.25); // 75% cut
                             logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
                             showPassivePopup(targetEl, "GUARD");
@@ -4457,6 +4458,16 @@ async function runBattleSequence() {
 
         target.currentHp = Math.max(0, target.currentHp - actualDamage);
 
+        // Guldie (ID: 319) Passive Activation
+        const wasAbove50 = (target.currentHp + actualDamage) > target.stats.hp * 0.5;
+        if (target.id === 319 && target.currentHp <= target.stats.hp * 0.5 && wasAbove50) {
+            const passiveAbility = target.abilities.find(a => a.name === '大罪支配【色欲】');
+            if (passiveAbility) {
+                await showCutIn(target, passiveAbility.name);
+                logBattleMessage(`${target.name}は大罪の力を解放した！`);
+            }
+        }
+
         // Ricardo (ID: 8) Earth Residue Flow
         if (target.id === 8 && target.currentHp === 0 && !target.gutsUsed && !target.statusEffects.some(e => e.type === 'curse')) {
             target.gutsUsed = true;
@@ -4545,20 +4556,6 @@ async function runBattleSequence() {
             }
         }
 
-        // Guldie (ID: 319) Passive Activation
-        if (target.id === 319 && !target.isPassiveActive && target.currentHp <= target.stats.hp * 0.5) {
-            target.isPassiveActive = true;
-            const passiveAbility = target.abilities.find(a => a.name === '大罪支配【色欲】');
-            if (passiveAbility) {
-                await showCutIn(target, passiveAbility.name);
-                logBattleMessage(`${target.name}は大罪の力を解放した！`);
-                const passiveBadge = document.querySelector(`#unit-${target.battleId} .passive-active-badge`);
-                if (passiveBadge) {
-                    passiveBadge.textContent = '色欲';
-                    passiveBadge.classList.add('active');
-                }
-            }
-        }
         setTimeout(() => targetEl.classList.remove(damageClass), animDuration);
 
         // Counter Attack (on_hit)
@@ -4627,6 +4624,13 @@ async function runBattleSequence() {
             }
           } else if (attacker.id === 22) { // キャル・エクレア
              chaseAbility = attacker.abilities[1]; // 多重詠唱
+          } else if (attacker.id === 319) { // Guldie
+             if (attacker.currentHp <= attacker.stats.hp * 0.5) {
+                const ab = attacker.abilities[2]; // Eternal Crimson
+                if (Math.random() < (ab.triggerRate || 0)) {
+                   chaseAbility = ab;
+                }
+             }
           } else {
             // 汎用処理
             for (const ab of attacker.abilities) {
@@ -5118,6 +5122,9 @@ function updateUnitUI(unit) {
       if (unit.abilities && unit.abilities.length > 1) {
         activeText = `⚡ ${unit.abilities[1].name}`;
       }
+            } else if (unit.id === 319 && unit.currentHp <= unit.stats.hp * 0.5) {
+              // グルディー (ID:319): HP50%以下で色欲
+              activeText = '色欲';
     }
     if (activeText) {
       passiveBadge.textContent = activeText;
