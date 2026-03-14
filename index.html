@@ -4431,31 +4431,6 @@ async function runBattleSequence() {
             playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
         }
 
-        // Ability: Defense (on_defense)
-        if (target.abilities && actualDamage > 0) {
-        // 呪いチェック
-        if (!target.statusEffects.some(e => e.type === 'curse')) {
-        for (const ab of target.abilities) {
-          if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
-             await showCutIn(target, ab.name);
-             
-             if (target.id === 6) { // Den Alvaro
-                 actualDamage = Math.floor(actualDamage * 0.7); // 30% Block
-                 logBattleMessage(`${target.name}の${ab.name}！ダメージ軽減＆麻痺付与！`);
-             } else {
-                 actualDamage = Math.floor(actualDamage * 0.9); // 10% Cut
-                 logBattleMessage(`${target.name}の${ab.name}！ダメージを軽減！`);
-             }
-             
-             if (ab.effect?.type === 'status') {
-                await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
-             }
-             playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
-          }
-        }
-        }
-      }
-
         target.currentHp = Math.max(0, target.currentHp - actualDamage);
 
         // Guldie (ID: 319) Passive Activation
