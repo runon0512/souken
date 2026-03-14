@@ -2445,7 +2445,7 @@ const units = [
   },
   {
     id: 313, name: 'パール・リリスコート', element: 'water', elementJp: '水',
-    baseStats: { hp: 1800, atk: 100, def: 80, spd: 70 }, abilityType: 'magic',
+    baseStats: { hp: 940, atk: 93, def: 81, spd: 72 }, abilityType: 'magic',
     abilities: [
       { name: 'アクアリウム', desc: '攻撃後、40%の確率で発動し相手に「溺没」（燃焼や独と同じ効果）を３Ｔ付与します。', triggerRate: 0.4, timing: 'after_attack', effect: { type: 'status', status: 'drown', turns: 3 } },
       { name: '防御の構え', desc: '被弾時に30%で20%のダメージをカットします。', triggerRate: 0.3, timing: 'on_defense', damageCut: 0.2 }
@@ -2911,7 +2911,24 @@ const eventChapters = [
         firstTimeReward: 1800
       }
     ]
+  },
+    {
+    name: 'イベント：次元の旅人',
+    missions: [
+      {
+        id: 905,
+        name: '次元の旅人',
+        description: '次元を彷徨う少女との遭遇。',
+        enemies: [
+          { id: 313, level: 55, aiType: AI_TYPES.RANDOM }, // Pearl
+        ],
+        recommendedPower: 30000,
+        reward: 900,
+        firstTimeReward: 1800
+      }
+    ]
   }
+
 ];
 
 function getMissionById(id) {
@@ -4089,6 +4106,7 @@ async function runBattleSequence() {
             switch (effect.type) {
                 case 'burn': // Fallthrough
                 case 'poison':
+                case 'drawn':
                     const effectInfo = STATUS_EFFECTS[effect.type];
                     const dotDamage = Math.floor(attacker.stats.hp / 8);
                     attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
@@ -5053,7 +5071,7 @@ function calculateDamage(attacker, defender) {
   let damage = Math.floor((atkStats.atk * atkStats.atk) / Math.max(1, defStats.def) * advantage);
   
   // 燃焼による被ダメージ増加
-  if (defender.statusEffects.some(e => e.type === 'burn' || e.type === 'poison')) {
+  if (defender.statusEffects.some(e => e.type === 'burn' || e.type === 'poison' || e.type === 'drawn')) {
     damage = Math.floor(damage * 1.1);
   }
 
