@@ -1221,8 +1221,7 @@
     animation: shake-hard 0.5s;
   }
   .battle-unit.is-targeted {
-    outline: 2px solid var(--accent);
-    outline-offset: 0.125rem;
+    /* The crosshair provides enough visual feedback */
   }
   .battle-unit.is-turn-active {
     box-shadow: 0 0 1rem var(--gold), 0 0 1.5rem var(--gold);
@@ -1284,7 +1283,14 @@
     filter: drop-shadow(0 0 1rem rgba(255,107,53,0.4));
   }
   .b-unit-info-overlay {
-    display: none;
+    display: none; /* Hidden by default, shown for targeted units */
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* Make the overlay visible for targeting */
+  .battle-unit.is-targeted .b-unit-info-overlay {
+    display: block;
   }
   .b-unit-info {
     position: relative;
@@ -1452,6 +1458,45 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* Targeting Crosshair */
+  .battle-unit.is-targeted::before,
+  .battle-unit.is-targeted::after,
+  .battle-unit.is-targeted .b-unit-info-overlay::before,
+  .battle-unit.is-targeted .b-unit-info-overlay::after {
+    content: '';
+    position: absolute;
+    width: 1.25rem; /* 20px */
+    height: 1.25rem; /* 20px */
+    border-color: var(--accent2);
+    border-style: solid;
+    animation: pulse-target 1.2s infinite ease-in-out;
+    z-index: 5; /* Ensure it's on top */
+  }
+  /* Top-left */
+  .battle-unit.is-targeted::before {
+    top: 0.5rem; /* 8px */
+    left: 0.5rem; /* 8px */
+    border-width: 3px 0 0 3px;
+  }
+  /* Bottom-right */
+  .battle-unit.is-targeted::after {
+    bottom: 0.5rem; /* 8px */
+    right: 0.5rem; /* 8px */
+    border-width: 0 3px 3px 0;
+  }
+  /* Top-right */
+  .battle-unit.is-targeted .b-unit-info-overlay::before {
+    top: 0.5rem; /* 8px */
+    right: 0.5rem; /* 8px */
+    border-width: 3px 3px 0 0;
+  }
+  /* Bottom-left */
+  .battle-unit.is-targeted .b-unit-info-overlay::after {
+    bottom: 0.5rem; /* 8px */
+    left: 0.5rem; /* 8px */
+    border-width: 0 0 3px 3px;
+  }
+
   .char-card {
     animation: cardIn 0.3s ease both;
   }
@@ -1508,6 +1553,12 @@
     0% { opacity: 1; transform: translate(-50%, 0); }
     100% { opacity: 0; transform: translate(-50%, -50px); }
   }
+  @keyframes pulse-target {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+  }
+
   /* EFFECT ANIMATIONS */
   .anim-slash { width: 100%; height: 100%; background: linear-gradient(45deg, transparent 45%, #fff 50%, transparent 55%); animation: eff-slash 0.3s forwards; }
   @keyframes eff-slash { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 100% { transform: scale(2) rotate(45deg); opacity: 0; } }
