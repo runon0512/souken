@@ -2163,7 +2163,10 @@
     <div class="modal-body">
       <div class="level-control">
         <div style="font-size:0.75rem;color:var(--text-main)">Lv.<span id="modalLevelVal" style="font-size:1rem;font-weight:700">1</span> <span style="font-size:0.625rem;color:var(--text-dim)">/ 20</span></div>
-        <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()">強化 (虹石 <span id="costVal">100</span>)</button>
+        <div style="display:flex; gap: 8px;">
+          <button class="level-btn" id="btnLevelDown" onclick="doLevelDown()" style="background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--border);" title="初期化 (素材全返還)">↺</button>
+          <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()">強化 (虹石 <span id="costVal">100</span>)</button>
+        </div>
       </div>
       <div class="modal-section">
         <div class="modal-section-title" id="modalCurrentStatsTitle">基礎ステータス</div>
@@ -3444,6 +3447,7 @@ function formatAbilityDetails(ability) {
   
   const cost = getLevelCost(level);
   const btn = document.getElementById('btnLevelUp');
+  const btnDown = document.getElementById('btnLevelDown');
   
   if (level >= maxLevel) {
     btn.disabled = true;
@@ -3451,6 +3455,11 @@ function formatAbilityDetails(ability) {
   } else {
     btn.disabled = playerState.rainbowStones < cost;
     btn.innerHTML = `強化 (虹石 <span id="costVal">${cost}</span>)`;
+  }
+  
+  if (btnDown) {
+    btnDown.disabled = level <= 1 && aura <= 0;
+    btnDown.style.opacity = (level <= 1 && aura <= 0) ? '0.5' : '1';
   }
 
   // Aura Upgrade Button
@@ -3543,6 +3552,37 @@ function doLevelUp() {
     saveGame();
   } else {
     showToast('虹石が足りません');
+  }
+}
+
+function doLevelDown() {
+  if (modalCharId === null) return;
+  const charState = playerState.characters[modalCharId];
+  if (!charState) return;
+  const currentAura = charState.aura || 0;
+  if (charState.level <= 1 && currentAura <= 0) return;
+
+  let refund = 0;
+  
+  // Level refund (Sum of 100 * level for levels 1 to current-1)
+  if (charState.level > 1) {
+    refund += 50 * charState.level * (charState.level - 1);
+  }
+  
+  // Aura refund
+  for(let i=0; i < currentAura; i++) {
+    if (AURA_DATA[i]) refund += AURA_DATA[i].cost;
+  }
+  
+  if (confirm(`レベルとオーラを初期化して、虹石 ${refund} 個を回収しますか？`)) {
+    playerState.rainbowStones += refund;
+    charState.level = 1;
+    charState.aura = 0;
+    showToast(`初期化完了 (虹石 +${refund})`);
+    updateModal();
+    renderCards(); // Update list stats
+    renderSquad(); // Update power
+    saveGame();
   }
 }
 
