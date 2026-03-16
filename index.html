@@ -2259,6 +2259,9 @@
       <button class="filter-btn" onclick="setView('gacha')" id="view-gacha">
         ガチャ
       </button>
+      <button class="filter-btn" onclick="setView('status')" id="view-status">
+        状態異常一覧
+      </button>
     </div>
 
     <div class="filter-section">
@@ -2359,6 +2362,15 @@
     </div>
     <div id="gachaContainer">
       <!-- Gacha banners will be rendered here -->
+    </div>
+  </div>
+
+  <!-- STATUS PANEL -->
+  <div class="roster-panel" id="statusPanel" style="display: none;">
+    <div class="roster-toolbar">
+      <div class="roster-title">状態異常一覧</div>
+    </div>
+    <div id="statusGrid" class="equip-grid" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; max-height: none;">
     </div>
   </div>
 </main>
@@ -2555,12 +2567,12 @@ const units = [
   },
   {
     id: 2, name: 'ノア・ルナリス', element: 'light', elementJp: '光', type: 'ルディ王国',
-    baseStats: { hp: 1150, atk: 90, def: 80, spd: 75 },
+    baseStats: { hp: 1350, atk: 90, def: 80, spd: 75 },
     abilityType: 'magic',
     abilities: [
-      { name: 'クリスタル・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の60%のダメージを与える。', triggerRate: 0.4, timing: 'after_attack' },
+      { name: 'クリスタル・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の60%のダメージを与える。この攻撃は敵の防御系スキルを無効化する。', triggerRate: 0.4, timing: 'after_attack', ignoresDefenseSkills: true },
       { name: '再生支配', desc: 'HPが30%以下の時、防御力が10%アップし、スキルが「ハート・ブレイク」に変化する。' },
-      { name: 'ハート・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の120%のダメージを与える。', triggerRate: 0.4, timing: 'after_attack' },
+      { name: 'ハート・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の120%のダメージを与える。この攻撃は敵の防御系スキルを無効化する。', triggerRate: 0.4, timing: 'after_attack', ignoresDefenseSkills: true },
     ],
     useImg: true,
     img: 'C2.svg',
@@ -2621,7 +2633,7 @@ const units = [
   },
   {
     id: 9, name: 'ベラ・ミルヘン', element: 'fire', elementJp: '炎', type: 'ルディ王国',
-    baseStats: { hp: 1000, atk: 90, def: 50, spd: 90 },
+    baseStats: { hp: 1150, atk: 90, def: 50, spd: 90 },
     abilityType: 'magic',
     abilities: [
       { name: '不可視の炎', desc: '攻撃後、50%の確率で再攻撃を行う。最大5回まで。', triggerRate: 1.0, timing: 'after_attack' },
@@ -2922,6 +2934,56 @@ const units = [
       { name: 'アブソリュート・ゼロ', desc: '「視界内物質操作・爆散」が発動しなかった攻撃後、60%で発動し、凍結を2T付与する。', triggerRate: 0.6, timing: 'after_attack', effect: { type: 'status', status: 'freeze', turns: 2 } }
     ],
     useImg: true, img: 'C28.svg'
+  },
+  {
+    id: 25, name: 'アッキー・ナトリウム', element: 'dark', elementJp: '闇', type: 'ルディ王国',
+    baseStats: { hp: 1140, atk: 105, def: 85, spd: 80 }, // Balance
+    abilityType: 'magic',
+    abilities: [
+      { name: '重力操作', desc: '40%の確率で発動。攻撃対象に「重量化(速度1/3)」を3ターン付与する。', triggerRate: 0.4, timing: 'before_attack', effect: { type: 'status', status: 'heavy', turns: 3 } },
+      { name: 'シャットダウン', desc: '戦闘開始時、敵全体に盲目(2ターン)を付与する。', timing: 'on_battle_start' }
+    ],
+    useImg: true, img: 'C29.svg'
+  },
+  {
+    id: 26, name: 'スルト・ルン', element: 'water', elementJp: '水', type: 'ルディ王国',
+    baseStats: { hp: 1250, atk: 85, def: 110, spd: 60 }, // Defense
+    abilityType: 'magic',
+    abilities: [
+      { name: '水属性エネルギー操作', desc: '戦闘開始時、水属性の味方と自分に強化を5ターン付与する。', timing: 'on_battle_start' },
+      { name: 'アクアリウム', desc: '攻撃後、40%の確率で発動し相手に「溺没」（燃焼や毒と同じ効果）を３Ｔ付与します。', triggerRate: 0.4, timing: 'after_attack', effect: { type: 'status', status: 'drown', turns: 3 } }
+    ],
+    useImg: true, img: 'C30.svg'
+  },
+  {
+    id: 27, name: 'ナック・ビリアン', element: 'fire', elementJp: '炎', type: 'ルディ王国',
+    baseStats: { hp: 1080, atk: 125, def: 70, spd: 85 }, // Attack
+    abilityType: 'slash',
+    abilities: [
+      { name: '気炎万丈', desc: '攻撃前、35%の確率で発動。自身に強化を3ターン付与する。', triggerRate: 0.35, timing: 'before_attack' },
+      { name: '不屈の闘志', desc: '状態異常にならない。' }
+    ],
+    useImg: true, img: 'C31.svg'
+  },
+  {
+    id: 28, name: 'カルマ・モルゴル', element: 'none', elementJp: '無', type: 'ルディ王国',
+    baseStats: { hp: 1130, atk: 100, def: 80, spd: 75 }, // Balance
+    abilityType: 'shoot',
+    abilities: [
+      { name: '跳弾の矢', desc: '攻撃後、確率(60%→30%)で威力50%の追撃を行う。', timing: 'after_attack' },
+      { name: '燃焼の矢', desc: '戦闘開始時、敵1体に燃焼(3ターン)を付与する。', timing: 'on_battle_start' }
+    ],
+    useImg: true, img: 'C32.svg'
+  },
+  {
+    id: 29, name: 'リナ・タナトス', element: 'light', elementJp: '光', type: 'ルディ王国',
+    baseStats: { hp: 1250, atk: 90, def: 105, spd: 65 }, // Defense
+    abilityType: 'magic',
+    abilities: [
+      { name: 'セレスティアルレイ', desc: '30%の確率で発動。攻撃威力が150%になり、盲目(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', damageMult: 1.5, effect: { type: 'status', status: 'blind', turns: 2 } },
+      { name: '防御態勢', desc: '被弾時、50%の確率でダメージを20%カットする。', triggerRate: 0.5, timing: 'on_defense', damageCut: 0.2 }
+    ],
+    useImg: true, img: 'C33.svg'
   },
 ];
 
@@ -3282,6 +3344,46 @@ const eventChapters = [
       }
     ]
   },
+  {
+    name: 'イベント：闇夜の月明かり',
+    missions: [
+      {
+        id: 909,
+        name: '闇夜の月明かり',
+        description: 'ルディ王国の精鋭たちとの手合わせ。',
+        enemies: [
+          { id: 25, level: 65, aiType: AI_TYPES.RANDOM },
+          { id: 26, level: 65, aiType: AI_TYPES.LOWEST_HP_DEF },
+          { id: 27, level: 65, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 28, level: 65, aiType: AI_TYPES.RANDOM },
+          { id: 29, level: 65, aiType: AI_TYPES.HIGHEST_ATK },
+        ],
+        recommendedPower: 60000,
+        reward: 1000,
+        firstTimeReward: 55000
+      }
+    ]
+  },
+  {
+    name: 'イベント：挑戦「星焔の降る戦場」',
+    missions: [
+      {
+        id: 910,
+        name: '挑戦「星焔の降る戦場」',
+        description: '星々の如く輝くオーラを纏った挑戦者が現れた。その実力、確かめてみよ。',
+        enemies: [
+          { id: 17, level: 7, aura: 0, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 13, name: '身代わり人形', icon: '🧸', desc: '最初の攻撃を1回だけ無効化する', effect: { type: 'shield_hit', val: 1 } } },
+          { id: 6, level: 51, aura: 7, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } },
+          { id: 10, level: 70, aura: 10, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 6, name: '狂戦士の斧', icon: '🪓', desc: '攻撃力が1.4倍になるが、HPが0.8倍になる', effect: { type: 'stat_mult_multi', stats: { atk: 1.4, hp: 0.8 } } } },
+          { id: 7, level: 51, aura: 7, aiType: AI_TYPES.RANDOM, equipment: { id: 14, name: 'フェニックスの羽', icon: '🪶', desc: '一度だけ致死ダメージを耐える', effect: { type: 'guts', val: true } } },
+          { id: 23, level: 7, aura: 0, aiType: AI_TYPES.RANDOM, equipment: { id: 11, name: '毒針', icon: '💉', desc: '攻撃時、20%の確率で毒を与える', effect: { type: 'add_status', status: 'poison', chance: 0.2 } } }
+        ],
+        recommendedPower: 35000,
+        reward: 3000,
+        firstTimeReward: 40000
+      }
+    ]
+  },
 
 ];
 
@@ -3303,16 +3405,18 @@ const elementalAdvantage = {
 };
 
 const STATUS_EFFECTS = {
-  burn: { icon: '🔥', name: '燃焼' },
-  paralysis: { icon: '⚡', name: '麻痺' },
-  poison: { icon: '☠️', name: '毒' },
-  weakness: { icon: '📉', name: '衰弱' },
-  strengthen: { icon: '💪', name: '強化' },
-  sleep: { icon: '💤', name: '睡眠' },
-  barrier: { icon: '🛡️', name: '障壁' },
-  curse: { icon: '🤐', name: '呪い' },
-  drown: {icon: '🌊', name: '溺没'},
-  freeze: { icon: '🧊', name: '凍結' },
+  burn: { icon: '🔥', name: '燃焼', desc: 'ターン開始時、最大HPの1/8のダメージを受ける。また、被ダメージが10%増加する。' },
+  poison: { icon: '☠️', name: '毒', desc: 'ターン開始時、最大HPの1/8のダメージを受ける。' },
+  drown: {icon: '🌊', name: '溺没', desc: 'ターン開始時、最大HPの1/8のダメージを受ける。'},
+  paralysis: { icon: '⚡', name: '麻痺', desc: 'ターン開始時、30%の確率で行動不能になる。' },
+  sleep: { icon: '💤', name: '睡眠', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
+  freeze: { icon: '🧊', name: '凍結', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
+  blind: { icon: '👁️‍🗨️', name: '盲目', desc: 'ターン開始時、30%の確率で行動不能になる。' },
+  weakness: { icon: '📉', name: '衰弱', desc: '攻撃力、防御力、速度が20%低下する。' },
+  strengthen: { icon: '💪', name: '強化', desc: '攻撃力、防御力、速度が20%上昇する。' },
+  barrier: { icon: '🛡️', name: '障壁', desc: '防御力が50%上昇する。' },
+  curse: { icon: '🤐', name: '呪い', desc: 'アビリティ（スキル）が発動しなくなる。' },
+  heavy: { icon: '🏋️', name: '重量化', desc: '速度が1/3になる。' },
 };
 
 const AURA_DATA = [
@@ -3574,6 +3678,7 @@ function setView(view) {
   document.getElementById('missionPanel').style.display = view === 'missions' ? 'block' : 'none';
   document.getElementById('equipPanel').style.display = view === 'equipment' ? 'block' : 'none';
   document.getElementById('gachaPanel').style.display = view === 'gacha' ? 'block' : 'none';
+  document.getElementById('statusPanel').style.display = view === 'status' ? 'block' : 'none';
   document.querySelectorAll('.filter-section button').forEach(b => b.classList.remove('active'));
   const viewBtn = document.getElementById('view-' + view);
   if(viewBtn) viewBtn.classList.add('active');
@@ -3585,6 +3690,8 @@ function setView(view) {
     renderGachaPanel();
   } else if (view === 'equipment') {
     renderEquipmentPanel();
+  } else if (view === 'status') {
+    renderStatusPanel();
   }
 }
 
@@ -3636,6 +3743,26 @@ function renderEquipmentPanel() {
     `;
     grid.appendChild(card);
   });
+}
+
+function renderStatusPanel() {
+  const grid = document.getElementById('statusGrid');
+  grid.innerHTML = '';
+  for (const key in STATUS_EFFECTS) {
+    const effect = STATUS_EFFECTS[key];
+    const card = document.createElement('div');
+    card.className = 'equip-item'; // Re-use style
+    card.style.cursor = 'default';
+    card.style.alignItems = 'flex-start';
+    card.innerHTML = `
+      <div class="equip-icon-box" style="font-size: 1.5rem;">${effect.icon}</div>
+      <div class="equip-info">
+        <div class="equip-name">${effect.name}</div>
+        <div class="equip-desc" style="white-space: normal; line-height: 1.5;">${effect.desc}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
 }
 
 // ===== SEARCH =====
@@ -4771,8 +4898,10 @@ async function runBattleSequence() {
                     }
                     break;
                 case 'paralysis':
+                case 'blind':
                     if (Math.random() < 0.3) {
-                        logBattleMessage(`${attacker.name}は<span class="info">麻痺</span>で動けない！`);
+                        const effectName = effect.type === 'paralysis' ? '麻痺' : '盲目';
+                        logBattleMessage(`${attacker.name}は<span class="info">${effectName}</span>で動けない！`);
                         canAct = false;
                     }
                     break;
@@ -4988,6 +5117,13 @@ async function runBattleSequence() {
         if (attacker.id === 13 && activeAbility.name === '圧縮の札') {
             attacker.isAdvantageForced = true;
         }
+        // ナック・ビリアン (ID: 27) 気炎万丈
+        if (attacker.id === 27 && activeAbility.name === '気炎万丈') {
+             await addStatusEffect(attacker, 'strengthen', 3);
+             logBattleMessage(`${attacker.name}は気炎を上げ、強化された！`);
+             playEffect(attackerEl, 'heal');
+        }
+
         if (attacker.id === 18 && activeAbility.name === '五色の魔法') {
             attacker.isAdvantageForced = true;
         }
@@ -5005,7 +5141,7 @@ async function runBattleSequence() {
         let actualDamage = damage;
         
         // Ability: Defense (on_defense)
-        if (target.abilities && actualDamage > 0) {
+        if (target.abilities && actualDamage > 0 && (!activeAbility || !activeAbility.ignoresDefenseSkills)) {
             // 呪い状態なら防御スキル発動不可
             if (!target.statusEffects.some(e => e.type === 'curse')) {
             for (const ab of target.abilities) {
@@ -5028,6 +5164,11 @@ async function runBattleSequence() {
                             actualDamage = Math.floor(actualDamage * 0.25); // 75% cut
                             logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
                             showPassivePopup(targetEl, "GUARD");
+                            break;
+                        } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos
+                            actualDamage = Math.floor(actualDamage * 0.8); // 20% cut
+                            logBattleMessage(`${target.name}は防御態勢でダメージを軽減した！`);
+                            playEffect(targetEl, 'guard-vertical');
                             break;
                         } else if (target.id === 318 && ab.name === '反転') {
                             await showCutIn(target, ab.name);
@@ -5436,6 +5577,25 @@ async function runBattleSequence() {
                 playEffect(targetEl, 'magic');
                   if (target.currentHp <= 0) await processUnitDeath(target);
               }
+            else if (attacker.id === 28 && chaseAbility.name === '跳弾の矢') { // Karma Morgol
+                const chainProbs = [0.6, 0.3];
+                for (let i = 0; i < 2; i++) {
+                   if (Math.random() > chainProbs[i]) break;
+                   if (target.currentHp <= 0) break;
+                   if (i===0) await showCutIn(attacker, chaseAbility.name);
+
+                   const chaseDamage = Math.floor(calculateDamage(attacker, target) * 0.5);
+                   recordDamage(attacker, chaseDamage);
+                   target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+                   playEffect(targetEl, 'shoot');
+                   logBattleMessage(`<span class="ability">跳弾の矢 ${i+1}回目！</span> ${target.name}に<span class="damage">${chaseDamage}</span>のダメージ！`);
+                   updateUnitUI(target);
+                   showDamageNumber(targetEl, chaseDamage);
+                   targetEl.classList.add('is-taking-damage');
+                   setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+                   await sleep(400 / battleSpeedMultiplier);
+                }
+            }
             else { // Single chase attacks
               await showCutIn(attacker, chaseAbility.name);
               let chaseMult = 0.6; // Default for クリスタル・ブレイク
@@ -5445,16 +5605,47 @@ async function runBattleSequence() {
               if (chaseAbility.name === '雷撃斬') chaseMult = 0.5;
 
               const chaseDamage = Math.floor(calculateDamage(attacker, target) * chaseMult);
+              let actualChaseDamage = chaseDamage;
+
+              // 追撃に対する防御スキルチェック
+              if (target.abilities && actualChaseDamage > 0 && (!chaseAbility || !chaseAbility.ignoresDefenseSkills)) {
+                if (!target.statusEffects.some(e => e.type === 'curse')) {
+                  for (const ab of target.abilities) {
+                    if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
+                      await showCutIn(target, ab.name);
+                      if (target.id === 20 && ab.name === '運操作') { // Kitty
+                          actualChaseDamage = 0;
+                          logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
+                          showPassivePopup(targetEl, "VOID");
+                          break;
+                      } else if (target.id === 6) { // Den Alvaro
+                          actualChaseDamage = Math.floor(actualChaseDamage * 0.7);
+                          logBattleMessage(`${target.name}の${ab.name}！ダメージ軽減＆麻痺付与！`);
+                          if (ab.effect?.type === 'status') {
+                              await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
+                          }
+                          playEffect(targetEl, 'guard-vertical');
+                      } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos
+                          actualChaseDamage = Math.floor(actualChaseDamage * 0.8); // 20% cut
+                          logBattleMessage(`${target.name}は防御態勢でダメージを軽減した！`);
+                          playEffect(targetEl, 'guard-vertical');
+                          break;
+                      }
+                    }
+                  }
+                }
+              }
+
               recordDamage(attacker, chaseDamage);
-              target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+              target.currentHp = Math.max(0, target.currentHp - actualChaseDamage);
 
               if (chaseAbility && chaseAbility.effect?.type === 'status') {
                   await addStatusEffect(target, chaseAbility.effect.status, chaseAbility.effect.turns);
               }
               playEffect(targetEl, 'slash');
-              logBattleMessage(`<span class="ability">追撃！</span> ${chaseAbility.name}！ ${target.name} に <span class="damage">${chaseDamage}</span>${advText} のダメージ！`);
+              logBattleMessage(`<span class="ability">追撃！</span> ${chaseAbility.name}！ ${target.name} に <span class="damage">${actualChaseDamage}</span>${advText} のダメージ！`);
               updateUnitUI(target);
-              showDamageNumber(targetEl, chaseDamage, advText.includes('WEAK') ? 'weak' : 'damage');
+              showDamageNumber(targetEl, actualChaseDamage, advText.includes('WEAK') ? 'weak' : 'damage');
               targetEl.classList.add('is-taking-damage');
               setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
               await sleep(600 / battleSpeedMultiplier);
@@ -5597,8 +5788,12 @@ async function addStatusEffect(target, type, turns) {
     if (!target || target.currentHp <= 0) return;
 
     // Ricardo (ID: 8) or Kitsudou (ID: 320) Passive: Status Immunity
-    if (target.id === 8 || target.id === 320) {
-        const abilityName = target.id === 8 ? '適応力' : '精神統一';
+    // ナック・ビリアン (ID: 27) Passive: 不屈の闘志
+    if (target.id === 8 || target.id === 320 || target.id === 27) {
+        let abilityName = '適応力';
+        if (target.id === 320) abilityName = '精神統一';
+        if (target.id === 27) abilityName = '不屈の闘志';
+
         await showCutIn(target, abilityName);
         logBattleMessage(`${target.name}は${abilityName}で状態異常を無効化した！`);
         playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
@@ -5607,7 +5802,7 @@ async function addStatusEffect(target, type, turns) {
 
     const existingEffect = target.statusEffects.find(e => e.type === type);
     if (existingEffect) {
-        existingEffect.turns = Math.max(existingEffect.turns, turns);
+        existingEffect.turns += turns;
     } else {
         target.statusEffects.push({ type, turns });
     }
@@ -5739,6 +5934,10 @@ function getBattleStats(unit) {
     s.atk = Math.floor(s.atk * 1.2);
     s.def = Math.floor(s.def * 1.2);
     s.spd = Math.floor(s.spd * 1.2);
+  }
+  // ステータス効果: 重量化 (速度1/3)
+  if (unit.statusEffects.some(e => e.type === 'heavy')) {
+    s.spd = Math.floor(s.spd / 3);
   }
   // ステータス効果: 障壁 (防御50%アップ)
   if (unit.statusEffects.some(e => e.type === 'barrier')) {
@@ -5933,9 +6132,9 @@ async function triggerOnBattleStartAbilities() {
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
-        else if (unit.id === 15 || unit.id === 306) { // リディン(雷) or シャール(闇) の属性攻撃強化
-            const targetElement = unit.id === 15 ? 'thunder' : 'dark';
-            const skillName = unit.id === 15 ? '雷攻撃強化' : '闇攻撃強化';
+        else if (unit.id === 15 || unit.id === 306 || unit.id === 26) { // リディン(雷), シャール(闇), スルト(水) の属性攻撃強化
+            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : 'dark');
+            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : '闇攻撃強化');
             
             // 味方全体（自分含む）で、指定属性のキャラを対象にする
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
@@ -5962,6 +6161,27 @@ async function triggerOnBattleStartAbilities() {
                     playEffect(tEl, 'guard-vertical');
                 }
                 logBattleMessage(`${ab.name}！味方全員に強固な障壁が展開された！`);
+            }
+        }
+        else if (unit.id === 25 && ab.name === 'シャットダウン') { // Acky: Shutdown (AoE Blind)
+            const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+            const living = targets.filter(t => t.currentHp > 0);
+            for (const t of living) {
+                await addStatusEffect(t, 'blind', 2);
+                const tEl = document.getElementById(`unit-${t.battleId}`);
+                playEffect(tEl, 'dark');
+            }
+            logBattleMessage(`${unit.name}のシャットダウン！敵全体の視界を奪った！`);
+        }
+        else if (unit.id === 28 && ab.name === '燃焼の矢') { // Karma: Burning Arrow (Single Burn)
+            const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+            const living = targets.filter(t => t.currentHp > 0);
+            if (living.length > 0) {
+                const t = living[Math.floor(Math.random() * living.length)];
+                await addStatusEffect(t, 'burn', 3);
+                logBattleMessage(`${unit.name}の燃焼の矢！${t.name}は炎に包まれた！`);
+                const tEl = document.getElementById(`unit-${t.battleId}`);
+                playEffect(tEl, 'shoot');
             }
         }
         
