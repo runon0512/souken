@@ -4032,12 +4032,19 @@ async function toggleFullScreen() {
         await el.webkitRequestFullscreen();
       } else if (el.msRequestFullscreen) { // IE/Edge
         await el.msRequestFullscreen();
+      } else {
+        showToast('お使いのブラウザは全画面表示に非対応です');
+        return;
       }
 
       // スマホの場合、横画面にロック
       const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       if (isMobile && screen.orientation && typeof screen.orientation.lock === 'function') {
-        await screen.orientation.lock('landscape');
+        try {
+          await screen.orientation.lock('landscape');
+        } catch (lockError) {
+          console.warn('Orientation lock failed:', lockError);
+        }
       }
     } else {
       // 画面ロックを解除
@@ -4057,6 +4064,7 @@ async function toggleFullScreen() {
     }
   } catch (err) {
     console.warn('Fullscreen or orientation lock failed:', err);
+    showToast('全画面表示に失敗しました');
   }
 }
 
@@ -4326,10 +4334,11 @@ function renderUnit(unit) {
   const clickAction = battleState.isStarted
     ? (!unit.isPlayer ? `onclick="selectTarget('${unit.battleId}')"` : '')
     : `onclick="openBattleUnitModal('${unit.battleId}')"`;
+  const isTargetedClass = battleState.selectedTargetId === unit.battleId ? 'is-targeted' : '';
 
   return `
     <div 
-      class="battle-unit ${unit.isPlayer ? 'player-unit' : 'enemy-unit'} ${unit.currentHp <= 0 ? 'defeated' : ''} ${auraClass}" 
+      class="battle-unit ${unit.isPlayer ? 'player-unit' : 'enemy-unit'} ${unit.currentHp <= 0 ? 'defeated' : ''} ${auraClass} ${isTargetedClass}" 
       id="unit-${unit.battleId}"
       ${clickAction}
       style="cursor: pointer;"
@@ -4421,17 +4430,21 @@ async function processUnitDeath(unit) {
     const callum = allies.find(u => u.id === 7 && u.currentHp > 0 && !u.passiveUsed);
     
     if (callum && callum.battleId !== unit.battleId) {
-        await showCutIn(callum, '完全治療');
-        const healAmount = Math.floor(unit.stats.hp * 0.5);
-        unit.currentHp = Math.floor(unit.stats.hp * 0.5);
-        logBattleMessage(`${callum.name}の完全治療！${unit.name}が復活した！`);
-        updateUnitUI(unit);
-        const unitEl = document.getElementById(`unit-${unit.battleId}`);
-        playEffect(unitEl, 'heal');
-        showDamageNumber(unitEl, healAmount, 'heal');
-        callum.passiveUsed = true;
-        if (unitEl) unitEl.classList.remove('defeated');
-        return;
+        if (callum.statusEffects.some(e => e.type === 'curse')) {
+            logBattleMessage(`${callum.name}は呪いでスキルを発動できない！`);
+        } else {
+            await showCutIn(callum, '完全治療');
+            const healAmount = Math.floor(unit.stats.hp * 0.5);
+            unit.currentHp = Math.floor(unit.stats.hp * 0.5);
+            logBattleMessage(`${callum.name}の完全治療！${unit.name}が復活した！`);
+            updateUnitUI(unit);
+            const unitEl = document.getElementById(`unit-${unit.battleId}`);
+            playEffect(unitEl, 'heal');
+            showDamageNumber(unitEl, healAmount, 'heal');
+            callum.passiveUsed = true;
+            if (unitEl) unitEl.classList.remove('defeated');
+            return;
+        }
     }
 
     // 3. Final Death
@@ -4448,6 +4461,12 @@ async function processUnitDeath(unit) {
 async function checkDeathAbilities(unit) {
   if (!unit) return false;
   const unitEl = document.getElementById(`unit-${unit.battleId}`);
+  
+  // If cursed, no death abilities trigger
+  if (unit.statusEffects.some(e => e.type === 'curse')) {
+    logBattleMessage(`${unit.name}は呪いでスキルを発動できない！`);
+    return false;
+  }
   
   // Gira (ID: 13) Passive: 祟り神の降臨
   if (unit.id === 13 && !unit.passiveUsed) {
@@ -5701,6 +5720,10 @@ async function triggerOnBattleStartAbilities() {
     // 3. Execute actions
     for (const action of actionQueue) {
         const { unit, ab } = action;
+        if (unit.statusEffects.some(e => e.type === 'curse')) {
+            logBattleMessage(`${unit.name}は呪いでスキルを発動できない！`);
+            continue;
+        }
         await showCutIn(unit, ab.name);
         logBattleMessage(`${unit.name}の「${ab.name}」！`);
 
