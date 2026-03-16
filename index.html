@@ -2221,6 +2221,21 @@
         <span style="color:var(--elem-light)">光</span> ⇔ <span style="color:var(--elem-dark)">闇</span>
       </div>
     </div>
+
+    <div class="filter-section">
+      <div class="section-title">設定</div>
+      <div style="padding: 0 0.75rem;">
+        <label for="bgmVolume" style="font-size: 0.75rem; color: var(--text-mid);">BGM音量</label>
+        <input type="range" id="bgmVolume" min="0" max="1" step="0.01" oninput="updateBgmVolume(this.value)" style="width: 100%;">
+        <label for="sfxVolume" style="font-size: 0.75rem; color: var(--text-mid); margin-top: 0.5rem; display: block;">効果音音量</label>
+        <input type="range" id="sfxVolume" min="0" max="1" step="0.01" oninput="updateSfxVolume(this.value)" style="width: 100%;">
+      </div>
+    </div>
+
+    <div style="font-size: 0.625rem; color: var(--text-dim); text-align: center; margin-top: 1.5rem; padding: 0.5rem;">
+      <p>BGM: 魔王魂 様</p>
+      <p>効果音: 効果音ラボ 様</p>
+    </div>
   </aside>
 
   <!-- ROSTER PANEL -->
@@ -2250,7 +2265,7 @@
   </div>
 
   <!-- MISSION PANEL -->
-  <div class="mission-panel" id="missionPanel" style="display: none;">
+  <div class="roster-panel" id="missionPanel" style="display: none;">
     <div class="roster-toolbar" style="align-items: center;">
       <div style="display:flex; align-items:center; gap:1rem;">
         <div class="roster-title" id="missionViewTitle">ストーリー選択</div>
@@ -2438,6 +2453,21 @@
 -->
 
 <script>
+// ===== AUDIO =====
+const sounds = {
+  homeBgm: new Audio('ホーム画面.mp3'),
+  battleBgm: new Audio('バトルbgm.mp3'),
+  abilitySfx: new Audio('スキル.mp3'),
+  slashSfx: new Audio('斬撃.mp3'),
+  magicSfx: new Audio('魔法.mp3'),
+};
+
+let settings = {
+  bgmVolume: 0.3,
+  sfxVolume: 0.5,
+};
+
+
 // ===== DATA =====
 const units = [
   {
@@ -3038,22 +3068,22 @@ const eventChapters = [
     ]
   },
   {
-    name: 'イベント：prog1248からの挑戦状',
+    name: 'イベント：progからの挑戦状',
     missions: [
       {
         id: 902,
-        name: 'prog1248からの挑戦状！',
+        name: 'progからの挑戦状！',
         description: '強力な装備で武装した部隊からの挑戦状が届いた。心してかかろう。',
         enemies: [
-          { id: 1, level: 40, aura: 4, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 } } },
-          { id: 4, level: 40, aura: 4, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } },
-          { id: 5, level: 40, aura: 4, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 } } },
-          { id: 6, level: 40, aura: 4, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 } } },
-          { id: 15, level: 40, aura: 4, aiType: AI_TYPES.RANDOM, equipment: { id: 15, name: '賢者の石', icon: '💎', desc: '全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } } } }
+          { id: 1, level: 50, aura: 6, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 } } },
+          { id: 4, level: 50, aura: 6, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } },
+          { id: 5, level: 50, aura: 6, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 } } },
+          { id: 6, level: 45, aura: 5, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 } } },
+          { id: 15, level: 45, aura: 5, aiType: AI_TYPES.RANDOM, equipment: { id: 15, name: '賢者の石', icon: '💎', desc: '全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } } } }
         ],
-        recommendedPower: 25000,
-        reward: 800,
-        firstTimeReward: 1500
+        recommendedPower: 45000,
+        reward: 1200,
+        firstTimeReward: 2500
       }
     ]
   },
@@ -3109,7 +3139,47 @@ const eventChapters = [
         firstTimeReward: 1800
       }
     ]
-  }
+  },
+  {
+    name: 'イベント：襲撃（本気）',
+    missions: [
+      {
+        id: 906,
+        name: '襲撃（本気）',
+        description: '世界の真実を知った者たちの本気の襲撃。',
+        enemies: [
+          { id: 319, level: 60, aiType: AI_TYPES.RANDOM },
+          { id: 318, level: 60, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 20, level: 60, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 18, level: 60, aiType: AI_TYPES.RANDOM },
+          { id: 19, level: 60, aiType: AI_TYPES.HIGHEST_ATK }
+        ],
+        recommendedPower: 62000,
+        reward: 30000,
+        firstTimeReward: 60000
+      }
+    ]
+  },
+  {
+    name: 'イベント：カリフラワーからの挑戦状',
+    missions: [
+      {
+        id: 907,
+        name: 'カリフラワーからの挑戦状！',
+        description: 'また新たな挑戦者が現れたようだ。',
+        enemies: [
+          { id: 1, level: 40, aura: 4, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 7, name: '重騎士の盾', icon: '🛡️', desc: '防御力が1.4倍になるが、速度が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { def: 1.4, spd: 0.8 } } } },
+          { id: 11, level: 40, aura: 4, aiType: AI_TYPES.RANDOM, equipment: { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 } } },
+          { id: 8, level: 40, aura: 4, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 6, name: '狂戦士の斧', icon: '🪓', desc: '攻撃力が1.4倍になるが、HPが0.8倍になる', effect: { type: 'stat_mult_multi', stats: { atk: 1.4, hp: 0.8 } } } },
+          { id: 23, level: 1, aura: 0, aiType: AI_TYPES.RANDOM, equipment: null },
+          { id: 15, level: 40, aura: 4, aiType: AI_TYPES.RANDOM, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } }
+        ],
+        recommendedPower: 33000,
+        reward: 1300,
+        firstTimeReward: 2600
+      }
+    ]
+  },
 
 ];
 
@@ -3169,6 +3239,12 @@ let searchQuery = '';
 let currentSort = 'id';
 let modalCharId = null;
 let missionProgress = new Set(); // Cleared mission IDs
+
+// Audio state
+sounds.homeBgm.loop = true;
+sounds.battleBgm.loop = true;
+let currentBgm = null;
+
 let gachaAnimationTimeout;
 let currentGachaResults = null;
 
@@ -3371,6 +3447,11 @@ function renderStatBar(label, val, type) {
 
 // ===== FILTER =====
 function setView(view) {
+  // Play BGM on user interaction
+  if (view !== 'battle') {
+    playBgm('home');
+  }
+
   currentView = view;
   document.getElementById('rosterPanel').style.display = view === 'roster' ? 'block' : 'none';
   document.getElementById('missionPanel').style.display = view === 'missions' ? 'block' : 'none';
@@ -3815,6 +3896,46 @@ function closeModalDirect() {
   if (existingTargetBtn) existingTargetBtn.remove();
 }
 
+// ===== AUDIO FUNCTIONS =====
+function playBgm(type) {
+  const newBgm = type === 'battle' ? sounds.battleBgm : sounds.homeBgm;
+  if (currentBgm === newBgm && !newBgm.paused) return; // Already playing
+
+  if (currentBgm) {
+    currentBgm.pause();
+    currentBgm.currentTime = 0;
+  }
+  
+  currentBgm = newBgm;
+  currentBgm.volume = settings.bgmVolume;
+  currentBgm.play().catch(e => console.log("BGM play was prevented. Requires user interaction.", e));
+}
+
+function playSfx(type) {
+  let sfx;
+  switch(type) {
+    case 'ability': sfx = sounds.abilitySfx; break;
+    case 'slash': sfx = sounds.slashSfx; break;
+    case 'magic': sfx = sounds.magicSfx; break;
+    case 'impact': sfx = sounds.slashSfx; break; // Use slash sound for impact
+    default: return;
+  }
+  sfx.currentTime = 0;
+  sfx.volume = settings.sfxVolume;
+  sfx.play().catch(e => console.log("SFX play was prevented.", e));
+}
+
+function updateBgmVolume(value) {
+  settings.bgmVolume = parseFloat(value);
+  if (currentBgm) currentBgm.volume = settings.bgmVolume;
+  saveSettings();
+}
+
+function updateSfxVolume(value) {
+  settings.sfxVolume = parseFloat(value);
+  playSfx('slash'); // Play a test sound
+  saveSettings();
+}
 
 
 
@@ -3859,6 +3980,8 @@ function renderStoryChapters() {
           if (m.id === 901) firstRewardHtml += ` + <span style="color:var(--accent)">リディン</span>`;
           if (m.id === 904) firstRewardHtml += ` + <span style="color:var(--accent)">シャム・グレゴリオ</span>`;
  
+          const actionHtml = `<button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>`;
+
           const card = document.createElement('div');
           card.className = `mission-card`;
           card.innerHTML = `
@@ -3871,9 +3994,8 @@ function renderStoryChapters() {
                 <div>報酬: 虹石 ${m.reward}</div>
               </div>
             </div>
-            <button class="mission-btn">任務開始</button>
+            ${actionHtml}
           `;
-          card.querySelector('.mission-btn').onclick = () => startBattle(m.id);
           container.appendChild(card);
       });
   });
@@ -3924,6 +4046,17 @@ function renderMissionsForChapter(chapterIndex) {
       firstRewardHtml += ` + <span style="color:var(--accent)">いえみけ</span>`;
     }
 
+    let actionHtml = `<button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>`;
+    if (!isCleared && !isLocked) {
+      const skipCost = m.reward * 2;
+      actionHtml = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem;">
+          <button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>
+          <button class="mission-btn" style="background:transparent; border-color:var(--text-dim); color:var(--text-dim); font-size:0.7rem;" onclick="skipMission(${m.id})">スキップ<br>💎${skipCost}</button>
+        </div>
+      `;
+    }
+
     const card = document.createElement('div');
     card.className = `mission-card ${isLocked ? 'locked' : ''}`;
     card.innerHTML = `
@@ -3936,7 +4069,7 @@ function renderMissionsForChapter(chapterIndex) {
           <div>報酬: 虹石 ${m.reward}</div>
         </div>
       </div>
-      <button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>
+      ${actionHtml}
     `;
     container.appendChild(card);
   });
@@ -3956,6 +4089,8 @@ async function startBattle(missionId) {
   }
   const mission = getMissionById(missionId);
   if (!mission) return;
+
+  playBgm('battle');
 
   battleState = {
     mission: mission,
@@ -4011,6 +4146,40 @@ async function startBattle(missionId) {
   document.getElementById('closeBattleBtn').disabled = false;
 
   document.getElementById('battleOverlay').classList.add('open');
+}
+
+function skipMission(missionId) {
+  const mission = getMissionById(missionId);
+  if (!mission) return;
+  const cost = mission.reward * 2;
+
+  if (playerState.rainbowStones < cost) {
+    showToast(`虹石が足りません (必要: ${cost})`);
+    return;
+  }
+
+  if (!confirm(`${mission.name} をスキップしますか？\n消費: 虹石 ${cost}\n\n※報酬・初回報酬は獲得できませんが、クリア扱いとなり次のステージに進めます。`)) {
+    return;
+  }
+
+  playerState.rainbowStones -= cost;
+  missionProgress.add(missionId);
+  saveGame();
+  showToast('任務をスキップしました');
+  renderSquad(); // Update header resource
+
+  // Refresh view based on where we are
+  const title = document.getElementById('missionViewTitle').textContent;
+  if (title === '任務選択' || title === 'メインストーリー') {
+      renderStoryChapters();
+  } else {
+      const chIdx = storyChapters.findIndex(c => c.name === title);
+      if (chIdx > -1) {
+          renderMissionsForChapter(chIdx);
+      } else {
+          renderStoryChapters();
+      }
+  }
 }
 
 function openBattleUnitModal(battleId) {
@@ -5099,6 +5268,7 @@ function checkWinLoss() {
 }
 
 async function showCutIn(unit, abilityName) {
+  playSfx('ability');
   const overlay = document.getElementById('cutinOverlay');
   const charWrap = document.getElementById('cutinChar');
   const text = document.getElementById('cutinText');
@@ -5196,6 +5366,14 @@ function showDamageNumber(targetEl, damage, type = 'damage') {
 }
 function playEffect(targetEl, type) {
   const overlay = targetEl.querySelector('.effect-overlay');
+
+  // Play SFX based on effect type
+  if (type === 'slash' || type === 'impact') {
+    playSfx('slash');
+  } else if (type === 'magic' || type === 'dark' || type === 'shoot') {
+    playSfx('magic');
+  }
+
   overlay.innerHTML = `<div class="anim-${type}"></div>`;
   setTimeout(() => {
     overlay.innerHTML = '';
@@ -5482,6 +5660,7 @@ async function triggerOnBattleStartAbilities() {
 
 function closeBattle() {
   document.getElementById('battleOverlay').classList.remove('open');
+  playBgm('home');
   // Reset button for next battle
   document.getElementById('retireBattleBtn').disabled = true;
   document.getElementById('battleActionBtn').onclick = runBattleSequence;
@@ -5790,6 +5969,18 @@ function saveGame() {
   console.log('Game saved!');
 }
 
+function saveSettings() {
+  localStorage.setItem('soukenWoF_settings', JSON.stringify(settings));
+}
+
+function loadSettings() {
+  const savedJSON = localStorage.getItem('soukenWoF_settings');
+  if (savedJSON) {
+    settings = JSON.parse(savedJSON);
+    console.log('Settings loaded.');
+  }
+}
+
 function loadGame() {
   const savedJSON = localStorage.getItem('soukenWoF_saveData');
   if (savedJSON) {
@@ -5845,10 +6036,27 @@ function closeVictoryModal() {
 
 // ===== INIT =====
 function initializeGame() {
+    loadSettings();
     loadGame();
     setView('roster');
     renderSquad();
     renderCards();    
+    // Update UI sliders from loaded settings
+    document.getElementById('bgmVolume').value = settings.bgmVolume;
+    document.getElementById('sfxVolume').value = settings.sfxVolume;
+
+    // ブラウザの自動再生ポリシー対策：ロード時に再生できない場合、初回操作時に再生を開始する
+    const tryPlayAudio = () => {
+        if (currentBgm && currentBgm.paused) {
+            currentBgm.play().catch(() => {});
+        }
+        document.removeEventListener('click', tryPlayAudio);
+        document.removeEventListener('touchstart', tryPlayAudio);
+        document.removeEventListener('keydown', tryPlayAudio);
+    };
+    document.addEventListener('click', tryPlayAudio);
+    document.addEventListener('touchstart', tryPlayAudio);
+    document.addEventListener('keydown', tryPlayAudio);
 }
 
 initializeGame();
