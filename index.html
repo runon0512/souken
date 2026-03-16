@@ -171,7 +171,7 @@
     z-index: 1;
     display: grid;
     /* サイドバー幅を画面比率で決定 (18rem ≈ 画面幅の16%) */
-    grid-template-columns: 18rem 1fr;
+    grid-template-columns: 27rem 1fr;
     flex: 1;
     min-height: 0; /* Flexアイテム内でのスクロールに必須 */
     overflow: hidden;
@@ -2236,6 +2236,8 @@
       <p>BGM: 魔王魂 様</p>
       <p>効果音: 効果音ラボ 様</p>
     </div>
+
+    <button class="filter-btn" onclick="toggleFullScreen()" style="margin-top: 1rem;">全画面表示</button>
   </aside>
 
   <!-- ROSTER PANEL -->
@@ -3161,6 +3163,26 @@ const eventChapters = [
     ]
   },
   {
+    name: 'イベント：襲撃（本気）',
+    missions: [
+      {
+        id: 906,
+        name: '襲撃（本気）',
+        description: '世界の真実を知った者たちの本気の襲撃。',
+        enemies: [
+          { id: 319, level: 60, aiType: AI_TYPES.RANDOM },
+          { id: 318, level: 60, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 20, level: 60, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 18, level: 60, aiType: AI_TYPES.RANDOM },
+          { id: 19, level: 60, aiType: AI_TYPES.HIGHEST_ATK }
+        ],
+        recommendedPower: 62000,
+        reward: 1500,
+        firstTimeReward: 3000
+      }
+    ]
+  },
+  {
     name: 'イベント：カリフラワーからの挑戦状',
     missions: [
       {
@@ -3946,6 +3968,34 @@ function showToast(msg) {
   t.classList.add('show');
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function toggleFullScreen() {
+  if (!document.fullscreenElement &&
+      !document.mozFullScreenElement &&
+      !document.webkitFullscreenElement &&
+      !document.msFullscreenElement) {
+    const el = document.documentElement;
+    if (el.requestFullscreen) {
+      el.requestFullscreen();
+    } else if (el.mozRequestFullScreen) { // Firefox
+      el.mozRequestFullScreen();
+    } else if (el.webkitRequestFullscreen) { // Chrome, Safari & Opera
+      el.webkitRequestFullscreen();
+    } else if (el.msRequestFullscreen) { // IE/Edge
+      el.msRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.mozCancelFullScreen) { // Firefox
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) { // Chrome, Safari & Opera
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) { // IE/Edge
+      document.msExitFullscreen();
+    }
+  }
 }
 
 function getElemIcon(elem) {
