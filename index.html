@@ -171,7 +171,7 @@
     z-index: 1;
     display: grid;
     /* サイドバー幅を画面比率で決定 (18rem ≈ 画面幅の16%) */
-    grid-template-columns: 27rem 1fr;
+    grid-template-columns: 18rem 1fr;
     flex: 1;
     min-height: 0; /* Flexアイテム内でのスクロールに必須 */
     overflow: hidden;
@@ -3159,26 +3159,6 @@ const eventChapters = [
         recommendedPower: 62000,
         reward: 30000,
         firstTimeReward: 60000
-      }
-    ]
-  },
-  {
-    name: 'イベント：襲撃（本気）',
-    missions: [
-      {
-        id: 906,
-        name: '襲撃（本気）',
-        description: '世界の真実を知った者たちの本気の襲撃。',
-        enemies: [
-          { id: 319, level: 60, aiType: AI_TYPES.RANDOM },
-          { id: 318, level: 60, aiType: AI_TYPES.HIGHEST_ATK },
-          { id: 20, level: 60, aiType: AI_TYPES.HIGHEST_ATK },
-          { id: 18, level: 60, aiType: AI_TYPES.RANDOM },
-          { id: 19, level: 60, aiType: AI_TYPES.HIGHEST_ATK }
-        ],
-        recommendedPower: 62000,
-        reward: 1500,
-        firstTimeReward: 3000
       }
     ]
   },
