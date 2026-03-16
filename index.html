@@ -2467,6 +2467,7 @@ const sounds = {
 let settings = {
   bgmVolume: 0.3,
   sfxVolume: 0.5,
+  battleSpeed: 2,
 };
 
 
@@ -3254,14 +3255,15 @@ let battleState = {};
 let battleSpeedMultiplier = 2;
 
 // ===== COMPUTED =====
-function calcStats(baseStats, level, equipment = null) {
+function calcStats(baseStats, level, equipment = null, potential = 0) {
   // レベル1ごとに10%上昇する計算
   const multiplier = 1 + (level - 1) * 0.1;
+  const potentialMult = 1 + (potential * 0.1);
   let s = {
-    hp: Math.floor(baseStats.hp * multiplier),
-    atk: Math.floor(baseStats.atk * multiplier),
-    def: Math.floor(baseStats.def * multiplier),
-    spd: Math.floor(baseStats.spd * multiplier)
+    hp: Math.floor(baseStats.hp * multiplier * potentialMult),
+    atk: Math.floor(baseStats.atk * multiplier * potentialMult),
+    def: Math.floor(baseStats.def * multiplier * potentialMult),
+    spd: Math.floor(baseStats.spd * multiplier * potentialMult)
   };
 
   // Equipment Stat Modifiers
@@ -3283,10 +3285,10 @@ function calcStats(baseStats, level, equipment = null) {
   return s;
 }
 
-function getPower(unit, level) {
+function getPower(unit, level, potential = 0) {
   const equipId = playerState.characters[unit.id] ? playerState.characters[unit.id].equippedId : null;
   const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-  const s = calcStats(unit.baseStats, level, equip);
+  const s = calcStats(unit.baseStats, level, equip, potential);
   return Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
 }
 
@@ -3309,6 +3311,7 @@ function renderSquad() {
     const slot = document.createElement('div');
     const equipId = id ? playerState.characters[id].equippedId : null;
     const aura = id ? (playerState.characters[id].aura || 0) : 0;
+    const potential = id ? (playerState.characters[id].potential || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
     slot.className = 'squad-slot' + (c ? ' filled' : '') + (aura > 0 ? ` ${AURA_DATA[aura-1].class}` : '');
     if (c) {
@@ -3320,7 +3323,7 @@ function renderSquad() {
           <div class="slot-name">${c.name}</div>
         </div>
         ${equip ? `<div class="squad-equip-icon" title="${equip.name}">${equip.icon}</div>` : ''}
-        <div class="slot-power">${getPower(c, playerState.characters[id].level)}</div>
+        <div class="slot-power">${getPower(c, playerState.characters[id].level, potential)}</div>
       `;
       slot.onclick = () => openModal(c.id);
     } else {
@@ -3334,7 +3337,8 @@ function renderSquad() {
   }
   const total = squad.reduce((s, id) => {
     const c = units.find(u => u.id === id);
-    return s + (c ? getPower(c, playerState.characters[id].level) : 0);
+    const pot = playerState.characters[id] ? (playerState.characters[id].potential || 0) : 0;
+    return s + (c ? getPower(c, playerState.characters[id].level, pot) : 0);
   }, 0);
   document.getElementById('totalPower').textContent = total;
   document.getElementById('hSquadPower').textContent = total;
@@ -3397,9 +3401,10 @@ function renderCards() {
     const charState = isOwned ? playerState.characters[c.id] : null;
     const level = isOwned ? charState.level : 1;
     const equipId = isOwned ? charState.equippedId : null;
+    const potential = isOwned ? (charState.potential || 0) : 0;
     const aura = isOwned ? (charState.aura || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-    const s = calcStats(c.baseStats, level, equip);
+    const s = calcStats(c.baseStats, level, equip, potential);
     
     const auraClass = aura > 0 ? AURA_DATA[aura-1].class : '';
     const imgSrc = c.useImg ? c.img : 'C0.svg';
@@ -3605,7 +3610,7 @@ function formatAbilityDetails(ability) {
   const imgWrap = document.getElementById('modalImgWrap');
   imgWrap.innerHTML = `<img src="${imgSrc}" alt="${c.name}" style="filter:drop-shadow(0 0 20px rgba(0,200,255,0.4))">`;
 
-    let level, equipId, aura, s, equip;
+    let level, equipId, aura, potential, s, equip;
 
     const charState = playerState.characters[c.id];
     const isOwned = !!charState;
@@ -3614,18 +3619,21 @@ function formatAbilityDetails(ability) {
       level = battleUnit.level;
       equipId = battleUnit.equipment ? battleUnit.equipment.id : null;
       aura = battleUnit.aura || 0;
+      potential = battleUnit.potential || 0;
       s = getBattleStats(battleUnit); // Use dynamically calculated battle stats to reflect passives/effects
       equip = battleUnit.equipment;
     } else if (isOwned) {
       level = charState.level;
       equipId = charState.equippedId;
       aura = charState.aura || 0;
+      potential = charState.potential || 0;
       equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-      s = calcStats(c.baseStats, level, equip);
+      s = calcStats(c.baseStats, level, equip, potential);
     } else {
       // Not owned, not in battle -> show base Lv1 stats
       level = 1;
       equipId = null;
+      potential = 0;
       aura = 0;
       equip = null;
       s = c.baseStats;
@@ -3671,6 +3679,44 @@ function formatAbilityDetails(ability) {
   if (btnDown) {
     btnDown.disabled = level <= 1 && aura <= 0;
     btnDown.style.opacity = (level <= 1 && aura <= 0) ? '0.5' : '1';
+  }
+
+  // Potential UI
+  const existingPotRow = document.getElementById('modalPotentialRow');
+  if (existingPotRow) existingPotRow.remove();
+
+  if (isOwned && !isBattleContext) {
+    const potRow = document.createElement('div');
+    potRow.id = 'modalPotentialRow';
+    potRow.className = 'potential-row';
+    potRow.style.marginBottom = '1rem';
+    
+    const potCosts = [20, 50, 100];
+    const nextCost = potential < 3 ? potCosts[potential] : 0;
+    
+    let starsHtml = '';
+    for(let i=0; i<3; i++) {
+      starsHtml += `<span class="star ${i < potential ? 'lit' : ''}">★</span>`;
+    }
+
+    let btnHtml = '';
+    if (potential < 3) {
+        const canAfford = charState.fragments >= nextCost;
+        btnHtml = `<button class="level-btn" onclick="unlockPotential()" style="font-size:10px; padding:4px 8px; margin-left:8px;" ${!canAfford ? 'disabled' : ''}>解放 (欠片 ${nextCost})</button>`;
+    } else {
+        btnHtml = `<span style="font-size:10px; color:var(--gold); margin-left:8px;">MAX</span>`;
+    }
+
+    potRow.innerHTML = `
+      <div class="potential-label" style="display:flex; align-items:center; gap:8px;">
+        素質解放 <span class="potential-stars">${starsHtml}</span>
+        ${btnHtml}
+      </div>
+      <div style="font-size: 0.625rem; color: var(--text-dim);">
+         所持欠片: ${charState.fragments}
+      </div>
+    `;
+    levelControl.parentNode.insertBefore(potRow, levelControl.nextSibling);
   }
 
   // Aura Upgrade Button
@@ -3763,6 +3809,30 @@ function doLevelUp() {
     saveGame();
   } else {
     showToast('虹石が足りません');
+  }
+}
+
+function unlockPotential() {
+  if (modalCharId === null) return;
+  const charState = playerState.characters[modalCharId];
+  if (!charState) return;
+
+  const currentPot = charState.potential || 0;
+  if (currentPot >= 3) return;
+
+  const costs = [20, 50, 100];
+  const cost = costs[currentPot];
+
+  if (charState.fragments >= cost) {
+    charState.fragments -= cost;
+    charState.potential = currentPot + 1;
+    showToast(`素質解放！ ★${charState.potential} になりました！`);
+    updateModal();
+    renderCards();
+    renderSquad();
+    saveGame();
+  } else {
+    showToast('欠片が足りません');
   }
 }
 
@@ -3950,31 +4020,43 @@ function showToast(msg) {
   t._timer = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function toggleFullScreen() {
-  if (!document.fullscreenElement &&
-      !document.mozFullScreenElement &&
-      !document.webkitFullscreenElement &&
-      !document.msFullscreenElement) {
-    const el = document.documentElement;
-    if (el.requestFullscreen) {
-      el.requestFullscreen();
-    } else if (el.mozRequestFullScreen) { // Firefox
-      el.mozRequestFullScreen();
-    } else if (el.webkitRequestFullscreen) { // Chrome, Safari & Opera
-      el.webkitRequestFullscreen();
-    } else if (el.msRequestFullscreen) { // IE/Edge
-      el.msRequestFullscreen();
+async function toggleFullScreen() {
+  try {
+    if (!document.fullscreenElement) {
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.mozRequestFullScreen) { // Firefox
+        await el.mozRequestFullScreen();
+      } else if (el.webkitRequestFullscreen) { // Chrome, Safari & Opera
+        await el.webkitRequestFullscreen();
+      } else if (el.msRequestFullscreen) { // IE/Edge
+        await el.msRequestFullscreen();
+      }
+
+      // スマホの場合、横画面にロック
+      const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      if (isMobile && screen.orientation && typeof screen.orientation.lock === 'function') {
+        await screen.orientation.lock('landscape');
+      }
+    } else {
+      // 画面ロックを解除
+      if (screen.orientation && typeof screen.orientation.unlock === 'function') {
+        screen.orientation.unlock();
+      }
+
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.mozCancelFullScreen) { // Firefox
+        await document.mozCancelFullScreen();
+      } else if (document.webkitExitFullscreen) { // Chrome, Safari & Opera
+        await document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) { // IE/Edge
+        await document.msExitFullscreen();
+      }
     }
-  } else {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.mozCancelFullScreen) { // Firefox
-      document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) { // Chrome, Safari & Opera
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) { // IE/Edge
-      document.msExitFullscreen();
-    }
+  } catch (err) {
+    console.warn('Fullscreen or orientation lock failed:', err);
   }
 }
 
@@ -4107,6 +4189,8 @@ function renderMissionsForChapter(chapterIndex) {
 
 function setBattleSpeed(speed) {
   battleSpeedMultiplier = speed;
+  settings.battleSpeed = speed; // Save to settings object
+  saveSettings(); // Persist setting
   document.querySelectorAll('.battle-speed-controls button').forEach(b => b.classList.remove('active'));
   document.getElementById(`speed-btn-${speed}`).classList.add('active');
 }
@@ -4122,6 +4206,9 @@ async function startBattle(missionId) {
 
   playBgm('battle');
 
+  // Set speed from settings
+  setBattleSpeed(settings.battleSpeed || 2);
+
   battleState = {
     mission: mission,
     playerUnits: squad.map(id => {
@@ -4129,11 +4216,12 @@ async function startBattle(missionId) {
       const level = playerState.characters[id].level;
       const equipId = playerState.characters[id].equippedId;
       const aura = playerState.characters[id].aura || 0;
+      const potential = playerState.characters[id].potential || 0;
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-      const stats = calcStats(char.baseStats, level, equip);
+      const stats = calcStats(char.baseStats, level, equip, potential);
       
       // Init battle props
-      let unit = { ...char, stats, currentHp: stats.hp, level, aura, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip };
+      let unit = { ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip };
       if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
       if (equip && equip.effect.type === 'guts') unit.guts = true;
       
@@ -4152,7 +4240,8 @@ async function startBattle(missionId) {
 
       // Enemy Equipment
       const equip = enemyConfig.equipment || null;
-      const stats = calcStats(enemy.baseStats, level, equip);
+      // Enemies don't use potential yet (or default 0)
+      const stats = calcStats(enemy.baseStats, level, equip, 0);
 
       let unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip };
       if (equip && equip.effect && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
@@ -6032,6 +6121,11 @@ function loadGame() {
     // Migration for Aura
     for (let id in playerState.characters) {
         if (playerState.characters[id].aura === undefined) playerState.characters[id].aura = 0;
+    }
+
+    // Migration for Potential
+    for (let id in playerState.characters) {
+        if (playerState.characters[id].potential === undefined) playerState.characters[id].potential = 0;
     }
     
     missionProgress = new Set(savedData.missionProgress || []);
