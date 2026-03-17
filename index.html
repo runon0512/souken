@@ -33,6 +33,13 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* 軽量化設定：画像をピクセル化して補間負荷を下げる */
+  img {
+    image-rendering: -moz-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
   html {
     background: #000;
     width: 100%; height: 100%; overflow: hidden;
@@ -480,7 +487,8 @@
   .char-card:hover {
     border-color: var(--border-bright);
     transform: translateY(-0.1875rem);
-    box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.4), 0 0 1.25rem rgba(0,200,255,0.15);
+    /* 軽量化: 影を削除 */
+    box-shadow: none; 
   }
 
   .char-card:hover::before { opacity: 1; }
@@ -488,6 +496,8 @@
   .char-card.in-squad {
     border-color: rgba(0,200,255,0.45);
     box-shadow: 0 0 1rem rgba(0,200,255,0.15);
+    /* 軽量化: 影を削除 */
+    box-shadow: none;
   }
 
   .char-card.in-squad::after {
@@ -576,7 +586,8 @@
     position: relative;
     z-index: 1;
     font-size: 4.5rem;
-    filter: drop-shadow(0 0 1rem rgba(0,200,255,0.4));
+    /* 軽量化: ドロップシャドウ削除 */
+    /* filter: drop-shadow(0 0 1rem rgba(0,200,255,0.4)); */
   }
 
   .card-elem-badge {
@@ -862,7 +873,8 @@
   .modal-img img {
     width: 100%;
     height: auto;
-    filter: drop-shadow(0 0 1.25rem rgba(0,200,255,0.3));
+    /* 軽量化: ドロップシャドウ削除 */
+    /* filter: drop-shadow(0 0 1.25rem rgba(0,200,255,0.3)); */
   }
 
   .modal-body { padding: 1rem 1.25rem 1.25rem; }
@@ -1234,7 +1246,9 @@
   .battle-unit.defeated { opacity: 0.4; filter: grayscale(80%); }
   .battle-unit.is-attacking {
     transform: scale(1.05);
-    box-shadow: 0 0 1.25rem var(--gold);
+    /* 軽量化: 影削除 */
+    /* box-shadow: 0 0 1.25rem var(--gold); */
+    border: 2px solid var(--gold);
     z-index: 10;
   }
   .battle-unit.is-taking-damage {
@@ -1247,7 +1261,8 @@
     /* The crosshair provides enough visual feedback */
   }
   .battle-unit.is-turn-active {
-    box-shadow: 0 0 1rem var(--gold), 0 0 1.5rem var(--gold);
+    /* 軽量化: 影削除 */
+    /* box-shadow: 0 0 1rem var(--gold), 0 0 1.5rem var(--gold); */
     border-color: var(--gold);
     transform: scale(1.02);
   }
@@ -1297,13 +1312,15 @@
   }
   .b-unit-img .char-silhouette {
     font-size: 4.5rem;
-    filter: drop-shadow(0 0 1rem rgba(0,200,255,0.4));
+    /* 軽量化: ドロップシャドウ削除 */
+    /* filter: drop-shadow(0 0 1rem rgba(0,200,255,0.4)); */
   }
   .b-unit-img.enemy-icon-bg {
     background: linear-gradient(160deg, #2a1a0d, #180e07);
   }
   .b-unit-img.enemy-icon-bg .char-silhouette {
-    filter: drop-shadow(0 0 1rem rgba(255,107,53,0.4));
+    /* 軽量化: ドロップシャドウ削除 */
+    /* filter: drop-shadow(0 0 1rem rgba(255,107,53,0.4)); */
   }
   .b-unit-info-overlay {
     display: none; /* Hidden by default, shown for targeted units */
@@ -1408,7 +1425,8 @@
     font-size: 2.5rem;
     font-weight: 900;
     color: var(--accent);
-    text-shadow: 0 0 1.25rem var(--accent);
+    /* 軽量化: テキストシャドウ削除 */
+    /* text-shadow: 0 0 1.25rem var(--accent); */
     font-style: italic;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 101;
@@ -1562,9 +1580,12 @@
     border: 5px solid transparent;
     border-image-source: linear-gradient(135deg, #660000, #ff0000, #ff8080);
     border-image-slice: 1;
-    box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9);
+    /* 軽量化: 影とアニメーション削除 */
+    box-shadow: none;
+    animation: none;
+    /* box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9);
     background: linear-gradient(135deg, #330000, #000000);
-    animation: boss-pulse 2s infinite ease-in-out;
+    animation: boss-pulse 2s infinite ease-in-out; */
   }
   .aura-15 .aura-overlay::before {
     background: radial-gradient(circle, rgba(255,0,0,0.4) 0%, transparent 60%);
@@ -1573,7 +1594,8 @@
   }
   .battle-unit.aura-15 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 1.5rem #ff0000, 0 0 3rem #ff4d4d;
+    /* 軽量化 */
+    /* text-shadow: 0 0 1.5rem #ff0000, 0 0 3rem #ff4d4d; */
     background: linear-gradient(90deg, rgba(255,0,0,0.6), transparent);
     padding-left: 4px;
   }
@@ -1585,8 +1607,11 @@
     border: 4px solid transparent;
     border-image-source: linear-gradient(135deg, #a8c0ff, #f3d9a5, #ffffff);
     border-image-slice: 1;
-    box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6);
-    animation: celestial-pulse 3s infinite alternate;
+    /* 軽量化: 影とアニメーション削除 */
+    box-shadow: none;
+    animation: none;
+    /* box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6);
+    animation: celestial-pulse 3s infinite alternate; */
   }
   .aura-11 .aura-overlay::before {
     background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent);
@@ -1601,7 +1626,8 @@
   }
   .battle-unit.aura-11 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 1rem #fff, 0 0 2rem #eee;
+    /* 軽量化 */
+    /* text-shadow: 0 0 1rem #fff, 0 0 2rem #eee; */
     background: linear-gradient(90deg, rgba(255,255,255,0.4), transparent);
     padding-left: 4px;
   }
@@ -1612,9 +1638,12 @@
     border: 5px solid transparent;
     border-image-source: linear-gradient(135deg, #4b0082, #9400d3, #c724b1);
     border-image-slice: 1;
-    box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8);
+    /* 軽量化: 影とアニメーション削除 */
+    box-shadow: none;
+    animation: none;
+    /* box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8);
     background: linear-gradient(135deg, #0a001a, #000000);
-    animation: abyssal-pulse 4s infinite ease-in-out;
+    animation: abyssal-pulse 4s infinite ease-in-out; */
   }
   .aura-12 .aura-overlay::before {
     background: radial-gradient(circle, rgba(148,0,211,0.3) 0%, transparent 60%);
@@ -1632,7 +1661,8 @@
   }
   .battle-unit.aura-12 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 1.5rem #4b0082, 0 0 3rem #9400d3;
+    /* 軽量化 */
+    /* text-shadow: 0 0 1.5rem #4b0082, 0 0 3rem #9400d3; */
     background: linear-gradient(90deg, rgba(75,0,130,0.6), transparent);
     padding-left: 4px;
   }
@@ -2422,6 +2452,11 @@
         <input type="range" id="bgmVolume" min="0" max="1" step="0.01" oninput="updateBgmVolume(this.value)" style="width: 100%;">
         <label for="sfxVolume" style="font-size: 0.75rem; color: var(--text-mid); margin-top: 0.5rem; display: block;">効果音音量</label>
         <input type="range" id="sfxVolume" min="0" max="1" step="0.01" oninput="updateSfxVolume(this.value)" style="width: 100%;">
+      </div>
+      <div style="margin-top: 1rem; padding: 0 0.75rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
+        <button class="filter-btn" onclick="exportSaveFile()">ファイルに保存 (.WoF)</button>
+        <button class="filter-btn" onclick="importSaveFile()">ファイルから読込 (.WoF)</button>
+        <input type="file" id="saveFileInput" accept=".WoF" style="display:none" onchange="handleFileSelect(this)">
       </div>
     </div>
 
@@ -3541,6 +3576,26 @@ const eventChapters = [
         recommendedPower: 24897,
         reward: 10000,
         firstTimeReward: 50000
+      }
+    ]
+  },
+  {
+    name: 'イベント：鵺：傀儡の札',
+    missions: [
+      {
+        id: 912,
+        name: '鵺：傀儡の札',
+        description: '無数の札が舞う。同じ顔の男たちが無感情にこちらを見つめている。',
+        enemies: [
+          { id: 13, level: 60, aiType: AI_TYPES.RANDOM },
+          { id: 13, level: 60, aiType: AI_TYPES.RANDOM },
+          { id: 13, level: 65, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 13, level: 60, aiType: AI_TYPES.RANDOM },
+          { id: 13, level: 60, aiType: AI_TYPES.RANDOM },
+        ],
+        recommendedPower: 61423,
+        reward: 15000,
+        firstTimeReward: 30000
       }
     ]
   },
@@ -6695,6 +6750,83 @@ function viewSquadFromCode() {
     console.error(err);
     resultContainer.innerHTML = '<p style="color:var(--accent2)">無効な編成コードです。</p>';
   }
+}
+
+// ===== FILE SAVE/LOAD =====
+function exportSaveFile() {
+  const saveData = {
+    playerState: playerState,
+    missionProgress: [...missionProgress],
+    squad: squad,
+    timestamp: Date.now()
+  };
+  const jsonString = JSON.stringify(saveData);
+  const blob = new Blob([jsonString], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date();
+  const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  a.download = `save_${dateString}.WoF`;
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importSaveFile() {
+  document.getElementById('saveFileInput').click();
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const jsonString = e.target.result;
+      const data = JSON.parse(jsonString);
+      
+      if (!data.playerState) {
+        throw new Error('Invalid save data');
+      }
+
+      // Restore Data
+      playerState = data.playerState;
+      missionProgress = new Set(data.missionProgress || []);
+      squad = data.squad || [];
+
+      // Apply migrations if needed (similar to loadGame)
+      // Migration for Fragments
+      for (let id in playerState.characters) {
+          if (playerState.characters[id].fragments === undefined) playerState.characters[id].fragments = 0;
+      }
+      // Migration for Aura
+      for (let id in playerState.characters) {
+          if (playerState.characters[id].aura === undefined) playerState.characters[id].aura = 0;
+      }
+      // Migration for Potential
+      for (let id in playerState.characters) {
+          if (playerState.characters[id].potential === undefined) playerState.characters[id].potential = 0;
+      }
+
+      // UI Update
+      renderSquad();
+      renderCards();
+      
+      // Save to local storage as well
+      saveGame();
+      
+      showToast('ファイルからセーブデータをロードしました');
+    } catch (err) {
+      console.error(err);
+      showToast('ファイルの読み込みに失敗しました');
+    }
+    // Reset input
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 // ===== SAVE & LOAD =====
