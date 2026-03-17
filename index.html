@@ -1556,6 +1556,87 @@
     80% { opacity: 1; transform: translate(-50%, -20px); }
     100% { opacity: 0; transform: translate(-50%, -30px); }
   }
+
+  /* Aura 15: Boss */
+  .char-card.aura-15, .squad-slot.aura-15, .battle-unit.aura-15 {
+    border: 5px solid transparent;
+    border-image-source: linear-gradient(135deg, #660000, #ff0000, #ff8080);
+    border-image-slice: 1;
+    box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9);
+    background: linear-gradient(135deg, #330000, #000000);
+    animation: boss-pulse 2s infinite ease-in-out;
+  }
+  .aura-15 .aura-overlay::before {
+    background: radial-gradient(circle, rgba(255,0,0,0.4) 0%, transparent 60%);
+    animation: abyssal-swirl 8s linear infinite; /* reuse animation */
+    transform: scale(2.5);
+  }
+  .battle-unit.aura-15 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 1.5rem #ff0000, 0 0 3rem #ff4d4d;
+    background: linear-gradient(90deg, rgba(255,0,0,0.6), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-15 .b-unit-name::before { content: '👑 '; color: #ff0000; }
+
+  /* ===== NEW AURA EFFECTS ===== */
+  /* Aura 11: Celestial */
+  .char-card.aura-11, .squad-slot.aura-11, .battle-unit.aura-11 {
+    border: 4px solid transparent;
+    border-image-source: linear-gradient(135deg, #a8c0ff, #f3d9a5, #ffffff);
+    border-image-slice: 1;
+    box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6);
+    animation: celestial-pulse 3s infinite alternate;
+  }
+  .aura-11 .aura-overlay::before {
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent);
+    animation-duration: 1.5s;
+  }
+  .aura-11 .aura-overlay::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.8) 0.5px, transparent 0.5px);
+    background-size: 10px 10px;
+    opacity: 0.7;
+    animation: sparkle 1s linear infinite;
+  }
+  .battle-unit.aura-11 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 1rem #fff, 0 0 2rem #eee;
+    background: linear-gradient(90deg, rgba(255,255,255,0.4), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-11 .b-unit-name::before { content: '🌟 '; color: #fff; }
+
+  /* Aura 12: Abyssal */
+  .char-card.aura-12, .squad-slot.aura-12, .battle-unit.aura-12 {
+    border: 5px solid transparent;
+    border-image-source: linear-gradient(135deg, #4b0082, #9400d3, #c724b1);
+    border-image-slice: 1;
+    box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8);
+    background: linear-gradient(135deg, #0a001a, #000000);
+    animation: abyssal-pulse 4s infinite ease-in-out;
+  }
+  .aura-12 .aura-overlay::before {
+    background: radial-gradient(circle, rgba(148,0,211,0.3) 0%, transparent 60%);
+    animation: abyssal-swirl 10s linear infinite;
+    transform: scale(2);
+  }
+  .aura-12 .aura-overlay::after {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.1) 0.5px, transparent 0.5px),
+      radial-gradient(rgba(148,0,211,0.2) 0.5px, transparent 0.5px);
+    background-size: 50px 50px, 70px 70px;
+    background-position: 0 0, 35px 35px;
+    animation: sparkle-deep-space 6s linear infinite, sparkle-fade 5s ease-in-out infinite alternate;
+  }
+  .battle-unit.aura-12 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 1.5rem #4b0082, 0 0 3rem #9400d3;
+    background: linear-gradient(90deg, rgba(75,0,130,0.6), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-12 .b-unit-name::before { content: '🌀 '; color: #9400d3; }
   .damage-popup {
     position: absolute;
     top: 40%;
@@ -1958,6 +2039,28 @@
 
   @keyframes aura-text-shine { 0% { background-position: -100% 0; } 100% { background-position: 200% 0; } }
 
+  .battle-unit.aura-11 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 1rem #fff, 0 0 2rem #eee;
+    background: linear-gradient(90deg, rgba(255,255,255,0.4), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-11 .b-unit-name::before { content: '🌟 '; color: #fff; }
+  .battle-unit.aura-12 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 1.5rem #4b0082, 0 0 3rem #9400d3;
+    background: linear-gradient(90deg, rgba(75,0,130,0.6), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-12 .b-unit-name::before { content: '🌀 '; color: #9400d3; }
+  .battle-unit.aura-15 .b-unit-name {
+    color: #fff;
+    text-shadow: 0 0 1.5rem #ff0000, 0 0 3rem #ff4d4d;
+    background: linear-gradient(90deg, rgba(255,0,0,0.6), transparent);
+    padding-left: 4px;
+  }
+  .battle-unit.aura-15 .b-unit-name::before { content: '👑 '; color: #ff0000; }
+
   /* Squad Manager Modal */
   .squad-manager-tabs {
     display: flex;
@@ -2043,6 +2146,24 @@
       box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1);
       outline-color: #4d004d;
     }
+  }
+  @keyframes celestial-pulse {
+    0% { box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6); }
+    100% { box-shadow: 0 0 50px rgba(255,255,255,0.9), 0 0 100px rgba(255,255,255,0.7), inset 0 0 50px rgba(255,255,255,0.8); }
+  }
+  @keyframes abyssal-pulse {
+    0% { box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8); }
+    50% { box-shadow: 0 0 60px rgba(148,0,211,1), 0 0 120px rgba(199,21,133,0.8), inset 0 0 60px rgba(0,0,0,0.9); }
+    100% { box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8); }
+  }
+  @keyframes boss-pulse {
+    0% { box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9); outline-color: #ff0000; }
+    50% { box-shadow: 0 0 70px rgba(255,100,100,1), 0 0 140px rgba(255,0,0,0.9), inset 0 0 60px rgba(0,0,0,1); outline-color: #ff8080; }
+    100% { box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9); outline-color: #ff0000; }
+  }
+  @keyframes abyssal-swirl {
+    from { transform: rotate(0deg) scale(2); }
+    to { transform: rotate(360deg) scale(2); }
   }
   @keyframes galactic-swirl {
     from { transform: rotate(0deg) scale(1.5); }
@@ -2570,7 +2691,7 @@ const units = [
     baseStats: { hp: 1350, atk: 90, def: 80, spd: 75 },
     abilityType: 'magic',
     abilities: [
-      { name: 'クリスタル・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の60%のダメージを与える。この攻撃は敵の防御系スキルを無効化する。', triggerRate: 0.4, timing: 'after_attack', ignoresDefenseSkills: true },
+      { name: 'クリスタル・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の60%のダメージを与える。この攻撃は敵の防御系スキルを無効化する。', triggerRate: 0.4, timing: 'after_attack', ignoresDefenseSkills: true, damageMult: 0.6 },
       { name: '再生支配', desc: 'HPが30%以下の時、防御力が10%アップし、スキルが「ハート・ブレイク」に変化する。' },
       { name: 'ハート・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の120%のダメージを与える。この攻撃は敵の防御系スキルを無効化する。', triggerRate: 0.4, timing: 'after_attack', ignoresDefenseSkills: true },
     ],
@@ -2985,6 +3106,18 @@ const units = [
     ],
     useImg: true, img: 'C33.svg'
   },
+  {
+    id: 322, name: 'グルディー・ヴァーナク（色欲解放）', element: 'dark', elementJp: '闇', type: 'ロベリア',
+    baseStats: { hp: 1400, atk: 160, def: 120, spd: 90 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '威力操作', desc: '被弾時に80%の確率でダメージを75%カットする。', triggerRate: 0.8, timing: 'on_defense' },
+      { name: 'エターナルクリムゾン', desc: '攻撃後に60%の確率で敵全体に燃焼(2ターン)を付与する。', triggerRate: 0.6, timing: 'after_attack' },
+      { name: '永遠の肉体', desc: 'ターン開始時、最大HPの5%を回復する。' }
+    ],
+    useImg: true,
+    img: 'C311.svg',
+  },
 ];
 
 // Equipment Data
@@ -3004,6 +3137,7 @@ const equipmentItems = [
   { id: 13, name: '身代わり人形', icon: '🧸', desc: '最初の攻撃を1回だけ無効化する', effect: { type: 'shield_hit', val: 1 }, owned: true },
   { id: 14, name: 'フェニックスの羽', icon: '🪶', desc: '一度だけ致死ダメージを耐える', effect: { type: 'guts', val: true }, owned: true },
   { id: 15, name: '賢者の石', icon: '💎', desc: '全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } }, owned: true },
+  { id: 16, name: '色欲の魔石', icon: '💖', desc: '攻撃時、20%の確率で盲目(2ターン)を付与する', effect: { type: 'add_status', status: 'blind', turns: 2, chance: 0.2 }, owned: false },
 ];
 
 // AI Types
@@ -3205,7 +3339,7 @@ const eventChapters = [
           { id: 17, level: 60, aiType: AI_TYPES.HIGHEST_ATK }, // Aster
           { id: 15, level: 60, aiType: AI_TYPES.RANDOM }      // Ridin
         ],
-        recommendedPower: 18000,
+        recommendedPower: 23462,
         reward: 500,
         firstTimeReward: 1000
       }
@@ -3225,7 +3359,7 @@ const eventChapters = [
           { id: 6, level: 45, aura: 5, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 } } },
           { id: 15, level: 45, aura: 5, aiType: AI_TYPES.RANDOM, equipment: { id: 15, name: '賢者の石', icon: '💎', desc: '全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } } } }
         ],
-        recommendedPower: 45000,
+        recommendedPower: 49208,
         reward: 1200,
         firstTimeReward: 2500
       }
@@ -3245,7 +3379,7 @@ const eventChapters = [
           { id: 6, level: 30, aura: 2, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 } } },
           { id: 11, level: 25, aura: 1, aiType: AI_TYPES.RANDOM, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } }
         ],
-        recommendedPower: 22000,
+        recommendedPower: 23157,
         reward: 600,
         firstTimeReward: 1200
       }
@@ -3262,7 +3396,7 @@ const eventChapters = [
           { id: 22, level: 65, aiType: AI_TYPES.HIGHEST_ATK }, // Cal
           { id: 23, level: 65, aiType: AI_TYPES.RANDOM }      // Sham
         ],
-        recommendedPower: 30000,
+        recommendedPower: 25164,
         reward: 900,
         firstTimeReward: 1800
       }
@@ -3278,7 +3412,7 @@ const eventChapters = [
         enemies: [
           { id: 313, level: 55, aiType: AI_TYPES.RANDOM }, // Pearl
         ],
-        recommendedPower: 30000,
+        recommendedPower: 10185,
         reward: 900,
         firstTimeReward: 1800
       }
@@ -3298,7 +3432,7 @@ const eventChapters = [
           { id: 18, level: 60, aiType: AI_TYPES.RANDOM },
           { id: 19, level: 60, aiType: AI_TYPES.HIGHEST_ATK }
         ],
-        recommendedPower: 62000,
+        recommendedPower: 65445,
         reward: 30000,
         firstTimeReward: 60000
       }
@@ -3318,7 +3452,7 @@ const eventChapters = [
           { id: 23, level: 1, aura: 0, aiType: AI_TYPES.RANDOM, equipment: null },
           { id: 15, level: 40, aura: 4, aiType: AI_TYPES.RANDOM, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } }
         ],
-        recommendedPower: 33000,
+        recommendedPower: 31441,
         reward: 1300,
         firstTimeReward: 2600
       }
@@ -3338,7 +3472,7 @@ const eventChapters = [
           { id: 315, level: 20, aiType: AI_TYPES.RANDOM },
           { id: 315, level: 20, aiType: AI_TYPES.RANDOM },
         ],
-        recommendedPower: 55000,
+        recommendedPower: 31093,
         reward: 20000,
         firstTimeReward: 40000
       }
@@ -3358,7 +3492,7 @@ const eventChapters = [
           { id: 28, level: 65, aiType: AI_TYPES.RANDOM },
           { id: 29, level: 65, aiType: AI_TYPES.HIGHEST_ATK },
         ],
-        recommendedPower: 60000,
+        recommendedPower: 57165,
         reward: 1000,
         firstTimeReward: 55000
       }
@@ -3378,9 +3512,35 @@ const eventChapters = [
           { id: 7, level: 51, aura: 7, aiType: AI_TYPES.RANDOM, equipment: { id: 14, name: 'フェニックスの羽', icon: '🪶', desc: '一度だけ致死ダメージを耐える', effect: { type: 'guts', val: true } } },
           { id: 23, level: 7, aura: 0, aiType: AI_TYPES.RANDOM, equipment: { id: 11, name: '毒針', icon: '💉', desc: '攻撃時、20%の確率で毒を与える', effect: { type: 'add_status', status: 'poison', chance: 0.2 } } }
         ],
-        recommendedPower: 35000,
+        recommendedPower: 35301,
         reward: 3000,
         firstTimeReward: 40000
+      }
+    ]
+  },
+  {
+    name: 'イベント：色欲の怪物',
+    missions: [
+      {
+        id: 911, // New mission ID
+        name: '色欲の怪物',
+        description: '常に色欲の力を解放したグルディーが立ちはだかる。エターナルクリムゾンは盲目も付与する。',
+        enemies: [
+          {
+            id: 322,
+            level: 120,
+            aura: 15, // Boss Aura
+            aiType: AI_TYPES.HIGHEST_ATK,
+            img: 'C311.svg', // Special image for this mission's Gurudie
+            missionSpecific: { // Special properties for this mission's Gurudie
+              alwaysLust: true,
+              eternalCrimsonBlind: true
+            }
+          }
+        ],
+        recommendedPower: 24897,
+        reward: 10000,
+        firstTimeReward: 50000
       }
     ]
   },
@@ -3429,7 +3589,10 @@ const AURA_DATA = [
   { cost: 400000, name: 'Amethyst', class: 'aura-7', label: 'AURA VII', color: '#b388ff' },
   { cost: 800000, name: 'Rainbow', class: 'aura-8', label: 'AURA VIII', color: '#ff7f00' },
   { cost: 1500000, name: 'Cosmic', class: 'aura-9', label: 'AURA IX', color: '#ff00ff' },
-  { cost: 3000000, name: 'Galactic', class: 'aura-10', label: 'AURA X', color: '#4d004d' }
+  { cost: 3000000, name: 'Galactic', class: 'aura-10', label: 'AURA X', color: '#4d004d' },
+  { cost: 5000000, name: 'Celestial', class: 'aura-11', label: 'AURA XI', color: '#ffffff' },
+  { cost: 8000000, name: 'Abyssal', class: 'aura-12', label: 'AURA XII', color: '#000000' },
+  { cost: 10000000, name: 'Boss', class: 'aura-15', label: 'BOSS', color: '#ff0000' },
 ];
 
 let playerState = {
@@ -3516,11 +3679,12 @@ function renderSquad() {
     const equipId = id ? playerState.characters[id].equippedId : null;
     const aura = id ? (playerState.characters[id].aura || 0) : 0;
     const potential = id ? (playerState.characters[id].potential || 0) : 0;
-    const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-    slot.className = 'squad-slot' + (c ? ' filled' : '') + (aura > 0 ? ` ${AURA_DATA[aura-1].class}` : '');
+    const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
+    const auraData = aura > 0 ? AURA_DATA.find(a => a.class === `aura-${aura}`) : null;
+    slot.className = 'squad-slot' + (c ? ' filled' : '') + (auraData ? ` ${auraData.class}` : '');
     if (c) {
       slot.innerHTML = `
-        ${aura > 0 ? `<div class="aura-overlay"></div>` : ''}
+        ${auraData ? `<div class="aura-overlay"></div>` : ''}
         <div class="slot-num">${i+1}</div>
         <div class="slot-img-wrap"><img src="${c.useImg ? c.img : 'C0.svg'}" alt="${c.name}"></div>
         <div class="slot-info">
@@ -3607,7 +3771,7 @@ function renderCards() {
     const equipId = isOwned ? charState.equippedId : null;
     const potential = isOwned ? (charState.potential || 0) : 0;
     const aura = isOwned ? (charState.aura || 0) : 0;
-    const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+    const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
     const s = calcStats(c.baseStats, level, equip, potential);
     
     let starsHtml = '';
@@ -3619,7 +3783,8 @@ function renderCards() {
         starsHtml += '</div>';
     }
 
-    const auraClass = aura > 0 ? AURA_DATA[aura-1].class : '';
+    const auraData = aura > 0 ? AURA_DATA.find(a => a.class === `aura-${aura}`) : null;
+    const auraClass = auraData ? auraData.class : '';
     const imgSrc = c.useImg ? c.img : 'C0.svg';
 
     card.innerHTML = `
@@ -3627,8 +3792,8 @@ function renderCards() {
         <div style="padding:8px;background:linear-gradient(160deg,#0d1a2a,#070e18)"><img src="${imgSrc}" alt="${c.name}" style="width:100%;height:auto"></div>
         <div class="card-elem-badge elem-${c.element}">${getElemIcon(c.element)}</div>
       </div>
-      ${aura > 0 ? `<div class="aura-overlay"></div>` : ''}
-      ${aura > 0 ? `<div class="aura-badge" style="background:${AURA_DATA[aura-1].color};color:#000">${AURA_DATA[aura-1].label}</div>` : ''}
+      ${auraData ? `<div class="aura-overlay"></div>` : ''}
+      ${auraData ? `<div class="aura-badge" style="background:${auraData.color};color:#000">${auraData.label}</div>` : ''}
       <div class="card-body">
         <div class="card-name"><span>${c.name}</span><span>Lv.${level}</span></div>
         ${c.type ? `<span class="card-type-tag">${c.type}</span>` : ''}
@@ -3650,7 +3815,7 @@ function renderCards() {
         </button>
       </div>
     `;
-    if (aura > 0) card.classList.add(auraClass);
+    if (auraData) card.classList.add(auraClass);
     card.onclick = () => openModal(c.id);
     grid.appendChild(card);
   });
@@ -3961,7 +4126,7 @@ function formatAbilityDetails(ability) {
   if (existingAuraBtn) existingAuraBtn.remove();
   if (isBattleContext && existingAuraBtn) existingAuraBtn.style.display = 'none';
 
-  if (isOwned && !isBattleContext && aura < 10 && level >= maxLevel) {
+  if (isOwned && !isBattleContext && aura < 12 && level >= maxLevel) {
     const nextAura = AURA_DATA[aura];
     const auraBtn = document.createElement('button');
     auraBtn.id = 'btnAuraUp';
@@ -4107,7 +4272,7 @@ function doLevelDown() {
 function upgradeAura(charId) {
   const charState = playerState.characters[charId];
   const currentAura = charState.aura || 0;
-  if (currentAura >= 10) return;
+  if (currentAura >= AURA_DATA.length) return;
 
   const maxLevel = getMaxLevel(currentAura);
   if (charState.level < maxLevel) {
@@ -4115,10 +4280,17 @@ function upgradeAura(charId) {
     return;
   }
   
-  const nextAuraData = AURA_DATA[currentAura];
+  const nextAuraLevel = currentAura + 1;
+  const nextAuraData = AURA_DATA.find(a => a.class === `aura-${nextAuraLevel}`);
+
+  if (!nextAuraData || !nextAuraData.cost) {
+      showToast('次のオーラが見つかりません。');
+      return;
+  }
+
   if (playerState.rainbowStones >= nextAuraData.cost) {
     playerState.rainbowStones -= nextAuraData.cost;
-    charState.aura = currentAura + 1;
+    charState.aura = nextAuraLevel;
     showToast(`限界突破！ ${nextAuraData.label} を獲得！`);
     updateModal();
     renderCards(); // Update list stats
@@ -4336,6 +4508,7 @@ function renderStoryChapters() {
           let firstRewardHtml = `初回報酬: 虹石 ${m.firstTimeReward}`;
           if (m.id === 901) firstRewardHtml += ` + <span style="color:var(--accent)">リディン</span>`;
           if (m.id === 904) firstRewardHtml += ` + <span style="color:var(--accent)">シャム・グレゴリオ</span>`;
+          if (m.id === 911) firstRewardHtml += ` + <span style="color:var(--accent)">💖 色欲の魔石</span>`;
  
           const actionHtml = `<button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>`;
 
@@ -4565,7 +4738,8 @@ function renderUnit(unit) {
   const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100);
   let unitImageHtml;
   const bgClass = unit.isPlayer ? '' : 'enemy-icon-bg';
-  const auraClass = unit.aura && unit.aura > 0 ? AURA_DATA[unit.aura-1].class : '';
+  const auraData = unit.aura && unit.aura > 0 ? AURA_DATA.find(a => a.class === `aura-${unit.aura}`) : null;
+  const auraClass = auraData ? auraData.class : '';
   const imgSrc = unit.useImg ? unit.img : 'C0.svg';
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
   const equipHtml = unit.equipment ? `<div class="b-unit-equip" title="${unit.equipment.name}\n${unit.equipment.desc}">${unit.equipment.icon}</div>` : '';
@@ -4592,7 +4766,7 @@ function renderUnit(unit) {
       ${clickAction}
       style="cursor: pointer;"
     >
-      ${unit.aura && unit.aura > 0 ? `<div class="aura-overlay"></div>` : ''}
+      ${auraData ? `<div class="aura-overlay"></div>` : ''}
       ${unitImageHtml}
       <div class="b-unit-level">Lv.${unit.level}</div>
       ${equipHtml}
@@ -4850,8 +5024,10 @@ async function runBattleSequence() {
       let canAct = true;
       attacker.isAdvantageForced = false; // Reset flag for Gira
 
-      // Guldie (ID: 319) Passive: Eternal Body
-      if (attacker.id === 319 && attacker.currentHp <= attacker.stats.hp * 0.5) {
+      // Guldie (ID: 319) or new Gurudie (ID: 30) Passive: Eternal Body
+      const isOriginalGurudieLust = attacker.id === 319 && (attacker.currentHp <= attacker.stats.hp * 0.5 || attacker.missionSpecific?.alwaysLust);
+      const isNewGurudie = attacker.id === 30;
+      if (isOriginalGurudieLust || isNewGurudie) {
           const healAmt = Math.floor(attacker.stats.hp * 0.05);
           if (attacker.currentHp < attacker.stats.hp) {
               attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + healAmt);
@@ -5143,7 +5319,7 @@ async function runBattleSequence() {
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0 && (!activeAbility || !activeAbility.ignoresDefenseSkills)) {
             // 呪い状態なら防御スキル発動不可
-            if (!target.statusEffects.some(e => e.type === 'curse')) {
+            if (!target.statusEffects.some(e => e.type === 'curse') && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
             for (const ab of target.abilities) {
                 if (ab.timing === 'on_defense') {
                     let currentTriggerRate = ab.triggerRate || 0;
@@ -5159,8 +5335,8 @@ async function runBattleSequence() {
                             actualDamage = 0;
                             logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
                             showPassivePopup(targetEl, "VOID");
-                            break;
-                        } else if (target.id === 319 && target.currentHp > target.stats.hp * 0.5 && ab.name === '威力操作') {
+                            break; // Break from defense abilities loop
+                        } else if (ab.name === '威力操作' && (target.id === 30 || (target.id === 319 && target.currentHp > target.stats.hp * 0.5))) {
                             actualDamage = Math.floor(actualDamage * 0.25); // 75% cut
                             logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
                             showPassivePopup(targetEl, "GUARD");
@@ -5169,7 +5345,7 @@ async function runBattleSequence() {
                             actualDamage = Math.floor(actualDamage * 0.8); // 20% cut
                             logBattleMessage(`${target.name}は防御態勢でダメージを軽減した！`);
                             playEffect(targetEl, 'guard-vertical');
-                            break;
+                            break; // Break from defense abilities loop
                         } else if (target.id === 318 && ab.name === '反転') {
                             await showCutIn(target, ab.name);
                             logBattleMessage(`${target.name}はダメージを反転させた！`);
@@ -5186,7 +5362,7 @@ async function runBattleSequence() {
 
                             if (attacker.currentHp <= 0) await processUnitDeath(attacker);
                             break; 
-                        } else if (target.id === 6) { // Den Alvaro
+                        } else if (target.id === 6 && ab.name === '雷業壁') { // Den Alvaro
                             actualDamage = Math.floor(actualDamage * 0.7);
                             logBattleMessage(`${target.name}の${ab.name}！ダメージ軽減＆麻痺付与！`);
                             if (ab.effect?.type === 'status') {
@@ -5194,7 +5370,7 @@ async function runBattleSequence() {
                             }
                             playEffect(targetEl, 'guard-vertical');
                         } else if (target.id === 307) { // Sheria Wisteria
-                            actualDamage = Math.floor(actualDamage * 0.9);
+                            actualDamage = Math.floor(actualDamage * 0.9); // 10% cut
                             logBattleMessage(`${target.name}の${ab.name}！ダメージを10%軽減！`);
                             playEffect(targetEl, 'guard-vertical');
                         }
@@ -5262,7 +5438,7 @@ async function runBattleSequence() {
 
         // Guldie (ID: 319) Passive Activation
         const wasAbove50 = (target.currentHp + actualDamage) > target.stats.hp * 0.5;
-        if (target.id === 319 && target.currentHp <= target.stats.hp * 0.5 && wasAbove50) {
+        if (target.id === 319 && ((target.currentHp <= target.stats.hp * 0.5 && wasAbove50) || (target.missionSpecific?.alwaysLust && !target.passiveUsed))) {
             const passiveAbility = target.abilities.find(a => a.name === '大罪支配【色欲】');
             if (passiveAbility) {
                 await showCutIn(target, passiveAbility.name);
@@ -5324,7 +5500,7 @@ async function runBattleSequence() {
       // 装備による追加効果
       if (attacker.equipment && attacker.equipment.effect && attacker.equipment.effect.type === 'add_status') {
           if (Math.random() < attacker.equipment.effect.chance) {
-              await addStatusEffect(target, attacker.equipment.effect.status, 3);
+              await addStatusEffect(target, attacker.equipment.effect.status, attacker.equipment.effect.turns || 3);
           }
       }
         // Equipment: Drain
@@ -5430,8 +5606,8 @@ async function runBattleSequence() {
           } else if (attacker.id === 22) { // キャル・エクレア
              chaseAbility = attacker.abilities[1]; // 多重詠唱
           } else if (attacker.id === 319) { // Guldie
-             if (attacker.currentHp <= attacker.stats.hp * 0.5) {
-                const ab = attacker.abilities[2]; // Eternal Crimson
+             if (attacker.currentHp <= attacker.stats.hp * 0.5 || attacker.missionSpecific?.alwaysLust) {
+                const ab = attacker.abilities.find(a => a.name === 'エターナルクリムゾン');
                 if (ab && Math.random() < (ab.triggerRate || 0)) {
                    chaseAbility = ab;
                 }
@@ -5608,7 +5784,7 @@ async function runBattleSequence() {
               let actualChaseDamage = chaseDamage;
 
               // 追撃に対する防御スキルチェック
-              if (target.abilities && actualChaseDamage > 0 && (!chaseAbility || !chaseAbility.ignoresDefenseSkills)) {
+              if (target.abilities && actualChaseDamage > 0 && (!chaseAbility || !chaseAbility.ignoresDefenseSkills) && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
                 if (!target.statusEffects.some(e => e.type === 'curse')) {
                   for (const ab of target.abilities) {
                     if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
@@ -5617,6 +5793,11 @@ async function runBattleSequence() {
                           actualChaseDamage = 0;
                           logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
                           showPassivePopup(targetEl, "VOID");
+                          break; // Break from defense abilities loop
+                      } else if (ab.name === '威力操作' && (target.id === 30 || (target.id === 319 && target.currentHp > target.stats.hp * 0.5))) {
+                          actualChaseDamage = Math.floor(actualChaseDamage * 0.25); // 75% cut
+                          logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
+                          showPassivePopup(targetEl, "GUARD");
                           break;
                       } else if (target.id === 6) { // Den Alvaro
                           actualChaseDamage = Math.floor(actualChaseDamage * 0.7);
@@ -5629,7 +5810,7 @@ async function runBattleSequence() {
                           actualChaseDamage = Math.floor(actualChaseDamage * 0.8); // 20% cut
                           logBattleMessage(`${target.name}は防御態勢でダメージを軽減した！`);
                           playEffect(targetEl, 'guard-vertical');
-                          break;
+                          break; // Break from defense abilities loop
                       }
                     }
                   }
@@ -5741,8 +5922,17 @@ function checkWinLoss() {
             unlockedCharName = 'シャム・グレゴリオ';
             showToast('「シャム・グレゴリオ」が仲間になりました！');
         }
+
+        let unlockedItem = null;
+        if (mission.id === 911) {
+            const lustStone = equipmentItems.find(e => e.id === 16);
+            if (lustStone && !lustStone.owned) {
+                lustStone.owned = true;
+                unlockedItem = lustStone;
+            }
+        }
         playerState.rainbowStones += rewardAmount;
-        showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName, mvpUnit);
+        showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName, mvpUnit, unlockedItem);
     } else if (livingPlayers === 0) {
 
         battleState.isFinished = true;
@@ -6116,7 +6306,14 @@ async function triggerOnBattleStartAbilities() {
                 }
             }
         } else if (unit.id === 17) { // アスター・エクレアの「開闢」 (Single Target)
-            const targetUnit = livingTargets[Math.floor(Math.random() * livingTargets.length)];
+            let targetUnit;
+            if (unit.isPlayer && battleState.selectedTargetId) {
+                targetUnit = livingTargets.find(t => t.battleId === battleState.selectedTargetId);
+            }
+            if (!targetUnit) { // If no target selected or selected target is invalid
+                targetUnit = livingTargets[Math.floor(Math.random() * livingTargets.length)];
+            }
+
             const damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult || 1.2));
             targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
             recordDamage(unit, damage);
@@ -6177,7 +6374,14 @@ async function triggerOnBattleStartAbilities() {
             const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
             const living = targets.filter(t => t.currentHp > 0);
             if (living.length > 0) {
-                const t = living[Math.floor(Math.random() * living.length)];
+                let t;
+                if (unit.isPlayer && battleState.selectedTargetId) {
+                    t = living.find(target => target.battleId === battleState.selectedTargetId);
+                }
+                if (!t) {
+                    t = living[Math.floor(Math.random() * living.length)];
+                }
+
                 await addStatusEffect(t, 'burn', 3);
                 logBattleMessage(`${unit.name}の燃焼の矢！${t.name}は炎に包まれた！`);
                 const tEl = document.getElementById(`unit-${t.battleId}`);
@@ -6554,7 +6758,7 @@ function loadGame() {
   }
 }
 
-function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null) {
+function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null, unlockedItem = null) {
   const rewardsContainer = document.getElementById('victoryRewards');
   let mvpHtml = '';
   if (mvpUnit) {
@@ -6563,19 +6767,51 @@ function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUni
       <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
         <div style="font-family: 'Orbitron'; font-size: 1.5rem; color: var(--accent3); text-shadow: 0 0 10px var(--accent3);">MVP</div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(0,200,255,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-bright);">
-          <img src="${mvpUnit.img}" style="width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent3); object-fit: cover;">
+          <img src="${mvpUnit.useImg ? mvpUnit.img : 'C0.svg'}" style="width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent3); object-fit: cover;">
           <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${mvpUnit.name}</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">与ダメージ: ${totalDamage}</div></div>
         </div>
       </div>
     `;
   }
+
+  let unlockedCharHtml = '';
+  if (unlockedCharName) {
+      const unlockedChar = units.find(u => u.name === unlockedCharName);
+      if (unlockedChar) {
+        unlockedCharHtml = `
+          <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
+            <div style="font-family: 'Orbitron'; font-size: 1.5rem; color: var(--accent);">NEW CHARACTER</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(0,200,255,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-bright);">
+              <img src="${unlockedChar.useImg ? unlockedChar.img : 'C0.svg'}" style="width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;">
+              <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${unlockedChar.name}</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">が仲間に加わりました！</div></div>
+            </div>
+          </div>
+        `;
+      }
+  }
+
+  let unlockedItemHtml = '';
+  if (unlockedItem) {
+    unlockedItemHtml = `
+      <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
+        <div style="font-family: 'Orbitron'; font-size: 1.5rem; color: var(--accent);">NEW ITEM</div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(0,200,255,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-bright);">
+          <div style="font-size: 3rem; width: 4.5rem; height: 4.5rem; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: 0.5rem;">${unlockedItem.icon}</div>
+          <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${unlockedItem.name}</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">${unlockedItem.desc}</div></div>
+        </div>
+      </div>
+    `;
+  }
+
   rewardsContainer.innerHTML = `
-    ${mvpHtml}<div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+    ${mvpHtml}
+    ${unlockedCharHtml}
+    ${unlockedItemHtml}
+    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
       <div style="font-size: 14px; color: var(--text-mid); margin-bottom: 8px;">獲得報酬</div>
       <div style="font-size: 24px; font-weight: 700; color: var(--gold); font-family: 'Orbitron';">
         💎 ${reward}
       </div>
-      ${unlockedCharName ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border);color:var(--accent);font-weight:bold;">${unlockedCharName} が加入！</div>` : ''}
       ${isFirstClear ? '<div style="font-size: 12px; color: var(--accent3); margin-top: 8px;">初回クリアボーナス！</div>' : ''}
     </div>
   `;
