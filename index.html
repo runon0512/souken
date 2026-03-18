@@ -165,6 +165,11 @@
     color: var(--accent);
   }
 
+  .header-name-display {
+    font-size: 0.875rem; color: var(--text-main);
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
   .resource-display {
     display: flex;
     align-items: center;
@@ -2411,6 +2416,10 @@
     <div class="hstat-val" style="color:var(--gold)" id="resRainbow">0</div>
   </div>
   <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-label">COMMANDER</div>
+      <div class="hstat-val header-name-display" id="headerPlayerName">名無しの剣士</div>
+    </div>
     <div class="hstat">
       <div class="hstat-label">ROSTER</div>
       <div class="hstat-val" id="hRosterCount">12</div>
@@ -4757,6 +4766,8 @@ function updateSkipTutorial(checked) {
 
 function updatePlayerName(name) {
   playerState.playerName = name || "名無しの剣士";
+  const headerName = document.getElementById('headerPlayerName');
+  if(headerName) headerName.textContent = playerState.playerName;
   saveGame();
 }
 
@@ -7305,6 +7316,7 @@ function handleFileSelect(input) {
       saveGame();
       
       if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
+      if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
       showToast('ファイルからセーブデータをロードしました');
     } catch (err) {
       console.error(err);
@@ -7391,6 +7403,7 @@ function loadGame() {
     console.log('No save data found. Starting a new game.');
   }
   if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
+  if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
 }
 
 function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null, unlockedItem = null) {
@@ -7463,18 +7476,19 @@ function closeVictoryModal() {
 // 外部のデータベースサービス（Google Sheets + GAS, Firebase, etc.）が必要です。
 // ここではGoogle Apps Script (GAS) をバックエンドとして利用する想定のコード記述します。
 // 自分のGASウェブアプリのURLをここに設定してください。
-const RANKING_API_URL = ""; 
+// ※ここに先ほどコピーしたURLを貼り付けてください！
+const RANKING_API_URL = "https://script.google.com/macros/s/AKfycby_dOCyA8yHKypJO3xgKER33tDkMXfbXsycsSaMcLPHoa18RzKVzhShQQapC54n4kEw/exec"; 
 
 async function fetchTowerRanking() {
   if (!RANKING_API_URL) {
     // API URLが設定されていない場合はダミーデータを返す
     return [
-      { rank: 1, name: "最強の剣士", score: 100 },
-      { rank: 2, name: "塔の守護者", score: 95 },
-      { rank: 3, name: "挑戦者A", score: 80 },
-      { rank: 4, name: "mizryo", score: 75 },
-      { rank: 5, name: "prog", score: 70 },
-      { rank: 6, name: "カリフラワー", score: 60 },
+      { rank: 1, name: "最強の剣士", score: 5 },
+      { rank: 2, name: "塔の守護者", score: 4 },
+      { rank: 3, name: "挑戦者A", score: 3 },
+      { rank: 4, name: "mizryo", score: 2 },
+      { rank: 5, name: "prog", score: 1 },
+      { rank: 6, name: "カリフラワー", score: 0 },
       { rank: 7, name: "ビギナー", score: 40 },
       { rank: 8, name: "自分", score: playerState.towerProgress || 0 } // 仮の自分の位置
     ].sort((a,b) => b.score - a.score).map((d,i) => ({...d, rank: i+1}));
@@ -7494,8 +7508,8 @@ async function submitTowerScore(floor) {
   if (!RANKING_API_URL) return;
   
   try {
-    // navigator.sendBeacon or simple fetch
-    const formData = new FormData();
+    // GASでの受信確実性を高めるため URLSearchParams を使用
+    const formData = new URLSearchParams();
     formData.append('name', playerState.playerName);
     formData.append('score', floor);
     formData.append('action', 'post');
@@ -7518,8 +7532,20 @@ async function showTowerRanking() {
   const data = await fetchTowerRanking();
   
   listEl.innerHTML = '';
+  // データが配列でない場合（GASからのエラー応答など）を考慮
+  if (!Array.isArray(data)) {
+      console.error("Ranking data is not an array:", data); // デバッグ用に受信したオブジェクトをログに出力
+      let errorMsg = 'ランキングデータの取得に失敗しました。<br>サーバー側でエラーが発生しているか、URLが正しくありません。';
+      // サーバーが具体的なエラーメッセージを返してきた場合はそれを表示
+      if (data && data.error) {
+          errorMsg += `<br><br><span style="font-size:0.7em; color:var(--text-dim)">詳細: ${data.error}</span>`;
+      }
+      listEl.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-dim);">${errorMsg}</div>`;
+      return;
+  }
+
   if (data.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-dim);">ランキングデータの取得に失敗しました。<br>またはAPI URLが設定されていません。</div>';
+      listEl.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-dim);">ランキングデータがまだありません。</div>';
       return;
   }
 
