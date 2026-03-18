@@ -3092,6 +3092,18 @@ const units = [
     useImg: true, img: 'C307.svg'
   },
   {
+    id: 36, name: 'ライメル・アルバロ', element: 'thunder', elementJp: '雷', type: '古代ドララ帝国',
+    baseStats: { hp: 1200, atk: 110, def: 70, spd: 80 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '雷の始祖', desc: '麻痺状態のとき、攻撃と防御が1.4倍になる(パッシブ)', timing: 'while_paralyzed' },
+      { name: '充電', desc: '被弾時50%で発動。自身に麻痺を2ターン付与する', triggerRate: 0.5, timing: 'on_hit', effect: { type: 'status', status: 'paralysis', turns: 2 } },
+    ],
+    useImg: true,
+    img: 'C36.svg'
+  },
+
+  {
     id: 16, name: 'ランディア・スクラ', element: 'none', elementJp: '無', type: 'ルディ王国',
     baseStats: { hp: 1342, atk: 107, def: 78, spd: 66 },
     abilityType: 'slash',
@@ -3308,6 +3320,16 @@ const units = [
       { name: '防御態勢', desc: '被弾時、50%の確率でダメージを20%カットする。', triggerRate: 0.5, timing: 'on_defense', damageCut: 0.2 }
     ],
     useImg: true, img: 'C33.svg'
+  },
+  {
+    id: 30, name: 'セーレ', element: 'thunder', elementJp: '雷', type: 'ロベリア',
+    baseStats: { hp: 1350, atk: 95, def: 85, spd: 70 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '不可能支配', desc: '被弾時、30%の確率でダメージを50%カットする。', triggerRate: 0.3, timing: 'on_defense', damageCut: 0.5 },
+      { name: '悪魔の契約', desc: '攻撃時、自身が状態異常の場合、その効果を全て相手に付与する。', timing: 'before_attack' }
+    ],
+    useImg: true, img: 'C35.svg'
   },
   {
     id: 322, name: 'グルディー・ヴァーナク（色欲解放）', element: 'dark', elementJp: '闇', type: 'ロベリア',
@@ -3528,6 +3550,39 @@ const storyChapters = [
   { name: '第五章：大会参加者', missions: generateMissions(500, 6, 'Stage', [302, 303, 305], 250, chapter5Names, chapter5Enemies) },
   { name: '第六章：副隊長訓練・本気', missions: generateMissions(600, 6, 'Stage', [302, 303, 305], 300, chapter6Names, chapter6Enemies) },
   { name: '第七章：隊長訓練・本気', missions: generateMissions(700, 6, 'Stage', [302, 303, 305], 350, chapter7Names, chapter7Enemies) },
+];
+
+const chapter8Missions = [
+  {
+    id: 801, name: '雷の試練', description: 'ライメルの力を試す', recommendedPower: 50000,
+    enemies: [
+      { id: 36, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライメル
+      { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, // 衛兵
+    ], reward: 400, firstTimeReward: 800
+  },
+  {
+    id: 802, name: '雷と騎士', description: 'ライメルとライを守る', recommendedPower: 55000,
+    enemies: [
+      { id: 5, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライ
+      { id: 36, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライメル
+      { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM } // 衛兵
+    ], reward: 450, firstTimeReward: 900
+  },
+  {
+    id: 803, name: '雷と剣士と魔女', description: 'セーレとライとライメルを守る', recommendedPower: 60000,
+    enemies: [
+      { id: 30, level: 55, aiType: AI_TYPES.HIGHEST_ATK },  // セーレ
+      { id: 5, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライ
+      { id: 36, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライメル
+      { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM } // 衛兵
+    ], reward: 500, firstTimeReward: 1000
+  },
+  {
+    id: 804, name: '5人の試練', description: '5人で力を合わせる', recommendedPower: 70000,
+    enemies: [
+      { id: 5, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 36, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 30, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 1, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 4, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK } // ライ、ライメル、セーレ、ドラk、いえみけ
+    ], reward: 600, firstTimeReward: 1200
+  }
 ];
 
 const eventChapters = [
@@ -3773,6 +3828,8 @@ const userStageChapters = [
   },
 ];
 
+storyChapters.push({ name: '第八章：雷の始祖', missions: chapter8Missions });
+
 function getMissionById(id) {
   if (id >= 10000) {
     return generateTowerMission(id - 10000);
@@ -3864,6 +3921,7 @@ let playerState = {
   ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   towerProgress: 0,
   playerName: "名無しの剣士",
+  playerId: null, // Will be generated
 };
 
 // ===== STATE =====
@@ -3932,6 +3990,23 @@ function getMaxLevel(aura) {
 
 function getLevelCost(level) {
   return level * 100; // Lv1->2 = 100, Lv19->20 = 1900
+}
+
+function calculateLevelUpCost(currentLevel, targetLevel) {
+  if (targetLevel <= currentLevel) return 0;
+  // Sum of costs from currentLevel to targetLevel-1
+  // Sum of (i * 100) for i = currentLevel to targetLevel - 1
+  // = 100 * (sum of integers from currentLevel to targetLevel-1)
+  // = 100 * (currentLevel + targetLevel - 1) * (targetLevel - currentLevel) / 2
+  return 50 * (currentLevel + targetLevel - 1) * (targetLevel - currentLevel);
+}
+
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 
 // ===== SQUAD DRAG & DROP =====
@@ -4422,26 +4497,48 @@ function formatAbilityDetails(ability) {
 
   // Level Control
   const levelControl = document.querySelector('.level-control');
-  levelControl.style.display = (isOwned && !isBattleContext) ? 'flex' : 'none';
-  const maxLevel = getMaxLevel(aura);
-  document.getElementById('modalLevelVal').textContent = level;
-  document.querySelector('.level-control span[style*="color:var(--text-dim)"]').textContent = `/ ${maxLevel}`;
-  
-  const cost = getLevelCost(level);
-  const btn = document.getElementById('btnLevelUp');
-  const btnDown = document.getElementById('btnLevelDown');
-  
-  if (level >= maxLevel) {
-    btn.disabled = true;
-    btn.textContent = 'MAX LEVEL';
+  if (isOwned && !isBattleContext) {
+    levelControl.style.display = 'block';
+    const maxLevel = getMaxLevel(aura);
+    
+    let sliderHtml = '';
+    if (level < maxLevel) {
+      sliderHtml = `
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-mid); margin-bottom:4px;">
+            <span>レベル指定</span>
+            <span id="sliderTargetDisplay" style="font-family:'Orbitron'">Lv.${level} → Lv.${level+1}</span>
+          </div>
+          <input type="range" id="levelSlider" min="${level}" max="${maxLevel}" value="${level}" style="width:100%; cursor:pointer;" oninput="onLevelSliderChange(this.value)">
+          <div style="text-align:right; font-size:10px; margin-top:2px;">
+            費用: <span id="sliderCostDisplay" style="color:var(--gold); font-family:'Orbitron'">0</span>
+          </div>
+        </div>
+      `;
+    }
+
+    levelControl.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:0.75rem;color:var(--text-main)">Lv.<span style="font-size:1rem;font-weight:700;font-family:'Orbitron'">${level}</span> <span style="font-size:0.625rem;color:var(--text-dim)">/ ${maxLevel}</span></div>
+        <div style="display:flex; gap: 8px;">
+          <button class="level-btn" id="btnLevelDown" onclick="doLevelDown()" style="background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--border); padding:0.25rem 0.5rem;" title="初期化 (素材全返還)" ${level <= 1 && aura <= 0 ? 'disabled style="opacity:0.5;background:rgba(255,255,255,0.1);color:var(--text-dim);border:1px solid var(--border);padding:0.25rem 0.5rem;"' : ''}>↺</button>
+          <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()" style="min-width:6rem;">強化</button>
+        </div>
+      </div>
+      ${sliderHtml}
+    `;
+
+    // Init Button State
+    const btn = document.getElementById('btnLevelUp');
+    if (level >= maxLevel) {
+      btn.disabled = true;
+      btn.textContent = 'MAX LEVEL';
+    } else {
+      // Initial update for +1 state
+      onLevelSliderChange(level);
+    }
   } else {
-    btn.disabled = playerState.rainbowStones < cost;
-    btn.innerHTML = `強化 (虹石 <span id="costVal">${cost}</span>)`;
-  }
-  
-  if (btnDown) {
-    btnDown.disabled = level <= 1 && aura <= 0;
-    btnDown.style.opacity = (level <= 1 && aura <= 0) ? '0.5' : '1';
+    levelControl.style.display = 'none';
   }
 
   // Potential UI
@@ -4555,16 +4652,65 @@ function modalToggleSquad() {
   }
 }
 
+function onLevelSliderChange(val) {
+  if (modalCharId === null) return;
+  const charState = playerState.characters[modalCharId];
+  if (!charState) return;
+  
+  const current = charState.level;
+  const sliderVal = parseInt(val);
+  const target = sliderVal > current ? sliderVal : current + 1; // If slider is at current, treat as +1 preview
+  const isBulk = sliderVal > current;
+
+  const btn = document.getElementById('btnLevelUp');
+  const costDisplay = document.getElementById('sliderCostDisplay');
+  const targetDisplay = document.getElementById('sliderTargetDisplay');
+
+  // Calculate Cost
+  // If slider is at current, cost is for next level (single up)
+  // If slider is moved, cost is for bulk up
+  let cost = 0;
+  if (isBulk) {
+      cost = calculateLevelUpCost(current, target);
+  } else {
+      cost = getLevelCost(current);
+  }
+
+  if (targetDisplay) {
+      targetDisplay.textContent = `Lv.${current} → Lv.${target}`;
+      targetDisplay.style.color = isBulk ? 'var(--accent)' : 'var(--text-dim)';
+  }
+  if (costDisplay) {
+      costDisplay.textContent = cost.toLocaleString();
+      costDisplay.style.color = playerState.rainbowStones >= cost ? 'var(--gold)' : 'var(--accent2)';
+  }
+
+  if (playerState.rainbowStones < cost) {
+      btn.disabled = true;
+      btn.innerHTML = `虹石不足`;
+  } else {
+      btn.disabled = false;
+      btn.innerHTML = isBulk ? `一括強化 (Lv.${target})` : `強化 (Lv.${target})`;
+  }
+}
+
 function doLevelUp() {
   if (modalCharId === null) return;
   const charState = playerState.characters[modalCharId];
   const maxLevel = getMaxLevel(charState.aura || 0);
   if (!charState || charState.level >= maxLevel) return;
   
-  const cost = getLevelCost(charState.level);
+  const slider = document.getElementById('levelSlider');
+  let targetLevel = charState.level + 1;
+  if (slider && parseInt(slider.value) > charState.level) {
+      targetLevel = parseInt(slider.value);
+  }
+
+  const cost = calculateLevelUpCost(charState.level, targetLevel);
+  
   if (playerState.rainbowStones >= cost) {
     playerState.rainbowStones -= cost;
-    charState.level++;
+    charState.level = targetLevel;
     showToast(`Lv.${charState.level} にレベルアップ！`);
     updateModal();
     renderCards(); // Update list stats
@@ -5813,6 +5959,11 @@ async function runBattleSequence() {
                 }
 
                 aoeTarget.currentHp = Math.max(0, aoeTarget.currentHp - actualDamage);
+
+                // スキルによる追加効果 (AoE)
+                if (activeAbility.effect?.type === 'status') {
+                    await addStatusEffect(aoeTarget, activeAbility.effect.status, activeAbility.effect.turns);
+                }
                 
                 const adv = getElementalMultiplier(attacker.element, aoeTarget.element);
                 let advText = adv > 1.0 ? ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>' : adv < 1.0 ? ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>' : '';
@@ -5840,6 +5991,19 @@ async function runBattleSequence() {
         const targetEl = document.getElementById(`unit-${target.battleId}`);
         attackerEl.classList.add('is-attacking');
         await sleep(600 / battleSpeedMultiplier);
+
+        // セーレ (ID:30) の「悪魔の契約」
+        if (attacker.id === 30 && attacker.statusEffects.length > 0) {
+            const devilContractAbility = attacker.abilities.find(ab => ab.name === '悪魔の契約');
+            if (devilContractAbility && !attacker.statusEffects.some(e => e.type === 'curse')) {
+                await showCutIn(attacker, devilContractAbility.name);
+                logBattleMessage(`${attacker.name}は悪魔の契約を発動！`);
+                for (const effect of attacker.statusEffects) {
+                    await addStatusEffect(target, effect.type, effect.turns);
+                }
+                await sleep(600 / battleSpeedMultiplier);
+            }
+        }
 
         // Passive Activation Check (Visual)
       const isDoraPassiveConditionMet = attacker.id === 1 && attacker.currentHp <= attacker.stats.hp * 0.5;
@@ -5962,6 +6126,11 @@ async function runBattleSequence() {
                         } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos
                             actualDamage = Math.floor(actualDamage * 0.8); // 20% cut
                             logBattleMessage(`${target.name}は防御態勢でダメージを軽減した！`);
+                            playEffect(targetEl, 'guard-vertical');
+                            break; // Break from defense abilities loop
+                        } else if (target.id === 30 && ab.name === '不可能支配') { // Sele
+                            actualDamage = Math.floor(actualDamage * 0.5); // 50% cut
+                            logBattleMessage(`${target.name}は「不可能支配」でダメージを50%カットした！`);
                             playEffect(targetEl, 'guard-vertical');
                             break; // Break from defense abilities loop
                         } else if (target.id === 318 && ab.name === '反転') {
@@ -7370,8 +7539,18 @@ function handleFileSelect(input) {
       const jsonString = e.target.result;
       const data = JSON.parse(jsonString);
       
-      if (!data.playerState) {
+      if (!data.playerState) { 
         throw new Error('Invalid save data');
+      }
+
+      // Check File Ownership
+      const currentId = playerState.playerId;
+      const fileId = data.playerState.playerId;
+
+      if (fileId && fileId !== currentId) {
+          showToast('他人のファイルは開けません');
+          input.value = '';
+          return;
       }
 
       // Restore Data
@@ -7402,6 +7581,11 @@ function handleFileSelect(input) {
       }
       playerState.towerProgress = data.playerState.towerProgress || 0;
       playerState.playerName = data.playerState.playerName || "名無しの剣士";
+
+      // Ensure ID preservation/migration for legacy files
+      if (!playerState.playerId) {
+          playerState.playerId = currentId || generateUUID();
+      }
 
       // UI Update
       renderSquad();
@@ -7458,6 +7642,7 @@ function loadGame() {
         ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         towerProgress: 0,
         playerName: "名無しの剣士",
+        playerId: null,
     };
     
     playerState.rainbowStones = savedData.playerState.rainbowStones !== undefined ? savedData.playerState.rainbowStones : defaultPlayerState.rainbowStones;
@@ -7488,6 +7673,12 @@ function loadGame() {
     playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
     playerState.towerProgress = savedData.playerState.towerProgress || 0;
     playerState.playerName = savedData.playerState.playerName || defaultPlayerState.playerName;
+    playerState.playerId = savedData.playerState.playerId;
+
+    if (!playerState.playerId) {
+        playerState.playerId = generateUUID();
+        saveGame();
+    }
     
     missionProgress = new Set(savedData.missionProgress || []);
     squad = savedData.squad || [];
@@ -7496,6 +7687,8 @@ function loadGame() {
     showToast('セーブデータをロードしました');
   } else {
     console.log('No save data found. Starting a new game.');
+    playerState.playerId = generateUUID();
+    saveGame();
   }
   if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
   if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
