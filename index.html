@@ -2508,7 +2508,10 @@
       </div>
       <div style="margin-top: 0.5rem; padding: 0 0.75rem;">
         <label style="font-size: 0.75rem; color: var(--text-mid);">プレイヤー名</label>
-        <input type="text" id="playerNameInput" maxlength="10" placeholder="名無しの剣士" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--text-main); padding:4px; font-size:0.75rem; border-radius:4px;" onchange="updatePlayerName(this.value)">
+        <div style="display:flex; gap:0.5rem;">
+          <div id="settingPlayerNameDisplay" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--text-main); padding:4px; font-size:0.75rem; border-radius:4px; display:flex; align-items:center;">名無しの剣士</div>
+          <button class="filter-btn" style="width:auto; margin:0; padding:0.25rem 0.5rem;" onclick="openNameEntryModal()">変更</button>
+        </div>
       </div>
       <div style="margin-top: 0.5rem; padding: 0 0.75rem;">
         <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--text-mid); cursor:pointer;">
@@ -2567,7 +2570,7 @@
             <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.25rem 0.75rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
             <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.25rem 0.75rem; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
             <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.25rem 0.75rem; margin:0;">ユーザーステージ</button>
-            <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.25rem 0.75rem; margin:0;">無限の塔</button>
+            <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.25rem 0.75rem; margin:0;">無限の塔 <span class="new-badge">New!</span></button>
         </div>
       </div>
       <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.375rem 0.75rem; margin: 0;" onclick="renderStoryChapters()">
@@ -2713,6 +2716,23 @@
     </div>
     <div class="modal-body">
       <div class="ranking-list" id="rankingList">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAME ENTRY MODAL -->
+<div class="modal-overlay" id="nameEntryOverlay">
+  <div class="modal" style="width: 25rem; transform: translateY(0);">
+    <div class="modal-header">
+      <div class="modal-title" id="nameModalTitle">司令官名登録</div>
+      <button class="modal-close" id="nameModalCloseBtn" onclick="closeNameEntryModal()" style="display:none;">✕</button>
+    </div>
+    <div class="modal-body" style="text-align: center; padding: 2rem 1rem;">
+      <p id="nameModalMessage" style="margin-bottom: 1rem; color: var(--text-mid);">あなたの名前を入力してください。<br><span style="font-size:0.75rem; color:var(--text-dim);">※初回のみ無料。以降は変更に虹石100,000が必要です。</span></p>
+      <input type="text" id="initialNameInput" maxlength="10" placeholder="名前を入力" style="width:80%; padding:0.5rem; border-radius:4px; border:1px solid var(--accent); background:rgba(0,0,0,0.3); color:white; text-align:center; font-family: 'Noto Sans JP', sans-serif;">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-add-btn" onclick="submitNameChange()">決定</button>
     </div>
   </div>
 </div>
@@ -3793,8 +3813,8 @@ function generateTowerMission(floor) {
         description: `レベル${level}の${enemyName}部隊が待ち構えている。`,
         enemies: missionEnemies,
         recommendedPower: totalPower,
-        reward: 100 + (floor * 50),
-        firstTimeReward: (100 + (floor * 50)) * 5,
+        reward: Math.floor((100 + (floor * 50)) / 50),
+        firstTimeReward: Math.floor(((100 + (floor * 50)) * 5) / 50),
         isTower: true // Add a flag to identify tower missions
     };
 }
@@ -4764,10 +4784,48 @@ function updateSkipTutorial(checked) {
   saveSettings();
 }
 
-function updatePlayerName(name) {
-  playerState.playerName = name || "名無しの剣士";
+function updatePlayerName(name, skipConfirm = false) {
+  const newName = name || "名無しの剣士";
+  // 名前が変わっていない場合は何もしない
+  if (newName === playerState.playerName) return;
+
+  const isDefaultName = playerState.playerName === "名無しの剣士";
+  
+  if (isDefaultName) {
+     // 初回変更（デフォルトからの変更）は無料
+     playerState.playerName = newName;
+     showToast("名前を変更しました");
+  } else {
+     // 2回目以降は有料
+     if (playerState.rainbowStones < 100000) {
+         showToast("虹石が足りません (必要: 100,000)");
+         // 入力を元に戻す
+         const input = document.getElementById('playerNameInput');
+         if(input) input.value = playerState.playerName;
+         return;
+     }
+     
+     if (confirm(`名前を変更しますか？\n消費: 虹石 100,000`)) {
+         playerState.rainbowStones -= 100000;
+         playerState.playerName = newName;
+         showToast("名前を変更しました");
+         renderSquad(); // 虹石の表示更新
+     } else {
+         // キャンセル時は入力を元に戻す
+         const input = document.getElementById('playerNameInput');
+         if(input) input.value = playerState.playerName;
+         return;
+     }
+  }
+
   const headerName = document.getElementById('headerPlayerName');
   if(headerName) headerName.textContent = playerState.playerName;
+  // 設定画面のインプットも更新（確認ダイアログ等で値がずれている可能性があるため）
+  const settingInput = document.getElementById('playerNameInput');
+  if(settingInput && settingInput.value !== playerState.playerName) {
+      settingInput.value = playerState.playerName;
+  }
+
   saveGame();
 }
 
@@ -5064,30 +5122,57 @@ function renderTowerMissions() {
     `;
     container.appendChild(infoCard);
 
-    // Display the next floor to challenge
-    const mission = generateTowerMission(nextFloor);
-    if (!mission) return;
+    // Generate cards for next floor and subsequent 10th floors
+    const floorsToShow = [nextFloor];
+    
+    // Determine next 10th floor targets
+    let checkFloor = (Math.floor(nextFloor / 10) + 1) * 10;
+    if (nextFloor % 10 === 0) checkFloor = nextFloor + 10;
 
-    const isCleared = missionProgress.has(mission.id); // Should always be false for next floor
-    const firstRewardHtml = `初回報酬: 虹石 ${mission.firstTimeReward}`;
-    const actionHtml = `<button class="mission-btn" onclick="startBattle(${mission.id})">挑戦する</button>`;
+    // Add next 3 milestones
+    for (let i = 0; i < 3; i++) {
+        floorsToShow.push(checkFloor + (i * 10));
+    }
 
-    const card = document.createElement('div');
-    card.className = 'mission-card';
-    card.style.gridColumn = '1 / -1'; // Make it span full width
-    card.innerHTML = `
-        <div class="mission-title">${mission.name}</div>
-        <div class="mission-desc">${mission.description}</div>
-        <div class="mission-info">
-            <span>推奨戦力: ${mission.recommendedPower}</span>
-            <div class="mission-reward-info">
-                ${isCleared ? '' : `<div class="first-clear">${firstRewardHtml}</div>`}
-                <div>報酬: 虹石 ${mission.reward}</div>
+    floorsToShow.forEach(floor => {
+        const mission = generateTowerMission(floor);
+        if (!mission) return;
+
+        const isCleared = missionProgress.has(mission.id);
+        
+        // Calculate potential skipped rewards
+        let skipRewardText = '';
+        if (floor > nextFloor) {
+             let skippedAmount = 0;
+             for (let f = nextFloor; f < floor; f++) {
+                 skippedAmount += Math.floor(((100 + (f * 50)) * 5) / 50);
+             }
+             if (skippedAmount > 0) {
+                 skipRewardText = `<div style="font-size:0.625rem; color:var(--accent3); margin-bottom:2px;">+ 中間報酬: 💎${skippedAmount}</div>`;
+             }
+        }
+
+        const firstRewardHtml = `初回報酬: 虹石 ${mission.firstTimeReward}`;
+        const actionHtml = `<button class="mission-btn" onclick="startBattle(${mission.id})">挑戦する</button>`;
+
+        const card = document.createElement('div');
+        card.className = 'mission-card';
+        // Removed grid-column: 1 / -1 to allow tiling
+        card.innerHTML = `
+            <div class="mission-title">${mission.name} ${floor > nextFloor ? '<span style="font-size:0.7em;color:var(--accent2)">(飛び級)</span>' : ''}</div>
+            <div class="mission-desc">${mission.description}</div>
+            <div class="mission-info">
+                <span>推奨戦力: ${mission.recommendedPower}</span>
+                <div class="mission-reward-info">
+                    ${isCleared ? '' : `<div class="first-clear">${firstRewardHtml}</div>`}
+                    ${skipRewardText}
+                    <div>報酬: 虹石 ${mission.reward}</div>
+                </div>
             </div>
-        </div>
-        ${actionHtml}
-    `;
-    container.appendChild(card);
+            ${actionHtml}
+        `;
+        container.appendChild(card);
+    });
 }
 
 function renderMissionsForChapter(chapterIndex) {
@@ -6419,7 +6504,7 @@ function checkWinLoss() {
         
         const mission = battleState.mission;
         const isFirstClear = !missionProgress.has(mission.id);
-        const rewardAmount = isFirstClear ? mission.firstTimeReward : mission.reward;
+        let rewardAmount = isFirstClear ? mission.firstTimeReward : mission.reward;
 
         if (isFirstClear) {
             missionProgress.add(mission.id);
@@ -6428,7 +6513,17 @@ function checkWinLoss() {
         // Add this block for tower progress
         if (mission.isTower) {
             const floor = mission.id - 10000;
-            if (floor > (playerState.towerProgress || 0)) {
+            const currentProgress = playerState.towerProgress || 0;
+            
+            if (floor > currentProgress) {
+                // Handle Skipped Rewards
+                if (isFirstClear) {
+                    for (let f = currentProgress + 1; f < floor; f++) {
+                        rewardAmount += Math.floor(((100 + (f * 50)) * 5) / 50);
+                        missionProgress.add(10000 + f); // Mark skipped floors as cleared
+                    }
+                }
+                
                 playerState.towerProgress = floor;
                 submitTowerScore(floor); // Submit score when progress updates
             }
@@ -7580,6 +7675,47 @@ async function showTowerRanking() {
 function closeRankingModal(e) { if(e.target.id === 'rankingOverlay') closeRankingModalDirect(); }
 function closeRankingModalDirect() { document.getElementById('rankingOverlay').classList.remove('open'); }
 
+// ===== NAME ENTRY =====
+function openNameEntryModal(isInitial = false) {
+    const overlay = document.getElementById('nameEntryOverlay');
+    const title = document.getElementById('nameModalTitle');
+    const msg = document.getElementById('nameModalMessage');
+    const input = document.getElementById('initialNameInput');
+    const closeBtn = document.getElementById('nameModalCloseBtn');
+
+    if (isInitial) {
+        title.textContent = "司令官名登録";
+        msg.innerHTML = 'あなたの名前を入力してください。<br><span style="font-size:0.75rem; color:var(--text-dim);">※初回のみ無料。以降は変更に虹石100,000が必要です。</span>';
+        if(closeBtn) closeBtn.style.display = 'none';
+        overlay.onclick = null;
+        input.value = "";
+    } else {
+        title.textContent = "名前変更";
+        const isFree = playerState.playerName === "名無しの剣士";
+        if (isFree) {
+             msg.innerHTML = '新しい名前を入力してください。<br><span style="font-size:0.75rem; color:var(--accent);">初回変更のため無料です。</span>';
+        } else {
+             msg.innerHTML = `新しい名前を入力してください。<br><span style="font-size:0.75rem; color:var(--accent2);">変更費用: 虹石 100,000</span><br><span style="font-size:0.75rem; color:var(--text-dim);">所持: ${playerState.rainbowStones}</span>`;
+        }
+        input.value = playerState.playerName;
+        if(closeBtn) closeBtn.style.display = 'flex';
+        overlay.onclick = (e) => { if(e.target === overlay) closeNameEntryModal(); };
+    }
+    overlay.classList.add('open');
+}
+
+function closeNameEntryModal() {
+    document.getElementById('nameEntryOverlay').classList.remove('open');
+}
+
+function submitNameChange() {
+  const input = document.getElementById('initialNameInput');
+  const name = input.value.trim();
+  if(!name) return;
+  
+  updatePlayerName(name);
+}
+
 // ===== INIT =====
 function initializeGame() {
     loadSettings();
@@ -7610,6 +7746,15 @@ function initializeGame() {
     // Start tutorial if not done
     if (!playerState.tutorialDone && !settings.skipTutorial) {
         setTimeout(startTutorial, 500);
+    }
+
+    // 初回名前入力案内
+    if (playerState.playerName === "名無しの剣士") {
+        openNameEntryModal(true);
+    } else {
+        // 設定画面の表示更新
+        const settingDisplay = document.getElementById('settingPlayerNameDisplay');
+        if(settingDisplay) settingDisplay.textContent = playerState.playerName;
     }
 }
 
