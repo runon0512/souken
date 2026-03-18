@@ -871,6 +871,19 @@
     flex-shrink: 0;
   }
 
+  .fav-btn {
+    background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-dim); transition: all 0.2s;
+    padding: 0; line-height: 1; margin-left: 0.5rem;
+  }
+  .fav-btn.active { color: #ff4d4d; text-shadow: 0 0 10px rgba(255, 77, 77, 0.5); }
+  .fav-btn:hover { transform: scale(1.1); }
+
+  .card-fav-badge {
+    position: absolute; top: 0.5rem; left: 2.5rem; z-index: 10; font-size: 0.875rem;
+    color: #ff4d4d;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8));
+  }
+
   .modal-close:hover { border-color: var(--accent2); color: var(--accent2); }
 
   .modal-img {
@@ -2580,7 +2593,10 @@
   <div class="modal" id="modalBox">
     <div class="modal-header">
       <div>
-        <div class="modal-title" id="modalName">-</div>
+        <div style="display:flex; align-items:center;">
+          <div class="modal-title" id="modalName">-</div>
+          <button id="modalFavBtn" class="fav-btn" onclick="toggleFavorite()">♡</button>
+        </div>
         <div class="modal-subtitle" id="modalSubtitle">-</div>
       </div>
       <button class="modal-close" onclick="closeModalDirect()">✕</button>
@@ -4010,15 +4026,20 @@ function renderCards() {
     const isOwnedA = playerState.characters.hasOwnProperty(a.id);
     const isOwnedB = playerState.characters.hasOwnProperty(b.id);
 
-    // 1. Ownership primary sort: owned characters first
+    // 1. Ownership: owned first
     if (isOwnedA && !isOwnedB) return -1;
     if (!isOwnedA && isOwnedB) return 1;
 
-    // 2. Secondary sort for owned characters
+    // 2. Favorites: favorites first (among owned)
     if (isOwnedA && isOwnedB) {
       const charA = playerState.characters[a.id];
       const charB = playerState.characters[b.id];
 
+      const favA = charA.isFavorite ? 1 : 0;
+      const favB = charB.isFavorite ? 1 : 0;
+      if (favA !== favB) return favB - favA;
+
+      // 3. Selected Sort
       if (currentSort === 'power') {
         return getPower(b, charB.level) - getPower(a, charA.level);
       } else if (currentSort === 'level') {
@@ -4046,6 +4067,7 @@ function renderCards() {
     const aura = isOwned ? (charState.aura || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
     const s = calcStats(c.baseStats, level, equip, potential);
+    const isFav = isOwned && charState.isFavorite;
     
     let starsHtml = '';
     if (isOwned && potential > 0) {
@@ -4061,6 +4083,7 @@ function renderCards() {
     const imgSrc = c.useImg ? c.img : 'C0.svg';
 
     card.innerHTML = `
+      ${isFav ? '<div class="card-fav-badge">❤️</div>' : ''}
       <div class="card-img">
         <div style="padding:8px;background:linear-gradient(160deg,#0d1a2a,#070e18)"><img src="${imgSrc}" alt="${c.name}" style="width:100%;height:auto"></div>
         <div class="card-elem-badge elem-${c.element}">${getElemIcon(c.element)}</div>
@@ -4233,6 +4256,18 @@ function toggleSquad(e, id) {
   saveGame();
 }
 
+function toggleFavorite() {
+  if (modalCharId === null) return;
+  const charState = playerState.characters[modalCharId];
+  if (!charState) return;
+  
+  charState.isFavorite = !charState.isFavorite;
+  showToast(charState.isFavorite ? 'お気に入りに登録しました' : 'お気に入りを解除しました');
+  updateModal();
+  renderCards();
+  saveGame();
+}
+
 // ===== MODAL =====
 function openModal(id, isBattleContext = false, battleUnit = null) {
   modalCharId = id;
@@ -4312,6 +4347,16 @@ function formatAbilityDetails(ability) {
       aura = 0;
       equip = null;
       s = c.baseStats;
+    }
+
+    // Favorite Button State
+    const favBtn = document.getElementById('modalFavBtn');
+    if (isBattleContext || !isOwned) {
+      favBtn.style.display = 'none';
+    } else {
+      favBtn.style.display = 'block';
+      favBtn.textContent = charState.isFavorite ? '❤️' : '♡';
+      favBtn.className = 'fav-btn' + (charState.isFavorite ? ' active' : '');
     }
 
   document.getElementById('modalCurrentStatsTitle').textContent = isBattleContext ? '戦闘中ステータス' : (isOwned ? '現在のステータス' : '基礎ステータス (Lv.1)');
