@@ -7464,8 +7464,11 @@ async function showTowerRanking() {
       return;
   }
 
-  data.forEach(entry => {
-      const isSelf = entry.name === playerState.playerName && entry.score === playerState.towerProgress;
+  // 上位10名を表示
+  const top10 = data.slice(0, 10);
+  
+  const renderEntry = (entry) => {
+      const isSelf = entry.name === playerState.playerName;
       const item = document.createElement('div');
       item.className = `ranking-item rank-${entry.rank} ${isSelf ? 'self' : ''}`;
       item.innerHTML = `
@@ -7474,7 +7477,19 @@ async function showTowerRanking() {
           <div class="rank-score">${entry.score}階</div>
       `;
       listEl.appendChild(item);
-  });
+  };
+
+  top10.forEach(renderEntry);
+
+  // 自分がトップ10圏外なら最後に表示
+  const myEntry = data.find(d => d.name === playerState.playerName);
+  if (myEntry && myEntry.rank > 10) {
+      const sep = document.createElement('div');
+      sep.style.cssText = 'text-align:center; color:var(--text-dim); padding:0.25rem;';
+      sep.textContent = '...';
+      listEl.appendChild(sep);
+      renderEntry(myEntry);
+  }
 }
 
 function closeRankingModal(e) { if(e.target.id === 'rankingOverlay') closeRankingModalDirect(); }
