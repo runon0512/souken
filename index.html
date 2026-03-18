@@ -247,6 +247,17 @@
   .squad-slot.filled:hover {
     background: rgba(0,200,255,0.1);
   }
+  
+  /* Drag and Drop styles */
+  .squad-slot[draggable="true"] { cursor: grab; }
+  .squad-slot.dragging { opacity: 0.5; border: 1px dashed var(--accent); }
+  .squad-slot.drag-over {
+    background: rgba(0, 200, 255, 0.2);
+    border: 1px solid var(--accent);
+    transform: scale(1.02);
+  }
+  /* Prevent children from interfering with drag events */
+  .squad-slot > * { pointer-events: none; }
 
   /* Ensure content sits above aura overlay in squad slots */
   .squad-slot > * { position: relative; z-index: 2; }
@@ -2207,6 +2218,26 @@
     from { opacity: 0.5; }
     to { opacity: 1; }
   }
+
+  /* RANKING STYLES */
+  .ranking-list {
+    display: flex; flex-direction: column; gap: 0.5rem;
+    max-height: 25rem; overflow-y: auto;
+  }
+  .ranking-item {
+    display: grid; grid-template-columns: 3rem 1fr 5rem; align-items: center;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    padding: 0.5rem 1rem; border-radius: 0.25rem;
+  }
+  .ranking-item.self {
+    border-color: var(--accent); background: rgba(0,200,255,0.1);
+  }
+  .rank-num { font-family: 'Orbitron'; font-weight: 700; color: var(--gold); }
+  .rank-name { color: var(--text-main); font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-score { font-family: 'Orbitron'; text-align: right; color: var(--accent); }
+  .rank-1 .rank-num { color: #ffd700; font-size: 1.2rem; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
+  .rank-2 .rank-num { color: #c0c0c0; font-size: 1.1rem; }
+  .rank-3 .rank-num { color: #b87333; font-size: 1.1rem; }
 </style>
 <style>
   /* GACHA ANIMATION */
@@ -2454,6 +2485,10 @@
         <input type="range" id="sfxVolume" min="0" max="1" step="0.01" oninput="updateSfxVolume(this.value)" style="width: 100%;">
       </div>
       <div style="margin-top: 0.5rem; padding: 0 0.75rem;">
+        <label style="font-size: 0.75rem; color: var(--text-mid);">プレイヤー名</label>
+        <input type="text" id="playerNameInput" maxlength="10" placeholder="名無しの剣士" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--text-main); padding:4px; font-size:0.75rem; border-radius:4px;" onchange="updatePlayerName(this.value)">
+      </div>
+      <div style="margin-top: 0.5rem; padding: 0 0.75rem;">
         <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--text-mid); cursor:pointer;">
           <input type="checkbox" id="skipTutorialCheck" onchange="updateSkipTutorial(this.checked)">
           チュートリアルを表示しない
@@ -2510,6 +2545,7 @@
             <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.25rem 0.75rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
             <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.25rem 0.75rem; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
             <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.25rem 0.75rem; margin:0;">ユーザーステージ</button>
+            <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.25rem 0.75rem; margin:0;">無限の塔</button>
         </div>
       </div>
       <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.375rem 0.75rem; margin: 0;" onclick="renderStoryChapters()">
@@ -3230,22 +3266,22 @@ const units = [
 
 // Equipment Data
 const equipmentItems = [
-  { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 }, owned: true },
-  { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 }, owned: true },
-  { id: 3, name: '鉄の胸当て', icon: '🛡️', desc: '防御力が1.2倍になる', effect: { type: 'stat_mult', stat: 'def', val: 1.2 }, owned: true },
-  { id: 4, name: '疾風のブーツ', icon: '👢', desc: '速度が1.2倍になる', effect: { type: 'stat_mult', stat: 'spd', val: 1.2 }, owned: true },
-  { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 }, owned: true },
-  { id: 6, name: '狂戦士の斧', icon: '🪓', desc: '攻撃力が1.4倍になるが、HPが0.8倍になる', effect: { type: 'stat_mult_multi', stats: { atk: 1.4, hp: 0.8 } }, owned: true },
-  { id: 7, name: '重騎士の盾', icon: '🛡️', desc: '防御力が1.4倍になるが、速度が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { def: 1.4, spd: 0.8 } }, owned: true },
-  { id: 8, name: '盗賊のマント', icon: '🧥', desc: '速度が1.3倍になるが、防御力が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { spd: 1.3, def: 0.8 } }, owned: true },
-  { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 }, owned: true },
-  { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 }, owned: true },
-  { id: 11, name: '毒針', icon: '💉', desc: '攻撃時、20%の確率で毒を与える', effect: { type: 'add_status', status: 'poison', chance: 0.2 }, owned: true },
-  { id: 12, name: '幸運のコイン', icon: '🪙', desc: '10%の確率で攻撃を回避する', effect: { type: 'evasion', val: 0.1 }, owned: true },
-  { id: 13, name: '身代わり人形', icon: '🧸', desc: '最初の攻撃を1回だけ無効化する', effect: { type: 'shield_hit', val: 1 }, owned: true },
-  { id: 14, name: 'フェニックスの羽', icon: '🪶', desc: '一度だけ致死ダメージを耐える', effect: { type: 'guts', val: true }, owned: true },
-  { id: 15, name: '賢者の石', icon: '💎', desc: '全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } }, owned: true },
-  { id: 16, name: '色欲の魔石', icon: '💖', desc: '攻撃時、20%の確率で盲目(2ターン)を付与する', effect: { type: 'add_status', status: 'blind', turns: 2, chance: 0.2 }, owned: false },
+  { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } },
+  { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 } },
+  { id: 3, name: '鉄の胸当て', icon: '🛡️', desc: '防御力が1.2倍になる', effect: { type: 'stat_mult', stat: 'def', val: 1.2 } },
+  { id: 4, name: '疾風のブーツ', icon: '👢', desc: '速度が1.2倍になる', effect: { type: 'stat_mult', stat: 'spd', val: 1.2 } },
+  { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 } },
+  { id: 6, name: '狂戦士の斧', icon: '🪓', desc: '攻撃力が1.4倍になるが、HPが0.8倍になる', effect: { type: 'stat_mult_multi', stats: { atk: 1.4, hp: 0.8 } } },
+  { id: 7, name: '重騎士の盾', icon: '🛡️', desc: '防御力が1.4倍になるが、速度が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { def: 1.4, spd: 0.8 } } },
+  { id: 8, name: '盗賊のマント', icon: '🧥', desc: '速度が1.3倍になるが、防御力が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { spd: 1.3, def: 0.8 } } },
+  { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 } },
+  { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 } },
+  { id: 11, name: '毒針', icon: '💉', desc: '攻撃時、20%の確率で毒を与える', effect: { type: 'add_status', status: 'poison', chance: 0.2 } },
+  { id: 12, name: '幸運のコイン', icon: '🪙', desc: '10%の確率で攻撃を回避する', effect: { type: 'evasion', val: 0.1 } },
+  { id: 13, name: '身代わり人形', icon: '🧸', desc: '最初の攻撃を1回だけ無効化する', effect: { type: 'shield_hit', val: 1 } },
+  { id: 14, name: 'フェニックスの羽', icon: '🪶', desc: '一度だけ致死ダメージを耐える', effect: { type: 'guts', val: true } },
+  { id: 15, name: '賢者の石', icon: '💎', desc: '全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } } },
+  { id: 16, name: '色欲の魔石', icon: '💖', desc: '攻撃時、20%の確率で盲目(2ターン)を付与する', effect: { type: 'add_status', status: 'blind', turns: 2, chance: 0.2 } },
 ];
 
 // AI Types
@@ -3679,12 +3715,49 @@ const userStageChapters = [
 ];
 
 function getMissionById(id) {
+  if (id >= 10000) {
+    return generateTowerMission(id - 10000);
+  }
   const allChapters = [...storyChapters, ...eventChapters, ...userStageChapters];
   for (const chapter of allChapters) {
     const m = chapter.missions.find(mis => mis.id === id);
     if (m) return m;
   }
   return null;
+}
+
+function generateTowerMission(floor) {
+    if (floor <= 0) return null;
+
+    const level = floor;
+    const enemyId = (floor % 2 === 1) ? 315 : 316; // 衛兵 or 傀儡
+    const enemyName = (floor % 2 === 1) ? '衛兵' : '傀儡';
+
+    const missionEnemies = Array.from({ length: 5 }, () => ({
+        id: enemyId,
+        level: level,
+        aiType: AI_TYPES.RANDOM
+    }));
+
+    let totalPower = 0;
+    missionEnemies.forEach(me => {
+        const e = units.find(x => x.id === me.id);
+        if (e) {
+            const s = calcStats(e.baseStats, me.level);
+            totalPower += Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
+        }
+    });
+
+    return {
+        id: 10000 + floor,
+        name: `第${floor}階`,
+        description: `レベル${level}の${enemyName}部隊が待ち構えている。`,
+        enemies: missionEnemies,
+        recommendedPower: totalPower,
+        reward: 100 + (floor * 50),
+        firstTimeReward: (100 + (floor * 50)) * 5,
+        isTower: true // Add a flag to identify tower missions
+    };
 }
 
 const elementalAdvantage = {
@@ -3729,6 +3802,9 @@ const AURA_DATA = [
 let playerState = {
   rainbowStones: 5000,
   characters: { 1: { level: 1, equippedId: null, fragments: 0 }, 2: { level: 1, equippedId: null, fragments: 0 } }, // id: {level, equippedId, fragments}
+  ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  towerProgress: 0,
+  playerName: "名無しの剣士",
 };
 
 // ===== STATE =====
@@ -3799,6 +3875,59 @@ function getLevelCost(level) {
   return level * 100; // Lv1->2 = 100, Lv19->20 = 1900
 }
 
+// ===== SQUAD DRAG & DROP =====
+let draggedSquadIndex = null;
+
+function handleSquadDragStart(e, index) {
+  draggedSquadIndex = index;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', index);
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+
+function handleSquadDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.squad-slot').forEach(el => el.classList.remove('drag-over'));
+  draggedSquadIndex = null;
+}
+
+function handleSquadDragOver(e) {
+  if (draggedSquadIndex === null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleSquadDragEnter(e) {
+  if (draggedSquadIndex === null) return;
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function handleSquadDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function handleSquadDrop(e, targetIndex) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  
+  if (draggedSquadIndex === null || draggedSquadIndex === targetIndex) return;
+
+  // Remove from old position
+  const item = squad.splice(draggedSquadIndex, 1)[0];
+  
+  // Calculate insert position (cap at end of array)
+  let insertAt = targetIndex;
+  if (insertAt > squad.length) insertAt = squad.length;
+  
+  // Insert at new position
+  squad.splice(insertAt, 0, item);
+  
+  draggedSquadIndex = null;
+  renderSquad();
+  saveGame();
+}
+
 // ===== RENDER SQUAD SLOTS =====
 function renderSquad() {
   document.getElementById('resRainbow').textContent = playerState.rainbowStones;
@@ -3826,6 +3955,11 @@ function renderSquad() {
         <div class="slot-power">${getPower(c, playerState.characters[id].level, potential)}</div>
       `;
       slot.onclick = () => openModal(c.id);
+      
+      // Make filled slots draggable
+      slot.setAttribute('draggable', 'true');
+      slot.ondragstart = (e) => handleSquadDragStart(e, i);
+      slot.ondragend = (e) => handleSquadDragEnd(e);
     } else {
       slot.innerHTML = `
         <div class="slot-num">${i+1}</div>
@@ -3833,6 +3967,13 @@ function renderSquad() {
         <div class="slot-info"><div class="slot-name" style="color:var(--text-dim)">空きスロット</div></div>
       `;
     }
+    
+    // All slots are drop targets
+    slot.ondragover = (e) => handleSquadDragOver(e);
+    slot.ondragenter = (e) => handleSquadDragEnter(e);
+    slot.ondragleave = (e) => handleSquadDragLeave(e);
+    slot.ondrop = (e) => handleSquadDrop(e, i);
+
     container.appendChild(slot);
   }
   const total = squad.reduce((s, id) => {
@@ -4020,7 +4161,7 @@ function renderEquipmentPanel() {
   }
 
   equipmentItems.forEach(item => {
-    if (!item.owned) return;
+    if (!playerState.ownedEquipment.includes(item.id)) return;
     const ownerId = equippedBy[item.id];
     const owner = ownerId ? units.find(u => u.id == ownerId) : null;
     
@@ -4454,7 +4595,7 @@ function openEquipModal(charId) {
   list.appendChild(unequipDiv);
 
   equipmentItems.forEach(item => {
-    if (!item.owned) return;
+    if (!playerState.ownedEquipment.includes(item.id)) return;
     
     const equipperId = equippedBy[item.id];
     const isEquippedByOther = equipperId && equipperId != charId;
@@ -4553,6 +4694,11 @@ function updateSfxVolume(value) {
 function updateSkipTutorial(checked) {
   settings.skipTutorial = checked;
   saveSettings();
+}
+
+function updatePlayerName(name) {
+  playerState.playerName = name || "名無しの剣士";
+  saveGame();
 }
 
 
@@ -4792,6 +4938,8 @@ function renderStoryChapters() {
       }
       container.appendChild(storyCard);
     });
+  } else if (currentStoryTab === 'tower') {
+    renderTowerMissions();
   } else {
     // イベントまたはユーザーステージ：ミッション一覧を表示
     const targetChapters = currentStoryTab === 'event' ? eventChapters : userStageChapters;
@@ -4825,6 +4973,51 @@ function renderStoryChapters() {
       });
     });
   }
+}
+
+function renderTowerMissions() {
+    const container = document.getElementById('missionGrid');
+    container.innerHTML = ''; // Clear previous content
+
+    const highestCleared = playerState.towerProgress || 0;
+    const nextFloor = highestCleared + 1;
+
+    // Display info about current progress
+    const infoCard = document.createElement('div');
+    infoCard.style.cssText = 'grid-column: 1 / -1; text-align: center; background: var(--bg-card); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);';
+    infoCard.innerHTML = `
+        <h3 style="color: var(--gold); font-family: 'Orbitron';">無限の塔</h3>
+        <p style="margin-top: 0.5rem; color: var(--text-mid);">現在の到達階層: <span style="font-size: 1.2em; color: var(--accent);">${highestCleared}階</span></p>
+        <div style="margin-top: 1rem;">
+            <button class="mission-btn" style="width:auto; display:inline-block; padding:0.5rem 1.5rem;" onclick="showTowerRanking()">ランキングを見る</button>
+        </div>
+    `;
+    container.appendChild(infoCard);
+
+    // Display the next floor to challenge
+    const mission = generateTowerMission(nextFloor);
+    if (!mission) return;
+
+    const isCleared = missionProgress.has(mission.id); // Should always be false for next floor
+    const firstRewardHtml = `初回報酬: 虹石 ${mission.firstTimeReward}`;
+    const actionHtml = `<button class="mission-btn" onclick="startBattle(${mission.id})">挑戦する</button>`;
+
+    const card = document.createElement('div');
+    card.className = 'mission-card';
+    card.style.gridColumn = '1 / -1'; // Make it span full width
+    card.innerHTML = `
+        <div class="mission-title">${mission.name}</div>
+        <div class="mission-desc">${mission.description}</div>
+        <div class="mission-info">
+            <span>推奨戦力: ${mission.recommendedPower}</span>
+            <div class="mission-reward-info">
+                ${isCleared ? '' : `<div class="first-clear">${firstRewardHtml}</div>`}
+                <div>報酬: 虹石 ${mission.reward}</div>
+            </div>
+        </div>
+        ${actionHtml}
+    `;
+    container.appendChild(card);
 }
 
 function renderMissionsForChapter(chapterIndex) {
@@ -6162,6 +6355,15 @@ function checkWinLoss() {
             missionProgress.add(mission.id);
         }
         
+        // Add this block for tower progress
+        if (mission.isTower) {
+            const floor = mission.id - 10000;
+            if (floor > (playerState.towerProgress || 0)) {
+                playerState.towerProgress = floor;
+                submitTowerScore(floor); // Submit score when progress updates
+            }
+        }
+
         let unlockedCharName = null
         // Stage 5 (Mission ID: 104) Clear Reward: Iemike (ID: 4)
         if (mission.id === 104 && !playerState.characters[4]) {
@@ -7029,6 +7231,12 @@ function handleFileSelect(input) {
       if (playerState.tutorialDone === undefined) {
           playerState.tutorialDone = true; // Assume done for imported saves to avoid annoyance, unless explicitly false
       }
+      // Migration for ownedEquipment
+      if (playerState.ownedEquipment === undefined) {
+        playerState.ownedEquipment = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+      }
+      playerState.towerProgress = data.playerState.towerProgress || 0;
+      playerState.playerName = data.playerState.playerName || "名無しの剣士";
 
       // UI Update
       renderSquad();
@@ -7037,6 +7245,7 @@ function handleFileSelect(input) {
       // Save to local storage as well
       saveGame();
       
+      if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
       showToast('ファイルからセーブデータをロードしました');
     } catch (err) {
       console.error(err);
@@ -7079,7 +7288,10 @@ function loadGame() {
     const defaultPlayerState = {
         rainbowStones: 5000,
         characters: { 1: { level: 1, equippedId: null, fragments: 0 }, 2: { level: 1, equippedId: null, fragments: 0 } },
-        tutorialDone: false
+        tutorialDone: false,
+        ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        towerProgress: 0,
+        playerName: "名無しの剣士",
     };
     
     playerState.rainbowStones = savedData.playerState.rainbowStones !== undefined ? savedData.playerState.rainbowStones : defaultPlayerState.rainbowStones;
@@ -7106,6 +7318,11 @@ function loadGame() {
         playerState.tutorialDone = savedData.playerState.tutorialDone;
     }
     
+    // Migration for ownedEquipment
+    playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
+    playerState.towerProgress = savedData.playerState.towerProgress || 0;
+    playerState.playerName = savedData.playerState.playerName || defaultPlayerState.playerName;
+    
     missionProgress = new Set(savedData.missionProgress || []);
     squad = savedData.squad || [];
     
@@ -7114,6 +7331,7 @@ function loadGame() {
   } else {
     console.log('No save data found. Starting a new game.');
   }
+  if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
 }
 
 function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null, unlockedItem = null) {
@@ -7180,6 +7398,87 @@ function closeVictoryModal() {
   document.getElementById('victoryOverlay').classList.remove('open');
   closeBattle();
 }
+
+// ===== RANKING SYSTEM =====
+// GitHub Pages等の静的ホスティングでランキングを実現するためには、
+// 外部のデータベースサービス（Google Sheets + GAS, Firebase, etc.）が必要です。
+// ここではGoogle Apps Script (GAS) をバックエンドとして利用する想定のコード記述します。
+// 自分のGASウェブアプリのURLをここに設定してください。
+const RANKING_API_URL = ""; 
+
+async function fetchTowerRanking() {
+  if (!RANKING_API_URL) {
+    // API URLが設定されていない場合はダミーデータを返す
+    return [
+      { rank: 1, name: "最強の剣士", score: 100 },
+      { rank: 2, name: "塔の守護者", score: 95 },
+      { rank: 3, name: "挑戦者A", score: 80 },
+      { rank: 4, name: "mizryo", score: 75 },
+      { rank: 5, name: "prog", score: 70 },
+      { rank: 6, name: "カリフラワー", score: 60 },
+      { rank: 7, name: "ビギナー", score: 40 },
+      { rank: 8, name: "自分", score: playerState.towerProgress || 0 } // 仮の自分の位置
+    ].sort((a,b) => b.score - a.score).map((d,i) => ({...d, rank: i+1}));
+  }
+
+  try {
+    const response = await fetch(RANKING_API_URL + "?action=get");
+    const data = await response.json();
+    return data;
+  } catch (e) {
+    console.error("Ranking fetch error:", e);
+    return [];
+  }
+}
+
+async function submitTowerScore(floor) {
+  if (!RANKING_API_URL) return;
+  
+  try {
+    // navigator.sendBeacon or simple fetch
+    const formData = new FormData();
+    formData.append('name', playerState.playerName);
+    formData.append('score', floor);
+    formData.append('action', 'post');
+    
+    await fetch(RANKING_API_URL, {
+        method: 'POST',
+        body: formData
+    });
+    console.log("Score submitted");
+  } catch (e) {
+    console.error("Score submit error:", e);
+  }
+}
+
+async function showTowerRanking() {
+  document.getElementById('rankingOverlay').classList.add('open');
+  const listEl = document.getElementById('rankingList');
+  listEl.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-dim);">読み込み中...</div>';
+
+  const data = await fetchTowerRanking();
+  
+  listEl.innerHTML = '';
+  if (data.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-dim);">ランキングデータの取得に失敗しました。<br>またはAPI URLが設定されていません。</div>';
+      return;
+  }
+
+  data.forEach(entry => {
+      const isSelf = entry.name === playerState.playerName && entry.score === playerState.towerProgress;
+      const item = document.createElement('div');
+      item.className = `ranking-item rank-${entry.rank} ${isSelf ? 'self' : ''}`;
+      item.innerHTML = `
+          <div class="rank-num">${entry.rank}</div>
+          <div class="rank-name">${entry.name}</div>
+          <div class="rank-score">${entry.score}階</div>
+      `;
+      listEl.appendChild(item);
+  });
+}
+
+function closeRankingModal(e) { if(e.target.id === 'rankingOverlay') closeRankingModalDirect(); }
+function closeRankingModalDirect() { document.getElementById('rankingOverlay').classList.remove('open'); }
 
 // ===== INIT =====
 function initializeGame() {
