@@ -192,7 +192,7 @@
   /* ===== SIDEBAR ===== */
   aside {
     border-right: 1px solid var(--border);
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 5rem 1rem;
     background: rgba(13,21,32,0.6);
     height: 100%;
     overflow-y: auto;
@@ -400,7 +400,7 @@
 
   /* ===== ROSTER PANEL ===== */
   .roster-panel {
-    padding: 1.5rem;
+    padding: 1.5rem 1.5rem 5rem 1.5rem;
     overflow-y: auto;
     height: 100%;
   }
@@ -2510,7 +2510,6 @@
         <label style="font-size: 0.75rem; color: var(--text-mid);">プレイヤー名</label>
         <div style="display:flex; gap:0.5rem;">
           <div id="settingPlayerNameDisplay" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--text-main); padding:4px; font-size:0.75rem; border-radius:4px; display:flex; align-items:center;">名無しの剣士</div>
-          <button class="filter-btn" style="width:auto; margin:0; padding:0.25rem 0.5rem;" onclick="openNameEntryModal()">変更</button>
         </div>
       </div>
       <div style="margin-top: 0.5rem; padding: 0 0.75rem;">
@@ -2728,7 +2727,7 @@
       <button class="modal-close" id="nameModalCloseBtn" onclick="closeNameEntryModal()" style="display:none;">✕</button>
     </div>
     <div class="modal-body" style="text-align: center; padding: 2rem 1rem;">
-      <p id="nameModalMessage" style="margin-bottom: 1rem; color: var(--text-mid);">あなたの名前を入力してください。<br><span style="font-size:0.75rem; color:var(--text-dim);">※初回のみ無料。以降は変更に虹石100,000が必要です。</span></p>
+      <p id="nameModalMessage" style="margin-bottom: 1rem; color: var(--text-mid);">あなたの名前を入力してください。<br><span style="font-size:0.75rem; color:var(--text-dim);">※名前は後から変更できません。</span></p>
       <input type="text" id="initialNameInput" maxlength="10" placeholder="名前を入力" style="width:80%; padding:0.5rem; border-radius:4px; border:1px solid var(--accent); background:rgba(0,0,0,0.3); color:white; text-align:center; font-family: 'Noto Sans JP', sans-serif;">
     </div>
     <div class="modal-footer">
@@ -3317,7 +3316,7 @@ const units = [
     abilityType: 'magic',
     abilities: [
       { name: 'セレスティアルレイ', desc: '30%の確率で発動。攻撃威力が150%になり、盲目(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', damageMult: 1.5, effect: { type: 'status', status: 'blind', turns: 2 } },
-      { name: '防御態勢', desc: '被弾時、50%の確率でダメージを20%カットする。', triggerRate: 0.5, timing: 'on_defense', damageCut: 0.2 }
+      { name: '支援の光', desc: 'ターン終了後、自分を含む全員の体力を全体の2%回復させます。', timing: 'on_turn_end' }
     ],
     useImg: true, img: 'C33.svg'
   },
@@ -4888,7 +4887,14 @@ function closeModalDirect() {
 // ===== AUDIO FUNCTIONS =====
 function playBgm(type) {
   const newBgm = type === 'battle' ? sounds.battleBgm : sounds.homeBgm;
-  if (currentBgm === newBgm && !newBgm.paused) return; // Already playing
+  
+  if (currentBgm === newBgm) {
+    if (newBgm.paused) {
+      newBgm.volume = settings.bgmVolume;
+      newBgm.play().catch(e => console.log("BGM play was prevented. Requires user interaction.", e));
+    }
+    return;
+  }
 
   if (currentBgm) {
     currentBgm.pause();
@@ -4901,15 +4907,16 @@ function playBgm(type) {
 }
 
 function playSfx(type) {
-  let sfx;
+  let sfxSrc;
   switch(type) {
-    case 'ability': sfx = sounds.abilitySfx; break;
-    case 'slash': sfx = sounds.slashSfx; break;
-    case 'magic': sfx = sounds.magicSfx; break;
-    case 'impact': sfx = sounds.slashSfx; break; // Use slash sound for impact
+    case 'ability': sfxSrc = sounds.abilitySfx; break;
+    case 'slash': sfxSrc = sounds.slashSfx; break;
+    case 'magic': sfxSrc = sounds.magicSfx; break;
+    case 'impact': sfxSrc = sounds.slashSfx; break; // Use slash sound for impact
     default: return;
   }
-  sfx.currentTime = 0;
+  // Clone the audio node to allow overlapping playback
+  const sfx = sfxSrc.cloneNode();
   sfx.volume = settings.sfxVolume;
   sfx.play().catch(e => console.log("SFX play was prevented.", e));
 }
@@ -5280,6 +5287,13 @@ function renderTowerMissions() {
     for (let i = 0; i < 3; i++) {
         floorsToShow.push(checkFloor + (i * 10));
     }
+    
+    const towerRewards = {
+        50: 18, // シオン・アンドラス
+        100: 19, // ソルン・アンドラス
+        200: 20, // キティー・スカイレット
+        300: 30, // セーレ
+    };
 
     floorsToShow.forEach(floor => {
         const mission = generateTowerMission(floor);
@@ -5299,7 +5313,11 @@ function renderTowerMissions() {
              }
         }
 
-        const firstRewardHtml = `初回報酬: 虹石 ${mission.firstTimeReward}`;
+        let firstRewardHtml = `初回報酬: 虹石 ${mission.firstTimeReward}`;
+        if (towerRewards[floor]) {
+            const rewardChar = units.find(u => u.id === towerRewards[floor]);
+            if (rewardChar) firstRewardHtml += ` + <span style="color:var(--accent)">${rewardChar.name}</span>`;
+        }
         const actionHtml = `<button class="mission-btn" onclick="startBattle(${mission.id})">挑戦する</button>`;
 
         const card = document.createElement('div');
@@ -6654,6 +6672,7 @@ function checkWinLoss() {
     const livingPlayers = battleState.playerUnits.filter(u => u.currentHp > 0).length;
 
     let isGameOver = false;
+    let unlockedTowerChars = [];
 
     if (livingEnemies === 0) {
         battleState.isFinished = true;
@@ -6695,6 +6714,7 @@ function checkWinLoss() {
                 }
                 
                 playerState.towerProgress = floor;
+                unlockedTowerChars = checkAndGrantTowerRewards(floor);
                 submitTowerScore(floor); // Submit score when progress updates
             }
         }
@@ -6739,7 +6759,7 @@ function checkWinLoss() {
             }
         }
         playerState.rainbowStones += rewardAmount;
-        showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName, mvpUnit, unlockedItem);
+        showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName, mvpUnit, unlockedItem, unlockedTowerChars);
     } else if (livingPlayers === 0) {
 
         battleState.isFinished = true;
@@ -7198,6 +7218,38 @@ async function triggerOnBattleStartAbilities() {
         
         // Check for deaths after each ability
         for (const t of livingTargets) { if (t.currentHp <= 0) await processUnitDeath(t); }
+    }
+
+    // --- ON TURN END ACTIONS ---
+    if (!battleState.isFinished) {
+      const livingUnits = [...battleState.playerUnits, ...battleState.enemyUnits].filter(u => u.currentHp > 0);
+      for (const unit of livingUnits) {
+        if (unit.abilities && !unit.statusEffects.some(e => e.type === 'curse')) {
+          for (const ab of unit.abilities) {
+            if (ab.timing === 'on_turn_end') {
+              if (unit.id === 29 && ab.name === '支援の光') { // リナ・タナトス
+                 const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+                 let anyHealed = false;
+                 for (const ally of allies) {
+                   if (ally.currentHp > 0 && ally.currentHp < ally.stats.hp) {
+                     const heal = Math.floor(ally.stats.hp * 0.02);
+                     if (heal > 0) {
+                       ally.currentHp = Math.min(ally.stats.hp, ally.currentHp + heal);
+                       updateUnitUI(ally);
+                       showDamageNumber(document.getElementById(`unit-${ally.battleId}`), heal, 'heal');
+                       anyHealed = true;
+                     }
+                   }
+                 }
+                 if (anyHealed) {
+                    logBattleMessage(`${unit.name}の${ab.name}。味方全体が回復。`);
+                    await sleep(400 / battleSpeedMultiplier);
+                 }
+              }
+            }
+          }
+        }
+      }
     }
 
     checkWinLoss();
@@ -7695,7 +7747,7 @@ function loadGame() {
   if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
 }
 
-function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null, unlockedItem = null) {
+function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null, unlockedItem = null, unlockedTowerChars = []) {
   const rewardsContainer = document.getElementById('victoryRewards');
   let mvpHtml = '';
   if (mvpUnit) {
@@ -7711,20 +7763,23 @@ function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUni
     `;
   }
 
-  let unlockedCharHtml = '';
+  let allUnlockedChars = [];
   if (unlockedCharName) {
-      const unlockedChar = units.find(u => u.name === unlockedCharName);
-      if (unlockedChar) {
-        unlockedCharHtml = `
-          <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
-            <div style="font-family: 'Orbitron'; font-size: 1.5rem; color: var(--accent);">NEW CHARACTER</div>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(0,200,255,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-bright);">
-              <img src="${unlockedChar.useImg ? unlockedChar.img : 'C0.svg'}" style="width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;">
-              <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${unlockedChar.name}</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">が仲間に加わりました！</div></div>
-            </div>
-          </div>
-        `;
-      }
+      const char = units.find(u => u.name === unlockedCharName);
+      if (char) allUnlockedChars.push(char);
+  }
+  allUnlockedChars = [...allUnlockedChars, ...unlockedTowerChars];
+
+  let unlockedCharHtml = '';
+  if (allUnlockedChars.length > 0) {
+      unlockedCharHtml = `
+        <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
+          <div style="font-family: 'Orbitron'; font-size: 1.5rem; color: var(--accent);">NEW CHARACTER</div>
+          ${allUnlockedChars.map(char => `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(0,200,255,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-bright);">
+              <img src="${char.useImg ? char.img : 'C0.svg'}" style="width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;">
+              <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${char.name}</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">が仲間に加わりました！</div></div>
+            </div>`).join('')}
+        </div>`;
   }
 
   let unlockedItemHtml = '';
@@ -7879,7 +7934,7 @@ function openNameEntryModal(isInitial = false) {
 
     if (isInitial) {
         title.textContent = "司令官名登録";
-        msg.innerHTML = 'あなたの名前を入力してください。<br><span style="font-size:0.75rem; color:var(--text-dim);">※初回のみ無料。以降は変更に虹石100,000が必要です。</span>';
+        msg.innerHTML = 'あなたの名前を入力してください。<br><span style="font-size:0.75rem; color:var(--text-dim);">※名前は後から変更できません。慎重に決定してください。</span>';
         if(closeBtn) closeBtn.style.display = 'none';
         overlay.onclick = null;
         input.value = "";
@@ -7913,10 +7968,42 @@ function submitNameChange() {
   }
 }
 
+// ===== TOWER REWARDS =====
+function checkAndGrantTowerRewards(currentFloor, showToasts = false) {
+    const rewards = {
+        50: 18, // シオン・アンドラス
+        100: 19, // ソルン・アンドラス
+        200: 20, // キティー・スカイレット
+        300: 30, // セーレ
+    };
+    let grantedChars = [];
+
+    for (const [floor, charId] of Object.entries(rewards)) {
+        if (currentFloor >= floor && !playerState.characters[charId]) {
+            playerState.characters[charId] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+            const char = units.find(u => u.id == charId);
+            if (char) {
+                grantedChars.push(char);
+                if (showToasts) {
+                    showToast(`無限の塔 ${floor}階 到達報酬: 「${char.name}」が仲間になりました！`);
+                }
+            }
+        }
+    }
+    return grantedChars; // 付与されたキャラクターの配列を返す
+}
+
 // ===== INIT =====
 function initializeGame() {
     loadSettings();
     loadGame();
+
+    // ログイン時のタワー報酬チェック
+    const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
+    if (grantedChars.length > 0) {
+        saveGame();
+    }
+
     setView('roster');
     renderSquad();
     renderCards();    
@@ -7940,11 +8027,6 @@ function initializeGame() {
     document.addEventListener('touchstart', tryPlayAudio);
     document.addEventListener('keydown', tryPlayAudio);
 
-    // Start tutorial if not done
-    if (!playerState.tutorialDone && !settings.skipTutorial) {
-        setTimeout(startTutorial, 500);
-    }
-
     // 初回名前入力案内
     if (playerState.playerName === "名無しの剣士") {
         openNameEntryModal(true);
@@ -7953,6 +8035,10 @@ function initializeGame() {
         const settingDisplay = document.getElementById('settingPlayerNameDisplay');
         if(settingDisplay) settingDisplay.textContent = playerState.playerName;
     }
+    
+    // 設定画面にIDを表示
+    const idDisplay = document.getElementById('settingPlayerIdDisplay');
+    if (idDisplay) idDisplay.textContent = playerState.playerId;
 }
 
 initializeGame();
