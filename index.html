@@ -4467,6 +4467,8 @@ function formatAbilityDetails(ability) {
       s = c.baseStats;
     }
 
+    const maxLevel = isOwned ? getMaxLevel(aura) : 0;
+
     // Favorite Button State
     const favBtn = document.getElementById('modalFavBtn');
     if (isBattleContext || !isOwned) {
@@ -4499,7 +4501,6 @@ function formatAbilityDetails(ability) {
   const levelControl = document.querySelector('.level-control');
   if (isOwned && !isBattleContext) {
     levelControl.style.display = 'block';
-    const maxLevel = getMaxLevel(aura);
     
     let sliderHtml = '';
     if (level < maxLevel) {
@@ -7907,6 +7908,9 @@ function submitNameChange() {
   if(!name) return;
   
   updatePlayerName(name);
+  if (playerState.playerName === name) {
+    closeNameEntryModal();
+  }
 }
 
 // ===== INIT =====
