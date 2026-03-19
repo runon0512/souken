@@ -2514,6 +2514,10 @@
         </div>
       </div>
       <div style="margin-top: 0.5rem; padding: 0 0.75rem;">
+        <label style="font-size: 0.75rem; color: var(--text-mid);">アカウントアドレス (ID)</label>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--text-dim); padding:4px; font-size:0.6rem; border-radius:4px; font-family:monospace; word-break:break-all;" id="settingPlayerIdDisplay">-</div>
+      </div>
+      <div style="margin-top: 0.5rem; padding: 0 0.75rem;">
         <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--text-mid); cursor:pointer;">
           <input type="checkbox" id="skipTutorialCheck" onchange="updateSkipTutorial(this.checked)">
           チュートリアルを表示しない
@@ -2914,7 +2918,7 @@ const units = [
   },
   {
     id: 5, name: 'ライ・アルバロ', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 1180, atk: 82, def: 65, spd: 95 },
+    baseStats: { hp: 1180, atk: 112, def: 65, spd: 85 },
     abilityType: 'slash',
     abilities: [
       { name: '雷撃斬', desc: '攻撃後、20%の確率で発動。攻撃力の50%のダメージで追撃する。', triggerRate: 0.2, timing: 'after_attack' },
@@ -7766,7 +7770,7 @@ function closeVictoryModal() {
 // ここではGoogle Apps Script (GAS) をバックエンドとして利用する想定のコード記述します。
 // 自分のGASウェブアプリのURLをここに設定してください。
 // ※ここに先ほどコピーしたURLを貼り付けてください！
-const RANKING_API_URL = "https://script.google.com/macros/s/AKfycby_dOCyA8yHKypJO3xgKER33tDkMXfbXsycsSaMcLPHoa18RzKVzhShQQapC54n4kEw/exec"; 
+const RANKING_API_URL = "https://script.google.com/macros/s/AKfycbzGr_ZJ0qWXXNifzYKMJgOKuddfpaRPivjbRev-klh_EfE_RW2akXZ0nmxwJLO6P8og/exec"; 
 
 async function fetchTowerRanking() {
   if (!RANKING_API_URL) {
@@ -7799,6 +7803,7 @@ async function submitTowerScore(floor) {
   try {
     // GASでの受信確実性を高めるため URLSearchParams を使用
     const formData = new URLSearchParams();
+    formData.append('id', playerState.playerId); // IDで一意に識別
     formData.append('name', playerState.playerName);
     formData.append('score', floor);
     formData.append('action', 'post');
@@ -7910,6 +7915,10 @@ function submitNameChange() {
   updatePlayerName(name);
   if (playerState.playerName === name) {
     closeNameEntryModal();
+    // 初回名前入力後にチュートリアル開始
+    if (!playerState.tutorialDone && !settings.skipTutorial) {
+        setTimeout(startTutorial, 500);
+    }
   }
 }
 
@@ -7940,19 +7949,23 @@ function initializeGame() {
     document.addEventListener('touchstart', tryPlayAudio);
     document.addEventListener('keydown', tryPlayAudio);
 
-    // Start tutorial if not done
-    if (!playerState.tutorialDone && !settings.skipTutorial) {
-        setTimeout(startTutorial, 500);
-    }
-
     // 初回名前入力案内
     if (playerState.playerName === "名無しの剣士") {
         openNameEntryModal(true);
     } else {
+        // 名前決定済みならチュートリアルチェック
+        if (!playerState.tutorialDone && !settings.skipTutorial) {
+            setTimeout(startTutorial, 500);
+        }
+        
         // 設定画面の表示更新
         const settingDisplay = document.getElementById('settingPlayerNameDisplay');
         if(settingDisplay) settingDisplay.textContent = playerState.playerName;
     }
+    
+    // 設定画面にIDを表示
+    const idDisplay = document.getElementById('settingPlayerIdDisplay');
+    if (idDisplay) idDisplay.textContent = playerState.playerId;
 }
 
 initializeGame();
