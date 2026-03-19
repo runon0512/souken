@@ -45,7 +45,7 @@
     width: 100%; height: 100%; overflow: hidden;
     /* ゲーム画面幅の約 0.9% を 1rem とする基準サイズ設定 */
     /* 1920pxのとき約17.4px、スマホ横画面800pxのとき約7.2px */
-    font-size: calc(min(100vw, 177.78vh) / 110);
+    font-size: calc(min(100vw, 177.78dvh) / 110);
   }
 
   body {
@@ -56,8 +56,8 @@
     /* 16:9 のアスペクト比で画面中央に固定 */
     width: 100vw;
     height: 56.25vw; /* 100 * 9/16 */
-    max-width: 177.78vh; /* 100 * 16/9 */
-    max-height: 100vh;
+    max-width: 177.78dvh; /* 100 * 16/9 */
+    max-height: 100dvh;
     position: absolute;
     inset: 0;
     margin: auto;
@@ -234,7 +234,7 @@
     background: rgba(255,255,255,0.02);
     cursor: pointer;
     transition: all 0.2s;
-    min-height: 3.25rem;
+    min-height: 3.75rem;
     position: relative;
     overflow: hidden;
   }
@@ -369,14 +369,15 @@
   .filter-btn {
     display: block;
     width: 100%;
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
     margin-bottom: 0.25rem;
     border: 1px solid var(--border);
     border-radius: 0.25rem;
     background: transparent;
     color: var(--text-mid);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
+    min-height: 2.75rem;
     cursor: pointer;
     text-align: left;
     transition: all 0.2s;
@@ -768,13 +769,14 @@
   .card-action-btn {
     width: 100%;
     margin-top: 0.5rem;
-    padding: 0.4375rem;
+    padding: 0.75rem 0.5rem;
     border-radius: 0.3125rem;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-dim);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.6875rem;
+    font-size: 0.8rem;
+    min-height: 2.5rem;
     cursor: pointer;
     transition: all 0.2s;
     letter-spacing: 1px;
@@ -864,9 +866,9 @@
     background: none;
     border: 1px solid var(--border);
     color: var(--text-dim);
-    font-size: 1.125rem;
-    width: 32px;
-    height: 32px;
+    font-size: 1.5rem;
+    width: 3rem;
+    height: 3rem;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
@@ -1010,13 +1012,14 @@
 
   .modal-add-btn {
     width: 100%;
-    padding: 0.75rem;
+    padding: 1rem;
     border-radius: 0.375rem;
     border: 1px solid var(--accent);
     background: rgba(0,200,255,0.1);
     color: var(--accent);
     font-family: 'Orbitron', monospace;
-    font-size: 12px;
+    font-size: 0.9rem;
+    min-height: 3rem;
     letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.2s;
@@ -1073,12 +1076,14 @@
   }
   .mission-btn {
     width: 100%;
-    padding: 0.5rem;
+    padding: 0.75rem;
     border-radius: 0.25rem;
     border: 1px solid var(--accent);
     background: rgba(0,200,255,0.1);
     color: var(--accent);
     font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    min-height: 2.75rem;
     cursor: pointer;
     transition: all 0.2s;
   }
@@ -1099,7 +1104,8 @@
     background: rgba(0,0,0,0.3);
     border: 1px solid var(--border);
     border-radius: 0.375rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
+    min-height: 3.5rem;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -1489,9 +1495,10 @@
     background: var(--accent);
     color: #000;
     border: none;
-    padding: 0.25rem 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: 0.25rem;
     font-weight: 700;
+    min-height: 2.25rem;
     cursor: pointer;
     font-family: 'Orbitron', monospace;
   }
@@ -2351,13 +2358,14 @@
     gap: 1rem;
   }
   .gacha-btn {
-    padding: 12px 24px;
+    padding: 1rem 1.5rem;
     border-radius: 6px;
     border: 1px solid var(--accent);
     background: rgba(0,200,255,0.1);
     color: var(--accent);
     font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
+    min-height: 3.5rem;
     letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.2s;
@@ -2566,13 +2574,13 @@
       <div style="display:flex; align-items:center; gap:1rem;">
         <div class="roster-title" id="missionViewTitle">ストーリー選択</div>
         <div id="storyCategoryTabs" style="display:none; gap:0.5rem;">
-            <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.25rem 0.75rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
-            <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.25rem 0.75rem; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
-            <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.25rem 0.75rem; margin:0;">ユーザーステージ</button>
-            <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.25rem 0.75rem; margin:0;">無限の塔 <span class="new-badge">New!</span></button>
+            <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.5rem 1rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
+            <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.5rem 1rem; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
+            <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.5rem 1rem; margin:0;">ユーザーステージ</button>
+            <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.5rem 1rem; margin:0;">無限の塔 <span class="new-badge">New!</span></button>
         </div>
       </div>
-      <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.375rem 0.75rem; margin: 0;" onclick="renderStoryChapters()">
+      <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.5rem 1rem; margin: 0;" onclick="renderStoryChapters()">
         ← 戻る
       </button>
     </div>
@@ -2617,7 +2625,7 @@
       <div class="level-control">
         <div style="font-size:0.75rem;color:var(--text-main)">Lv.<span id="modalLevelVal" style="font-size:1rem;font-weight:700">1</span> <span style="font-size:0.625rem;color:var(--text-dim)">/ 20</span></div>
         <div style="display:flex; gap: 8px;">
-          <button class="level-btn" id="btnLevelDown" onclick="doLevelDown()" style="background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--border);" title="初期化 (素材全返還)">↺</button>
+          <button class="level-btn" id="btnLevelDown" onclick="doLevelDown()" style="background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--border); padding: 0.5rem 1rem;" title="初期化 (素材全返還)">↺</button>
           <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()">強化 (虹石 <span id="costVal">100</span>)</button>
         </div>
       </div>
@@ -2765,7 +2773,7 @@
         <button onclick="setBattleSpeed(8)" id="speed-btn-8">8x</button>
       </div>
       <div class="battle-header-controls">
-        <button class="modal-close" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア" style="font-size: 1rem;">🏳️</button>
+        <button class="modal-close" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア">🏳️</button>
         <button class="modal-close" id="closeBattleBtn" onclick="closeBattle()" disabled>✕</button>
       </div>
     </div>
@@ -2794,8 +2802,8 @@
 <div class="tutorial-box" id="tutorialBox" style="display:none;">
   <div class="tutorial-text" id="tutorialText"></div>
   <div style="text-align: right;">
-    <button class="mission-btn" style="width:auto; display:inline-block; padding:0.25rem 0.75rem;" onclick="nextTutorialStep()">次へ</button>
-    <button class="mission-btn" style="width:auto; display:inline-block; padding:0.25rem 0.5rem; background:transparent; border:none; color:var(--text-dim);" onclick="endTutorial()">スキップ</button>
+    <button class="mission-btn" style="width:auto; display:inline-block; padding:0.75rem 1.5rem;" onclick="nextTutorialStep()">次へ</button>
+    <button class="mission-btn" style="width:auto; display:inline-block; padding:0.75rem 1rem; background:transparent; border:none; color:var(--text-dim);" onclick="endTutorial()">スキップ</button>
   </div>
 </div>
 
@@ -4521,7 +4529,7 @@ function formatAbilityDetails(ability) {
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div style="font-size:0.75rem;color:var(--text-main)">Lv.<span style="font-size:1rem;font-weight:700;font-family:'Orbitron'">${level}</span> <span style="font-size:0.625rem;color:var(--text-dim)">/ ${maxLevel}</span></div>
         <div style="display:flex; gap: 8px;">
-          <button class="level-btn" id="btnLevelDown" onclick="doLevelDown()" style="background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--border); padding:0.25rem 0.5rem;" title="初期化 (素材全返還)" ${level <= 1 && aura <= 0 ? 'disabled style="opacity:0.5;background:rgba(255,255,255,0.1);color:var(--text-dim);border:1px solid var(--border);padding:0.25rem 0.5rem;"' : ''}>↺</button>
+          <button class="level-btn" id="btnLevelDown" onclick="doLevelDown()" style="background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--border); padding: 0.5rem 1rem;" title="初期化 (素材全返還)" ${level <= 1 && aura <= 0 ? 'disabled style="opacity:0.5;background:rgba(255,255,255,0.1);color:var(--text-dim);border:1px solid var(--border);padding:0.5rem 1rem;"' : ''}>↺</button>
           <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()" style="min-width:6rem;">強化</button>
         </div>
       </div>
@@ -4562,7 +4570,7 @@ function formatAbilityDetails(ability) {
     let btnHtml = '';
     if (potential < 3) {
         const canAfford = charState.fragments >= nextCost;
-        btnHtml = `<button class="level-btn" onclick="unlockPotential()" style="font-size:10px; padding:4px 8px; margin-left:8px;" ${!canAfford ? 'disabled' : ''}>解放 (欠片 ${nextCost})</button>`;
+        btnHtml = `<button class="level-btn" onclick="unlockPotential()" style="font-size:10px; padding:0.5rem 1rem; margin-left:8px;" ${!canAfford ? 'disabled' : ''}>解放 (欠片 ${nextCost})</button>`;
     } else {
         btnHtml = `<span style="font-size:10px; color:var(--gold); margin-left:8px;">MAX</span>`;
     }
@@ -4605,7 +4613,7 @@ function formatAbilityDetails(ability) {
   equipDisplay.innerHTML = `
     <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer">
       <div>${equip ? `<div style="font-weight:700;color:var(--gold)">${equip.icon} ${equip.name}</div><div style="font-size:10px;color:var(--text-mid)">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
-      <button class="level-btn" style="font-size:10px;padding:4px 8px">変更</button>
+      <button class="level-btn" style="font-size:10px;padding:0.5rem 1rem">変更</button>
     </div>`;
 
   document.getElementById('modalAbilities').innerHTML = c.abilities.map(a =>
