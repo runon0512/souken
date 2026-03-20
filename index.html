@@ -2328,6 +2328,99 @@
   .rank-3 .rank-num { color: #b87333; font-size: 1.1rem; }
 </style>
 <style>
+  /* DIALOGUE OVERLAY */
+  .dialogue-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 400;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: 2rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .dialogue-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .dialogue-box {
+    background: rgba(13,21,32,0.95);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin: 0 5%;
+    position: relative;
+    min-height: 8rem;
+    box-shadow: 0 0 2rem rgba(0,0,0,0.8);
+    cursor: pointer;
+  }
+  .dialogue-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .dialogue-text {
+    font-size: 1rem;
+    color: var(--text-main);
+    line-height: 1.6;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .dialogue-next {
+    position: absolute;
+    bottom: 1rem;
+    right: 1.5rem;
+    color: var(--accent);
+    animation: bounce 1s infinite;
+    font-size: 0.8rem;
+  }
+  .dialogue-char-wrap {
+    position: absolute;
+    bottom: 9.5rem; /* text box height + margin */
+    right: 5%;
+    height: 50vh;
+    max-height: 600px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .dialogue-char-img {
+    height: 100%;
+    width: auto;
+    filter: drop-shadow(0 0 20px rgba(0,0,0,0.8));
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s ease-out;
+  }
+  .dialogue-char-img.active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .dialogue-skip-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Orbitron';
+    font-size: 0.8rem;
+    pointer-events: auto;
+  }
+  .dialogue-skip-btn:hover {
+    background: rgba(0,200,255,0.1);
+    color: var(--accent);
+  }
+</style>
+<style>
   /* GACHA ANIMATION */
   .gacha-animation-overlay {
     position: absolute;
@@ -2954,6 +3047,17 @@
       <button id="battleActionBtn" onclick="runBattleSequence()">戦闘開始</button>
     </div>
   </div>
+</div>
+
+<!-- DIALOGUE OVERLAY -->
+<div class="dialogue-overlay" id="dialogueOverlay" onclick="advanceDialogue()">
+  <div class="dialogue-char-wrap"><img id="dialogueCharImg" class="dialogue-char-img" src="" alt=""></div>
+  <div class="dialogue-box">
+    <div class="dialogue-name" id="dialogueName">Name</div>
+    <div class="dialogue-text" id="dialogueText">Text...</div>
+    <div class="dialogue-next">▼ CLICK TO NEXT</div>
+  </div>
+  <button class="dialogue-skip-btn" onclick="endDialogue(event)">SKIP</button>
 </div>
 
 <!-- TOAST -->
@@ -3764,6 +3868,42 @@ const storyChapters = [
   { name: '第七章：隊長訓練・本気', missions: generateMissions(700, 6, 'Stage', [302, 303, 305], 350, chapter7Names, chapter7Enemies) },
 ];
 
+// Mission Dialogues Definition
+const missionDialogues = {
+  100: [ // Shar Rafflesia
+    { charId: 306, text: "訓練をしたいって？" },
+    { charId: 306, text: "分かったわ。手加減はしてあげるから..." },
+    { charId: 306, text: "全力でかかってきなさい。" }
+  ],
+  101: [ // Sheria Wisteria
+    { charId: 307, text: "属性には、相性というのがあるの。" },
+    { charId: 307, text: "例えば、炎属性は、水属性に弱かったり..." },
+    { charId: 307, text: "属性はカードの左上から分かるわ。" }
+  ],
+    102: [ // Sheria Wisteria
+    { charId: 308, text: "対戦が始まる前にカードを押せば、情報が見れるんだぜ" },
+    { charId: 308, text: "便利だから使うんだな" },
+  ],
+    103: [ // Sheria Wisteria
+    { charId: 309, text: "バトルは倍速でもできるんだ。" },
+    { charId: 309, text: "有効活用すると良い。" },
+  ],
+
+  104: [ // Iemike
+    { charId: 4, text: "次の相手はドラkたちかな？" },
+    { charId: 4, text: "僕に勝ったら仲間に入ってあげるよ" }
+  ],
+  107: [ // Rai Alvaro
+    { charId: 5, text: "俺のスピードについてこれるか？" },
+    { charId: 5, text: "勝ったら協力してやるぜ" }
+
+  ],
+  109: [ // Den Alvaro
+    { charId: 6, text: "私も綺麗な街を破壊しようとするやつは許せないわ" },
+    { charId: 6, text: "これが最後の訓練よ。終わったら旅に出かけましょう！" }
+  ],
+};
+
 const chapter8Missions = [
   {
     id: 801, name: '雷の試練', description: 'ライメルの力を試す', recommendedPower: 50000,
@@ -4128,12 +4268,23 @@ const AURA_DATA = [
 ];
 
 const RANK_AURA_MAP = {
+  'X': 'aura-15',  // Boss
   'SS': 'aura-10', // Galactic (Highest)
   'S': 'aura-7',   // Amethyst
   'A': 'aura-6',   // Sapphire
   'B': 'aura-5',   // Emerald
   'C': 'aura-2',   // Gold
   'D': 'aura-1'    // Silver
+};
+
+const ENCHANT_PREFIXES = {
+  'X': '神話の',
+  'SS': '伝説の',
+  'S': '英雄の',
+  'A': '達人の',
+  'B': '上質な',
+  'C': '改良された',
+  'D': ''
 };
 
 let playerState = {
@@ -4146,6 +4297,13 @@ let playerState = {
   playerName: "名無しの剣士",
   playerId: null, // Will be generated
 };
+
+function getEnhancedEquipName(item, enhancement) {
+    if (!item) return '';
+    if (!enhancement) return item.name;
+    const prefix = ENCHANT_PREFIXES[enhancement.rank] || '';
+    return `${prefix}${item.name}`;
+}
 
 // ===== STATE =====
 const MAX_SQUAD = 5;
@@ -4572,6 +4730,7 @@ function renderEquipmentPanel() {
     }
 
     const card = document.createElement('div');
+    const enhancedName = getEnhancedEquipName(item, enhancement);
     card.className = 'equip-card';
     card.innerHTML = `
       <div class="equip-card-header">
@@ -4580,7 +4739,7 @@ function renderEquipmentPanel() {
            ${item.icon}
         </div>
         <div class="equip-card-info">
-          <div class="equip-card-name">${item.name} ${rankBadge}</div>
+          <div class="equip-card-name">${enhancedName} ${rankBadge}</div>
           <div class="equip-card-desc">${item.desc}</div>
         </div>
       </div>
@@ -4893,8 +5052,8 @@ function formatAbilityDetails(ability) {
   const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
 
   equipDisplay.innerHTML = `
-    <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer">
-      <div>${equip ? `<div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;"><div class="${equipAuraClass}" style="width:1.5em; height:1.5em; display:flex; align-items:center; justify-content:center; border-radius:4px; position:relative;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div> <span>${equip.name}</span> <span style="font-size:0.7em; color:var(--accent)">${equipEnhancement ? `(+${equipEnhancement.value}%)` : ''}</span></div><div style="font-size:10px;color:var(--text-mid); margin-top:4px;">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
+    <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer;">
+      <div>${equip ? `<div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;"><div class="${equipAuraClass}" style="width:1.5em; height:1.5em; display:flex; align-items:center; justify-content:center; border-radius:4px; position:relative;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div> <span>${getEnhancedEquipName(equip, equipEnhancement)}</span> <span style="font-size:0.7em; color:var(--accent)">${equipEnhancement ? `(+${equipEnhancement.value}%)` : ''}</span></div><div style="font-size:10px;color:var(--text-mid); margin-top:4px;">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
       <button class="level-btn" style="font-size:10px;padding:0.5rem 1rem">変更</button>
     </div>`;
 
@@ -5129,13 +5288,14 @@ function openEquipModal(charId) {
     const enhancementHtml = enhancement ? `<div style="font-size:10px; color:var(--gold); margin-top:4px;">付与効果: ${enhancement.stat.toUpperCase()} +${enhancement.value}% (${enhancement.rank})</div>` : '<div style="font-size:10px; color:var(--text-dim); margin-top:4px;">付与効果なし</div>';
     const auraClass = enhancement ? (RANK_AURA_MAP[enhancement.rank] || '') : '';
 
+    const enhancedName = getEnhancedEquipName(item, enhancement);
     const div = document.createElement('div');
     div.className = `equip-item ${currentEquipId === item.id ? 'equipped' : ''} ${isEquippedByOther ? 'disabled' : ''}`;
     div.innerHTML = `
       <div class="equip-icon-box ${auraClass}">${auraClass ? `<div class="aura-overlay"></div>` : ''}${item.icon}</div>
       <div class="equip-info">
         <div style="display:flex; justify-content: space-between; align-items: center; gap: 8px;">
-          <div class="equip-name">${item.name}</div>
+          <div class="equip-name">${enhancedName}</div>
         </div>
         <div class="equip-desc">${item.desc}</div>
         ${enhancementHtml}
@@ -5683,8 +5843,70 @@ function setBattleSpeed(speed) {
   document.getElementById(`speed-btn-${speed}`).classList.add('active');
 }
 
+// ===== DIALOGUE SYSTEM =====
+let dialogueQueue = [];
+let dialogueCallback = null;
+
+function startDialogue(missionId, onComplete) {
+  const dialogues = missionDialogues[missionId];
+  if (!dialogues || dialogues.length === 0) {
+    onComplete();
+    return;
+  }
+
+  dialogueQueue = [...dialogues];
+  dialogueCallback = onComplete;
+  
+  document.getElementById('dialogueOverlay').classList.add('open');
+  showNextDialogue();
+}
+
+function showNextDialogue() {
+  if (dialogueQueue.length === 0) {
+    endDialogue();
+    return;
+  }
+
+  const data = dialogueQueue.shift();
+  const char = units.find(u => u.id === data.charId);
+  
+  // Setup Text
+  document.getElementById('dialogueName').textContent = char ? char.name : '???';
+  document.getElementById('dialogueText').textContent = data.text;
+  
+  // Setup Image
+  const imgEl = document.getElementById('dialogueCharImg');
+  if (char && char.useImg) {
+    imgEl.src = char.img;
+    imgEl.classList.add('active');
+    imgEl.style.display = 'block';
+  } else {
+    imgEl.classList.remove('active');
+    imgEl.style.display = 'none';
+  }
+}
+
+function advanceDialogue() {
+  showNextDialogue();
+}
+
+function endDialogue(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('dialogueOverlay').classList.remove('open');
+  if (dialogueCallback) {
+    dialogueCallback();
+    dialogueCallback = null;
+  }
+}
+
 let sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-async function startBattle(missionId) {
+async function startBattle(missionId, skipDialogue = false) {
+  // Check and start dialogue first
+  if (!skipDialogue && missionDialogues[missionId]) {
+    startDialogue(missionId, () => startBattle(missionId, true));
+    return;
+  }
+
   if (squad.length === 0) {
     showToast('部隊が編成されていません');
     return;
@@ -7632,22 +7854,25 @@ function getEnchantment() {
     const rand = Math.random() * 100;
     let rank, value;
 
-    if (rand < 0.1) { // SS: 0.1%
+    if (rand < 0.01) { // X: 0.01%
+        rank = 'X';
+        value = Math.floor(Math.random() * (50 - 41 + 1)) + 41;
+    } else if (rand < 0.01 + 0.09) { // SS: 0.09%
         rank = 'SS';
         value = Math.floor(Math.random() * (40 - 26 + 1)) + 26;
     } else if (rand < 0.1 + 0.9) { // S: 0.9%
         rank = 'S';
         value = Math.floor(Math.random() * (25 - 16 + 1)) + 16;
-    } else if (rand < 1 + 4) { // A: 4%
+    } else if (rand < 1 + 4) { // A: 4% (Total 5%)
         rank = 'A';
         value = Math.floor(Math.random() * (15 - 11 + 1)) + 11;
-    } else if (rand < 5 + 15) { // B: 15%
+    } else if (rand < 5 + 15) { // B: 15% (Total 20%)
         rank = 'B';
         value = Math.floor(Math.random() * (10 - 7 + 1)) + 7;
-    } else if (rand < 20 + 30) { // C: 30%
+    } else if (rand < 20 + 30) { // C: 30% (Total 50%)
         rank = 'C';
         value = Math.floor(Math.random() * (6 - 4 + 1)) + 4;
-    } else { // D: 50%
+    } else { // D: 50% (Total 100%)
         rank = 'D';
         value = Math.floor(Math.random() * (3 - 1 + 1)) + 1;
     }
@@ -7667,13 +7892,13 @@ function openEnchantModal(itemId) {
     const footer = document.getElementById('enchantFooter');
     const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
     const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
-    const rankColors = {'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
+    const rankColors = {'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
 
     let currentHtml = '<div style="color: var(--text-dim);">付与効果なし</div>';
     let currentAuraClass = '';
     if (currentEnhancement) {
         const color = rankColors[currentEnhancement.rank] || '#fff';
-        currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value}%</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color}">${currentEnhancement.rank}</span></div>`;
+        currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value}%</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color};">${currentEnhancement.rank}</span></div>`;
         currentAuraClass = RANK_AURA_MAP[currentEnhancement.rank] || '';
     }
 
@@ -7686,7 +7911,7 @@ function openEnchantModal(itemId) {
          </div>
       </div>
       <div style="text-align:center; margin-bottom:1rem;">
-        <div class="equip-name" style="font-size:1.2rem;">${item.name}</div>
+        <div class="equip-name" style="font-size:1.2rem;">${getEnhancedEquipName(item, currentEnhancement)}</div>
         <div class="equip-desc">${item.desc}</div>
       </div>
       <div class="modal-section-title">現在の効果</div>
@@ -7722,7 +7947,7 @@ async function performEnchant(itemId) {
     const resultArea = document.getElementById('enchantResultArea');
     const footer = document.getElementById('enchantFooter');
     const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
-    const rankColors = {'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
+    const rankColors = {'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
     const color = rankColors[tempEnchantResult.rank];
 
     // Update Icon Preview
