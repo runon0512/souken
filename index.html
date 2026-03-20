@@ -2326,13 +2326,6 @@
   .rank-1 .rank-num { color: #ffd700; font-size: 1.2rem; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
   .rank-2 .rank-num { color: #c0c0c0; font-size: 1.1rem; }
   .rank-3 .rank-num { color: #b87333; font-size: 1.1rem; }
-
-  /* ONLINE STATUS */
-  .online-dot {
-    width: 0.5rem; height: 0.5rem; background: var(--accent3); border-radius: 50%;
-    box-shadow: 0 0 0.625rem var(--accent3); animation: pulse-green 2s infinite;
-  }
-  @keyframes pulse-green { 0% { opacity: 0.5; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.5; transform: scale(0.8); } }
 </style>
 <style>
   /* GACHA ANIMATION */
@@ -7969,7 +7962,7 @@ function closeVictoryModal() {
 // ここではGoogle Apps Script (GAS) をバックエンドとして利用する想定のコード記述します。
 // 自分のGASウェブアプリのURLをここに設定してください。
 // ※ここに先ほどコピーしたURLを貼り付けてください！
-const RANKING_API_URL = "https://script.google.com/macros/s/AKfycbw23LgCgPOY-ailPZX7slkasAICFD2OtWFxbD43HYPeVYV41WcBekuGfHsu8k-Tx5N0/exec"; 
+const RANKING_API_URL = "https://script.google.com/macros/s/AKfycby_dOCyA8yHKypJO3xgKER33tDkMXfbXsycsSaMcLPHoa18RzKVzhShQQapC54n4kEw/exec"; 
 
 async function fetchTowerRanking() {
   if (!RANKING_API_URL) {
