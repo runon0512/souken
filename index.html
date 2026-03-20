@@ -3420,6 +3420,17 @@ const units = [
   },
 
   {
+    id: 37, name: 'エアラ・セイント', element: 'light', elementJp: '光', type: 'ルディ王国',
+    baseStats: { hp: 1380, atk: 80, def: 115, spd: 55 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '波状光一閃', desc: '40%の確率で発動。敵全体に攻撃力の60%のダメージを与える。', triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.6 },
+      { name: '光支配', desc: 'HPが50%以下の時、防御力が1.2倍になり、スキルが「波状光一閃・改」に変化する。' },
+      { name: '波状光一閃・改', desc: '40%の確率で発動。敵全体に攻撃力の80%のダメージを与え、盲目(2ターン)を付与する。', triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8, effect: { type: 'status', status: 'blind', turns: 2 } }
+    ],
+    useImg: true, img: 'C37.svg'
+  },
+  {
     id: 16, name: 'ランディア・スクラ', element: 'none', elementJp: '無', type: 'ルディ王国',
     baseStats: { hp: 1342, atk: 107, def: 78, spd: 66 },
     abilityType: 'slash',
@@ -4094,7 +4105,25 @@ const eventChapters = [
       }
     ]
   },
-
+  {
+    name: 'イベント：属性剣士訓練',
+    missions: [
+      {
+        id: 913,
+        name: '属性剣士訓練',
+        description: 'ドラk、いえみけ、ライ、セイントの4人による合同訓練。',
+        enemies: [
+          { id: 1, level: 70, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 4, level: 70, aiType: AI_TYPES.LOWEST_HP_DEF },
+          { id: 5, level: 70, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 37, level: 70, aiType: AI_TYPES.RANDOM }
+        ],
+        recommendedPower: 60000,
+        reward: 30000,
+        firstTimeReward: 60000
+      }
+    ]
+  },
 ];
 
 const userStageChapters = [
@@ -6448,11 +6477,19 @@ async function runBattleSequence() {
           if (attacker.statusEffects.some(e => e.type === 'curse')) {
              // スキル発動なし
           } else {
+            if (attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5) {
+               // エアラ (ID:37): 光支配発動中は「波状光一閃・改」(abilities[2]) を抽選
+               const ab = attacker.abilities[2];
+               if (ab && ab.timing === 'before_attack' && Math.random() < (ab.triggerRate || 0)) {
+                  activeAbility = ab;
+               }
+            } else {
           for (const ab of attacker.abilities) {
             if (ab.timing === 'before_attack' && Math.random() < (ab.triggerRate || 0)) {
               activeAbility = ab;
               break; // 1ターンに1つの攻撃スキルのみ発動と仮定
             }
+          }
           }
           }
         }
@@ -6587,6 +6624,17 @@ async function runBattleSequence() {
               await sleep(1200 / battleSpeedMultiplier);
             }
           } else if (!isAsterPassiveConditionMet && attacker.isPassiveActive) {
+            attacker.isPassiveActive = false;
+          }
+      }
+
+      const isEaraPassiveConditionMet = attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5; // エアラ
+      if (attacker.id === 37) {
+          if (isEaraPassiveConditionMet && !attacker.isPassiveActive) {
+            attacker.isPassiveActive = true;
+            showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
+            await sleep(1200 / battleSpeedMultiplier);
+          } else if (!isEaraPassiveConditionMet && attacker.isPassiveActive) {
             attacker.isPassiveActive = false;
           }
       }
@@ -7279,13 +7327,14 @@ function checkWinLoss() {
 
         let unlockedItem = null;
         if (mission.id === 911) {
-            const lustStone = equipmentItems.find(e => e.id === 16);
-            if (lustStone && !lustStone.owned) {
-                lustStone.owned = true;
+            const lustStone = equipmentItems.find(e => e.id === 16); // 色欲の魔石
+            if (lustStone && !playerState.ownedEquipment.includes(lustStone.id)) {
+                playerState.ownedEquipment.push(lustStone.id);
                 unlockedItem = lustStone;
             }
         }
         playerState.rainbowStones += rewardAmount;
+        saveGame(); // バトル勝利時に自動セーブ
         showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName, mvpUnit, unlockedItem, unlockedTowerChars);
     } else if (livingPlayers === 0) {
 
@@ -7448,6 +7497,11 @@ function getBattleStats(unit) {
     s.def = Math.floor(s.def * 1.4);
   }
 
+  // パッシブ: エアラ・セイント (ID:37) HP50%以下で防御力20%UP (光支配)
+  if (unit.id === 37 && unit.currentHp <= unit.stats.hp * 0.5) {
+    s.def = Math.floor(s.def * 1.2);
+  }
+
   // パッシブ: エマ (ID:10) 厭世開花
   if (unit.id === 10) {
     const lostHpRatio = 1 - (unit.currentHp / unit.stats.hp);
@@ -7596,6 +7650,11 @@ function updateUnitUI(unit) {
       // アスター (ID:17): HP30%以下で嵐呼ぶ剣戟
       if (unit.abilities && unit.abilities.length > 1) {
         activeText = `⚡ ${unit.abilities[1].name}`;
+      }
+    } else if (unit.id === 37 && unit.currentHp <= unit.stats.hp * 0.5) {
+      // エアラ・セイント (ID:37): HP50%以下で光支配
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `✨ ${unit.abilities[1].name}`;
       }
             } else if (unit.id === 319 && unit.currentHp <= unit.stats.hp * 0.5) {
               // グルディー (ID:319): HP50%以下で色欲
