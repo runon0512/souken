@@ -2471,6 +2471,73 @@
     z-index: 10;
     display: none;
   }
+
+  /* EQUIPMENT & ENCHANT STYLES */
+  .equip-card-stats {
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    font-size: 0.8rem;
+    color: var(--text-mid);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .enchant-rank-badge {
+    display: inline-block;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-weight: bold;
+    font-family: 'Orbitron';
+    margin-left: 6px;
+    font-size: 0.75rem;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid currentColor;
+    box-shadow: 0 0 5px currentColor;
+  }
+  
+  /* Ensure aura styles apply to equipment icons */
+  .equip-card-icon, .squad-equip-icon, .b-unit-equip {
+    position: relative;
+    z-index: 1;
+  }
+  /* Re-apply border/shadow styles for small icons if needed, reusing char-card aura styles */
+  .equip-card-icon[class*="aura-"], .squad-equip-icon[class*="aura-"], .b-unit-equip[class*="aura-"] {
+    /* Reset some char-card specific styles if they conflict, but generally keep the aura effect */
+    animation: none; /* Disable heavy animations for small icons if desired, or keep them */
+  }
+  
+  .enchant-anim-box {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 10rem;
+    margin-bottom: 1rem;
+    background: radial-gradient(circle, rgba(0,200,255,0.1) 0%, transparent 70%);
+  }
+  
+  .enchant-flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  @keyframes enchant-flash-anim {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  
+  @keyframes enchant-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -2809,6 +2876,34 @@
     <div class="modal-footer">
       <button class="modal-add-btn" onclick="submitNameChange()">決定</button>
     </div>
+  </div>
+</div>
+
+<!-- LOGIN BONUS MODAL -->
+<div class="modal-overlay" id="loginBonusOverlay">
+  <div class="modal" id="loginBonusBox" style="width: 28rem; text-align: center;">
+    <div class="modal-header" style="justify-content: center; border: none; padding-bottom: 0;">
+      <div class="modal-title" style="font-size: 2rem; color: var(--gold); font-family: 'Orbitron';">LOGIN BONUS</div>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--text-mid); margin-bottom: 1rem;">本日のログインボーナスです！</p>
+      <div id="rouletteResult" style="margin: 2rem 0;">
+         <div style="font-size: 2.5rem; font-weight: 700; color: var(--gold); font-family: 'Orbitron';">💎 15000</div>
+      </div>
+      <button class="modal-add-btn" onclick="closeLoginBonusModal()">受け取る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ENCHANT MODAL -->
+<div class="modal-overlay" id="enchantOverlay" onclick="closeEnchantModal(event)">
+  <div class="modal" id="enchantBox" style="width: 32rem;">
+    <div class="modal-header">
+      <div class="modal-title">装備強化</div>
+      <button class="modal-close" onclick="closeEnchantModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="enchantBody"></div>
+    <div class="modal-footer" id="enchantFooter" style="padding-top: 0;"></div>
   </div>
 </div>
 
@@ -4032,9 +4127,20 @@ const AURA_DATA = [
   { cost: 10000000, name: 'Boss', class: 'aura-15', label: 'BOSS', color: '#ff0000' },
 ];
 
+const RANK_AURA_MAP = {
+  'SS': 'aura-10', // Galactic (Highest)
+  'S': 'aura-7',   // Amethyst
+  'A': 'aura-6',   // Sapphire
+  'B': 'aura-5',   // Emerald
+  'C': 'aura-2',   // Gold
+  'D': 'aura-1'    // Silver
+};
+
 let playerState = {
   rainbowStones: 5000,
   characters: { 1: { level: 1, equippedId: null, fragments: 0 }, 2: { level: 1, equippedId: null, fragments: 0 } }, // id: {level, equippedId, fragments}
+  equipmentEnhancements: {},
+  lastLoginDate: null,
   ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   towerProgress: 0,
   playerName: "名無しの剣士",
@@ -4074,6 +4180,18 @@ function calcStats(baseStats, level, equipment = null, potential = 0) {
     def: Math.floor(baseStats.def * multiplier * potentialMult),
     spd: Math.floor(baseStats.spd * multiplier * potentialMult)
   };
+
+  // NEW: Equipment Enhancement Logic
+  if (equipment) {
+      const enhancement = playerState.equipmentEnhancements?.[equipment.id];
+      if (enhancement) {
+          // The enhancement is a percentage of the character's BASE stats
+          const baseStatValue = baseStats[enhancement.stat];
+          if (baseStatValue) {
+              s[enhancement.stat] += Math.floor(baseStatValue * (enhancement.value / 100));
+          }
+      }
+  }
 
   // Equipment Stat Modifiers
   if (equipment && equipment.effect) {
@@ -4192,6 +4310,10 @@ function renderSquad() {
     const aura = id ? (playerState.characters[id].aura || 0) : 0;
     const potential = id ? (playerState.characters[id].potential || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
+    
+    const equipEnhancement = equipId ? playerState.equipmentEnhancements?.[equipId] : null;
+    const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
+
     const auraData = aura > 0 ? AURA_DATA.find(a => a.class === `aura-${aura}`) : null;
     slot.className = 'squad-slot' + (c ? ' filled' : '') + (auraData ? ` ${auraData.class}` : '');
     if (c) {
@@ -4202,7 +4324,7 @@ function renderSquad() {
         <div class="slot-info">
           <div class="slot-name">${c.name}</div>
           <div style="display:flex; align-items:center; gap:0.5rem;">
-            ${equip ? `<div class="squad-equip-icon" title="${equip.name}">${equip.icon}</div>` : ''}
+            ${equip ? `<div class="squad-equip-icon ${equipAuraClass}" title="${equip.name}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
             <div class="slot-power">${getPower(c, playerState.characters[id].level, potential)}</div>
           </div>
         </div>
@@ -4432,19 +4554,45 @@ function renderEquipmentPanel() {
     const ownerId = equippedBy[item.id];
     const owner = ownerId ? units.find(u => u.id == ownerId) : null;
     
+    const enhancement = playerState.equipmentEnhancements?.[item.id];
+    let enhancementHtml = '<div style="font-size:10px; color:var(--text-dim); text-align:center;">付与効果なし</div>';
+    let auraClass = '';
+    let rankBadge = '';
+
+    if (enhancement) {
+        const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
+        const rankColor = {
+            'SS': '#ff00ff', 'S': '#b388ff', 'A': '#4d90ff',
+            'B': '#50C878', 'C': '#ffd700', 'D': '#c0c0c0'
+        }[enhancement.rank] || '#fff';
+        
+        rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}">${enhancement.rank}</span>`;
+        enhancementHtml = `<div style="color:${rankColor}; font-weight:bold;">${statJp[enhancement.stat]} +${enhancement.value}%</div>`;
+        auraClass = RANK_AURA_MAP[enhancement.rank] || '';
+    }
+
     const card = document.createElement('div');
     card.className = 'equip-card';
     card.innerHTML = `
       <div class="equip-card-header">
-        <div class="equip-card-icon">${item.icon}</div>
+        <div class="equip-card-icon ${auraClass}">
+           ${auraClass ? `<div class="aura-overlay"></div>` : ''}
+           ${item.icon}
+        </div>
         <div class="equip-card-info">
-          <div class="equip-card-name">${item.name}</div>
+          <div class="equip-card-name">${item.name} ${rankBadge}</div>
           <div class="equip-card-desc">${item.desc}</div>
         </div>
+      </div>
+      <div class="equip-card-stats">
+         ${enhancementHtml}
       </div>
       <div class="equip-card-owner">
         ${owner ? `<span>🛡️ ${owner.name} が装備中</span>` : '<span style="color:var(--text-dim)">未装備</span>'}
       </div>
+      <button class="card-action-btn" onclick="openEnchantModal(${item.id})" style="margin-top:auto;">
+        強化 (能力付与)
+      </button>
     `;
     grid.appendChild(card);
   });
@@ -4739,9 +4887,14 @@ function formatAbilityDetails(ability) {
     const equipSection = document.getElementById('modalEquipDisplay').parentNode;
     equipSection.style.display = (isOwned && !isBattleContext) ? 'block' : 'none';
   const equipDisplay = document.getElementById('modalEquipDisplay');
+  
+  // Get enhancement for display
+  const equipEnhancement = equipId ? playerState.equipmentEnhancements?.[equipId] : null;
+  const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
+
   equipDisplay.innerHTML = `
     <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer">
-      <div>${equip ? `<div style="font-weight:700;color:var(--gold)">${equip.icon} ${equip.name}</div><div style="font-size:10px;color:var(--text-mid)">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
+      <div>${equip ? `<div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;"><div class="${equipAuraClass}" style="width:1.5em; height:1.5em; display:flex; align-items:center; justify-content:center; border-radius:4px; position:relative;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div> <span>${equip.name}</span> <span style="font-size:0.7em; color:var(--accent)">${equipEnhancement ? `(+${equipEnhancement.value}%)` : ''}</span></div><div style="font-size:10px;color:var(--text-mid); margin-top:4px;">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
       <button class="level-btn" style="font-size:10px;padding:0.5rem 1rem">変更</button>
     </div>`;
 
@@ -4972,13 +5125,20 @@ function openEquipModal(charId) {
     const isEquippedByOther = equipperId && equipperId != charId;
     const equipperName = isEquippedByOther ? units.find(u => u.id == equipperId).name : '';
 
+    const enhancement = playerState.equipmentEnhancements?.[item.id];
+    const enhancementHtml = enhancement ? `<div style="font-size:10px; color:var(--gold); margin-top:4px;">付与効果: ${enhancement.stat.toUpperCase()} +${enhancement.value}% (${enhancement.rank})</div>` : '<div style="font-size:10px; color:var(--text-dim); margin-top:4px;">付与効果なし</div>';
+    const auraClass = enhancement ? (RANK_AURA_MAP[enhancement.rank] || '') : '';
+
     const div = document.createElement('div');
     div.className = `equip-item ${currentEquipId === item.id ? 'equipped' : ''} ${isEquippedByOther ? 'disabled' : ''}`;
     div.innerHTML = `
-      <div class="equip-icon-box">${item.icon}</div>
+      <div class="equip-icon-box ${auraClass}">${auraClass ? `<div class="aura-overlay"></div>` : ''}${item.icon}</div>
       <div class="equip-info">
-        <div class="equip-name">${item.name}</div>
+        <div style="display:flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <div class="equip-name">${item.name}</div>
+        </div>
         <div class="equip-desc">${item.desc}</div>
+        ${enhancementHtml}
       </div>
       ${currentEquipId === item.id ? '<div class="equip-status">E</div>' : ''}
       ${isEquippedByOther ? `<div class="equip-status other">${equipperName}が装備中</div>` : ''}
@@ -5652,7 +5812,11 @@ function renderUnit(unit) {
   const auraClass = auraData ? auraData.class : '';
   const imgSrc = unit.useImg ? unit.img : 'C0.svg';
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
-  const equipHtml = unit.equipment ? `<div class="b-unit-equip" title="${unit.equipment.name}\n${unit.equipment.desc}">${unit.equipment.icon}</div>` : '';
+  
+  const equipEnhancement = unit.equipment ? playerState.equipmentEnhancements?.[unit.equipment.id] : null; // For player only ideally, but ok
+  const equipAuraClass = (unit.isPlayer && equipEnhancement) ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
+
+  const equipHtml = unit.equipment ? `<div class="b-unit-equip ${equipAuraClass}" title="${unit.equipment.name}\n${unit.equipment.desc}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${unit.equipment.icon}</div>` : '';
   
   const potential = unit.potential || 0;
   let starsHtml = '';
@@ -7414,6 +7578,179 @@ function closeBattle() {
   saveGame();
 }
 
+// ===== LOGIN BONUS & ENHANCEMENT =====
+let tempEnchantResult = null;
+
+async function triggerLoginBonus() {
+    const reward = Math.floor(Math.random() * (30000 - 3000 + 1)) + 3000;
+    
+    const overlay = document.getElementById('loginBonusOverlay');
+    const resultDiv = document.querySelector('#rouletteResult div');
+    const receiveBtn = overlay.querySelector('.modal-add-btn');
+
+    // 1. モーダルを開き、アニメーションの準備をします
+    resultDiv.textContent = `💎 0`;
+    receiveBtn.disabled = true;
+    receiveBtn.textContent = 'ルーレット中...';
+    overlay.classList.add('open');
+
+    // 2. ルーレットアニメーション
+    const duration = 2000; // 2秒
+    const intervalTime = 50; // 50msごとに更新
+
+    const spinInterval = setInterval(() => {
+        const randomValue = Math.floor(Math.random() * (30000 - 3000 + 1)) + 3000;
+        resultDiv.textContent = `💎 ${randomValue.toLocaleString()}`;
+    }, intervalTime);
+
+    await sleep(duration);
+
+    // 3. アニメーションを停止し、最終結果を表示します
+    clearInterval(spinInterval);
+    
+    resultDiv.textContent = `💎 ${reward.toLocaleString()}`;
+    playSfx('magic');
+    resultDiv.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    resultDiv.style.transform = 'scale(1.3)';
+    await sleep(200);
+    resultDiv.style.transform = 'scale(1)';
+
+    // 4. プレイヤーの状態を更新し、ボタンを有効にします
+    playerState.rainbowStones += reward;
+    playerState.lastLoginDate = new Date().toDateString();
+    receiveBtn.disabled = false;
+    receiveBtn.textContent = '受け取る';
+}
+
+function closeLoginBonusModal() {
+    document.getElementById('loginBonusOverlay').classList.remove('open');
+    renderSquad(); // To update rainbow stone display in header
+    saveGame();
+}
+
+function getEnchantment() {
+    const rand = Math.random() * 100;
+    let rank, value;
+
+    if (rand < 0.1) { // SS: 0.1%
+        rank = 'SS';
+        value = Math.floor(Math.random() * (40 - 26 + 1)) + 26;
+    } else if (rand < 0.1 + 0.9) { // S: 0.9%
+        rank = 'S';
+        value = Math.floor(Math.random() * (25 - 16 + 1)) + 16;
+    } else if (rand < 1 + 4) { // A: 4%
+        rank = 'A';
+        value = Math.floor(Math.random() * (15 - 11 + 1)) + 11;
+    } else if (rand < 5 + 15) { // B: 15%
+        rank = 'B';
+        value = Math.floor(Math.random() * (10 - 7 + 1)) + 7;
+    } else if (rand < 20 + 30) { // C: 30%
+        rank = 'C';
+        value = Math.floor(Math.random() * (6 - 4 + 1)) + 4;
+    } else { // D: 50%
+        rank = 'D';
+        value = Math.floor(Math.random() * (3 - 1 + 1)) + 1;
+    }
+
+    const stats = ['hp', 'atk', 'def', 'spd'];
+    const stat = stats[Math.floor(Math.random() * stats.length)];
+    
+    return { rank, stat, value };
+}
+
+function openEnchantModal(itemId) {
+    const item = equipmentItems.find(e => e.id === itemId);
+    if (!item) return;
+
+    tempEnchantResult = null;
+    const body = document.getElementById('enchantBody');
+    const footer = document.getElementById('enchantFooter');
+    const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
+    const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
+    const rankColors = {'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
+
+    let currentHtml = '<div style="color: var(--text-dim);">付与効果なし</div>';
+    let currentAuraClass = '';
+    if (currentEnhancement) {
+        const color = rankColors[currentEnhancement.rank] || '#fff';
+        currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value}%</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color}">${currentEnhancement.rank}</span></div>`;
+        currentAuraClass = RANK_AURA_MAP[currentEnhancement.rank] || '';
+    }
+
+    body.innerHTML = `
+      <div class="enchant-anim-box" id="enchantAnimBox">
+         <div class="enchant-flash" id="enchantFlash"></div>
+         <div class="equip-icon-box ${currentAuraClass}" id="enchantTargetIcon" style="width:5rem; height:5rem; font-size:2.5rem; transition: all 0.3s;">
+           ${currentAuraClass ? `<div class="aura-overlay"></div>` : ''}
+           ${item.icon}
+         </div>
+      </div>
+      <div style="text-align:center; margin-bottom:1rem;">
+        <div class="equip-name" style="font-size:1.2rem;">${item.name}</div>
+        <div class="equip-desc">${item.desc}</div>
+      </div>
+      <div class="modal-section-title">現在の効果</div>
+      <div class="equip-card-stats" style="margin-bottom:1rem;">${currentHtml}</div>
+      <div id="enchantResultArea"></div>
+    `;
+
+    const canAfford = playerState.rainbowStones >= 3000;
+    footer.innerHTML = `<button class="modal-add-btn" onclick="performEnchant(${itemId})" ${!canAfford ? 'disabled' : ''}>強化する (💎 3000)</button>`;
+    document.getElementById('enchantOverlay').classList.add('open');
+}
+
+async function performEnchant(itemId) {
+    if (playerState.rainbowStones < 3000) { showToast('虹石が足りません'); return; }
+    playerState.rainbowStones -= 3000;
+    renderSquad();
+    
+    // Animation
+    playSfx('magic');
+    const flash = document.getElementById('enchantFlash');
+    const icon = document.getElementById('enchantTargetIcon');
+    
+    flash.style.animation = 'none';
+    icon.style.animation = 'none';
+    void flash.offsetWidth; // trigger reflow
+    
+    flash.style.animation = 'enchant-flash-anim 0.5s ease-out';
+    icon.style.animation = 'enchant-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    
+    await sleep(400);
+
+    tempEnchantResult = getEnchantment();
+    const resultArea = document.getElementById('enchantResultArea');
+    const footer = document.getElementById('enchantFooter');
+    const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
+    const rankColors = {'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
+    const color = rankColors[tempEnchantResult.rank];
+
+    // Update Icon Preview
+    const newAura = RANK_AURA_MAP[tempEnchantResult.rank] || '';
+    icon.className = `equip-icon-box ${newAura}`;
+    icon.innerHTML = `${newAura ? `<div class="aura-overlay"></div>` : ''}${equipmentItems.find(e=>e.id===itemId).icon}`;
+
+    resultArea.innerHTML = `
+      <div class="modal-section-title">新しい効果</div>
+      <div class="equip-card-stats" style="border-color: ${color}; background: rgba(0,0,0,0.6); box-shadow: 0 0 10px ${color}40;">
+        <div style="font-size:1.2rem; font-weight:bold; color:${color}; text-shadow:0 0 5px ${color}80;">
+           ${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value}%
+           <span class="enchant-rank-badge" style="color:${color}; border-color:${color}; font-size:0.8rem;">${tempEnchantResult.rank}</span>
+        </div>
+      </div>`;
+      
+    footer.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="closeEnchantModalDirect()">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
+    saveGame();
+}
+
+function confirmEnchant(itemId) {
+    if (tempEnchantResult) { playerState.equipmentEnhancements[itemId] = tempEnchantResult; showToast('装備を強化しました！'); saveGame(); }
+    closeEnchantModalDirect();
+}
+
+function closeEnchantModal(e) { if (e.target.id === 'enchantOverlay') closeEnchantModalDirect(); }
+function closeEnchantModalDirect() { document.getElementById('enchantOverlay').classList.remove('open'); tempEnchantResult = null; renderCards(); renderSquad(); if (currentView === 'equipment') { renderEquipmentPanel(); } }
+
 // ===== GACHA ANIMATION =====
 async function startGachaAnimation() {
   const overlay = document.getElementById('gachaAnimationOverlay');
@@ -7833,6 +8170,8 @@ function loadGame() {
         rainbowStones: 5000,
         characters: { 1: { level: 1, equippedId: null, fragments: 0 }, 2: { level: 1, equippedId: null, fragments: 0 } },
         tutorialDone: false,
+        equipmentEnhancements: {},
+        lastLoginDate: null,
         ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         towerProgress: 0,
         playerName: "名無しの剣士",
@@ -7862,6 +8201,9 @@ function loadGame() {
     } else {
         playerState.tutorialDone = savedData.playerState.tutorialDone;
     }
+
+    playerState.equipmentEnhancements = savedData.playerState.equipmentEnhancements || {};
+    playerState.lastLoginDate = savedData.playerState.lastLoginDate || null;
     
     // Migration for ownedEquipment
     playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
@@ -8138,6 +8480,13 @@ function checkAndGrantTowerRewards(currentFloor, showToasts = false) {
 function initializeGame() {
     loadSettings();
     loadGame();
+
+    // NEW: Login Bonus Check
+    const today = new Date().toDateString();
+    if (playerState.lastLoginDate !== today) {
+        // Use a timeout to let the main UI render first
+        setTimeout(triggerLoginBonus, 500);
+    }
 
     // ログイン時のタワー報酬チェック
     const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
