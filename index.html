@@ -4665,6 +4665,11 @@ function getMaxLevel(aura) {
   return 20 + (aura || 0) * 5;
 }
 
+function getRequiredAuraForLevel(level) {
+  if (level <= 20) return 0;
+  return Math.ceil((level - 20) / 5);
+}
+
 function getLevelCost(level) {
   return level * 100; // Lv1->2 = 100, Lv19->20 = 1900
 }
