@@ -3431,6 +3431,16 @@ const units = [
     useImg: true, img: 'C37.svg'
   },
   {
+    id: 38, name: 'ギンドー・ペレクス', element: 'none', elementJp: '無', type: 'ルディ王国',
+    baseStats: { hp: 1280, atk: 110, def: 70, spd: 82 },
+    abilityType: 'impact',
+    abilities: [
+      { name: '斧投げ', desc: '戦闘開始時、攻撃力の120%で敵1体を攻撃し、麻痺(2ターン)を付与する。', timing: 'on_battle_start', damageMult: 1.2, effect: { type: 'status', status: 'paralysis', turns: 2 } },
+      { name: '魔眼「破壊眼」', desc: 'HPが30%以下の時、攻撃力が2.5倍になり、攻撃時に怯み(3ターン)を付与する。' }
+    ],
+    useImg: true, img: 'C38.svg'
+  },
+  {
     id: 16, name: 'ランディア・スクラ', element: 'none', elementJp: '無', type: 'ルディ王国',
     baseStats: { hp: 1342, atk: 107, def: 78, spd: 66 },
     abilityType: 'slash',
@@ -4124,6 +4134,24 @@ const eventChapters = [
       }
     ]
   },
+    {
+    name: 'イベント：正義の中将',
+    missions: [
+      {
+        id: 913,
+        name: '正義の中将',
+        description: '聖なる戦いを体感しよう。',
+        enemies: [
+          { id: 38, level: 75, aiType: AI_TYPES.HIGHEST_ATK },
+          { id: 37, level: 75, aiType: AI_TYPES.LOWEST_HP_DEF }
+        ],
+        recommendedPower: 60000,
+        reward: 30000,
+        firstTimeReward: 60000
+      }
+    ]
+  },
+
 ];
 
 const userStageChapters = [
@@ -4272,6 +4300,7 @@ const STATUS_EFFECTS = {
   paralysis: { icon: '⚡', name: '麻痺', desc: 'ターン開始時、30%の確率で行動不能になる。' },
   sleep: { icon: '💤', name: '睡眠', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
   freeze: { icon: '🧊', name: '凍結', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
+  flinch: { icon: '🥶', name: '怯み', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
   blind: { icon: '👁️‍🗨️', name: '盲目', desc: 'ターン開始時、30%の確率で行動不能になる。' },
   weakness: { icon: '📉', name: '衰弱', desc: '攻撃力、防御力、速度が20%低下する。' },
   strengthen: { icon: '💪', name: '強化', desc: '攻撃力、防御力、速度が20%上昇する。' },
@@ -6231,7 +6260,11 @@ async function checkDeathAbilities(unit) {
       
       const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
       for (const e of enemies) {
-          if (e.currentHp > 0) await addStatusEffect(e, 'weakness', 3);
+          if (e.currentHp > 0) {
+              const eEl = document.getElementById(`unit-${e.battleId}`);
+              if (eEl) playEffect(eEl, 'dark');
+              await addStatusEffect(e, 'weakness', 3);
+          }
       }
       return true;
   }
@@ -6303,6 +6336,8 @@ async function checkDeathAbilities(unit) {
       const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
       for (const e of enemies) {
           if (e.currentHp > 0) {
+              const eEl = document.getElementById(`unit-${e.battleId}`);
+              if (eEl) playEffect(eEl, 'dark');
               await addStatusEffect(e, 'weakness', 2);
               await addStatusEffect(e, 'burn', 2);
               await addStatusEffect(e, 'poison', 2);
@@ -6408,7 +6443,8 @@ async function runBattleSequence() {
                     break;
                 case 'sleep':
                 case 'freeze':
-                    const effectName = effect.type === 'sleep' ? '睡眠' : '凍結';
+                case 'flinch':
+                    const effectName = effect.type === 'sleep' ? '睡眠' : (effect.type === 'freeze' ? '凍結' : '怯み');
                     logBattleMessage(`${attacker.name}は<span class="info">${effectName}</span>で動けない！`);
                     canAct = false;
                     break;
@@ -6639,6 +6675,17 @@ async function runBattleSequence() {
           }
       }
 
+      const isGindoPassiveConditionMet = attacker.id === 38 && attacker.currentHp <= attacker.stats.hp * 0.3; // ギンドー
+      if (attacker.id === 38) {
+          if (isGindoPassiveConditionMet && !attacker.isPassiveActive) {
+            attacker.isPassiveActive = true;
+            showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
+            await sleep(1200 / battleSpeedMultiplier);
+          } else if (!isGindoPassiveConditionMet && attacker.isPassiveActive) {
+            attacker.isPassiveActive = false;
+          }
+      }
+
 
       // Lloyd (ID: 11) Chemical Contamination
       if (attacker.id === 11 && attacker.currentHp <= attacker.stats.hp * 0.5 && !attacker.passiveUsed) {
@@ -6646,7 +6693,11 @@ async function runBattleSequence() {
           await showCutIn(attacker, '化学物質汚染');
           const enemies = attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
           for (const e of enemies) {
-              if (e.currentHp > 0) await addStatusEffect(e, 'poison', 3);
+              if (e.currentHp > 0) {
+                  const eEl = document.getElementById(`unit-${e.battleId}`);
+                  if (eEl) playEffect(eEl, 'dark');
+                  await addStatusEffect(e, 'poison', 3);
+              }
           }
           logBattleMessage(`${attacker.name}は化学物質を撒き散らした！`);
           await sleep(600 / battleSpeedMultiplier);
@@ -6877,6 +6928,12 @@ async function runBattleSequence() {
 
       // パッシブ効果: 炎支配 (通常攻撃時)
       if (!activeAbility && attacker.id === 1 && attacker.isPassiveActive) await addStatusEffect(target, 'burn', 2);
+
+      // パッシブ効果: 破壊眼 (通常攻撃時)
+      if (!activeAbility && attacker.id === 38 && attacker.isPassiveActive) {
+          await addStatusEffect(target, 'flinch', 3);
+          logBattleMessage(`${attacker.name}の破壊眼！${target.name}は怯んだ！`);
+      }
 
       // 装備による追加効果
       if (attacker.equipment && attacker.equipment.effect && attacker.equipment.effect.type === 'add_status') {
@@ -7521,6 +7578,11 @@ function getBattleStats(unit) {
     s.atk = Math.floor(s.atk * 1.3);
   }
 
+  // パッシブ: ギンドー (ID:38) HP30%以下で攻撃力2.5倍
+  if (unit.id === 38 && unit.currentHp <= unit.stats.hp * 0.3) {
+    s.atk = Math.floor(s.atk * 2.5);
+  }
+
   // ステータス効果: 衰弱 (HP以外20%ダウン)
   if (unit.statusEffects.some(e => e.type === 'weakness')) {
     s.atk = Math.floor(s.atk * 0.8);
@@ -7656,6 +7718,11 @@ function updateUnitUI(unit) {
       if (unit.abilities && unit.abilities.length > 1) {
         activeText = `✨ ${unit.abilities[1].name}`;
       }
+    } else if (unit.id === 38 && unit.currentHp <= unit.stats.hp * 0.3) {
+      // ギンドー (ID:38): HP30%以下で破壊眼
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `👁️ ${unit.abilities[1].name}`;
+      }
             } else if (unit.id === 319 && unit.currentHp <= unit.stats.hp * 0.5) {
               // グルディー (ID:319): HP50%以下で色欲
               activeText = '色欲';
@@ -7782,6 +7849,29 @@ async function triggerOnBattleStartAbilities() {
                 playEffect(tEl, 'dark');
             }
             logBattleMessage(`${unit.name}のシャットダウン！敵全体の視界を奪った！`);
+        }
+        else if (unit.id === 38) { // Gindo: Axe Throw
+            let targetUnit;
+            if (unit.isPlayer && battleState.selectedTargetId) {
+                targetUnit = livingTargets.find(t => t.battleId === battleState.selectedTargetId);
+            }
+            if (!targetUnit) {
+                targetUnit = livingTargets[Math.floor(Math.random() * livingTargets.length)];
+            }
+
+            const damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult || 1.2));
+            targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
+            recordDamage(unit, damage);
+            logBattleMessage(`${targetUnit.name}に<span class="damage">${damage}</span>のダメージ！`);
+            if (ab.effect?.type === 'status') {
+                await addStatusEffect(targetUnit, ab.effect.status, ab.effect.turns);
+            }
+            updateUnitUI(targetUnit);
+            const targetEl = document.getElementById(`unit-${targetUnit.battleId}`);
+            showDamageNumber(targetEl, damage);
+            if (targetEl) {
+                playEffect(targetEl, 'impact');
+            }
         }
         else if (unit.id === 28 && ab.name === '燃焼の矢') { // Karma: Burning Arrow (Single Burn)
             const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
