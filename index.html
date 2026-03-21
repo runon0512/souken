@@ -2326,6 +2326,24 @@
   .rank-1 .rank-num { color: #ffd700; font-size: 1.2rem; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
   .rank-2 .rank-num { color: #c0c0c0; font-size: 1.1rem; }
   .rank-3 .rank-num { color: #b87333; font-size: 1.1rem; }
+
+  /* CHAPTER BANNER */
+  .chapter-banner {
+    grid-column: 1 / -1;
+    padding: 1rem 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
 </style>
 <style>
   /* DIALOGUE OVERLAY */
@@ -3680,6 +3698,16 @@ const units = [
     useImg: true,
     img: 'C311.svg',
   },
+  {
+    id: 323, name: 'シトラ', element: 'light', elementJp: '光', type: '神族',
+    baseStats: { hp: 2000, atk: 120, def: 80, spd: 80 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '神判の天秤', desc: '被弾後、50%の確率で発動。自分の方が体力が低い場合、相手の体力の1/3を奪い回復し、その20%を味方全員に回復。', triggerRate: 0.5, timing: 'on_hit' },
+      { name: '神威【天秤】', desc: '攻撃後、50%の確率で再攻撃を行う。最大5回まで。', triggerRate: 0.5, timing: 'after_attack' }
+    ],
+    useImg: true, img: 'C39.svg'
+  },
 ];
 
 // Equipment Data
@@ -3961,6 +3989,7 @@ const chapter8Missions = [
 const eventChapters = [
   {
     name: 'イベント：約束',
+    color: '#4d90ff',
     missions: [
       {
         id: 901,
@@ -3978,6 +4007,7 @@ const eventChapters = [
   },
   {
     name: 'イベント：厭悪',
+    color: '#b388ff',
     missions: [
       {
         id: 904,
@@ -3995,6 +4025,7 @@ const eventChapters = [
   },
     {
     name: 'イベント：次元の旅人',
+    color: '#a8c0ff',
     missions: [
       {
         id: 905,
@@ -4011,6 +4042,7 @@ const eventChapters = [
   },
   {
     name: 'イベント：襲撃（本気）',
+    color: '#ff4d4d',
     missions: [
       {
         id: 906,
@@ -4031,6 +4063,7 @@ const eventChapters = [
   },
   {
     name: 'イベント：師弟①',
+    color: '#ffaa00',
     missions: [
       {
         id: 908,
@@ -4051,6 +4084,7 @@ const eventChapters = [
   },
   {
     name: 'イベント：闇夜の月明かり',
+    color: '#2a2a5a',
     missions: [
       {
         id: 909,
@@ -4071,6 +4105,7 @@ const eventChapters = [
   },
   {
     name: 'イベント：色欲の怪物',
+    color: '#ff66cc',
     missions: [
       {
         id: 911, // New mission ID
@@ -4097,6 +4132,7 @@ const eventChapters = [
   },
   {
     name: 'イベント：鵺：傀儡の札',
+    color: '#555555',
     missions: [
       {
         id: 912,
@@ -4117,6 +4153,7 @@ const eventChapters = [
   },
   {
     name: 'イベント：属性剣士訓練',
+    color: '#ffd700',
     missions: [
       {
         id: 913,
@@ -4136,9 +4173,10 @@ const eventChapters = [
   },
     {
     name: 'イベント：正義の中将',
+    color: '#e0e0e0',
     missions: [
       {
-        id: 913,
+        id: 914,
         name: '正義の中将',
         description: '聖なる戦いを体感しよう。',
         enemies: [
@@ -4151,12 +4189,35 @@ const eventChapters = [
       }
     ]
   },
+  {
+    name: 'イベント：天秤の神',
+    color: '#00c8ff',
+    missions: [
+      {
+        id: 915,
+        name: '天秤の神',
+        description: '天秤を操る神との闘いに備えよう。',
+        enemies: [
+          { id: 315, level: 80, aiType: AI_TYPES.RANDOM },
+          { id: 315, level: 80, aiType: AI_TYPES.RANDOM },
+          { id: 323, level: 120, aiType: AI_TYPES.RANDOM },
+          { id: 315, level: 80, aiType: AI_TYPES.RANDOM },
+          { id: 315, level: 80, aiType: AI_TYPES.RANDOM },
+
+        ],
+        recommendedPower: 60000,
+        reward: 50000,
+        firstTimeReward: 50000
+      }
+    ]
+  },
 
 ];
 
 const userStageChapters = [
   {
     name: 'イベント：progからの挑戦状',
+    color: '#00ff00',
     missions: [
       {
         id: 902,
@@ -4177,6 +4238,7 @@ const userStageChapters = [
   },
   {
     name: 'イベント：mizryoからの挑戦状',
+    color: '#ff00ff',
     missions: [
       {
         id: 903,
@@ -4197,6 +4259,7 @@ const userStageChapters = [
   },
   {
     name: 'イベント：カリフラワーからの挑戦状',
+    color: '#ffffff',
     missions: [
       {
         id: 907,
@@ -4217,10 +4280,11 @@ const userStageChapters = [
   },
   {
     name: 'イベント：挑戦「星焔の降る戦場」',
+    color: '#ff4500',
     missions: [
       {
         id: 910,
-        name: '挑戦「星焔の降る戦場」',
+        name: 'どらけーからの挑戦状！',
         description: '星々の如く輝くオーラを纏った挑戦者が現れた。その実力、確かめてみよ。',
         enemies: [
           { id: 17, level: 7, aura: 0, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 13, name: '身代わり人形', icon: '🧸', desc: '最初の攻撃を1回だけ無効化する', effect: { type: 'shield_hit', val: 1 } } },
@@ -4292,6 +4356,21 @@ const elementalAdvantage = {
   light: { dark: 1.5 },
   dark: { light: 1.5 },
 };
+
+function calculateTotalPower(enemies) {
+  let total = 0;
+  enemies.forEach(eConfig => {
+    const unit = units.find(u => u.id === eConfig.id);
+    if (unit) {
+      const level = eConfig.level || 1;
+      const equip = eConfig.equipment || null;
+      const potential = eConfig.potential || 0;
+      const s = calcStats(unit.baseStats, level, equip, potential);
+      total += Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
+    }
+  });
+  return total;
+}
 
 const STATUS_EFFECTS = {
   burn: { icon: '🔥', name: '燃焼', desc: 'ターン開始時、最大HPの1/8のダメージを受ける。また、被ダメージが10%増加する。' },
@@ -5733,9 +5812,21 @@ function renderStoryChapters() {
     
     targetChapters.forEach((chapter) => {
       // Render event missions directly as cards
+      // Add Banner
+      if (chapter.color) {
+        const banner = document.createElement('div');
+        banner.className = 'chapter-banner';
+        banner.style.background = `linear-gradient(135deg, ${chapter.color}, #000)`;
+        banner.innerHTML = `<span style="position:relative; z-index:1;">${chapter.name}</span><div style="position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,0.5) 0%, transparent 100%);"></div>`;
+        container.appendChild(banner);
+      }
+
       chapter.missions.forEach(m => {
           const isCleared = missionProgress.has(m.id);
           let firstRewardHtml = `初回報酬: 虹石 ${m.firstTimeReward}`;
+
+          m.recommendedPower = calculateTotalPower(m.enemies);
+
           if (m.id === 901) firstRewardHtml += ` + <span style="color:var(--accent)">リディン</span>`;
           if (m.id === 904) firstRewardHtml += ` + <span style="color:var(--accent)">シャム・グレゴリオ</span>`;
           if (m.id === 911) firstRewardHtml += ` + <span style="color:var(--accent)">💖 色欲の魔石</span>`;
@@ -5745,7 +5836,7 @@ function renderStoryChapters() {
           const card = document.createElement('div');
           card.className = `mission-card`;
           card.innerHTML = `
-            <div class="mission-title" style="color:var(--gold)">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${chapter.name}</div>
+            <div class="mission-title" style="color:var(--gold)">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${m.name}</div>
             <div class="mission-desc">${m.description}</div>
             <div class="mission-info">
               <span>推奨戦力: ${m.recommendedPower}</span>
@@ -5858,6 +5949,8 @@ function renderMissionsForChapter(chapterIndex) {
   chapter.missions.forEach((m, idx) => {
     const isCleared = missionProgress.has(m.id);
     const isLocked = idx > 0 && !missionProgress.has(chapter.missions[idx-1].id);
+    
+    m.recommendedPower = calculateTotalPower(m.enemies);
     
     let firstRewardHtml = `初回報酬: 虹石 ${m.firstTimeReward}`;
     if (m.id === 104) {
@@ -6981,6 +7074,37 @@ async function runBattleSequence() {
         if (!target.statusEffects.some(e => e.type === 'curse')) {
         for (const ab of target.abilities) {
           if (ab.timing === 'on_hit' && Math.random() < (ab.triggerRate || 0)) {
+             if (target.id === 323 && ab.name === '神判の天秤') {
+                 if (target.currentHp < attacker.currentHp) {
+                     await showCutIn(target, ab.name);
+                     const stealAmount = Math.floor(attacker.currentHp / 3);
+                     attacker.currentHp = Math.max(0, attacker.currentHp - stealAmount);
+                     target.currentHp = Math.min(target.stats.hp, target.currentHp + stealAmount);
+                     logBattleMessage(`${target.name}の${ab.name}！${attacker.name}から体力を<span class="damage">${stealAmount}</span>奪った！`);
+                     updateUnitUI(attacker);
+                     updateUnitUI(target);
+                     showDamageNumber(document.getElementById(`unit-${attacker.battleId}`), stealAmount);
+                     showDamageNumber(document.getElementById(`unit-${target.battleId}`), stealAmount, 'heal');
+                     playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
+
+                     const allies = target.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+                     const healAlliesAmount = Math.floor(stealAmount * 0.2);
+                     if (healAlliesAmount > 0) {
+                        for (const ally of allies) {
+                            if (ally.currentHp > 0) {
+                                ally.currentHp = Math.min(ally.stats.hp, ally.currentHp + healAlliesAmount);
+                                updateUnitUI(ally);
+                                showDamageNumber(document.getElementById(`unit-${ally.battleId}`), healAlliesAmount, 'heal');
+                            }
+                        }
+                        logBattleMessage(`味方全体が<span class="heal">${healAlliesAmount}</span>回復した！`);
+                     }
+
+                     if (attacker.currentHp <= 0) await processUnitDeath(attacker);
+                 }
+                 await sleep(600 / battleSpeedMultiplier);
+                 continue;
+             }
              await showCutIn(target, ab.name);
              
              let counterDmg = 0;
@@ -7208,6 +7332,23 @@ async function runBattleSequence() {
                    targetEl.classList.add('is-taking-damage');
                    setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
                    await sleep(400 / battleSpeedMultiplier);
+                }
+            }
+            else if (attacker.id === 323 && chaseAbility.name === '神威【天秤】') {
+                for (let i = 0; i < 5; i++) {
+                    if (target.currentHp <= 0) break;
+                    await showCutIn(attacker, chaseAbility.name);
+                    const chaseDamage = Math.floor(calculateDamage(attacker, target));
+                    recordDamage(attacker, chaseDamage);
+                    target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+                    playEffect(targetEl, 'magic');
+                    logBattleMessage(`<span class="ability">神威 ${i+1}撃目！</span> ${target.name} に <span class="damage">${chaseDamage}</span> のダメージ！`);
+                    updateUnitUI(target);
+                    showDamageNumber(targetEl, chaseDamage);
+                    targetEl.classList.add('is-taking-damage');
+                    setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+                    await sleep(400 / battleSpeedMultiplier);
+                    if (Math.random() > 0.5) break;
                 }
             }
             else { // Single chase attacks
