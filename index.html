@@ -6166,6 +6166,7 @@ async function renderUserStagesPage() {
                 </div>
                 <div class="user-stage-list-stats">
                     <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
+                    <div class="stat-item" title="プレイ数">👤 ${stage.plays || 0}</div>
                     <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
                     <div class="stat-item" title="コメント数">💬 ${(stage.comments||[]).length}</div>
                     <div class="stat-item" title="推奨戦力">⚔️ ${totalPower}</div>
@@ -6387,8 +6388,8 @@ async function startUserStageBattle(stageId) {
         description: stage.description,
         enemies: enemies,
         recommendedPower: 0, // calc later
-        reward: 100, // Minimal reward for user stages
-        firstTimeReward: 200,
+        reward: Math.max(100, Math.floor(rewardVal * 0.1)),
+        firstTimeReward: rewardVal,
         isUserStage: true,
         rawStageId: stage.id // for API calls
     };
@@ -6403,6 +6404,9 @@ async function startUserStageBattle(stageId) {
     formData.append('action', 'postPlay');
     formData.append('stageId', stage.id);
     fetch(USER_STAGE_API_URL, { method:'POST', body:formData }).catch(e=>{});
+
+    // Optimistic update
+    stage.plays = (stage.plays || 0) + 1;
 
     startBattle("TEMP_USER_STAGE");
 }
