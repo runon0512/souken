@@ -1034,11 +1034,15 @@
     font-size: 0.75rem;
   }
   .battle-unit .potential-stars-display {
-    position: relative;
-    margin-top: 2px;
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    right: 0;
     text-align: center;
-    font-size: 0.875rem;
+    font-size: 1rem;
     text-shadow: 0 1px 3px #000;
+    z-index: 3;
+    pointer-events: none;
   }
   .potential-stars-display .star.lit {
     color: var(--gold);
@@ -6225,8 +6229,8 @@ function renderUnit(unit) {
         <div class="b-unit-status-effects"></div>
         <div class="b-unit-hp-bar-bg"><div class="b-unit-hp-bar" style="width: ${hpPercent}%"></div></div>
         <div class="b-unit-hp-text">${unit.currentHp} / ${unit.stats.hp}</div>
-        ${starsHtml}
       </div>
+      ${starsHtml}
       <div class="damage-flash-overlay" style="display:none;"></div>
       <div class="effect-overlay"></div>
     </div>
