@@ -1264,6 +1264,28 @@
   }
   .battle-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
   .battle-header h2 { font-size: 1rem; color: var(--accent2); }
+  .battle-header-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    width: 3rem;
+    height: 2.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .battle-header-btn:hover:not(:disabled) {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .battle-header-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .battle-header-controls {
     display: flex;
     gap: 0.5rem;
@@ -2655,6 +2677,10 @@
   }
 </style>
 </head>
+<script>
+  // GASのウェブアプリURLをここに貼り付けてください（両方に同じURLを入れてください）
+  const USER_STAGE_API_URL = "https://script.google.com/macros/s/AKfycbxjHXNJgcujuBjsYNHHvcU3a2vv-Y-z_C0MF1JHwNIZ5P45AIgIqX2U9LPtKm2wVrwA/exec"; 
+</script>
 <body>
 
 <!-- HEADER -->
@@ -2826,7 +2852,8 @@
         <div id="storyCategoryTabs" style="display:none; gap:0.5rem;">
             <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.5rem 1rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
             <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.5rem 1rem; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
-            <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.5rem 1rem; margin:0;">ユーザーステージ</button>
+            <button class="filter-btn" id="tab-story-challenge" onclick="setStoryTab('challenge')" style="padding: 0.5rem 1rem; margin:0;">チャレンジ</button>
+            <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.5rem 1rem; margin:0;">みんなのステージ</button>
             <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.5rem 1rem; margin:0;">無限の塔 <span class="new-badge">New!</span></button>
         </div>
       </div>
@@ -2898,6 +2925,98 @@
     </div>
     <div class="modal-footer">
       <button class="modal-add-btn" id="modalActionBtn" onclick="modalToggleSquad()">編成に追加</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* USER STAGE & POST STYLES */
+  .user-stage-list-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.2s;
+  }
+  .user-stage-list-item:hover {
+    border-color: var(--border-bright);
+    background: var(--bg-card-hover);
+  }
+  .user-stage-list-info { flex: 1; min-width: 0; }
+  .user-stage-list-stats { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+  .user-stage-list-actions { grid-column: 2 / 3; grid-row: 1 / 3; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; width: 8rem; }
+  .user-stage-meta-info { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem; display: flex; gap: 1rem; }
+  .stat-item { font-size: 0.8rem; color: var(--text-mid); display: flex; align-items: center; gap: 0.5rem; }
+
+  .sort-controls { grid-column: 1 / -1; display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center; }
+  .sort-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+  .sort-btn.active, .sort-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  .stage-action-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    padding: 0.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: all 0.2s;
+  }
+  .stage-action-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); background: rgba(0,200,255,0.1); }
+  .stage-action-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.1); }
+
+  .post-input {
+    width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    border-radius: 0.25rem; color: var(--text-main); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.8rem; outline: none; transition: border-color 0.2s; margin-bottom: 0.75rem;
+  }
+  .post-input:focus { border-color: var(--accent); }
+  .post-input::placeholder { color: var(--text-dim); }
+
+  .comments-list {
+    display: flex; flex-direction: column; gap: 0.75rem;
+    max-height: 20rem; overflow-y: auto; margin-bottom: 1rem;
+  }
+  .comment-item { background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 4px; border-left: 2px solid var(--border); }
+  .comment-header {
+    display: flex; justify-content: space-between; font-size: 0.7rem;
+    color: var(--text-dim); margin-bottom: 0.5rem;
+  }
+  .comment-header span:first-child { font-weight: bold; color: var(--text-mid); }
+  .comment-text { font-size: 0.8rem; line-height: 1.5; }
+</style>
+
+<!-- POST STAGE MODAL -->
+<div class="modal-overlay" id="postStageOverlay" onclick="closePostStageModal(event)">
+  <div class="modal" id="postStageBox" style="width: 30rem;">
+    <div class="modal-header">
+      <div class="modal-title">ステージ投稿</div>
+      <button class="modal-close" onclick="closePostStageModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="post-stage-form">
+        <p style="font-size:0.8rem; color:var(--text-mid);">現在の編成を敵部隊として投稿します。</p>
+        <input type="text" id="postStageName" class="post-input" placeholder="ステージ名" maxlength="20">
+        <textarea id="postStageDesc" class="post-input" placeholder="ステージ概要 (100字以内)" maxlength="100" style="height:5rem; resize:none;"></textarea>
+        <div style="font-size:0.75rem; color:var(--text-dim); text-align:right;">投稿者: <span id="postCreatorName"></span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-add-btn" onclick="submitUserStage()">投稿する</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMMENTS MODAL -->
+<div class="modal-overlay" id="commentsOverlay" onclick="closeCommentsModal(event)">
+  <div class="modal" id="commentsBox" style="width: 30rem;">
+    <div class="modal-header">
+      <div class="modal-title">コメント</div>
+      <button class="modal-close" onclick="closeCommentsModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="comments-list" id="commentsList"></div>
+      <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
+        <input type="text" id="newCommentInput" class="post-input" placeholder="コメントを入力 (50字以内)" maxlength="50">
+        <button class="modal-add-btn" style="margin-top: 0.5rem;" onclick="submitComment()">送信</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3051,8 +3170,8 @@
         <button onclick="setBattleSpeed(8)" id="speed-btn-8">8x</button>
       </div>
       <div class="battle-header-controls">
-        <button class="modal-close" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア">🏳️</button>
-        <button class="modal-close" id="closeBattleBtn" onclick="closeBattle()" disabled>✕</button>
+        <button class="battle-header-btn" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア">🏳️</button>
+        <button class="battle-header-btn" id="closeBattleBtn" onclick="closeBattle()" disabled>✕</button>
       </div>
     </div>
     <div class="battle-field">
@@ -3889,7 +4008,7 @@ const chapter6Names = [
   "第五部隊訓練・本気", "第四部隊訓練・本気", "第三部隊訓練・本気", "第二部隊訓練・本気", "第一部隊訓練・本気", "副隊長訓練・本気"
 ];
 
-const chapter6Enemies = [
+const chapter6Enemies = [ 
   [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 7, level: 45, aiType: AI_TYPES.HIGHEST_ATK }, { id: 315, level: 20 }, { id: 315, level: 20 }],
   [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 9, level: 46, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20 }, { id: 315, level: 20 }],
   [{ id: 315, level: 20 }, { id: 315, level: 20 }, { id: 11, level: 47, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20 }, { id: 315, level: 20 }],
@@ -3915,7 +4034,7 @@ const storyChapters = [
   { name: '第一章：天からの贈り物', missions: generateMissions(100, 10, 'Stage', [101], 50, chapter1Names, chapter1Enemies) },
   { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [302, 302, 301], 100, chapter2Names, chapter2Enemies) },
   { name: '第三章：ルディ王国 (後編)', missions: generateMissions(300, 6, 'Stage', [102, 102, 101], 150, chapter3Names, chapter3Enemies) },
-  { name: '第四章：世界の真実', missions: generateMissions(400, 6, 'Stage', [302, 303, 305], 200, chapter4Names, chapter4Enemies) },
+  { name: '第四章：世界の真実', missions: generateMissions(400, 6, 'Stage', [302, 303, 305], 200, chapter4Names, chapter4Enemies) }, 
   { name: '第五章：大会参加者', missions: generateMissions(500, 6, 'Stage', [302, 303, 305], 250, chapter5Names, chapter5Enemies) },
   { name: '第六章：副隊長訓練・本気', missions: generateMissions(600, 6, 'Stage', [302, 303, 305], 300, chapter6Names, chapter6Enemies) },
   { name: '第七章：隊長訓練・本気', missions: generateMissions(700, 6, 'Stage', [302, 303, 305], 350, chapter7Names, chapter7Enemies) },
@@ -4218,15 +4337,15 @@ const eventChapters = [
 
 ];
 
-const userStageChapters = [
+const challengeChapters = [
   {
-    name: 'イベント：progからの挑戦状',
+    name: 'チャレンジ：progからの挑戦状',
     color: '#00ff00',
     missions: [
       {
         id: 902,
         name: 'progからの挑戦状！',
-        description: '強力な装備で武装した部隊からの挑戦状が届いた。心してかかろう。',
+        description: '強力な装備で武装した部隊からの挑戦状。',
         enemies: [
           { id: 1, level: 50, aura: 6, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 } } },
           { id: 4, level: 50, aura: 6, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } },
@@ -4241,13 +4360,13 @@ const userStageChapters = [
     ]
   },
   {
-    name: 'イベント：mizryoからの挑戦状',
+    name: 'チャレンジ：mizryoからの挑戦状',
     color: '#ff00ff',
     missions: [
       {
         id: 903,
         name: 'mizryoからの挑戦状！',
-        description: '新たな挑戦者が現れた。バランスの取れた編成を攻略せよ。',
+        description: 'バランスの取れた編成を攻略せよ。',
         enemies: [
           { id: 1, level: 30, aura: 2, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 } } },
           { id: 4, level: 25, aura: 1, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 3, name: '鉄の胸当て', icon: '🛡️', desc: '防御力が1.2倍になる', effect: { type: 'stat_mult', stat: 'def', val: 1.2 } } },
@@ -4262,13 +4381,13 @@ const userStageChapters = [
     ]
   },
   {
-    name: 'イベント：カリフラワーからの挑戦状',
+    name: 'チャレンジ：カリフラワーからの挑戦状',
     color: '#ffffff',
     missions: [
       {
         id: 907,
         name: 'カリフラワーからの挑戦状！',
-        description: 'また新たな挑戦者が現れたようだ。',
+        description: '油断ならない敵編成。',
         enemies: [
           { id: 1, level: 40, aura: 4, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 7, name: '重騎士の盾', icon: '🛡️', desc: '防御力が1.4倍になるが、速度が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { def: 1.4, spd: 0.8 } } } },
           { id: 11, level: 40, aura: 4, aiType: AI_TYPES.RANDOM, equipment: { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 } } },
@@ -4283,13 +4402,13 @@ const userStageChapters = [
     ]
   },
   {
-    name: 'イベント：挑戦「星焔の降る戦場」',
+    name: 'チャレンジ：星焔の降る戦場',
     color: '#ff4500',
     missions: [
       {
         id: 910,
         name: 'どらけーからの挑戦状！',
-        description: '星々の如く輝くオーラを纏った挑戦者が現れた。その実力、確かめてみよ。',
+        description: '星々の如く輝くオーラを纏った部隊。',
         enemies: [
           { id: 17, level: 7, aura: 0, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 13, name: '身代わり人形', icon: '🧸', desc: '最初の攻撃を1回だけ無効化する', effect: { type: 'shield_hit', val: 1 } } },
           { id: 6, level: 51, aura: 7, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } } },
@@ -4304,13 +4423,13 @@ const userStageChapters = [
     ]
   },
   {
-    name: 'イベント：ハコからの挑戦状',
+    name: 'チャレンジ：ハコからの挑戦状',
     color: '#888888',
     missions: [
       {
         id: 916,
         name: 'ハコからの挑戦状！',
-        description: '新たな挑戦者が現れた。バランスの取れた編成を攻略せよ。',
+        description: 'バランスの取れた編成。',
         enemies: [
           { id: 1, level: 60, aura: 8, aiType: AI_TYPES.HIGHEST_ATK, equipment: { id: 2, name: '太古の剣', icon: '🗡️', desc: '攻撃力が1.2倍になる', effect: { type: 'stat_mult', stat: 'atk', val: 1.2 } } },
           { id: 4, level: 55, aura: 7, aiType: AI_TYPES.LOWEST_HP_DEF, equipment: { id: 5, name: '巨人のベルト', icon: '🥋', desc: 'HPが1.3倍になる', effect: { type: 'stat_mult', stat: 'hp', val: 1.3 } } },
@@ -4332,7 +4451,7 @@ function getMissionById(id) {
   if (id >= 10000) {
     return generateTowerMission(id - 10000);
   }
-  const allChapters = [...storyChapters, ...eventChapters, ...userStageChapters];
+  const allChapters = [...storyChapters, ...eventChapters, ...challengeChapters];
   for (const chapter of allChapters) {
     const m = chapter.missions.find(mis => mis.id === id);
     if (m) return m;
@@ -4477,6 +4596,9 @@ let currentSort = 'power';
 let modalCharId = null;
 let missionProgress = new Set(); // Cleared mission IDs
 let currentStoryTab = 'main';
+let cachedUserStages = []; // Store fetched stages
+let tempUserStageMission = null; // For holding the currently selected user stage mission data
+let currentUserStageSort = 'newest'; // newest, hearts, recommended
 
 // Audio state
 sounds.homeBgm.loop = true;
@@ -5071,8 +5193,8 @@ function formatAbilityDetails(ability) {
       equip = null;
       s = c.baseStats;
     }
-
-    const maxLevel = isOwned ? getMaxLevel(aura) : 0;
+    const currentMaxLevel = isOwned ? getMaxLevel(aura) : 0;
+    const absoluteMaxLevel = getMaxLevel(12); // Max possible player level
 
     // Favorite Button State
     const favBtn = document.getElementById('modalFavBtn');
@@ -5108,14 +5230,15 @@ function formatAbilityDetails(ability) {
     levelControl.style.display = 'block';
     
     let sliderHtml = '';
-    if (level < maxLevel) {
+    // The slider should always be visible if not at absolute max level
+    if (level < absoluteMaxLevel) {
       sliderHtml = `
         <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
           <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-mid); margin-bottom:4px;">
             <span>レベル指定</span>
             <span id="sliderTargetDisplay" style="font-family:'Orbitron'">Lv.${level} → Lv.${level+1}</span>
           </div>
-          <input type="range" id="levelSlider" min="${level}" max="${maxLevel}" value="${level}" style="width:100%; cursor:pointer;" oninput="onLevelSliderChange(this.value)">
+          <input type="range" id="levelSlider" min="${level}" max="${absoluteMaxLevel}" value="${level}" style="width:100%; cursor:pointer;" oninput="onLevelSliderChange(this.value)">
           <div style="text-align:right; font-size:10px; margin-top:2px;">
             費用: <span id="sliderCostDisplay" style="color:var(--gold); font-family:'Orbitron'">0</span>
           </div>
@@ -5125,7 +5248,7 @@ function formatAbilityDetails(ability) {
 
     levelControl.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-size:0.75rem;color:var(--text-main)">Lv.<span style="font-size:1rem;font-weight:700;font-family:'Orbitron'">${level}</span> <span style="font-size:0.625rem;color:var(--text-dim)">/ ${maxLevel}</span></div>
+        <div style="font-size:0.75rem;color:var(--text-main)">Lv.<span style="font-size:1rem;font-weight:700;font-family:'Orbitron'">${level}</span> <span style="font-size:0.625rem;color:var(--text-dim)">/ ${currentMaxLevel}</span></div>
         <div style="display:flex; gap: 8px;">
           <button class="level-btn" id="btnLevelDown" onclick="doLevelDown()" style="background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--border); padding: 0.5rem 1rem;" title="初期化 (素材全返還)" ${level <= 1 && aura <= 0 ? 'disabled style="opacity:0.5;background:rgba(255,255,255,0.1);color:var(--text-dim);border:1px solid var(--border);padding:0.5rem 1rem;"' : ''}>↺</button>
           <button class="level-btn" id="btnLevelUp" onclick="doLevelUp()" style="min-width:6rem;">強化</button>
@@ -5136,7 +5259,7 @@ function formatAbilityDetails(ability) {
 
     // Init Button State
     const btn = document.getElementById('btnLevelUp');
-    if (level >= maxLevel) {
+    if (level >= absoluteMaxLevel) { // Check against absolute max
       btn.disabled = true;
       btn.textContent = 'MAX LEVEL';
     } else {
@@ -5183,25 +5306,6 @@ function formatAbilityDetails(ability) {
       </div>
     `;
     levelControl.parentNode.insertBefore(potRow, levelControl.nextSibling);
-  }
-
-  // Aura Upgrade Button
-  const existingAuraBtn = document.getElementById('btnAuraUp');
-  if (existingAuraBtn) existingAuraBtn.remove();
-  if (isBattleContext && existingAuraBtn) existingAuraBtn.style.display = 'none';
-
-  if (isOwned && !isBattleContext && aura < 12 && level >= maxLevel) {
-    const nextAura = AURA_DATA[aura];
-    const auraBtn = document.createElement('button');
-    auraBtn.id = 'btnAuraUp';
-    auraBtn.className = 'level-btn';
-    auraBtn.style.cssText = "width:100%; margin-top:8px; background:transparent; border:1px solid var(--gold); color:var(--gold);";
-    auraBtn.innerHTML = `限界突破: ${nextAura.label} (虹石 ${nextAura.cost})`;
-    auraBtn.onclick = () => upgradeAura(c.id);
-    if (playerState.rainbowStones < nextAura.cost) {
-      auraBtn.disabled = true;
-    }
-    document.querySelector('.level-control').parentNode.insertBefore(auraBtn, document.querySelector('.level-control').nextSibling);
   }
 
   // Equipment Section
@@ -5266,50 +5370,62 @@ function modalToggleSquad() {
 function onLevelSliderChange(val) {
   if (modalCharId === null) return;
   const charState = playerState.characters[modalCharId];
-  if (!charState) return;
+  if (!charState) return;  
   
   const current = charState.level;
+  const currentAura = charState.aura || 0;
   const sliderVal = parseInt(val);
-  const target = sliderVal > current ? sliderVal : current + 1; // If slider is at current, treat as +1 preview
+  
+  // If slider is at or below current level, preview cost for +1 level
+  const targetLevel = sliderVal > current ? sliderVal : current + 1;
   const isBulk = sliderVal > current;
 
   const btn = document.getElementById('btnLevelUp');
   const costDisplay = document.getElementById('sliderCostDisplay');
   const targetDisplay = document.getElementById('sliderTargetDisplay');
 
-  // Calculate Cost
-  // If slider is at current, cost is for next level (single up)
-  // If slider is moved, cost is for bulk up
-  let cost = 0;
-  if (isBulk) {
-      cost = calculateLevelUpCost(current, target);
-  } else {
-      cost = getLevelCost(current);
+  // New cost calculation
+  const requiredAura = getRequiredAuraForLevel(targetLevel);
+  let auraUpgradeCost = 0;
+  let auraUpgradeText = '';
+
+  if (requiredAura > currentAura) {
+      for (let i = currentAura; i < requiredAura; i++) {
+          if (AURA_DATA[i]) {
+              auraUpgradeCost += AURA_DATA[i].cost;
+          }
+      }
+      if (auraUpgradeCost > 0) {
+          auraUpgradeText = ` + 限界突破`;
+      }
   }
 
+  const levelUpCost = calculateLevelUpCost(current, targetLevel);
+  const totalCost = levelUpCost + auraUpgradeCost;
+
   if (targetDisplay) {
-      targetDisplay.textContent = `Lv.${current} → Lv.${target}`;
+      targetDisplay.textContent = `Lv.${current} → Lv.${targetLevel}${auraUpgradeText}`;
       targetDisplay.style.color = isBulk ? 'var(--accent)' : 'var(--text-dim)';
   }
   if (costDisplay) {
-      costDisplay.textContent = cost.toLocaleString();
-      costDisplay.style.color = playerState.rainbowStones >= cost ? 'var(--gold)' : 'var(--accent2)';
+      costDisplay.textContent = totalCost.toLocaleString();
+      costDisplay.style.color = playerState.rainbowStones >= totalCost ? 'var(--gold)' : 'var(--accent2)';
   }
 
-  if (playerState.rainbowStones < cost) {
+  if (playerState.rainbowStones < totalCost) {
       btn.disabled = true;
       btn.innerHTML = `虹石不足`;
   } else {
       btn.disabled = false;
-      btn.innerHTML = isBulk ? `一括強化 (Lv.${target})` : `強化 (Lv.${target})`;
+      btn.innerHTML = isBulk ? `一括強化 (Lv.${targetLevel})` : `強化 (Lv.${targetLevel})`;
   }
 }
 
 function doLevelUp() {
   if (modalCharId === null) return;
   const charState = playerState.characters[modalCharId];
-  const maxLevel = getMaxLevel(charState.aura || 0);
-  if (!charState || charState.level >= maxLevel) return;
+  const absoluteMaxLevel = getMaxLevel(12);
+  if (!charState || charState.level >= absoluteMaxLevel) return;
   
   const slider = document.getElementById('levelSlider');
   let targetLevel = charState.level + 1;
@@ -5317,12 +5433,33 @@ function doLevelUp() {
       targetLevel = parseInt(slider.value);
   }
 
-  const cost = calculateLevelUpCost(charState.level, targetLevel);
+  const currentLevel = charState.level;
+  const currentAura = charState.aura || 0;
   
-  if (playerState.rainbowStones >= cost) {
-    playerState.rainbowStones -= cost;
+  const requiredAura = getRequiredAuraForLevel(targetLevel);
+  let auraUpgradeCost = 0;
+  if (requiredAura > currentAura) {
+      for (let i = currentAura; i < requiredAura; i++) {
+          if (AURA_DATA[i]) {
+              auraUpgradeCost += AURA_DATA[i].cost;
+          }
+      }
+  }
+
+  const levelUpCost = calculateLevelUpCost(currentLevel, targetLevel);
+  const totalCost = levelUpCost + auraUpgradeCost;
+  
+  if (playerState.rainbowStones >= totalCost) {
+    playerState.rainbowStones -= totalCost;
+    
+    let message = `Lv.${targetLevel} にレベルアップ！`;
+    if (requiredAura > currentAura) {
+        charState.aura = requiredAura;
+        message = `限界突破し、Lv.${targetLevel} に一括強化しました！`;
+    }
     charState.level = targetLevel;
-    showToast(`Lv.${charState.level} にレベルアップ！`);
+
+    showToast(message);
     updateModal();
     renderCards(); // Update list stats
     renderSquad(); // Update power
@@ -5384,38 +5521,6 @@ function doLevelDown() {
     renderCards(); // Update list stats
     renderSquad(); // Update power
     saveGame();
-  }
-}
-
-function upgradeAura(charId) {
-  const charState = playerState.characters[charId];
-  const currentAura = charState.aura || 0;
-  if (currentAura >= AURA_DATA.length) return;
-
-  const maxLevel = getMaxLevel(currentAura);
-  if (charState.level < maxLevel) {
-    showToast(`限界突破にはレベルを ${maxLevel} にする必要があります`);
-    return;
-  }
-  
-  const nextAuraLevel = currentAura + 1;
-  const nextAuraData = AURA_DATA.find(a => a.class === `aura-${nextAuraLevel}`);
-
-  if (!nextAuraData || !nextAuraData.cost) {
-      showToast('次のオーラが見つかりません。');
-      return;
-  }
-
-  if (playerState.rainbowStones >= nextAuraData.cost) {
-    playerState.rainbowStones -= nextAuraData.cost;
-    charState.aura = nextAuraLevel;
-    showToast(`限界突破！ ${nextAuraData.label} を獲得！`);
-    updateModal();
-    renderCards(); // Update list stats
-    renderSquad(); // Update power
-    saveGame();
-  } else {
-    showToast('虹石が足りません');
   }
 }
 
@@ -5793,6 +5898,12 @@ function endTutorial() {
 // ===== MISSION & BATTLE =====
 function setStoryTab(tab) {
   currentStoryTab = tab;
+  const container = document.getElementById('missionGrid');
+  if (tab === 'user') {
+      container.style.gridTemplateColumns = '1fr';
+  } else {
+      container.style.gridTemplateColumns = ''; // デフォルトに戻す
+  }
   renderStoryChapters();
 }
 
@@ -5813,6 +5924,7 @@ function renderStoryChapters() {
 
   if (currentStoryTab === 'main') {
     // メインストーリー：章一覧を表示
+    // ... (unchanged) ...
     storyChapters.forEach((chapter, index) => {
       const lastMissionOfPrevChapter = index > 0 ? storyChapters[index - 1].missions.slice(-1)[0] : null;
       const isLocked = lastMissionOfPrevChapter && !missionProgress.has(lastMissionOfPrevChapter.id);
@@ -5831,9 +5943,11 @@ function renderStoryChapters() {
     });
   } else if (currentStoryTab === 'tower') {
     renderTowerMissions();
+  } else if (currentStoryTab === 'user') {
+    renderUserStagesPage();
   } else {
-    // イベントまたはユーザーステージ：ミッション一覧を表示
-    const targetChapters = currentStoryTab === 'event' ? eventChapters : userStageChapters;
+    // イベントまたはチャレンジ：ミッション一覧を表示
+    const targetChapters = currentStoryTab === 'event' ? eventChapters : challengeChapters;
     
     targetChapters.forEach((chapter) => {
       // Render event missions directly as cards
@@ -5961,6 +6075,172 @@ function renderTowerMissions() {
     });
 }
 
+function sortUserStages(stages) {
+  if (currentUserStageSort === 'newest') {
+    return stages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else if (currentUserStageSort === 'hearts') {
+    return stages.sort((a, b) => b.hearts - a.hearts);
+  } else if (currentUserStageSort === 'recommended') {
+    // おすすめ順： (ハート数+1) / (経過時間 + 2)^1.5  (Hacker News的な重み付け)
+    // 新しくてハートが多いものが上位に来る
+    const getScore = (s) => {
+        const hours = (Date.now() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60);
+        return (s.hearts + 1) / Math.pow(hours + 2, 1.5);
+    };
+    return stages.sort((a, b) => getScore(b) - getScore(a));
+  }
+  return stages;
+}
+
+async function renderUserStagesPage() {
+    const container = document.getElementById('missionGrid');
+    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-dim);">Loading stages...</div>';
+
+    // Post Button
+    const postBtnContainer = document.createElement('div');
+    postBtnContainer.style.cssText = 'grid-column: 1 / -1; margin-bottom: 1rem;';
+    postBtnContainer.innerHTML = `<button class="mission-btn" onclick="openPostStageModal()" style="width:100%; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>`;
+    
+    try {
+        // Fetch from GAS
+        if (!USER_STAGE_API_URL.startsWith('http')) throw new Error('API URL not set');
+        const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId);
+        const data = await response.json();
+        cachedUserStages = data;
+
+        container.innerHTML = '';
+        container.appendChild(postBtnContainer);
+
+        if (!data || data.length === 0) {
+            container.innerHTML += '<div style="grid-column:1/-1; text-align:center; color:var(--text-mid);">投稿されたステージはありません。</div>';
+            return;
+        }
+
+        // Sort Controls
+        const sortControls = document.createElement('div');
+        sortControls.className = 'sort-controls';
+        sortControls.innerHTML = `
+            <span style="color:var(--text-mid); font-size:0.8rem; display:flex; align-items:center;">並び替え:</span>
+            <button class="sort-btn ${currentUserStageSort === 'newest' ? 'active' : ''}" onclick="setStageSort('newest')">新しい順</button>
+            <button class="sort-btn ${currentUserStageSort === 'hearts' ? 'active' : ''}" onclick="setStageSort('hearts')">ハート順</button>
+            <button class="sort-btn ${currentUserStageSort === 'recommended' ? 'active' : ''}" onclick="setStageSort('recommended')">おすすめ</button>
+        `;
+        container.appendChild(sortControls);
+
+        const sortedData = sortUserStages([...data]);
+
+        sortedData.forEach(stage => {
+            const squadData = JSON.parse(stage.squadData);
+            let totalPower = 0;
+            // Calculate Power roughly
+            squadData.forEach(s => {
+                const u = units.find(unit => unit.id === s.id);
+                if (u) {
+                    const stats = calcStats(u.baseStats, s.level, null, s.potential||0);
+                    totalPower += stats.hp + stats.atk*2 + stats.def + stats.spd;
+                }
+            });
+
+            const playRate = stage.plays > 0 ? Math.round((stage.clears / stage.plays) * 100) : 0;
+            const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
+            const isCleared = missionProgress.has("user_" + stage.id);
+            
+            // Reward Calculation: 5000 + (Hearts * 1000)
+            const rewardVal = 5000 + (stage.hearts * 1000);
+
+            const card = document.createElement('div');
+            card.className = 'mission-card user-stage-list-item';
+            card.innerHTML = `
+                <div class="user-stage-list-info">
+                    <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}</div>
+                    <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
+                    <div class="user-stage-meta-info">
+                        <span>作成者: ${stage.creator}</span>
+                        <span>投稿日: ${new Date(stage.createdAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                <div class="user-stage-list-stats">
+                    <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
+                    <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
+                    <div class="stat-item" title="コメント数">💬 ${(stage.comments||[]).length}</div>
+                    <div class="stat-item" title="推奨戦力">⚔️ ${totalPower}</div>
+                </div>
+                <div class="user-stage-list-actions">
+                    <div class="mission-reward-info" style="text-align: right; margin-bottom: 0.5rem;">
+                        <div class="first-clear">💎 ${rewardVal.toLocaleString()}</div>
+                    </div>
+                    <button class="mission-btn" onclick="startUserStageBattle('${stage.id}')">挑戦する</button>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; width: 100%;">
+                        <button class="stage-action-btn stage-heart-btn ${stage.isLiked ? 'active' : ''}" onclick="toggleStageHeart('${stage.id}')" style="flex:1;">❤️</button>
+                        <button class="stage-action-btn" onclick="openStageComments('${stage.id}')" style="flex:1;">💬</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--accent2);">読み込みエラー<br>API URLを確認してください。</div>';
+    }
+}
+
+function setStageSort(sortType) {
+    currentUserStageSort = sortType;
+    renderUserStagesPage();
+}
+
+function openPostStageModal() {
+    if (squad.length === 0) { showToast('部隊が編成されていません'); return; }
+    document.getElementById('postCreatorName').textContent = playerState.playerName;
+    document.getElementById('postStageOverlay').classList.add('open');
+}
+function closePostStageModalDirect() { document.getElementById('postStageOverlay').classList.remove('open'); }
+function closePostStageModal(e) { if(e.target.id==='postStageOverlay') closePostStageModalDirect(); }
+
+async function submitUserStage() {
+    const name = document.getElementById('postStageName').value.trim();
+    const desc = document.getElementById('postStageDesc').value.trim();
+    if (!name) { showToast('ステージ名を入力してください'); return; }
+
+    const btn = document.querySelector('#postStageBox .modal-add-btn');
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+
+    // Prepare Squad Data
+    const squadData = squad.map(id => {
+        const char = playerState.characters[id];
+        return {
+            id: id,
+            level: char.level,
+            aura: char.aura,
+            potential: char.potential,
+            equippedId: char.equippedId,
+            // Pass equipped item details explicitly if needed, but ID is enough if item logic is consistent
+        };
+    });
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('action', 'postStage');
+        formData.append('name', name);
+        formData.append('description', desc);
+        formData.append('creatorName', playerState.playerName);
+        formData.append('creatorId', playerState.playerId);
+        formData.append('squadData', JSON.stringify(squadData));
+
+        await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
+        showToast('投稿しました！');
+        closePostStageModalDirect();
+        renderUserStagesPage(); // reload
+    } catch(e) {
+        showToast('送信エラー');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '投稿する';
+    }
+}
+
 function renderMissionsForChapter(chapterIndex) {
   const chapter = storyChapters[chapterIndex];
   const container = document.getElementById('missionGrid');
@@ -6075,10 +6355,57 @@ function endDialogue(e) {
   }
 }
 
+async function startUserStageBattle(stageId) {
+    const stage = cachedUserStages.find(s => s.id == stageId);
+    if (!stage) return;
+
+    const squadData = JSON.parse(stage.squadData);
+    const enemies = squadData.map(s => {
+        const equip = s.equippedId ? equipmentItems.find(e => e.id == s.equippedId) : null;
+        return {
+            id: s.id,
+            level: s.level,
+            aura: s.aura,
+            potential: s.potential,
+            equipment: equip,
+            aiType: AI_TYPES.RANDOM // Default AI for now
+        };
+    });
+
+    // Reward Calc
+    const rewardVal = 5000 + (stage.hearts * 1000);
+
+    // Create a temporary mission object
+    const mission = {
+        id: "user_" + stage.id,
+        name: stage.name + " (挑戦)",
+        description: stage.description,
+        enemies: enemies,
+        recommendedPower: 0, // calc later
+        reward: 100, // Minimal reward for user stages
+        firstTimeReward: 200,
+        isUserStage: true,
+        rawStageId: stage.id // for API calls
+    };
+
+    // Pass this mission directly to startBattle
+    // We need to modify startBattle to accept an object OR find a way to register it.
+    // Modification: Set a global temp variable
+    tempUserStageMission = mission;
+
+    // 挑戦数をカウントアップ (postPlay)
+    const formData = new URLSearchParams();
+    formData.append('action', 'postPlay');
+    formData.append('stageId', stage.id);
+    fetch(USER_STAGE_API_URL, { method:'POST', body:formData }).catch(e=>{});
+
+    startBattle("TEMP_USER_STAGE");
+}
+
 let sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function startBattle(missionId, skipDialogue = false) {
   // Check and start dialogue first
-  if (!skipDialogue && missionDialogues[missionId]) {
+  if (!skipDialogue && missionId !== "TEMP_USER_STAGE" && missionDialogues[missionId]) {
     startDialogue(missionId, () => startBattle(missionId, true));
     return;
   }
@@ -6087,8 +6414,16 @@ async function startBattle(missionId, skipDialogue = false) {
     showToast('部隊が編成されていません');
     return;
   }
-  const mission = getMissionById(missionId);
-  if (!mission) return;
+  
+  let mission;
+  if (missionId === "TEMP_USER_STAGE") {
+      mission = tempUserStageMission;
+      if (!mission) return;
+  } else {
+      mission = getMissionById(missionId);
+  }
+  
+  if (!mission) { console.error("Mission not found", missionId); return; }
 
   playBgm('battle');
 
@@ -7496,6 +7831,19 @@ function checkWinLoss() {
         if (isFirstClear) {
             missionProgress.add(mission.id);
         }
+
+        // Post Result to API if User Stage
+        if (mission.isUserStage) {
+            // Fire and forget
+            const formData = new URLSearchParams();
+            formData.append('action', 'postResult');
+            formData.append('stageId', mission.rawStageId);
+            formData.append('isClear', 'true');
+            fetch(USER_STAGE_API_URL, { method:'POST', body:formData }).catch(e=>{});
+            
+            // Prompt for Comment
+            setTimeout(() => openStageComments(mission.rawStageId), 1000); // Open comments after victory screen closed? Or maybe just suggest it
+        }
         
         // Add this block for tower progress
         if (mission.isTower) {
@@ -8844,7 +9192,7 @@ function closeVictoryModal() {
 // ここではGoogle Apps Script (GAS) をバックエンドとして利用する想定のコード記述します。
 // 自分のGASウェブアプリのURLをここに設定してください。
 // ※ここに先ほどコピーしたURLを貼り付けてください！
-const RANKING_API_URL = "https://script.google.com/macros/s/AKfycby_dOCyA8yHKypJO3xgKER33tDkMXfbXsycsSaMcLPHoa18RzKVzhShQQapC54n4kEw/exec"; 
+const RANKING_API_URL = USER_STAGE_API_URL; // 共通化
 
 async function fetchTowerRanking() {
   if (!RANKING_API_URL) {
@@ -8946,6 +9294,79 @@ async function showTowerRanking() {
 
 function closeRankingModal(e) { if(e.target.id === 'rankingOverlay') closeRankingModalDirect(); }
 function closeRankingModalDirect() { document.getElementById('rankingOverlay').classList.remove('open'); }
+
+async function toggleStageHeart(stageId) {
+    const formData = new URLSearchParams();
+    formData.append('action', 'toggleHeart');
+    formData.append('stageId', stageId);
+    formData.append('playerId', playerState.playerId);
+    
+    try {
+        const res = await fetch(USER_STAGE_API_URL, {method:'POST', body:formData});
+        const json = await res.json();
+        if (json.status === 'already_hearted') {
+            showToast('すでにハートを送っています');
+        } else {
+            showToast('ハートを送りました！ (報酬UP!)');
+            // Optimistic update
+            const stage = cachedUserStages.find(s => s.id == stageId);
+            if(stage) { stage.hearts++; stage.isLiked = true; }
+            renderUserStagesPage(); // refresh stats
+        }
+    } catch(e) { showToast('通信エラー'); }
+}
+
+let currentCommentStageId = null;
+function openStageComments(stageId) {
+    currentCommentStageId = stageId;
+    const stage = cachedUserStages.find(s => s.id == stageId);
+    if(!stage) return;
+    const comments = stage.comments || [];
+    
+    const list = document.getElementById('commentsList');
+    list.innerHTML = '';
+    
+    if (comments.length === 0) {
+        list.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:1rem;">コメントはまだありません。</div>';
+    } else {
+        comments.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'comment-item';
+            div.innerHTML = `
+                <div class="comment-header"><span>${c.name}</span><span>${new Date(c.date).toLocaleDateString()}</span></div>
+                <div class="comment-text">${c.text}</div>
+            `;
+            list.appendChild(div);
+        });
+    }
+    document.getElementById('commentsOverlay').classList.add('open');
+}
+
+function closeCommentsModal(e) { if(e.target.id==='commentsOverlay') closeCommentsModalDirect(); }
+function closeCommentsModalDirect() { document.getElementById('commentsOverlay').classList.remove('open'); currentCommentStageId = null; }
+
+function submitComment() {
+    if (!currentCommentStageId) return;
+    const input = document.getElementById('newCommentInput');
+    const comment = input.value.trim();
+    if (comment) {
+        if (comment.length > 50) { showToast('50字以内で入力してください'); return; }
+        const formData = new URLSearchParams();
+        formData.append('action', 'postComment');
+        formData.append('stageId', currentCommentStageId);
+        formData.append('playerId', playerState.playerId);
+        formData.append('playerName', playerState.playerName);
+        formData.append('comment', comment);
+        
+        fetch(USER_STAGE_API_URL, {method:'POST', body:formData})
+            .then(() => { 
+                showToast('コメントしました'); 
+                input.value = '';
+                closeCommentsModalDirect();
+                renderUserStagesPage(); // Reload to fetch new comment
+            });
+    }
+}
 
 // ===== NAME ENTRY =====
 function openNameEntryModal(isInitial = false) {
