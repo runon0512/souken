@@ -2692,6 +2692,10 @@
     <div class="hstat-label" style="margin-right:8px">虹石</div>
     <div class="hstat-val" style="color:var(--gold)" id="resRainbow">0</div>
   </div>
+  <button class="notification-btn" onclick="openNotificationModal()" title="通知">
+    🔔
+    <div class="notification-badge" id="notificationBadge"></div>
+  </button>
   <div class="header-stats">
     <div class="hstat">
       <div class="hstat-label">COMMANDER</div>
@@ -2980,6 +2984,34 @@
   .comment-header span:first-child { font-weight: bold; color: var(--text-mid); }
   .comment-text { font-size: 0.8rem; line-height: 1.5; }
 
+  /* NOTIFICATION STYLES */
+  .notification-btn {
+    background: transparent; border: none; color: var(--text-dim);
+    font-size: 1.5rem; cursor: pointer; position: relative;
+    margin-right: 1.5rem; transition: color 0.2s;
+  }
+  .notification-btn:hover { color: var(--text-main); }
+  .notification-badge {
+    position: absolute; top: -2px; right: -2px; width: 10px; height: 10px;
+    background: var(--accent2); border-radius: 50%; border: 2px solid var(--bg-deep);
+    display: none;
+  }
+  .notification-badge.active { display: block; }
+  
+  .notification-list {
+    display: flex; flex-direction: column; gap: 0.5rem;
+    max-height: 25rem; overflow-y: auto;
+  }
+  .notification-item {
+    background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+    padding: 0.75rem; border-radius: 4px; font-size: 0.8rem;
+    display: flex; flex-direction: column; gap: 0.25rem;
+  }
+  .notification-item.new { border-left: 3px solid var(--accent2); background: rgba(255,107,53,0.05); }
+  .notif-date { font-size: 0.65rem; color: var(--text-dim); text-align: right; }
+  .notif-text { color: var(--text-main); line-height: 1.4; }
+  .notif-text strong { color: var(--accent); }
+
   /* STAGE EDITOR */
   .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; height: 100%; }
   .editor-col { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; max-height: 60vh; }
@@ -3235,6 +3267,19 @@
         <input type="text" id="newCommentInput" class="post-input" placeholder="コメントを入力 (50字以内)" maxlength="50">
         <button class="modal-add-btn" style="margin-top: 0.5rem;" onclick="submitComment()">送信</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION MODAL -->
+<div class="modal-overlay" id="notificationOverlay" onclick="closeNotificationModal(event)">
+  <div class="modal" id="notificationBox" style="width: 30rem;">
+    <div class="modal-header">
+      <div class="modal-title">通知</div>
+      <button class="modal-close" onclick="closeNotificationModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="notification-list" id="notificationList"></div>
     </div>
   </div>
 </div>
@@ -4782,6 +4827,8 @@ let playerState = {
   towerProgress: 0,
   playerName: "名無しの剣士",
   playerId: null, // Will be generated
+  notifications: [], // { id, text, date, read }
+  stageStats: {}, // { stageId: { hearts: 0, comments: 0 } }
 };
 
 function getEnhancedEquipName(item, enhancement) {
@@ -6486,7 +6533,7 @@ async function renderUserStagesPage(forceReload = false) {
             const isCleared = missionProgress.has("user_" + stage.id);
             
             // Reward Calculation: Total Power
-            const rewardVal = totalPower;
+            const rewardVal = Math.min(totalPower, 100000);
             
             let fieldBadge = '';
             if (fieldEffectP !== 'none' || fieldEffectE !== 'none') {
@@ -7088,7 +7135,7 @@ async function startUserStageBattle(stageId) {
         description: stage.description,
         enemies: enemies,
         recommendedPower: 0, // calc later
-        reward: Math.max(100, Math.floor(rewardVal * 0.1)),
+        reward: Math.min(10000, Math.max(100, Math.floor(rewardVal * 0.1))), // Cap repeatable reward too
         firstTimeReward: rewardVal,
         isUserStage: true,
         rawStageId: stage.id,
@@ -7101,15 +7148,6 @@ async function startUserStageBattle(stageId) {
     // We need to modify startBattle to accept an object OR find a way to register it.
     // Modification: Set a global temp variable
     tempUserStageMission = mission;
-
-    // 挑戦数をカウントアップ (postPlay)
-    const formData = new URLSearchParams();
-    formData.append('action', 'postPlay');
-    formData.append('stageId', stage.id);
-    fetch(USER_STAGE_API_URL, { method:'POST', body:formData }).catch(e=>{});
-
-    // Optimistic update
-    stage.plays = (stage.plays || 0) + 1;
 
     startBattle("TEMP_USER_STAGE");
 }
@@ -7218,7 +7256,8 @@ async function startBattle(missionId, skipDialogue = false) {
     damageDealt: {}, // MVP計算用
     fieldEffectPlayer: mission.fieldEffectPlayer || mission.fieldEffect || 'none',
     fieldEffectEnemy: mission.fieldEffectEnemy || mission.fieldEffect || 'none',
-    bgId: mission.bgId || 'default'
+    bgId: mission.bgId || 'default',
+    playCounted: false // Track play count
   };
   battleState.isStarted = false;
 
@@ -7254,6 +7293,21 @@ async function startBattle(missionId, skipDialogue = false) {
   if (battleContainer) {
       battleContainer.style.background = bgData.css;
   }
+  
+  // Apply Field Visuals
+  const pTeamEl = document.getElementById('playerTeam');
+  const eTeamEl = document.getElementById('enemyTeam');
+  
+  // Reset previous visuals if any (though innerHTML wipes them usually, better safe)
+  // We wrap teams in a container relative? No, battle-team is flex item.
+  // Let's modify renderBattleUnits to include a visual layer or add it to battle-field
+  // Easier: add/remove classes or elements to #playerTeam / #enemyTeam
+  pTeamEl.style.position = 'relative';
+  eTeamEl.style.position = 'relative';
+  
+  // We'll handle visuals in renderBattleUnits or just append overlays now
+  // Actually, appending now is fine, but renderBattleUnits wipes content.
+  // So let's update renderBattleUnits to preserve or re-add them.
 
   document.getElementById('battleOverlay').classList.add('open');
 }
@@ -7302,8 +7356,19 @@ function openBattleUnitModal(battleId) {
 function renderBattleUnits() {
   const playerTeam = document.getElementById('playerTeam');
   const enemyTeam = document.getElementById('enemyTeam');
-  playerTeam.innerHTML = battleState.playerUnits.map(u => renderUnit(u)).join('');
-  enemyTeam.innerHTML = battleState.enemyUnits.map(u => renderUnit(u)).join('');
+  
+  let pFieldHtml = '';
+  if (battleState.fieldEffectPlayer && battleState.fieldEffectPlayer !== 'none') {
+      pFieldHtml = `<div class="field-visual-overlay field-${battleState.fieldEffectPlayer}"></div>`;
+  }
+  
+  let eFieldHtml = '';
+  if (battleState.fieldEffectEnemy && battleState.fieldEffectEnemy !== 'none') {
+      eFieldHtml = `<div class="field-visual-overlay field-${battleState.fieldEffectEnemy}"></div>`;
+  }
+
+  playerTeam.innerHTML = pFieldHtml + battleState.playerUnits.map(u => renderUnit(u)).join('');
+  enemyTeam.innerHTML = eFieldHtml + battleState.enemyUnits.map(u => renderUnit(u)).join('');
 }
 
 function renderUnit(unit) {
@@ -7580,6 +7645,19 @@ async function runBattleSequence() {
   document.getElementById('retireBattleBtn').disabled = true; // Disable during sequence execution to prevent race conditions
   document.getElementById('closeBattleBtn').disabled = true;
   logBattleMessage(`<span class="info">戦闘開始！</span>`);
+
+  // Play Count Increment (Once per battle start)
+  if (battleState.mission.isUserStage && !battleState.playCounted) {
+      battleState.playCounted = true;
+      const formData = new URLSearchParams();
+      formData.append('action', 'postPlay');
+      formData.append('stageId', battleState.mission.rawStageId);
+      fetch(USER_STAGE_API_URL, { method: 'POST', body: formData }).catch(e => console.error(e));
+      
+      // Optimistic update if we have the stage in cache
+      const stage = cachedUserStages.find(s => s.id == battleState.mission.rawStageId);
+      if (stage) stage.plays = (stage.plays || 0) + 1;
+  }
 
   // Reset passive flags for re-battles
   battleState.playerUnits.forEach(u => {
@@ -10097,7 +10175,7 @@ function openStageComments(stageId) {
 function closeCommentsModal(e) { if(e.target.id==='commentsOverlay') closeCommentsModalDirect(); }
 function closeCommentsModalDirect() { document.getElementById('commentsOverlay').classList.remove('open'); currentCommentStageId = null; }
 
-function submitComment() {
+async function submitComment() {
     if (!currentCommentStageId) return;
     const input = document.getElementById('newCommentInput');
     const comment = input.value.trim();
@@ -10110,13 +10188,22 @@ function submitComment() {
         formData.append('playerName', playerState.playerName);
         formData.append('comment', comment);
         
-        fetch(USER_STAGE_API_URL, {method:'POST', body:formData})
-            .then(() => { 
-                showToast('コメントしました'); 
-                input.value = '';
-                closeCommentsModalDirect();
-                renderUserStagesPage(); // Reload to fetch new comment
-            });
+        const btn = document.querySelector('#commentsBox .modal-add-btn');
+        btn.disabled = true;
+        btn.textContent = '送信中...';
+        
+        try {
+            await fetch(USER_STAGE_API_URL, {method:'POST', body:formData});
+            showToast('コメントしました'); 
+            input.value = '';
+            await renderUserStagesPage(true); // Force reload stages to get new comment
+            openStageComments(currentCommentStageId); // Refresh the open modal
+        } catch(e) {
+            showToast('送信エラー');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '送信';
+        }
     }
 }
 
@@ -10164,6 +10251,107 @@ function submitNameChange() {
   }
 }
 
+// ===== NOTIFICATIONS =====
+async function checkNotifications() {
+    if (!playerState.playerId) return;
+    
+    // Initialize stage stats if new
+    if (!playerState.stageStats) playerState.stageStats = {};
+    if (!playerState.notifications) playerState.notifications = [];
+
+    try {
+        const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId);
+        const stages = await response.json();
+        
+        // Filter my stages
+        const myStages = stages.filter(s => s.creatorId === playerState.playerId);
+        
+        let hasChanges = false;
+        const isFirstRun = Object.keys(playerState.stageStats).length === 0;
+
+        myStages.forEach(stage => {
+            const prev = playerState.stageStats[stage.id] || { hearts: 0, comments: 0 };
+            const currentComments = stage.comments || [];
+            
+            // Check Hearts
+            if (!isFirstRun && stage.hearts > prev.hearts) {
+                const diff = stage.hearts - prev.hearts;
+                addNotification(`あなたのステージ「<strong>${stage.name}</strong>」にハートが送られました！ (+${diff})`);
+                hasChanges = true;
+            }
+            
+            // Check Comments
+            if (!isFirstRun && currentComments.length > prev.comments) {
+                const newComments = currentComments.slice(prev.comments);
+                newComments.forEach(c => {
+                    addNotification(`「<strong>${stage.name}</strong>」に <strong>${c.name}</strong> からコメントがありました。<br>"${c.text}"`);
+                });
+                hasChanges = true;
+            }
+            
+            // Update Stats
+            playerState.stageStats[stage.id] = {
+                hearts: stage.hearts,
+                comments: currentComments.length
+            };
+        });
+
+        if (isFirstRun) {
+            saveGame(); // Just save the initial state
+        } else if (hasChanges) {
+            saveGame();
+            updateNotificationBadge();
+            showToast('新着通知があります');
+        }
+        
+    } catch (e) {
+        console.error('Notification check failed', e);
+    }
+}
+
+function addNotification(text) {
+    playerState.notifications.unshift({
+        id: Date.now() + Math.random(),
+        text: text,
+        date: new Date().toISOString(),
+        read: false
+    });
+    // Keep only last 20
+    if (playerState.notifications.length > 20) {
+        playerState.notifications.pop();
+    }
+}
+
+function updateNotificationBadge() {
+    const badge = document.getElementById('notificationBadge');
+    const hasUnread = playerState.notifications.some(n => !n.read);
+    if (hasUnread) badge.classList.add('active');
+    else badge.classList.remove('active');
+}
+
+function openNotificationModal() {
+    const list = document.getElementById('notificationList');
+    list.innerHTML = playerState.notifications.length === 0 ? '<div style="text-align:center; color:var(--text-dim); padding:1rem;">通知はありません</div>' : '';
+    
+    playerState.notifications.forEach(n => {
+        const item = document.createElement('div');
+        item.className = `notification-item ${!n.read ? 'new' : ''}`;
+        item.innerHTML = `
+            <div class="notif-text">${n.text}</div>
+            <div class="notif-date">${new Date(n.date).toLocaleString()}</div>
+        `;
+        list.appendChild(item);
+        n.read = true; // Mark as read on open
+    });
+    
+    updateNotificationBadge();
+    saveGame();
+    document.getElementById('notificationOverlay').classList.add('open');
+}
+
+function closeNotificationModal(e) { if(e.target.id==='notificationOverlay') closeNotificationModalDirect(); }
+function closeNotificationModalDirect() { document.getElementById('notificationOverlay').classList.remove('open'); }
+
 // ===== TOWER REWARDS =====
 function checkAndGrantTowerRewards(currentFloor, showToasts = false) {
     const rewards = {
@@ -10200,6 +10388,9 @@ function initializeGame() {
         // Use a timeout to let the main UI render first
         setTimeout(triggerLoginBonus, 500);
     }
+    
+    // Check notifications on startup
+    setTimeout(checkNotifications, 1000);
 
     // ログイン時のタワー報酬チェック
     const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
@@ -10236,6 +10427,8 @@ function initializeGame() {
     document.addEventListener('click', tryPlayAudio);
     document.addEventListener('touchstart', tryPlayAudio);
     document.addEventListener('keydown', tryPlayAudio);
+
+    updateNotificationBadge();
 
     // 初回名前入力案内
     if (playerState.playerName === "名無しの剣士") {
