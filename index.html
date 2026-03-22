@@ -2979,25 +2979,245 @@
   }
   .comment-header span:first-child { font-weight: bold; color: var(--text-mid); }
   .comment-text { font-size: 0.8rem; line-height: 1.5; }
+
+  /* STAGE EDITOR */
+  .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; height: 100%; }
+  .editor-col { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; max-height: 60vh; }
+  .enemy-slot-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .enemy-slot-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 0.5rem; border-radius: 4px;
+    cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .enemy-slot-item:hover { border-color: var(--accent); background: rgba(0,200,255,0.1); }
+  .enemy-slot-item.empty { border-style: dashed; justify-content: center; color: var(--text-dim); }
+  .enemy-slot-img { width: 3rem; height: 3rem; object-fit: cover; border-radius: 4px; background: #000; }
+  .enemy-slot-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .enemy-slot-name { font-weight: bold; font-size: 0.9rem; }
+  .enemy-slot-detail { font-size: 0.7rem; color: var(--text-mid); display: flex; gap: 0.5rem; align-items: center;}
+  .enemy-remove-btn {
+    position: absolute; right: 0.5rem; top: 0.5rem;
+    background: rgba(255,0,0,0.2); border: 1px solid var(--accent2); color: var(--accent2);
+    width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.8rem;
+  }
+
+  .field-select-btn {
+    padding: 0.75rem; border: 1px solid var(--border); background: rgba(0,0,0,0.3);
+    color: var(--text-main); text-align: left; width: 100%; border-radius: 4px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .field-select-btn:hover { border-color: var(--accent); }
+
+  .unit-selector-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr)); gap: 0.5rem;
+    max-height: 20rem; overflow-y: auto; padding: 0.5rem;
+  }
+  .unit-selector-item {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;
+    cursor: pointer; transition: transform 0.1s; position: relative;
+  }
+  .unit-selector-item:hover { transform: scale(1.05); border-color: var(--accent); z-index: 10; }
+  .unit-selector-item img { width: 100%; height: auto; display: block; border-radius: 3px; }
+  .unit-selector-id { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.7); font-size: 0.6rem; padding: 1px 3px; color: var(--text-dim); }
+
+  .draft-stage-item {
+    border: 1px solid var(--border); padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 4px;
+    background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;
+  }
+  .draft-status { font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; margin-left: 0.5rem; }
+  .draft-status.cleared { background: var(--accent3); color: #000; font-weight: bold; }
+  .draft-status.draft { background: var(--text-dim); color: #fff; }
+
+  /* VISUAL EDITOR STYLES */
+  .editor-scene {
+    flex: 1; display: flex; flex-direction: column; gap: 1rem;
+    background: #0d1520; border: 1px solid var(--border); border-radius: 0.5rem;
+    position: relative; overflow: hidden; padding: 1rem;
+    transition: background 0.3s;
+  }
+  .editor-field-controls {
+    display: flex; justify-content: space-between; align-items: center; z-index: 5; position: relative;
+    background: rgba(0,0,0,0.6); padding: 0.5rem; border-radius: 0.5rem;
+  }
+  .editor-team-container {
+    flex: 1; display: flex; justify-content: center; align-items: center; gap: 1rem; z-index: 5;
+  }
+  .editor-unit-slot {
+    width: 8rem; height: 11rem; /* Smaller than battle unit */
+    border: 1px dashed var(--border); border-radius: 0.5rem;
+    background: rgba(0,0,0,0.2); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .editor-unit-slot:hover { border-color: var(--accent); background: rgba(0,200,255,0.1); }
+  .editor-unit-slot.filled { border-style: solid; background: var(--bg-card); }
+  
+  .editor-plus-sign { font-size: 2rem; color: var(--text-dim); }
+  .editor-slot-img { width: 100%; height: 60%; object-fit: cover; background: #000; }
+  .editor-slot-info { padding: 0.25rem; width: 100%; font-size: 0.7rem; text-align: center; color: var(--text-main); }
+  .editor-remove-btn {
+    position: absolute; top: 2px; right: 2px; width: 1.25rem; height: 1.25rem;
+    background: rgba(255,0,0,0.8); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; z-index: 10;
+    font-size: 0.8rem;
+  }
+  .editor-step-2 { display: none; }
+  .editor-step-2.active { display: block; }
+  .editor-step-1 { height: 100%; display: flex; flex-direction: column; }
+  .editor-step-1.hidden { display: none; }
+  .editor-step-3 { display: none; }
+  .editor-step-3.active { display: block; }
+  
+  .editor-equip-btn {
+    width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; justify-content: center; margin-top: 0.5rem;
+  }
 </style>
 
 <!-- POST STAGE MODAL -->
-<div class="modal-overlay" id="postStageOverlay" onclick="closePostStageModal(event)">
-  <div class="modal" id="postStageBox" style="width: 30rem;">
+<!-- Replaced with a more advanced Stage Editor -->
+<div class="modal-overlay" id="stageEditorOverlay">
+  <div class="modal" id="stageEditorBox" style="width: 60rem; max-width: 95%; height: 80vh; display: flex; flex-direction: column;">
     <div class="modal-header">
-      <div class="modal-title">ステージ投稿</div>
-      <button class="modal-close" onclick="closePostStageModalDirect()">✕</button>
+      <div class="modal-title">ステージエディタ</div>
+      <button class="modal-close" onclick="closeStageEditor()">✕</button>
+    </div>
+    <div class="modal-body" style="flex: 1; overflow: hidden; padding: 1rem;">
+      
+      <!-- STEP 1: VISUAL EDITOR -->
+      <div id="editorStep1" class="editor-step-1">
+        <div class="editor-scene" id="editorScenePreview">
+           <div class="editor-field-controls">
+              <div style="flex:1; margin-right:0.5rem;">
+                 <label style="font-size:0.7rem; color:var(--text-dim);">味方側フィールド</label>
+                 <select id="editorFieldPlayer" class="post-input" style="margin:0; padding:0.4rem; font-size:0.8rem;"></select>
+                 <div id="fieldDescPlayer" style="font-size: 0.6rem; color: var(--accent); margin-top: 2px; height: 1em; overflow:hidden;"></div>
+              </div>
+              <div style="flex:1; margin-right:0.5rem;">
+                 <label style="font-size:0.7rem; color:var(--text-dim);">敵側フィールド</label>
+                 <select id="editorFieldEnemy" class="post-input" style="margin:0; padding:0.4rem; font-size:0.8rem;"></select>
+                 <div id="fieldDescEnemy" style="font-size: 0.6rem; color: var(--accent2); margin-top: 2px; height: 1em; overflow:hidden;"></div>
+              </div>
+              <div style="flex:1;">
+                 <label style="font-size:0.7rem; color:var(--text-dim);">背景</label>
+                 <select id="editorBackground" class="post-input" style="margin:0; padding:0.4rem; font-size:0.8rem;">
+                    <!-- Populated JS -->
+                 </select>
+              </div>
+           </div>
+           
+           <div style="text-align:center; margin-top:1rem; color:var(--text-dim); font-size:0.8rem;">↓ 敵部隊編成 (最大5体) ↓</div>
+           <div class="editor-team-container" id="editorVisualSlots">
+              <!-- Slots injected here -->
+           </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: DETAILS -->
+      <div id="editorStep2" class="editor-step-2">
+          <div class="section-title">ステージ情報</div>
+          <input type="text" id="editorStageName" class="post-input" placeholder="ステージ名 (必須)" maxlength="20">
+          <textarea id="editorStageDesc" class="post-input" placeholder="ステージ概要 (100字以内)" maxlength="100" style="height:4rem; resize:none;"></textarea>
+      </div>
+
+      <!-- STEP 3: CONFIRM & ACTIONS -->
+      <div id="editorStep3" class="editor-step-3">
+          <div class="section-title">公開設定</div>
+          <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+             <div style="font-weight:bold; margin-bottom:0.5rem;" id="confirmStageName">-</div>
+             <div style="font-size:0.8rem; color:var(--text-mid); margin-bottom:0.5rem;" id="confirmStageDesc">-</div>
+             <div style="font-size:0.75rem; color:var(--text-dim);" id="confirmStageConfig">-</div>
+          </div>
+          
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+             <div style="font-size:0.9rem; color:var(--text-dim); margin-bottom:0.5rem; text-align:center;">クリア状況: <span id="editorStatusBadge" class="draft-status draft" style="font-size:1rem;">未クリア</span></div>
+             <p style="font-size:0.75rem; color:var(--text-mid); text-align:center;">※公開するには「テストプレイ」で勝利する必要があります。</p>
+             <div style="text-align:center; margin-top:1rem;"><button class="mission-btn" style="width:auto; padding:0.8rem 2rem; font-size:1.1rem; background:rgba(0,200,255,0.2);" onclick="startClearCheck()">テストプレイ (クリアチェック)</button></div>
+          </div>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="display: flex; gap: 1rem; justify-content: space-between;">
+      <div>
+        <button class="mission-btn" style="background:transparent; border-color:var(--text-dim); color:var(--text-dim); width:auto;" onclick="saveDraftStage()">下書き保存</button>
+      </div>
+      <div style="display:flex; gap: 1rem;">
+        <button class="mission-btn" id="editorPrevBtn" onclick="editorPrevStep()" style="display:none; width:auto;">戻る</button>
+        <button class="mission-btn" id="editorNextBtn" onclick="editorNextStep()" style="width:auto;">次へ</button>
+        <button class="mission-btn" id="btnPublishStage" onclick="publishStage()" disabled style="display:none; width:auto; opacity:0.5;">公開する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UNIT SELECTOR MODAL (FOR EDITOR) -->
+<div class="modal-overlay" id="unitSelectorOverlay">
+  <div class="modal" style="width: 40rem; height: 70vh; display:flex; flex-direction:column;">
+    <div class="modal-header">
+      <div class="modal-title">キャラクター選択</div>
+      <button class="modal-close" onclick="closeUnitSelector()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0.5rem;">
+      <input type="text" id="unitSelectorSearch" class="post-input" placeholder="検索..." oninput="renderUnitSelector()" style="margin-bottom:0.5rem;">
+      <div class="unit-selector-grid" id="unitSelectorGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ENEMY SETTING MODAL -->
+<div class="modal-overlay" id="enemySettingOverlay">
+  <div class="modal" style="width: 20rem;">
+    <div class="modal-header">
+      <div class="modal-title">敵詳細設定</div>
+      <button class="modal-close" onclick="closeEnemySetting()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="post-stage-form">
-        <p style="font-size:0.8rem; color:var(--text-mid);">現在の編成を敵部隊として投稿します。</p>
-        <input type="text" id="postStageName" class="post-input" placeholder="ステージ名" maxlength="20">
-        <textarea id="postStageDesc" class="post-input" placeholder="ステージ概要 (100字以内)" maxlength="100" style="height:5rem; resize:none;"></textarea>
-        <div style="font-size:0.75rem; color:var(--text-dim); text-align:right;">投稿者: <span id="postCreatorName"></span></div>
+      <div style="text-align:center; margin-bottom:1rem;">
+        <img id="enemySettingImg" src="" style="height:5rem; margin-bottom:0.5rem;">
+        <div id="enemySettingName" style="font-weight:bold;"></div>
+      </div>
+      
+      <label style="font-size:0.8rem; color:var(--text-mid); display:block; margin-bottom:0.25rem;">レベル</label>
+      <input type="number" id="enemySettingLevel" min="1" value="50" class="post-input" style="font-family:'Orbitron'; font-weight:bold; color:var(--accent);">
+      
+      <div style="margin-top:1rem;">
+        <label style="font-size:0.8rem; color:var(--text-mid);">オーラ設定</label>
+        <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
+                <input type="radio" name="enemyAuraType" value="auto" checked onchange="toggleEnemyAuraSetting()">
+                <span style="font-size:0.8rem;">自動 (レベル依存)</span>
+            </label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
+                <input type="radio" name="enemyAuraType" value="boss" onchange="toggleEnemyAuraSetting()">
+                <span style="font-size:0.8rem; color:var(--accent2);">ボスオーラ</span>
+            </label>
+        </div>
+      </div>
+
+      <div style="margin-top:1rem;">
+        <label style="font-size:0.8rem; color:var(--text-mid);">装備</label>
+        <div id="enemySettingEquipDisplay" class="editor-equip-btn" onclick="openEditorEquipSelect()">
+           <span>装備なし</span>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="modal-add-btn" onclick="submitUserStage()">投稿する</button>
+      <button class="modal-add-btn" onclick="applyEnemySetting()">決定</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDITOR EQUIP SELECT MODAL -->
+<div class="modal-overlay" id="editorEquipOverlay" style="z-index: 300;">
+  <div class="modal" style="width: 25rem; max-height:80%;">
+    <div class="modal-header">
+      <div class="modal-title">装備選択</div>
+      <button class="modal-close" onclick="document.getElementById('editorEquipOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="equip-grid" id="editorEquipGrid" style="grid-template-columns: 1fr; gap: 0.5rem;">
+         <!-- Populated via JS -->
+      </div>
     </div>
   </div>
 </div>
@@ -4577,7 +4797,7 @@ let squad = []; // ids
 let currentView = 'roster';
 let currentFilter = 'all';
 let searchQuery = '';
-let currentSort = 'power';
+let currentSort = 'id';
 let modalCharId = null;
 let missionProgress = new Set(); // Cleared mission IDs
 let currentStoryTab = 'main';
@@ -4595,6 +4815,24 @@ let currentGachaResults = null;
 
 let battleState = {};
 let battleSpeedMultiplier = 2;
+
+const FIELD_EFFECTS = [
+    { id: 'none', name: 'なし', desc: '効果なし' },
+    { id: 'miasma', name: '瘴気', desc: 'ターン開始時、毒を受ける。' },
+    { id: 'heavy_gravity', name: '重力場', desc: '速度が半減する。' },
+    { id: 'berserk', name: '狂戦士', desc: '攻撃力1.5倍、防御力半減。' },
+    { id: 'lightning_storm', name: '雷雲', desc: 'ターン開始時、20%で麻痺。' },
+    { id: 'anti_magic', name: '封魔', desc: 'スキル発動率が半減。' },
+    { id: 'heal_reverse', name: '反転世界', desc: '回復効果がダメージになる。' },
+];
+
+const STAGE_BACKGROUNDS = [
+    { id: 'default', name: '標準', css: 'var(--bg-mid)' },
+    { id: 'volcano', name: '火山', css: 'linear-gradient(to bottom, #330000, #110000)' },
+    { id: 'sea', name: '深海', css: 'linear-gradient(to bottom, #000033, #000011)' },
+    { id: 'forest', name: '森林', css: 'linear-gradient(to bottom, #001100, #003300)' },
+    { id: 'sky', name: '天空', css: 'linear-gradient(to bottom, #003366, #87CEEB)' },
+];
 
 let userStageAbortController = null;
 
@@ -6146,11 +6384,37 @@ async function renderUserStagesPage(forceReload = false) {
     }
 
     // Post Button & Reload Button
+    // Drafts Section
+    const drafts = loadDraftStages();
+    
     const postBtnContainer = document.createElement('div');
-    postBtnContainer.style.cssText = 'grid-column: 1 / -1; margin-bottom: 1rem; display: flex; gap: 0.5rem;';
+    postBtnContainer.style.cssText = 'grid-column: 1 / -1; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem;';
+    
+    let draftsHtml = '';
+    if (drafts.length > 0) {
+        draftsHtml = `<div style="background:var(--bg-card); padding:0.5rem; border-radius:4px; border:1px solid var(--border); margin-bottom:0.5rem;">
+            <div style="font-size:0.8rem; color:var(--text-mid); margin-bottom:0.5rem;">下書きステージ</div>
+            ${drafts.map((d, i) => `
+                <div class="draft-stage-item">
+                    <div style="flex:1;">
+                        <span style="font-weight:bold;">${d.name || '名称未設定'}</span>
+                        <span class="draft-status ${d.cleared ? 'cleared' : 'draft'}">${d.cleared ? 'クリア済' : '未クリア'}</span>
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="sort-btn" onclick="loadDraftToEditor(${i})">編集</button>
+                        <button class="sort-btn" onclick="deleteDraft(${i})" style="color:var(--accent2); border-color:var(--accent2);">削除</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
     postBtnContainer.innerHTML = `
+        ${draftsHtml}
+        <div style="display:flex; gap:0.5rem;">
         <button class="mission-btn" onclick="openPostStageModal()" style="flex:1; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>
         <button class="mission-btn" onclick="renderUserStagesPage(true)" style="width: 4rem; padding:1rem; font-size:1.5rem;" title="リストを更新">↻</button>
+        </div>
     `;
     
     try {
@@ -6191,13 +6455,28 @@ async function renderUserStagesPage(forceReload = false) {
         const sortedData = sortUserStages([...data]);
 
         sortedData.forEach(stage => {
-            const squadData = JSON.parse(stage.squadData);
+            let squadData;
+            let fieldEffectP = 'none';
+            let fieldEffectE = 'none';
+            let bgId = 'default';
+            try {
+                const parsed = JSON.parse(stage.squadData);
+                if (parsed.isCustom) {
+                    squadData = parsed.enemies;
+                    // Legacy support or new separate fields
+                    fieldEffectP = parsed.fieldEffectPlayer || parsed.fieldEffect || 'none';
+                    fieldEffectE = parsed.fieldEffectEnemy || parsed.fieldEffect || 'none';
+                    bgId = parsed.bgId || 'default';
+                } else {
+                    squadData = parsed; // Legacy format (array)
+                }
+            } catch(e) { squadData = []; }
+
             let totalPower = 0;
-            // Calculate Power roughly
             squadData.forEach(s => {
                 const u = units.find(unit => unit.id === s.id);
                 if (u) {
-                    const stats = calcStats(u.baseStats, s.level, null, s.potential||0);
+                    const stats = calcStats(u.baseStats, s.level, null, 0); // Enemy potential usu. 0
                     totalPower += stats.hp + stats.atk*2 + stats.def + stats.spd;
                 }
             });
@@ -6206,14 +6485,24 @@ async function renderUserStagesPage(forceReload = false) {
             const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
             const isCleared = missionProgress.has("user_" + stage.id);
             
-            // Reward Calculation: 5000 + (Hearts * 1000)
-            const rewardVal = 5000 + (stage.hearts * 1000);
+            // Reward Calculation: Total Power
+            const rewardVal = totalPower;
+            
+            let fieldBadge = '';
+            if (fieldEffectP !== 'none' || fieldEffectE !== 'none') {
+                let names = [];
+                const feP = FIELD_EFFECTS.find(f => f.id === fieldEffectP);
+                if (feP && feP.id !== 'none') names.push(`味:${feP.name}`);
+                const feE = FIELD_EFFECTS.find(f => f.id === fieldEffectE);
+                if (feE && feE.id !== 'none') names.push(`敵:${feE.name}`);
+                if (names.length > 0) fieldBadge = `<span style="font-size:0.7rem; background:var(--accent2); color:#000; padding:2px 4px; border-radius:3px; margin-left:0.5rem;">⚠️ ${names.join('/')}</span>`;
+            }
 
             const card = document.createElement('div');
             card.className = 'mission-card user-stage-list-item';
             card.innerHTML = `
                 <div class="user-stage-list-info">
-                    <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}</div>
+                    <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
                     <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
                     <div class="user-stage-meta-info">
                         <span>作成者: ${stage.creator}</span>
@@ -6258,35 +6547,367 @@ function setStageSort(sortType) {
     renderUserStagesPage();
 }
 
+// ===== STAGE EDITOR =====
+let currentEditingStage = {
+    name: '',
+    desc: '',
+    enemies: [], // { id, level, equippedId, aura }
+    fieldEffectPlayer: 'none',
+    fieldEffectEnemy: 'none',
+    cleared: false,
+    bgId: 'default'
+};
+let editingDraftIndex = null;
+
 function openPostStageModal() {
-    if (squad.length === 0) { showToast('部隊が編成されていません'); return; }
-    document.getElementById('postCreatorName').textContent = playerState.playerName;
-    document.getElementById('postStageOverlay').classList.add('open');
+    // Initialize new stage
+    currentEditingStage = {
+        name: '', desc: '', enemies: [], fieldEffectPlayer: 'none', fieldEffectEnemy: 'none', cleared: false, bgId: 'default'
+    };
+    // Copy current squad as initial (optional convenience)
+    // But user asked for specific placement, so maybe start empty or let them add
+    // Let's start empty to encourage custom building, or maybe just add 1 placeholder
+    editingDraftIndex = null;
+    openStageEditorUI();
 }
-function closePostStageModalDirect() { document.getElementById('postStageOverlay').classList.remove('open'); }
-function closePostStageModal(e) { if(e.target.id==='postStageOverlay') closePostStageModalDirect(); }
+
+function loadDraftToEditor(index) {
+    const drafts = loadDraftStages();
+    if (drafts[index]) {
+        currentEditingStage = JSON.parse(JSON.stringify(drafts[index]));
+        editingDraftIndex = index;
+        openStageEditorUI();
+    }
+}
+
+function openStageEditorUI() {
+    // Populate Field Effects
+    const pSelect = document.getElementById('editorFieldPlayer');
+    const eSelect = document.getElementById('editorFieldEnemy');
+    const opts = FIELD_EFFECTS.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+    
+    pSelect.innerHTML = opts;
+    eSelect.innerHTML = opts;
+    
+    pSelect.value = currentEditingStage.fieldEffectPlayer || 'none';
+    eSelect.value = currentEditingStage.fieldEffectEnemy || 'none';
+
+    pSelect.onchange = () => {
+        currentEditingStage.fieldEffectPlayer = pSelect.value;
+        currentEditingStage.cleared = false; // Reset clear status on change
+        updateEditorUI();
+    };
+    eSelect.onchange = () => {
+        currentEditingStage.fieldEffectEnemy = eSelect.value;
+        currentEditingStage.cleared = false; // Reset clear status on change
+        updateEditorUI();
+    };
+
+    // Populate Backgrounds
+    const bgSelect = document.getElementById('editorBackground');
+    bgSelect.innerHTML = STAGE_BACKGROUNDS.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+    bgSelect.value = currentEditingStage.bgId || 'default';
+    bgSelect.onchange = () => {
+        currentEditingStage.bgId = bgSelect.value;
+        updateEditorUI();
+    };
+
+    document.getElementById('editorStageName').value = currentEditingStage.name;
+    document.getElementById('editorStageDesc').value = currentEditingStage.desc;
+
+    // Reset to Step 1
+    document.getElementById('editorStep1').classList.remove('hidden');
+    document.getElementById('editorStep2').classList.remove('active');
+    document.getElementById('editorStep3').classList.remove('active');
+    
+    document.getElementById('editorPrevBtn').style.display = 'none';
+    document.getElementById('editorNextBtn').style.display = 'block';
+    document.getElementById('editorNextBtn').textContent = '次へ';
+    document.getElementById('editorNextBtn').onclick = editorNextStep;
+    document.getElementById('btnPublishStage').style.display = 'none';
+
+    updateEditorUI();
+    document.getElementById('stageEditorOverlay').classList.add('open');
+}
+
+function closeStageEditor() {
+    // Auto-save draft on close? Or confirm. Prompt says "概要を決めて..." implies structured flow.
+    if (confirm('エディタを閉じますか？編集中の内容は破棄されます（下書き保存をお勧めします）。')) {
+       document.getElementById('stageEditorOverlay').classList.remove('open');
+    }
+}
+
+function updateEditorUI() {
+    const statusBadge = document.getElementById('editorStatusBadge');
+    const btnPublish = document.getElementById('btnPublishStage');
+    
+    // Status Update
+    if (currentEditingStage.cleared) {
+        statusBadge.textContent = "クリア済 (公開可能)";
+        statusBadge.className = "draft-status cleared";
+        btnPublish.disabled = false;
+        btnPublish.style.opacity = 1;
+    } else {
+        statusBadge.textContent = "未クリア";
+        statusBadge.className = "draft-status draft";
+        btnPublish.disabled = true;
+        btnPublish.style.opacity = 0.5;
+    }
+
+    // Descriptions
+    const feP = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectPlayer);
+    document.getElementById('fieldDescPlayer').textContent = feP ? feP.desc : '';
+    const feE = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectEnemy);
+    document.getElementById('fieldDescEnemy').textContent = feE ? feE.desc : '';
+
+    // Update Visual Scene Background
+    const bgData = STAGE_BACKGROUNDS.find(b => b.id === (currentEditingStage.bgId || 'default')) || STAGE_BACKGROUNDS[0];
+    document.getElementById('editorScenePreview').style.background = bgData.css;
+
+    // Render Slots
+    const slotContainer = document.getElementById('editorVisualSlots');
+    slotContainer.innerHTML = '';
+    
+    // Fixed 5 slots
+    for (let i = 0; i < 5; i++) {
+        const enemy = currentEditingStage.enemies[i];
+        const slot = document.createElement('div');
+        slot.className = 'editor-unit-slot' + (enemy ? ' filled' : '');
+        
+        if (enemy) {
+            const unit = units.find(u => u.id === enemy.id);
+            const imgSrc = unit ? (unit.useImg ? unit.img : 'C0.svg') : '';
+            slot.innerHTML = `
+                <div class="editor-remove-btn" onclick="removeEditorEnemy(${i}); event.stopPropagation();">✕</div>
+                <img src="${imgSrc}" class="editor-slot-img">
+                <div class="editor-slot-info">
+                    <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${unit ? unit.name : '?'}</div>
+                    <div style="color:var(--accent); font-size:0.65rem;">Lv.${enemy.level}</div>
+                    ${enemy.equippedId ? '<div style="color:var(--gold); font-size:0.6rem;">🛡️装備有</div>' : ''}
+                </div>
+            `;
+            slot.onclick = () => openEnemySetting(i);
+        } else {
+            slot.innerHTML = `<div class="editor-plus-sign">＋</div><div style="font-size:0.7rem; color:var(--text-dim); margin-top:0.5rem;">追加</div>`;
+            slot.onclick = () => openUnitSelector(); // Append to end
+        }
+        slotContainer.appendChild(slot);
+    }
+}
+
+let editorCurrentStep = 1;
+
+function editorNextStep() {
+    if (editorCurrentStep === 1) {
+        if (currentEditingStage.enemies.length === 0) { showToast('敵を配置してください'); return; }
+        document.getElementById('editorStep1').classList.add('hidden');
+        document.getElementById('editorStep2').classList.add('active');
+        document.getElementById('editorPrevBtn').style.display = 'block';
+        editorCurrentStep = 2;
+    } else if (editorCurrentStep === 2) {
+        currentEditingStage.name = document.getElementById('editorStageName').value.trim();
+        currentEditingStage.desc = document.getElementById('editorStageDesc').value.trim();
+        if (!currentEditingStage.name) { showToast('ステージ名を入力してください'); return; }
+        
+        document.getElementById('editorStep2').classList.remove('active');
+        document.getElementById('editorStep3').classList.add('active');
+        
+        // Setup Step 3 UI
+        document.getElementById('confirmStageName').textContent = currentEditingStage.name;
+        document.getElementById('confirmStageDesc').textContent = currentEditingStage.desc || '(概要なし)';
+        const feP = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectPlayer)?.name || 'なし';
+        const feE = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectEnemy)?.name || 'なし';
+        const bgName = STAGE_BACKGROUNDS.find(b => b.id === currentEditingStage.bgId)?.name || '標準';
+        document.getElementById('confirmStageConfig').innerHTML = `敵:${currentEditingStage.enemies.length}体 / 味方効果:${feP} / 敵効果:${feE} / 背景:${bgName}`;
+
+        document.getElementById('editorNextBtn').style.display = 'none';
+        document.getElementById('btnPublishStage').style.display = 'block';
+        
+        editorCurrentStep = 3;
+    }
+}
+function editorPrevStep() {
+    if (editorCurrentStep === 2) {
+        document.getElementById('editorStep1').classList.remove('hidden');
+        document.getElementById('editorStep2').classList.remove('active');
+        document.getElementById('editorPrevBtn').style.display = 'none';
+        editorCurrentStep = 1;
+    } else if (editorCurrentStep === 3) {
+        document.getElementById('editorStep3').classList.remove('active');
+        document.getElementById('editorStep2').classList.add('active');
+        document.getElementById('editorNextBtn').style.display = 'block';
+        document.getElementById('btnPublishStage').style.display = 'none';
+        editorCurrentStep = 2;
+    }
+}
+
+function openUnitSelector() {
+    if (currentEditingStage.enemies.length >= 5) { showToast('これ以上配置できません'); return; }
+    document.getElementById('unitSelectorOverlay').classList.add('open');
+    document.getElementById('unitSelectorSearch').value = '';
+    renderUnitSelector();
+}
+function closeUnitSelector() { document.getElementById('unitSelectorOverlay').classList.remove('open'); }
+
+function renderUnitSelector() {
+    const q = document.getElementById('unitSelectorSearch').value.toLowerCase();
+    const grid = document.getElementById('unitSelectorGrid');
+    grid.innerHTML = '';
+    
+    // All units including enemies (Only with images)
+    const filtered = units.filter(u => (!q || u.name.toLowerCase().includes(q)) && u.useImg);
+    
+    filtered.forEach(u => {
+        const div = document.createElement('div');
+        div.className = 'unit-selector-item';
+        div.innerHTML = `<img src="${u.useImg ? u.img : 'C0.svg'}"><div class="unit-selector-id">${u.id}</div>`;
+        div.onclick = () => {
+            addEditorEnemy(u.id);
+            closeUnitSelector();
+        };
+        grid.appendChild(div);
+    });
+}
+
+function addEditorEnemy(id) {
+    currentEditingStage.enemies.push({ id: id, level: 50, equippedId: null, aura: 0 });
+    currentEditingStage.cleared = false;
+    updateEditorUI();
+}
+function removeEditorEnemy(idx) {
+    currentEditingStage.enemies.splice(idx, 1);
+    currentEditingStage.cleared = false;
+    updateEditorUI();
+}
+
+let editingEnemyIndex = -1;
+let tempEditingEnemy = null; // Temporary hold changes
+
+function openEnemySetting(idx) {
+    editingEnemyIndex = idx;
+    const enemy = currentEditingStage.enemies[idx];
+    tempEditingEnemy = {...enemy}; // Clone
+    const unit = units.find(u => u.id === enemy.id);
+    
+    document.getElementById('enemySettingImg').src = unit.useImg ? unit.img : 'C0.svg';
+    document.getElementById('enemySettingName').textContent = unit.name;
+    document.getElementById('enemySettingLevel').value = enemy.level;
+    
+    // Aura UI
+    const isBoss = enemy.aura === 15;
+    const radios = document.getElementsByName('enemyAuraType');
+    radios[0].checked = !isBoss;
+    radios[1].checked = isBoss;
+
+    // Equip UI update
+    updateEditorEquipDisplay();
+
+    document.getElementById('enemySettingOverlay').classList.add('open');
+}
+
+function toggleEnemyAuraSetting() {
+    // Just UI toggle, applied on save
+}
+
+function updateEditorEquipDisplay() {
+    const display = document.getElementById('enemySettingEquipDisplay');
+    const equipId = tempEditingEnemy.equippedId;
+    if (equipId) {
+        const item = equipmentItems.find(e => e.id === equipId);
+        display.innerHTML = `<div style="font-size:1.2rem;">${item.icon}</div><div>${item.name}</div>`;
+    } else {
+        display.innerHTML = '<span style="color:var(--text-dim)">装備なし</span>';
+    }
+}
+
+function openEditorEquipSelect() {
+    const grid = document.getElementById('editorEquipGrid');
+    grid.innerHTML = `<div class="equip-item" onclick="selectEditorEquip(null)" style="justify-content:center; color:var(--text-dim);">装備を外す</div>`;
+    equipmentItems.forEach(item => {
+        grid.innerHTML += `
+            <div class="equip-item" onclick="selectEditorEquip(${item.id})">
+                <div style="font-size:1.5rem; margin-right:0.5rem;">${item.icon}</div>
+                <div style="font-size:0.8rem; font-weight:bold;">${item.name}</div>
+            </div>
+        `;
+    });
+    document.getElementById('editorEquipOverlay').classList.add('open');
+}
+function selectEditorEquip(id) {
+    tempEditingEnemy.equippedId = id;
+    updateEditorEquipDisplay();
+    document.getElementById('editorEquipOverlay').classList.remove('open');
+}
+
+function closeEnemySetting() { document.getElementById('enemySettingOverlay').classList.remove('open'); }
+function applyEnemySetting() {
+    if (editingEnemyIndex < 0) return;
+    const enemy = currentEditingStage.enemies[editingEnemyIndex];
+    enemy.level = parseInt(document.getElementById('enemySettingLevel').value) || 1;
+    
+    // Apply Aura
+    const isBoss = document.querySelector('input[name="enemyAuraType"][value="boss"]').checked;
+    enemy.aura = isBoss ? 15 : 0; // 0 means auto
+
+    // Apply Equip
+    enemy.equippedId = tempEditingEnemy.equippedId;
+    
+    currentEditingStage.cleared = false;
+    updateEditorUI();
+    closeEnemySetting();
+}
+
+function saveDraftStage() {
+    currentEditingStage.name = document.getElementById('editorStageName').value.trim();
+    currentEditingStage.desc = document.getElementById('editorStageDesc').value.trim();
+    
+    let drafts = loadDraftStages();
+    if (editingDraftIndex !== null) {
+        drafts[editingDraftIndex] = currentEditingStage;
+    } else {
+        drafts.push(currentEditingStage);
+        editingDraftIndex = drafts.length - 1;
+    }
+    localStorage.setItem('soukenWoF_drafts', JSON.stringify(drafts));
+    showToast('下書きを保存しました');
+    renderUserStagesPage(); // Update list
+}
+
+function loadDraftStages() {
+    try {
+        return JSON.parse(localStorage.getItem('soukenWoF_drafts') || '[]');
+    } catch(e) { return []; }
+}
+function deleteDraft(index) {
+    if (!confirm('削除しますか？')) return;
+    let drafts = loadDraftStages();
+    drafts.splice(index, 1);
+    localStorage.setItem('soukenWoF_drafts', JSON.stringify(drafts));
+    renderUserStagesPage();
+}
 
 async function submitUserStage() {
-    const name = document.getElementById('postStageName').value.trim();
-    const desc = document.getElementById('postStageDesc').value.trim();
-    if (!name) { showToast('ステージ名を入力してください'); return; }
+    // Replaced by publishStage
+}
 
-    const btn = document.querySelector('#postStageBox .modal-add-btn');
+async function publishStage() {
+    if (!currentEditingStage.cleared) { showToast('クリアチェックが必要です'); return; }
+    const name = document.getElementById('editorStageName').value.trim();
+    const desc = document.getElementById('editorStageDesc').value.trim();
+    if (!name) { showToast('ステージ名を入力してください'); return; }
+    
+    const btn = document.getElementById('btnPublishStage');
     btn.disabled = true;
     btn.textContent = '送信中...';
 
-    // Prepare Squad Data
-    const squadData = squad.map(id => {
-        const char = playerState.characters[id];
-        return {
-            id: id,
-            level: char.level,
-            aura: char.aura,
-            potential: char.potential,
-            equippedId: char.equippedId,
-            // Pass equipped item details explicitly if needed, but ID is enough if item logic is consistent
-        };
-    });
+    // Payload: { isCustom: true, enemies: [...], fieldEffect: ... }
+    const payload = {
+        isCustom: true,
+        enemies: currentEditingStage.enemies,
+        fieldEffectPlayer: currentEditingStage.fieldEffectPlayer,
+        fieldEffectEnemy: currentEditingStage.fieldEffectEnemy,
+        bgId: currentEditingStage.bgId
+    };
 
     try {
         const formData = new URLSearchParams();
@@ -6295,17 +6916,17 @@ async function submitUserStage() {
         formData.append('description', desc);
         formData.append('creatorName', playerState.playerName);
         formData.append('creatorId', playerState.playerId);
-        formData.append('squadData', JSON.stringify(squadData));
+        formData.append('squadData', JSON.stringify(payload));
 
         await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
         showToast('投稿しました！');
-        closePostStageModalDirect();
+        document.getElementById('stageEditorOverlay').classList.remove('open');
         renderUserStagesPage(true); // force reload
     } catch(e) {
         showToast('送信エラー');
     } finally {
         btn.disabled = false;
-        btn.textContent = '投稿する';
+        btn.textContent = '公開する';
     }
 }
 
@@ -6426,9 +7047,25 @@ function endDialogue(e) {
 async function startUserStageBattle(stageId) {
     const stage = cachedUserStages.find(s => s.id == stageId);
     if (!stage) return;
+    
+    let enemyData = [];
+    let fieldEffectP = 'none';
+    let fieldEffectE = 'none';
+    let bgId = 'default';
 
-    const squadData = JSON.parse(stage.squadData);
-    const enemies = squadData.map(s => {
+    try {
+        const parsed = JSON.parse(stage.squadData);
+        if (parsed.isCustom) {
+            enemyData = parsed.enemies;
+            fieldEffectP = parsed.fieldEffectPlayer || parsed.fieldEffect || 'none';
+            fieldEffectE = parsed.fieldEffectEnemy || parsed.fieldEffect || 'none';
+            bgId = parsed.bgId || 'default';
+        } else {
+            enemyData = parsed; // Legacy
+        }
+    } catch(e) { enemyData = []; }
+
+    const enemies = enemyData.map(s => {
         const equip = s.equippedId ? equipmentItems.find(e => e.id == s.equippedId) : null;
         return {
             id: s.id,
@@ -6440,8 +7077,8 @@ async function startUserStageBattle(stageId) {
         };
     });
 
-    // Reward Calc
-    const rewardVal = 5000 + (stage.hearts * 1000);
+    // Reward Calc (Total Power)
+    const rewardVal = calculateTotalPower(enemies);
 
     // Create a temporary mission object
     const mission = {
@@ -6453,7 +7090,10 @@ async function startUserStageBattle(stageId) {
         reward: Math.max(100, Math.floor(rewardVal * 0.1)),
         firstTimeReward: rewardVal,
         isUserStage: true,
-        rawStageId: stage.id // for API calls
+        rawStageId: stage.id,
+        fieldEffectPlayer: fieldEffectP,
+        fieldEffectEnemy: fieldEffectE,
+        bgId: bgId
     };
 
     // Pass this mission directly to startBattle
@@ -6470,6 +7110,36 @@ async function startUserStageBattle(stageId) {
     // Optimistic update
     stage.plays = (stage.plays || 0) + 1;
 
+    startBattle("TEMP_USER_STAGE");
+}
+
+function startClearCheck() {
+    if (currentEditingStage.enemies.length === 0) { showToast('敵が配置されていません'); return; }
+    
+    const enemies = currentEditingStage.enemies.map(s => {
+        const equip = s.equippedId ? equipmentItems.find(e => e.id == s.equippedId) : null;
+        return {
+            id: s.id, level: s.level, aura: s.aura,
+            equipment: equip, aiType: AI_TYPES.RANDOM
+        };
+    });
+
+    tempUserStageMission = {
+        id: "TEST_PLAY",
+        name: "テストプレイ",
+        description: "クリアチェック中...",
+        enemies: enemies,
+        recommendedPower: 0,
+        reward: 0, firstTimeReward: 0,
+        fieldEffect: currentEditingStage.fieldEffect,
+        fieldEffectPlayer: currentEditingStage.fieldEffectPlayer,
+        fieldEffectEnemy: currentEditingStage.fieldEffectEnemy,
+        isTestPlay: true,
+        bgId: currentEditingStage.bgId
+    };
+    
+    // Save current editing state to temp storage or it's in global var
+    document.getElementById('stageEditorOverlay').classList.remove('open');
     startBattle("TEMP_USER_STAGE");
 }
 
@@ -6545,17 +7215,44 @@ async function startBattle(missionId, skipDialogue = false) {
     isFinished: false,
     selectedTargetId: null,
     damageDealt: {}, // MVP計算用
+    fieldEffectPlayer: mission.fieldEffectPlayer || mission.fieldEffect || 'none',
+    fieldEffectEnemy: mission.fieldEffectEnemy || mission.fieldEffect || 'none',
+    bgId: mission.bgId || 'default'
   };
   battleState.isStarted = false;
 
   document.getElementById('battleTitle').textContent = mission.name;
   renderBattleUnits();
   logBattleMessage(`<span class="info">戦闘準備完了...</span>`);
+  
+  // Log Field Effect
+  if (battleState.fieldEffectPlayer !== 'none') {
+      const fe = FIELD_EFFECTS.find(f => f.id === battleState.fieldEffectPlayer);
+      if (fe) {
+          logBattleMessage(`<span style="color:var(--accent); font-weight:bold;">味方フィールド: ${fe.name}</span>`);
+          logBattleMessage(`<span style="font-size:0.8rem; color:var(--text-mid);">${fe.desc}</span>`);
+      }
+  }
+  if (battleState.fieldEffectEnemy !== 'none') {
+      const fe = FIELD_EFFECTS.find(f => f.id === battleState.fieldEffectEnemy);
+      if (fe) {
+          logBattleMessage(`<span style="color:var(--accent2); font-weight:bold;">敵フィールド: ${fe.name}</span>`);
+          logBattleMessage(`<span style="font-size:0.8rem; color:var(--text-mid);">${fe.desc}</span>`);
+      }
+  }
+
   document.getElementById('battleActionBtn').disabled = false;
   document.getElementById('battleActionBtn').textContent = '戦闘開始';
   document.getElementById('retireBattleBtn').disabled = false;
   document.getElementById('closeBattleBtn').disabled = true;
   document.getElementById('closeBattleBtn').disabled = false;
+
+  // Apply Background
+  const bgData = STAGE_BACKGROUNDS.find(b => b.id === battleState.bgId) || STAGE_BACKGROUNDS[0];
+  const battleContainer = document.querySelector('.battle-container');
+  if (battleContainer) {
+      battleContainer.style.background = bgData.css;
+  }
 
   document.getElementById('battleOverlay').classList.add('open');
 }
@@ -6937,6 +7634,23 @@ async function runBattleSequence() {
         logBattleMessage(`${attacker.name} のターン。`);
         await sleep(400 / battleSpeedMultiplier);
 
+        // --- FIELD EFFECT HANDLING (Start of turn) ---
+        if (battleState.fieldEffect) {
+            const isPlayerTurn = attacker.isPlayer;
+            if (battleState.fieldEffect === 'miasma' && isPlayerTurn) {
+                await addStatusEffect(attacker, 'poison', 1);
+            }
+            if (battleState.fieldEffect === 'lightning_storm' && isPlayerTurn) {
+                if (Math.random() < 0.2) {
+                    await addStatusEffect(attacker, 'paralysis', 1);
+                    logBattleMessage(`<span style="color:var(--accent)">雷雲</span>が${attacker.name}を襲う！`);
+                }
+            }
+            if (battleState.fieldEffect === 'berserk') {
+                // Visual effect handled in stats, maybe show log once?
+            }
+        }
+
         // --- STATUS EFFECT HANDLING (START OF TURN) ---
         const effectsCopy = [...attacker.statusEffects]; // Iterate over a copy
         for (const effect of effectsCopy) {
@@ -7034,7 +7748,10 @@ async function runBattleSequence() {
         let activeAbility = null;
         if (attacker.abilities) {
           // 呪い状態ならスキル発動不可
-          if (attacker.statusEffects.some(e => e.type === 'curse')) {
+          const isCursed = attacker.statusEffects.some(e => e.type === 'curse');
+          const fieldAntiMagic = (attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
+          
+          if (isCursed) {
              // スキル発動なし
           } else {
             if (attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5) {
@@ -7045,7 +7762,10 @@ async function runBattleSequence() {
                }
             } else {
           for (const ab of attacker.abilities) {
-            if (ab.timing === 'before_attack' && Math.random() < (ab.triggerRate || 0)) {
+            let rate = ab.triggerRate || 0;
+            if (fieldAntiMagic) rate *= 0.5;
+            
+            if (ab.timing === 'before_attack' && Math.random() < rate) {
               activeAbility = ab;
               break; // 1ターンに1つの攻撃スキルのみ発動と仮定
             }
@@ -7071,9 +7791,15 @@ async function runBattleSequence() {
                 // Simplified defense check for AoE
                 if (aoeTarget.abilities && actualDamage > 0) {
                     // 呪い状態なら防御スキルも発動しない
-                    if (!aoeTarget.statusEffects.some(e => e.type === 'curse')) {
+                    const isTargetCursed = aoeTarget.statusEffects.some(e => e.type === 'curse');
+                    const fieldAntiMagic = (aoeTarget.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
+                    
+                    if (!isTargetCursed) {
                     for (const ab of aoeTarget.abilities) {
-                        if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
+                        let defRate = ab.triggerRate || 0;
+                        if (fieldAntiMagic) defRate *= 0.5;
+
+                        if (ab.timing === 'on_defense' && Math.random() < defRate) {
                             if (aoeTarget.id === 6) { // Den Alvaro
                                 actualDamage = Math.floor(actualDamage * 0.7);
                             } else {
@@ -7270,10 +7996,15 @@ async function runBattleSequence() {
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0 && (!activeAbility || !activeAbility.ignoresDefenseSkills)) {
             // 呪い状態なら防御スキル発動不可
-            if (!target.statusEffects.some(e => e.type === 'curse') && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
+            const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');
+            const fieldAntiMagic = (target.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
+
+            if (!isTargetCursed && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
             for (const ab of target.abilities) {
                 if (ab.timing === 'on_defense') {
                     let currentTriggerRate = ab.triggerRate || 0;
+                    if (fieldAntiMagic) currentTriggerRate *= 0.5;
+
                     // Kitty's passive check
                     if (target.id === 20 && ab.name === '運操作' && target.isPassiveActive) {
                         currentTriggerRate *= 2;
@@ -7502,9 +8233,15 @@ async function runBattleSequence() {
 
         // Counter Attack (on_hit)
       if (target.currentHp > 0 && actualDamage > 0 && target.abilities) {
-        if (!target.statusEffects.some(e => e.type === 'curse')) {
+        const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');
+        const fieldAntiMagic = (target.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
+        
+        if (!isTargetCursed) {
         for (const ab of target.abilities) {
-          if (ab.timing === 'on_hit' && Math.random() < (ab.triggerRate || 0)) {
+          let hitRate = ab.triggerRate || 0;
+          if (fieldAntiMagic) hitRate *= 0.5;
+          
+          if (ab.timing === 'on_hit' && Math.random() < hitRate) {
              if (target.id === 323 && ab.name === '神判の天秤') {
                  if (target.currentHp < attacker.currentHp) {
                      await showCutIn(target, ab.name);
@@ -7573,14 +8310,17 @@ async function runBattleSequence() {
         // 3. Check for 'after_attack' ability (追撃)
         if (target.currentHp > 0 && attacker.currentHp > 0 && attacker.abilities) {
           // 呪いなら追撃不可
-          if (!attacker.statusEffects.some(e => e.type === 'curse')) {
+          const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');
+          const fieldAntiMagic = (attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
+
+          if (!isAttackerCursed) {
           let chaseAbility = null;
           // ライ・アルバロ (ID:5) の特殊処理
           if (attacker.id === 5) {
             if (attacker.isPassiveActive) { // 八連雷撃斬
               chaseAbility = attacker.abilities[2]; // 八連雷撃斬
             } else { // 雷撃斬
-              if (Math.random() < attacker.abilities[0].triggerRate) {
+              if (Math.random() < (attacker.abilities[0].triggerRate || 0)) {
                 chaseAbility = attacker.abilities[0]; // 雷撃斬
               }
             }
@@ -7589,7 +8329,9 @@ async function runBattleSequence() {
           else if (attacker.id === 2) {
             const abIndex = attacker.isPassiveActive ? 2 : 0; // ハート・ブレイク or クリスタル・ブレイク
             const ab = attacker.abilities[abIndex];
-            if (ab && ab.timing === 'after_attack' && Math.random() < (ab.triggerRate || 0)) {
+            let rate = ab ? (ab.triggerRate || 0) : 0;
+            if (fieldAntiMagic) rate *= 0.5;
+            if (ab && ab.timing === 'after_attack' && Math.random() < rate) {
               chaseAbility = ab;
             }
           } else if (attacker.id === 17 && attacker.isPassiveActive) {
@@ -7601,7 +8343,9 @@ async function runBattleSequence() {
           } else if (attacker.id === 319) { // Guldie
              if (attacker.currentHp <= attacker.stats.hp * 0.5 || attacker.missionSpecific?.alwaysLust) {
                 const ab = attacker.abilities.find(a => a.name === 'エターナルクリムゾン');
-                if (ab && Math.random() < (ab.triggerRate || 0)) {
+                let rate = ab ? (ab.triggerRate || 0) : 0;
+                if (fieldAntiMagic) rate *= 0.5;
+                if (ab && Math.random() < rate) {
                    chaseAbility = ab;
                 }
              }
@@ -7609,14 +8353,18 @@ async function runBattleSequence() {
               // 「視界内物質操作・爆散」が発動していなかった場合のみ
               if (!activeAbility || activeAbility.name !== '視界内物質操作・爆散') {
                   const ab = attacker.abilities.find(a => a.name === 'アブソリュート・ゼロ');
-                  if (ab && Math.random() < ab.triggerRate) {
+                  let rate = ab ? (ab.triggerRate || 0) : 0;
+                  if (fieldAntiMagic) rate *= 0.5;
+                  if (ab && Math.random() < rate) {
                       chaseAbility = ab;
                   }
               }
           } else {
             // 汎用処理
             for (const ab of attacker.abilities) {
-              if (ab.timing === 'after_attack' && Math.random() < (ab.triggerRate || 0)) {
+              let rate = ab.triggerRate || 0;
+              if (fieldAntiMagic) rate *= 0.5;
+              if (ab.timing === 'after_attack' && Math.random() < rate) {
                 chaseAbility = ab;
                 break;
               }
@@ -7795,9 +8543,14 @@ async function runBattleSequence() {
 
               // 追撃に対する防御スキルチェック
               if (target.abilities && actualChaseDamage > 0 && (!chaseAbility || !chaseAbility.ignoresDefenseSkills) && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
-                if (!target.statusEffects.some(e => e.type === 'curse')) {
+                const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');
+                if (!isTargetCursed) {
+                  const targetFieldAntiMagic = (target.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
                   for (const ab of target.abilities) {
-                    if (ab.timing === 'on_defense' && Math.random() < (ab.triggerRate || 0)) {
+                    let defRate = ab.triggerRate || 0;
+                    if (targetFieldAntiMagic) defRate *= 0.5;
+                    
+                    if (ab.timing === 'on_defense' && Math.random() < defRate) {
                       await showCutIn(target, ab.name);
                       if (target.id === 20 && ab.name === '運操作') { // Kitty
                           actualChaseDamage = 0;
@@ -7933,6 +8686,15 @@ function checkWinLoss() {
                 playerState.towerProgress = floor;
                 unlockedTowerChars = checkAndGrantTowerRewards(floor);
             }
+        }
+
+        // TEST PLAY CLEAR
+        if (mission.isTestPlay) {
+            currentEditingStage.cleared = true;
+            showToast('クリアチェック合格！');
+            // Auto-save the cleared status
+            saveDraftStage();
+            // We will return to editor when modal closes
         }
 
         let unlockedCharName = null
@@ -8088,6 +8850,14 @@ function showPassivePopup(el, text) {
 
 function showDamageNumber(targetEl, damage, type = 'damage') {
   if (!targetEl || damage <= 0) return;
+  
+  // Field Effect: Heal Reverse
+  const myField = targetEl.classList.contains('player-unit') ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+  if (type === 'heal' && myField === 'heal_reverse') {
+      type = 'damage';
+      // Logic to reduce HP happens outside this visual function, but visual should show damage color
+  }
+
   const popup = document.createElement('div');
   popup.className = 'damage-popup';
   popup.textContent = damage;
@@ -8123,6 +8893,19 @@ function playEffect(targetEl, type) {
 function getBattleStats(unit) {
   const s = { ...unit.stats };
   
+  const myField = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+
+  // Field Effect: Berserk
+  if (myField === 'berserk') {
+      s.atk = Math.floor(s.atk * 1.5);
+      s.def = Math.floor(s.def * 0.5);
+  }
+
+  // Field Effect: Heavy Gravity
+  if (myField === 'heavy_gravity') {
+      s.spd = Math.floor(s.spd * 0.5);
+  }
+
   // パッシブ: ドラ (ID:1) HP50%以下で攻撃力30%UP
   if (unit.id === 1 && unit.currentHp <= unit.stats.hp * 0.5) {
     s.atk = Math.floor(s.atk * 1.3);
@@ -8327,9 +9110,11 @@ async function triggerOnBattleStartAbilities() {
     // 1. Build the action queue
     for (const unit of allUnits) {
       if (unit.currentHp > 0 && unit.abilities) {
+          const fieldAntiMagic = (unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
           const startAbility = unit.abilities.find(ab => ab.timing === 'on_battle_start');
           if (startAbility) {
-              const rate = startAbility.triggerRate;
+              let rate = startAbility.triggerRate;
+              if (rate !== undefined && fieldAntiMagic) rate *= 0.5;
               // triggerRateが未定義(100%発動)か、確率チェックをパスした場合にキューに追加
               if (rate === undefined || Math.random() < rate) {
                   actionQueue.push({ unit, ab: startAbility });
@@ -8519,12 +9304,17 @@ async function triggerOnBattleStartAbilities() {
 function closeBattle() {
   document.getElementById('battleOverlay').classList.remove('open');
   playBgm('home');
+  document.querySelector('.battle-container').style.background = 'var(--bg-mid)'; // Reset bg
   // Reset button for next battle
   document.getElementById('retireBattleBtn').disabled = true;
   document.getElementById('battleActionBtn').onclick = runBattleSequence;
   const chapterIndex = storyChapters.findIndex(c => c.missions.some(m => m.id === battleState.mission.id));
   if (chapterIndex > -1 && currentStoryTab === 'main') {
     renderMissionsForChapter(chapterIndex);
+  } else if (battleState.mission.isTestPlay) {
+      // Return to editor
+      document.getElementById('stageEditorOverlay').classList.add('open');
+      updateEditorUI();
   } else {
     renderStoryChapters();
   }
