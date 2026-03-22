@@ -200,9 +200,10 @@
     overflow-y: auto;
   }
 
-  aside::-webkit-scrollbar { width: 12px; }
-  aside::-webkit-scrollbar-track { background: transparent; }
-  aside::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+  /* UNIFIED SCROLLBAR (MATCHING SIDEBAR) */
+  ::-webkit-scrollbar { width: 12px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 
   .section-title {
     font-family: 'Orbitron', monospace;
@@ -414,11 +415,6 @@
     overflow-y: auto;
     height: 100%;
   }
-
-  .roster-panel::-webkit-scrollbar { width: 18px; }
-  .roster-panel::-webkit-scrollbar-track { background: transparent; }
-  .roster-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9px; }
-  .roster-panel::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
 
   .roster-toolbar {
     display: flex;
@@ -878,9 +874,6 @@
   }
 
   .modal-overlay.open .modal { transform: translateY(0); }
-
-  .modal::-webkit-scrollbar { width: 4px; }
-  .modal::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 
   .modal-header {
     padding: 1.25rem 1.25rem 1rem;
@@ -2855,7 +2848,7 @@
             <button class="filter-btn" id="tab-story-challenge" onclick="setStoryTab('challenge')" style="padding: 0.5rem 1rem; margin:0;">チャレンジ</button>
             <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.5rem 1rem; margin:0;">みんなのステージ</button>
             <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.5rem 1rem; margin:0;">無限の塔 <span class="new-badge">New!</span></button>
-        </div>
+      </div>
       </div>
       <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.5rem 1rem; margin: 0;" onclick="renderStoryChapters()">
         ← 戻る
@@ -4657,6 +4650,32 @@ function getRequiredAuraForLevel(level) {
   return Math.ceil((level - 20) / 5);
 }
 
+function getMaxAffordableLevel(currentLevel, currentAura, currentStones) {
+  let level = currentLevel;
+  let aura = currentAura || 0;
+  let cost = 0;
+  const absMax = getMaxLevel(12);
+
+  while (level < absMax) {
+    const nextLevel = level + 1;
+    let stepCost = calculateLevelUpCost(level, nextLevel);
+    
+    const reqAura = getRequiredAuraForLevel(nextLevel);
+    if (reqAura > aura) {
+      for (let i = aura; i < reqAura; i++) {
+        if (AURA_DATA[i]) stepCost += AURA_DATA[i].cost;
+      }
+    }
+    
+    if (cost + stepCost > currentStones) break;
+    
+    cost += stepCost;
+    level = nextLevel;
+    if (reqAura > aura) aura = reqAura;
+  }
+  return level;
+}
+
 function getLevelCost(level) {
   return level * 100; // Lv1->2 = 100, Lv19->20 = 1900
 }
@@ -5187,6 +5206,8 @@ function formatAbilityDetails(ability) {
     }
     const currentMaxLevel = isOwned ? getMaxLevel(aura) : 0;
     const absoluteMaxLevel = getMaxLevel(12); // Max possible player level
+    const affordableMaxLevel = isOwned ? getMaxAffordableLevel(level, aura, playerState.rainbowStones) : 0;
+    const sliderMax = Math.max(level, affordableMaxLevel);
 
     // Favorite Button State
     const favBtn = document.getElementById('modalFavBtn');
@@ -5230,7 +5251,7 @@ function formatAbilityDetails(ability) {
             <span>レベル指定</span>
             <span id="sliderTargetDisplay" style="font-family:'Orbitron'">Lv.${level} → Lv.${level+1}</span>
           </div>
-          <input type="range" id="levelSlider" min="${level}" max="${absoluteMaxLevel}" value="${level}" style="width:100%; cursor:pointer;" oninput="onLevelSliderChange(this.value)">
+          <input type="range" id="levelSlider" min="${level}" max="${sliderMax}" value="${level}" style="width:100%; cursor:pointer;" oninput="onLevelSliderChange(this.value)">
           <div style="text-align:right; font-size:10px; margin-top:2px;">
             費用: <span id="sliderCostDisplay" style="color:var(--gold); font-family:'Orbitron'">0</span>
           </div>
@@ -5549,7 +5570,7 @@ function openEquipModal(charId) {
 
     const enhancedName = getEnhancedEquipName(item, enhancement);
     const div = document.createElement('div');
-    div.className = `equip-item ${currentEquipId === item.id ? 'equipped' : ''} ${isEquippedByOther ? 'disabled' : ''}`;
+    div.className = `equip-item ${currentEquipId === item.id ? 'equipped' : ''}`;
     div.innerHTML = `
       <div class="equip-icon-box ${auraClass}">${auraClass ? `<div class="aura-overlay"></div>` : ''}${item.icon}</div>
       <div class="equip-info">
@@ -5560,12 +5581,10 @@ function openEquipModal(charId) {
         ${enhancementHtml}
       </div>
       ${currentEquipId === item.id ? '<div class="equip-status">E</div>' : ''}
-      ${isEquippedByOther ? `<div class="equip-status other">${equipperName}が装備中</div>` : ''}
+      ${isEquippedByOther ? `<div class="equip-status other" style="text-align:right; line-height:1.2;">${equipperName}<br><span style="font-size:0.6rem; color:var(--accent);">付替可能</span></div>` : ''}
     `;
     
-    if (!isEquippedByOther) {
-      div.onclick = () => equipItem(charId, item.id);
-    }
+    div.onclick = () => equipItem(charId, item.id);
     list.appendChild(div);
   });
 
@@ -5573,6 +5592,16 @@ function openEquipModal(charId) {
 }
 
 function equipItem(charId, itemId) {
+  if (itemId !== null) {
+    // 他のキャラが装備している場合は外す
+    for (const cid in playerState.characters) {
+      if (parseInt(cid) !== charId && playerState.characters[cid].equippedId === itemId) {
+        playerState.characters[cid].equippedId = null;
+        const prevOwner = units.find(u => u.id == cid);
+        if (prevOwner) showToast(`${prevOwner.name}から装備を付け替えました`);
+      }
+    }
+  }
   playerState.characters[charId].equippedId = itemId;
   closeEquipModalDirect();
   updateModal(); // Refresh char modal
