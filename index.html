@@ -6135,26 +6135,39 @@ function sortUserStages(stages) {
   return stages;
 }
 
-async function renderUserStagesPage() {
+async function renderUserStagesPage(forceReload = false) {
     const container = document.getElementById('missionGrid');
-    container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-dim);">Loading stages...</div>';
-
-    // Post Button
-    const postBtnContainer = document.createElement('div');
-    postBtnContainer.style.cssText = 'grid-column: 1 / -1; margin-bottom: 1rem;';
-    postBtnContainer.innerHTML = `<button class="mission-btn" onclick="openPostStageModal()" style="width:100%; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>`;
     
-    if (userStageAbortController) userStageAbortController.abort();
-    userStageAbortController = new AbortController();
+    // Loading indication only if fetching
+    if (forceReload || cachedUserStages.length === 0) {
+        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-dim);">Loading stages...</div>';
+    } else {
+        container.innerHTML = '';
+    }
 
+    // Post Button & Reload Button
+    const postBtnContainer = document.createElement('div');
+    postBtnContainer.style.cssText = 'grid-column: 1 / -1; margin-bottom: 1rem; display: flex; gap: 0.5rem;';
+    postBtnContainer.innerHTML = `
+        <button class="mission-btn" onclick="openPostStageModal()" style="flex:1; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>
+        <button class="mission-btn" onclick="renderUserStagesPage(true)" style="width: 4rem; padding:1rem; font-size:1.5rem;" title="リストを更新">↻</button>
+    `;
+    
     try {
-        // Fetch from GAS
-        if (!USER_STAGE_API_URL.startsWith('http')) throw new Error('API URL not set');
-        const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId, {
-            signal: userStageAbortController.signal
-        });
-        const data = await response.json();
-        cachedUserStages = data;
+        let data = cachedUserStages;
+
+        if (forceReload || cachedUserStages.length === 0) {
+            if (userStageAbortController) userStageAbortController.abort();
+            userStageAbortController = new AbortController();
+
+            // Fetch from GAS
+            if (!USER_STAGE_API_URL.startsWith('http')) throw new Error('API URL not set');
+            const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId, {
+                signal: userStageAbortController.signal
+            });
+            data = await response.json();
+            cachedUserStages = data;
+        }
 
         container.innerHTML = '';
         container.appendChild(postBtnContainer);
@@ -6231,7 +6244,12 @@ async function renderUserStagesPage() {
     } catch (e) {
         if (e.name === 'AbortError') return;
         console.error(e);
-        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--accent2);">読み込みエラー<br>API URLを確認してください。</div>';
+        container.innerHTML = '';
+        container.appendChild(postBtnContainer);
+        const errDiv = document.createElement('div');
+        errDiv.style.cssText = 'grid-column:1/-1; text-align:center; padding:2rem; color:var(--accent2);';
+        errDiv.innerHTML = '読み込みエラー<br>API URLを確認してください。<br><span style="font-size:0.8rem; color:var(--text-dim)">' + e.message + '</span>';
+        container.appendChild(errDiv);
     }
 }
 
@@ -6282,7 +6300,7 @@ async function submitUserStage() {
         await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
         showToast('投稿しました！');
         closePostStageModalDirect();
-        renderUserStagesPage(); // reload
+        renderUserStagesPage(true); // force reload
     } catch(e) {
         showToast('送信エラー');
     } finally {
