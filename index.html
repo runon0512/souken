@@ -198,6 +198,7 @@
     background: rgba(13,21,32,0.6);
     height: 100%;
     overflow-y: auto;
+    will-change: scroll-position;
   }
 
   /* UNIFIED SCROLLBAR (MATCHING SIDEBAR) */
@@ -414,6 +415,7 @@
     padding: 1rem 1rem 5rem 1rem;
     overflow-y: auto;
     height: 100%;
+    will-change: scroll-position;
   }
 
   .roster-toolbar {
@@ -814,7 +816,8 @@
     cursor: pointer;
     transition: all 0.2s;
     letter-spacing: 1px;
-    backdrop-filter: blur(4px);
+    /* backdrop-filter: blur(4px); */
+    background: rgba(0,0,0,0.8);
   }
 
   .card-action-btn:hover:not(:disabled) {
@@ -871,6 +874,7 @@
     box-shadow: 0 0 3.75rem rgba(0,200,255,0.15), 0 2rem 5rem rgba(0,0,0,0.8);
     transform: translateY(1rem);
     transition: transform 0.2s;
+    will-change: scroll-position;
   }
 
   .modal-overlay.open .modal { transform: translateY(0); }
@@ -1135,6 +1139,7 @@
     gap: 0.5rem;
     max-height: 25rem;
     overflow-y: auto;
+    will-change: scroll-position;
   }
   .equip-item {
     background: rgba(0,0,0,0.3);
@@ -1463,8 +1468,8 @@
   .b-unit-level { position: absolute; top: 8px; right: 8px; font-size: 0.625rem; font-family: 'Orbitron', monospace; background: rgba(0,0,0,0.5); color: var(--gold); padding: 1px 5px; border-radius: 3px; z-index: 4; }
   .b-unit-equip {
     position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
+    top: 4px;
+    left: 4px;
     width: 1.375rem;
     height: 1.375rem;
     background: rgba(0,0,0,0.6);
@@ -1474,7 +1479,7 @@
     align-items: center;
     justify-content: center;
     font-size: 0.875rem;
-    z-index: 4;
+    z-index: 10;
     cursor: help;
   }
   .battle-log-container { height: 8.75rem; border-top: 1px solid var(--border); padding: 0.75rem; display: flex; gap: 0.75rem; }
@@ -4591,6 +4596,8 @@ let currentGachaResults = null;
 let battleState = {};
 let battleSpeedMultiplier = 2;
 
+let userStageAbortController = null;
+
 // ===== COMPUTED =====
 function calcStats(baseStats, level, equipment = null, potential = 0) {
   // レベル1ごとに10%上昇する計算
@@ -4949,6 +4956,10 @@ function renderStatBar(label, val, type) {
 // ===== FILTER =====
 function setView(view) {
   // Play BGM on user interaction
+  if (userStageAbortController) {
+      userStageAbortController.abort();
+      userStageAbortController = null;
+  }
   if (view !== 'battle') {
     playBgm('home');
   }
@@ -5918,6 +5929,10 @@ function endTutorial() {
 
 // ===== MISSION & BATTLE =====
 function setStoryTab(tab) {
+  if (userStageAbortController) {
+      userStageAbortController.abort();
+      userStageAbortController = null;
+  }
   currentStoryTab = tab;
   const container = document.getElementById('missionGrid');
   if (tab === 'user') {
@@ -6129,10 +6144,15 @@ async function renderUserStagesPage() {
     postBtnContainer.style.cssText = 'grid-column: 1 / -1; margin-bottom: 1rem;';
     postBtnContainer.innerHTML = `<button class="mission-btn" onclick="openPostStageModal()" style="width:100%; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>`;
     
+    if (userStageAbortController) userStageAbortController.abort();
+    userStageAbortController = new AbortController();
+
     try {
         // Fetch from GAS
         if (!USER_STAGE_API_URL.startsWith('http')) throw new Error('API URL not set');
-        const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId);
+        const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId, {
+            signal: userStageAbortController.signal
+        });
         const data = await response.json();
         cachedUserStages = data;
 
@@ -6209,6 +6229,7 @@ async function renderUserStagesPage() {
         });
 
     } catch (e) {
+        if (e.name === 'AbortError') return;
         console.error(e);
         container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--accent2);">読み込みエラー<br>API URLを確認してください。</div>';
     }
