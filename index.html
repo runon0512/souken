@@ -6616,6 +6616,7 @@ function openStageEditorUI() {
     document.getElementById('editorStageDesc').value = currentEditingStage.desc;
 
     // Reset to Step 1
+    editorCurrentStep = 1;
     document.getElementById('editorStep1').classList.remove('hidden');
     document.getElementById('editorStep2').classList.remove('active');
     document.getElementById('editorStep3').classList.remove('active');
