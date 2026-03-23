@@ -2675,6 +2675,31 @@
     50% { transform: scale(1.2); }
     100% { transform: scale(1); opacity: 1; }
   }
+
+  /* PRELOADER */
+  #preloader {
+    position: fixed;
+    inset: 0;
+    background: #060a0f;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease-out;
+  }
+  #preloader.fade-out { opacity: 0; pointer-events: none; }
+  .loader-logo { font-family: 'Orbitron', sans-serif; font-size: 3rem; color: var(--accent); font-weight: 900; letter-spacing: 5px; text-shadow: 0 0 20px rgba(0,200,255,0.5); margin-bottom: 2rem; }
+  .loader-logo span { color: var(--accent2); }
+  .loader-bar-bg {
+    width: 300px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; position: relative;
+  }
+  .loader-bar-fill {
+    height: 100%; background: var(--accent); width: 0%; box-shadow: 0 0 10px var(--accent); transition: width 0.2s ease-out;
+  }
+  .loader-text {
+    font-family: 'Orbitron', monospace; color: var(--text-dim); margin-top: 1rem; font-size: 0.8rem; letter-spacing: 2px;
+  }
 </style>
 </head>
 <script>
@@ -2682,6 +2707,13 @@
   const USER_STAGE_API_URL = "https://script.google.com/macros/s/AKfycbxjHXNJgcujuBjsYNHHvcU3a2vv-Y-z_C0MF1JHwNIZ5P45AIgIqX2U9LPtKm2wVrwA/exec"; 
 </script>
 <body>
+
+<!-- PRELOADER -->
+<div id="preloader">
+  <div class="loader-logo">Souken<span>WoF</span></div>
+  <div class="loader-bar-bg"><div class="loader-bar-fill" id="loaderFill"></div></div>
+  <div class="loader-text" id="loaderText">LOADING...</div>
+</div>
 
 <!-- HEADER -->
 <header>
@@ -3023,6 +3055,12 @@
     background: none; border: none; color: var(--accent); font-size: 0.7rem; cursor: pointer; padding: 0.25rem; width: 100%; text-align: center; margin-bottom: 0.5rem;
   }
   .comment-show-more-btn:hover { text-decoration: underline; color: var(--text-main); }
+  
+  .comment-author-link { color: var(--accent); cursor: pointer; transition: color 0.2s; }
+  .comment-author-link:hover { text-decoration: underline; color: var(--text-main); }
+  .user-profile-header {
+    grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; background: var(--bg-card); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);
+  }
   
   .sort-btn { flex: 1; text-align: center; } /* Make sort buttons even width */
 
@@ -4329,7 +4367,7 @@ const storyChapters = [
   { name: '第二章：ルディ王国 (前編)', missions: generateMissions(200, 6, 'Stage', [302, 302, 301], 100, chapter2Names, chapter2Enemies) },
   { name: '第三章：ルディ王国 (後編)', missions: generateMissions(300, 6, 'Stage', [102, 102, 101], 150, chapter3Names, chapter3Enemies) },
   { name: '第四章：世界の真実', missions: generateMissions(400, 6, 'Stage', [302, 303, 305], 200, chapter4Names, chapter4Enemies) }, 
-  { name: '第五章：大会参加者', missions: generateMissions(500, 6, 'Stage', [302, 303, 305], 250, chapter5Names, chapter5Enemies) },
+  { name: '第五章：大会参加者', missions: generateMissions(500, 4, 'Stage', [302, 303, 305], 250, chapter5Names, chapter5Enemies) },
   { name: '第六章：副隊長訓練・本気', missions: generateMissions(600, 6, 'Stage', [302, 303, 305], 300, chapter6Names, chapter6Enemies) },
   { name: '第七章：隊長訓練・本気', missions: generateMissions(700, 6, 'Stage', [302, 303, 305], 350, chapter7Names, chapter7Enemies) },
 ];
@@ -4392,7 +4430,7 @@ const chapter8Missions = [
       { id: 30, level: 55, aiType: AI_TYPES.HIGHEST_ATK },  // セーレ
       { id: 5, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライ
       { id: 36, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライメル
-      { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM } // 衛兵
+      { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, // 衛兵
     ], reward: 24000, firstTimeReward: 48000
   },
   {
@@ -4765,6 +4803,36 @@ const collabChapters = [
 
 storyChapters.push({ name: '第八章：雷の始祖', missions: chapter8Missions });
 
+// Generate Chapters 9-16 (High Difficulty X Versions)
+const baseChapterNum = ["一", "二", "三", "四", "五", "六", "七", "八"];
+const newChapterNum = ["九", "十", "十一", "十二", "十三", "十四", "十五", "十六"];
+
+for (let i = 0; i < 8; i++) {
+    const baseChapter = storyChapters[i];
+    if (!baseChapter) continue;
+
+    let newName = baseChapter.name.replace(`第${baseChapterNum[i]}章`, `第${newChapterNum[i]}章`);
+    if (newName === baseChapter.name) newName += " X"; // Fallback if replace fails
+
+    const newMissions = baseChapter.missions.map(m => {
+        const newEnemies = m.enemies.map(e => ({
+            ...e,
+            level: (e.level || 1) + 80
+        }));
+        return {
+            ...m,
+            id: m.id + 1000,
+            name: m.name + "X",
+            enemies: newEnemies,
+            recommendedPower: 0, // Recalculated on render
+            reward: Math.floor(m.reward * 2.5),
+            firstTimeReward: Math.floor(m.firstTimeReward * 2.5)
+        };
+    });
+
+    storyChapters.push({ name: newName, missions: newMissions });
+}
+
 function getMissionById(id) {
   if (id >= 10000) {
     return generateTowerMission(id - 10000);
@@ -4959,7 +5027,19 @@ const STAGE_BACKGROUNDS = [
 let userStageAbortController = null;
 
 // ===== COMPUTED =====
-function calcStats(baseStats, level, equipment = null, potential = 0) {
+let viewingUserProfile = null; // { id, name }
+
+function openUserProfile(id, name) {
+    viewingUserProfile = { id, name };
+    renderUserStagesPage();
+}
+
+function closeUserProfile() {
+    viewingUserProfile = null;
+    renderUserStagesPage();
+}
+
+function calcStats(baseStats, level, equipment = null, potential = 0, explicitEnhancement = undefined) {
   // レベル1ごとに10%上昇する計算
   const multiplier = 1 + (level - 1) * 0.1;
   const potentialMult = 1 + (potential * 0.1);
@@ -4972,7 +5052,11 @@ function calcStats(baseStats, level, equipment = null, potential = 0) {
 
   // NEW: Equipment Enhancement Logic
   if (equipment) {
-      const enhancement = playerState.equipmentEnhancements?.[equipment.id];
+      let enhancement = explicitEnhancement;
+      if (enhancement === undefined) {
+          enhancement = playerState.equipmentEnhancements?.[equipment.id];
+      }
+
       if (enhancement) {
           // The enhancement is a percentage of the character's BASE stats
           const baseStatValue = baseStats[enhancement.stat];
@@ -5064,6 +5148,66 @@ function generateUUID() {
   });
 }
 
+// ===== PRELOADER =====
+async function runPreloader() {
+  // Extract unique image URLs
+  const images = units
+      .filter(u => u.useImg && u.img)
+      .map(u => u.img);
+  images.push('Title.png');
+  // Remove duplicates
+  const uniqueImages = [...new Set(images)];
+
+  const audioFiles = [
+      'ホーム画面.mp3', 'バトルbgm.mp3', 'スキル.mp3', '斬撃.mp3', '魔法.mp3'
+  ];
+
+  const totalAssets = uniqueImages.length + audioFiles.length;
+  let loadedCount = 0;
+  const loaderFill = document.getElementById('loaderFill');
+  const loaderText = document.getElementById('loaderText');
+
+  const updateLoader = () => {
+      loadedCount++;
+      const pct = Math.min(100, Math.floor((loadedCount / totalAssets) * 100));
+      if (loaderFill) loaderFill.style.width = pct + '%';
+      if (loaderText) loaderText.textContent = `LOADING ${pct}%`;
+  };
+
+  const loadImg = (src) => new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => { updateLoader(); resolve(); };
+      img.onerror = () => { console.warn('Img load err:', src); updateLoader(); resolve(); };
+      img.src = src;
+  });
+
+  const loadAud = (src) => new Promise(resolve => {
+      const audio = new Audio();
+      // Audio preloading is tricky on mobile, so we use a timeout fallback to not block the game
+      const timeout = setTimeout(() => { updateLoader(); resolve(); }, 2000);
+      audio.oncanplaythrough = () => { clearTimeout(timeout); updateLoader(); resolve(); };
+      audio.onerror = () => { clearTimeout(timeout); console.warn('Aud load err:', src); updateLoader(); resolve(); };
+      audio.src = src;
+      audio.load();
+  });
+
+  const promises = [
+      ...uniqueImages.map(src => loadImg(src)),
+      ...audioFiles.map(src => loadAud(src))
+  ];
+
+  await Promise.all(promises);
+  
+  // Short delay to ensure 100% is seen
+  await new Promise(r => setTimeout(r, 500));
+
+  const preloader = document.getElementById('preloader');
+  if (preloader) {
+      preloader.classList.add('fade-out');
+      setTimeout(() => preloader.remove(), 500);
+  }
+}
+
 // ===== SQUAD DRAG & DROP =====
 let draggedSquadIndex = null;
 
@@ -5122,6 +5266,8 @@ function renderSquad() {
   document.getElementById('resRainbow').textContent = playerState.rainbowStones;
   const container = document.getElementById('squadSlots');
   container.innerHTML = '';
+  const fragment = document.createDocumentFragment(); // Use DocumentFragment for efficient DOM updates
+
   for (let i = 0; i < MAX_SQUAD; i++) {
     const id = squad[i];
     const c = id ? units.find(u => u.id === id) : null;
@@ -5169,8 +5315,10 @@ function renderSquad() {
     slot.ondragleave = (e) => handleSquadDragLeave(e);
     slot.ondrop = (e) => handleSquadDrop(e, i);
 
-    container.appendChild(slot);
+    fragment.appendChild(slot);
   }
+  container.appendChild(fragment);
+
   const total = squad.reduce((s, id) => {
     const c = units.find(u => u.id === id);
     const pot = playerState.characters[id] ? (playerState.characters[id].potential || 0) : 0;
@@ -5184,6 +5332,8 @@ function renderSquad() {
 function renderCards() {
   const grid = document.getElementById('cardGrid');
   grid.innerHTML = '';
+  const fragment = document.createDocumentFragment(); // Use DocumentFragment for efficient DOM updates
+
   const ownedCharIds = Object.keys(playerState.characters);
   const filtered = units.filter(c => {
     // プレイヤーが獲得できないキャラクター（敵専用など、ID 300以上）は表示しない
@@ -5299,9 +5449,9 @@ function renderCards() {
     `;
     if (auraData) card.classList.add(auraClass);
     card.onclick = () => openModal(c.id);
-    grid.appendChild(card);
+    fragment.appendChild(card);
   });
-
+  grid.appendChild(fragment);
   updateFilterCounts();
 }
 
@@ -5698,7 +5848,7 @@ function formatAbilityDetails(ability) {
   const equipDisplay = document.getElementById('modalEquipDisplay');
   
   // Get enhancement for display
-  const equipEnhancement = equipId ? playerState.equipmentEnhancements?.[equipId] : null;
+  const equipEnhancement = isBattleContext && battleUnit ? battleUnit.enhancement : (equipId ? playerState.equipmentEnhancements?.[equipId] : null);
   const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
 
   equipDisplay.innerHTML = `
@@ -6524,13 +6674,24 @@ async function renderUserStagesPage(forceReload = false) {
     // Post Button & Reload Button
     // Drafts Section
     const drafts = loadDraftStages();
-    
+
     const postBtnContainer = document.createElement('div');
     postBtnContainer.style.cssText = 'grid-column: 1 / -1; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem;';
     
     let draftsHtml = '';
-    if (drafts.length > 0) {
-        draftsHtml = `<div style="background:var(--bg-card); padding:0.5rem; border-radius:4px; border:1px solid var(--border); margin-bottom:0.5rem;">
+    
+    if (viewingUserProfile) {
+        // Profile Mode Header
+        postBtnContainer.innerHTML = `
+            <div class="user-profile-header">
+                <div style="font-size:1.2rem; font-weight:bold;"><span style="color:var(--accent);">${viewingUserProfile.name}</span> の作品一覧</div>
+                <button class="mission-btn" onclick="closeUserProfile()" style="width:auto; padding:0.5rem 1rem; font-size:1rem;">← 一覧に戻る</button>
+            </div>
+        `;
+    } else {
+        // Default Mode Buttons
+        if (drafts.length > 0) {
+            draftsHtml = `<div style="background:var(--bg-card); padding:0.5rem; border-radius:4px; border:1px solid var(--border); margin-bottom:0.5rem;">
             <div style="font-size:0.8rem; color:var(--text-mid); margin-bottom:0.5rem;">下書きステージ</div>
             ${drafts.map((d, i) => `
                 <div class="draft-stage-item">
@@ -6545,15 +6706,16 @@ async function renderUserStagesPage(forceReload = false) {
                 </div>
             `).join('')}
         </div>`;
-    }
+        }
 
-    postBtnContainer.innerHTML = `
-        ${draftsHtml}
-        <div style="display:flex; gap:0.5rem;">
-        <button class="mission-btn" onclick="openPostStageModal()" style="flex:1; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>
-        <button class="mission-btn" onclick="renderUserStagesPage(true)" style="width: 4rem; padding:1rem; font-size:1.5rem;" title="リストを更新">↻</button>
-        </div>
-    `;
+        postBtnContainer.innerHTML = `
+            ${draftsHtml}
+            <div style="display:flex; gap:0.5rem;">
+            <button class="mission-btn" onclick="openPostStageModal()" style="flex:1; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>
+            <button class="mission-btn" onclick="renderUserStagesPage(true)" style="width: 4rem; padding:1rem; font-size:1.5rem;" title="リストを更新">↻</button>
+            </div>
+        `;
+    }
     
     try {
         let data = cachedUserStages;
@@ -6581,20 +6743,25 @@ async function renderUserStagesPage(forceReload = false) {
             return;
         }
 
-        // Sort Controls
-        const sortControls = document.createElement('div');
-        sortControls.className = 'sort-controls';
-        sortControls.innerHTML = `
-            <span style="color:var(--text-mid); font-size:0.8rem; display:flex; align-items:center;">並び替え:</span>
-            <button class="sort-btn ${currentUserStageSort === 'newest' ? 'active' : ''}" onclick="setStageSort('newest')">新しい順</button>
-            <button class="sort-btn ${currentUserStageSort === 'plays' ? 'active' : ''}" onclick="setStageSort('plays')">プレイ数順</button>
-            <button class="sort-btn ${currentUserStageSort === 'clearRate' ? 'active' : ''}" onclick="setStageSort('clearRate')">クリア率順</button>
-            <button class="sort-btn ${currentUserStageSort === 'hearts' ? 'active' : ''}" onclick="setStageSort('hearts')">ハート順</button>
-            <button class="sort-btn ${currentUserStageSort === 'recommended' ? 'active' : ''}" onclick="setStageSort('recommended')">おすすめ</button>
-        `;
-        container.appendChild(sortControls);
-
-        const sortedData = sortUserStages([...data]);
+        let sortedData = sortUserStages([...data]);
+        
+        // Filter for User Profile
+        if (viewingUserProfile) {
+            sortedData = sortedData.filter(s => s.creatorId === viewingUserProfile.id);
+        } else {
+            // Sort Controls (Only in main list)
+            const sortControls = document.createElement('div');
+            sortControls.className = 'sort-controls';
+            sortControls.innerHTML = `
+                <span style="color:var(--text-mid); font-size:0.8rem; display:flex; align-items:center;">並び替え:</span>
+                <button class="sort-btn ${currentUserStageSort === 'newest' ? 'active' : ''}" onclick="setStageSort('newest')">新しい順</button>
+                <button class="sort-btn ${currentUserStageSort === 'plays' ? 'active' : ''}" onclick="setStageSort('plays')">プレイ数順</button>
+                <button class="sort-btn ${currentUserStageSort === 'clearRate' ? 'active' : ''}" onclick="setStageSort('clearRate')">難しい順</button>
+                <button class="sort-btn ${currentUserStageSort === 'hearts' ? 'active' : ''}" onclick="setStageSort('hearts')">ハート順</button>
+                <button class="sort-btn ${currentUserStageSort === 'recommended' ? 'active' : ''}" onclick="setStageSort('recommended')">おすすめ</button>
+            `;
+            container.appendChild(sortControls);
+        }
         
         // Pagination Slice
         const visibleData = sortedData.slice(0, userStageLimit);
@@ -6661,7 +6828,7 @@ async function renderUserStagesPage(forceReload = false) {
                     <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
                     <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
                     <div class="user-stage-meta-info">
-                        <span>作成者: ${stage.creator}</span>
+                        <span>作成者: <span class="comment-author-link" onclick="openUserProfile('${stage.creatorId}', '${stage.creator}')">${stage.creator}</span></span>
                         <span>投稿日: ${new Date(stage.createdAt).toLocaleDateString()}</span>
                     </div>
                 </div>
@@ -6727,11 +6894,16 @@ function renderInlineComments(stageId, comments) {
     const visible = comments.slice(0, 3);
     const hidden = comments.slice(3);
     
-    const renderItem = (c) => `
+    const renderItem = (c) => {
+        const nameHtml = c.playerId 
+            ? `<span class="comment-author-link" onclick="openUserProfile('${c.playerId}', '${c.name}')">${c.name}</span>`
+            : `<span>${c.name}</span>`;
+        return `
         <div class="inline-comment-item">
-            <div class="inline-comment-header"><span>${c.name}</span><span>${new Date(c.date).toLocaleDateString()}</span></div>
+            <div class="inline-comment-header">${nameHtml}<span>${new Date(c.date).toLocaleDateString()}</span></div>
             <div style="line-height:1.4;">${c.text}</div>
         </div>`;
+    };
 
     let html = `<div class="inline-comment-list" id="commentList-${stageId}">` + visible.map(renderItem).join('');
     
@@ -7002,6 +7174,7 @@ function editorNextStep() {
             id: e.id,
             level: e.level,
             equipment: e.equippedId ? equipmentItems.find(i => i.id === e.equippedId) : null,
+            enhancement: e.enhancement,
             potential: 0
         }));
         const enemyPower = calculateTotalPower(enemyConfigs);
@@ -7057,6 +7230,7 @@ function copySquadToEditor() {
             level: char.level,
             aura: char.aura || 0,
             equippedId: char.equippedId,
+            enhancement: char.equippedId ? playerState.equipmentEnhancements[char.equippedId] : null,
             aiType: AI_TYPES.RANDOM
         };
     });
@@ -7424,6 +7598,7 @@ async function startUserStageBattle(stageId) {
             aura: s.aura,
             potential: s.potential,
             equipment: equip,
+            enhancement: s.enhancement,
             aiType: AI_TYPES.RANDOM // Default AI for now
         };
     });
@@ -7461,8 +7636,8 @@ function startClearCheck() {
     const enemies = currentEditingStage.enemies.map(s => {
         const equip = s.equippedId ? equipmentItems.find(e => e.id == s.equippedId) : null;
         return {
-            id: s.id, level: s.level, aura: s.aura,
-            equipment: equip, aiType: AI_TYPES.RANDOM
+            id: s.id, level: s.level, aura: s.aura, potential: 0,
+            equipment: equip, enhancement: s.enhancement, aiType: AI_TYPES.RANDOM
         };
     });
     
@@ -7548,7 +7723,7 @@ async function startBattle(missionId, skipDialogue = false) {
       const aura = playerState.characters[id].aura || 0;
       const potential = playerState.characters[id].potential || 0;
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-      const stats = calcStats(char.baseStats, level, equip, potential);
+      const stats = calcStats(char.baseStats, level, equip, potential, undefined); // Use playerState enhancement
       
       // Init battle props
       let unit = { ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip };
@@ -7570,10 +7745,11 @@ async function startBattle(missionId, skipDialogue = false) {
 
       // Enemy Equipment
       const equip = enemyConfig.equipment || null;
+      const enhancement = enemyConfig.enhancement || null;
       // Enemies don't use potential yet (or default 0)
-      const stats = calcStats(enemy.baseStats, level, equip, 0);
+      const stats = calcStats(enemy.baseStats, level, equip, 0, enhancement);
 
-      let unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip };
+      let unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip, enhancement: enhancement };
       if (equip && equip.effect && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
       if (equip && equip.effect && equip.effect.type === 'guts') unit.guts = true;
       
@@ -7709,7 +7885,7 @@ function renderUnit(unit) {
   const imgSrc = unit.useImg ? unit.img : 'C0.svg';
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
   
-  const equipEnhancement = unit.equipment ? playerState.equipmentEnhancements?.[unit.equipment.id] : null; // For player only ideally, but ok
+  const equipEnhancement = unit.isPlayer ? (unit.equipment ? playerState.equipmentEnhancements?.[unit.equipment.id] : null) : unit.enhancement;
   const equipAuraClass = (unit.isPlayer && equipEnhancement) ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
 
   const equipHtml = unit.equipment ? `<div class="b-unit-equip ${equipAuraClass}" title="${unit.equipment.name}\n${unit.equipment.desc}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${unit.equipment.icon}</div>` : '';
@@ -10139,7 +10315,8 @@ function getSquadData() {
       details[id] = {
         level: playerState.characters[id].level,
         aura: playerState.characters[id].aura || 0,
-        equippedId: playerState.characters[id].equippedId || null
+        equippedId: playerState.characters[id].equippedId || null,
+        enhancement: (playerState.characters[id].equippedId ? playerState.equipmentEnhancements[playerState.characters[id].equippedId] : null)
       };
     }
   });
@@ -10211,12 +10388,14 @@ function viewSquadFromCode() {
       let level = 1;
       let aura = 0;
       let equipId = null;
+      let enhancement = null;
 
       if (data.details && data.details[charId]) {
         const detail = data.details[charId];
         level = detail.level || 1;
         aura = detail.aura || 0;
         equipId = detail.equippedId || null;
+        enhancement = detail.enhancement || null;
       } else if (data.equipment) { // Backward compatibility
         equipId = data.equipment[charId] || null;
       }
@@ -10224,6 +10403,10 @@ function viewSquadFromCode() {
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
       const auraData = aura > 0 ? AURA_DATA[aura - 1] : null;
       const auraClass = auraData ? auraData.class : '';
+      
+      const enhancedName = getEnhancedEquipName(equip, enhancement);
+      const equipAuraClass = enhancement ? (RANK_AURA_MAP[enhancement.rank] || '') : '';
+      // const rankBadge = enhancement ? `<span style="font-size:0.6rem; color:var(--gold); border:1px solid currentColor; border-radius:3px; padding:0 2px; margin-left:2px;">${enhancement.rank}</span>` : '';
       
       html += `
         <div class="squad-slot filled ${auraClass}" style="margin-bottom: 6px; cursor: default;">
@@ -10234,7 +10417,7 @@ function viewSquadFromCode() {
             <div class="slot-name">${char.name} <span style="font-size:10px;color:var(--accent)">(Lv.${level})</span></div>
             <div class="slot-role">${char.roleJp}</div>
           </div>
-          ${equip ? `<div class="squad-equip-icon" title="${equip.name}">${equip.icon}</div>` : ''}
+          ${equip ? `<div class="squad-equip-icon ${equipAuraClass}" title="${enhancedName}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
           ${auraData ? `<div class="aura-badge" style="background:${auraData.color};color:#000;">${auraData.label}</div>` : ''}
         </div>
       `;
@@ -10717,8 +10900,13 @@ async function checkNotifications() {
     try {
         const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId);
         const stages = await response.json();
+        cachedUserStages = stages;
         processStageNotifications(stages);
         lastNotificationCheck = Date.now();
+        
+        if (currentView === 'missions' && currentStoryTab === 'user') {
+            renderUserStagesPage();
+        }
     } catch (e) {
         console.error('Notification check failed', e);
     }
@@ -10837,7 +11025,7 @@ function checkAndGrantTowerRewards(currentFloor, showToasts = false) {
 }
 
 // ===== INIT =====
-function initializeGame() {
+async function initializeGame() {
     loadSettings();
     loadGame();
 
@@ -10869,6 +11057,9 @@ function initializeGame() {
             }
         }
     });
+
+    // Run Preloader (Await assets)
+    await runPreloader();
 
     // ログイン時のタワー報酬チェック
     const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
