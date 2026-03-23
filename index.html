@@ -3051,7 +3051,13 @@
   }
   .unit-selector-item:hover { transform: scale(1.05); border-color: var(--accent); z-index: 10; }
   .unit-selector-item img { width: 100%; height: auto; display: block; border-radius: 3px; }
-  .unit-selector-id { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.7); font-size: 0.6rem; padding: 1px 3px; color: var(--text-dim); }
+  .unit-selector-id { position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.7); font-size: 0.6rem; padding: 1px 3px; color: var(--text-dim); z-index: 2; }
+  .unit-selector-name {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.8); color: #fff;
+    font-size: 0.6rem; padding: 2px;
+    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
 
   .draft-stage-item {
     border: 1px solid var(--border); padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 4px;
@@ -4879,6 +4885,11 @@ const STAGE_BACKGROUNDS = [
     { id: 'sea', name: '深海', css: 'linear-gradient(to bottom, #000033, #000011)' },
     { id: 'forest', name: '森林', css: 'linear-gradient(to bottom, #001100, #003300)' },
     { id: 'sky', name: '天空', css: 'linear-gradient(to bottom, #003366, #87CEEB)' },
+    { id: 'snow', name: '雪原', css: 'linear-gradient(to bottom, #e0f7fa, #a7cfdb)' },
+    { id: 'desert', name: '砂漠', css: 'linear-gradient(to bottom, #f4a460, #8b4513)' },
+    { id: 'cyber', name: '電脳', css: 'repeating-linear-gradient(0deg, #000, #000 2px, #003300 2px, #003300 4px)' },
+    { id: 'space', name: '宇宙', css: 'radial-gradient(circle, #1a1a40 0%, #000000 100%)' },
+    { id: 'castle', name: '城内', css: 'linear-gradient(to bottom, #444, #222)' },
 ];
 
 let userStageAbortController = null;
@@ -6808,7 +6819,7 @@ function renderUnitSelector() {
     filtered.forEach(u => {
         const div = document.createElement('div');
         div.className = 'unit-selector-item';
-        div.innerHTML = `<img src="${u.useImg ? u.img : 'C0.svg'}"><div class="unit-selector-id">${u.id}</div>`;
+        div.innerHTML = `<img src="${u.useImg ? u.img : 'C0.svg'}"><div class="unit-selector-id">${u.id}</div><div class="unit-selector-name">${u.name}</div>`;
         div.onclick = () => {
             addEditorEnemy(u.id);
             closeUnitSelector();
@@ -7126,7 +7137,7 @@ async function startUserStageBattle(stageId) {
     });
 
     // Reward Calc (Total Power)
-    const rewardVal = calculateTotalPower(enemies);
+    const rewardVal = Math.min(calculateTotalPower(enemies), 100000);
 
     // Create a temporary mission object
     const mission = {
@@ -7714,18 +7725,18 @@ async function runBattleSequence() {
         await sleep(400 / battleSpeedMultiplier);
 
         // --- FIELD EFFECT HANDLING (Start of turn) ---
-        if (battleState.fieldEffect) {
-            const isPlayerTurn = attacker.isPlayer;
-            if (battleState.fieldEffect === 'miasma' && isPlayerTurn) {
+        const myField = attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+        if (myField && myField !== 'none') {
+            if (myField === 'miasma') {
                 await addStatusEffect(attacker, 'poison', 1);
             }
-            if (battleState.fieldEffect === 'lightning_storm' && isPlayerTurn) {
+            if (myField === 'lightning_storm') {
                 if (Math.random() < 0.2) {
                     await addStatusEffect(attacker, 'paralysis', 1);
                     logBattleMessage(`<span style="color:var(--accent)">雷雲</span>が${attacker.name}を襲う！`);
                 }
             }
-            if (battleState.fieldEffect === 'berserk') {
+            if (myField === 'berserk') {
                 // Visual effect handled in stats, maybe show log once?
             }
         }
@@ -9905,11 +9916,11 @@ function handleFileSelect(input) {
       const currentId = playerState.playerId;
       const fileId = data.playerState.playerId;
 
-      if (fileId && fileId !== currentId) {
-          showToast('他人のファイルは開けません');
-          input.value = '';
-          return;
-      }
+      // if (fileId && fileId !== currentId) {
+      //     showToast('他人のファイルは開けません');
+      //     input.value = '';
+      //     return;
+      // }
 
       // Restore Data
       playerState = data.playerState;
