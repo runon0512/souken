@@ -10504,6 +10504,49 @@ function viewSquadFromCode() {
   }
 }
 
+const COMPENSATION_VERSION = '20260323_fix_v1';
+
+function checkAndApplyCompensation() {
+  if (playerState.compensationVersion === COMPENSATION_VERSION) return;
+
+  // 1. Reset Characters & Refund
+  let refund = 0;
+  for (const charId in playerState.characters) {
+    const charState = playerState.characters[charId];
+    if (charState.level > 1) {
+      // Refund level cost: sum of (level-1)*100 equivalent logic (50 * L * (L-1))
+      refund += 50 * charState.level * (charState.level - 1);
+      charState.level = 1;
+    }
+    const aura = charState.aura || 0;
+    if (aura > 0) {
+      for(let i=0; i < aura; i++) {
+        if (AURA_DATA[i]) refund += AURA_DATA[i].cost;
+      }
+      charState.aura = 0;
+    }
+  }
+  playerState.rainbowStones += refund;
+
+  // 2. Reduce Stones if Overflowing
+  if (playerState.rainbowStones > 104000936) {
+    playerState.rainbowStones -= 104000936;
+  }
+
+  // 3. Distribute Compensation
+  playerState.rainbowStones += 4000;
+  if (!playerState.characters[36]) { // Raimel (ID: 36)
+    playerState.characters[36] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+  }
+
+  // 4. Mark & Save
+  playerState.compensationVersion = COMPENSATION_VERSION;
+  saveGame();
+
+  // 5. Notify
+  alert("私の不手際により一部のプレイヤーに多大な迷惑をおかけしました。こちらが補償です。");
+}
+
 // ===== FILE SAVE/LOAD =====
 function exportSaveFile() {
   const saveData = {
@@ -10595,6 +10638,9 @@ function handleFileSelect(input) {
       if (!playerState.playerId) {
           playerState.playerId = currentId || generateUUID();
       }
+      
+      // Apply Compensation/Fix Logic
+      checkAndApplyCompensation();
 
       // UI Update
       renderSquad();
@@ -10715,6 +10761,7 @@ function loadGame() {
     if (!playerState.squads[1]) playerState.squads[1] = [];
     if (!playerState.squads[2]) playerState.squads[2] = [];
     
+    playerState.compensationVersion = savedData.playerState.compensationVersion;
     playerState.playerId = savedData.playerState.playerId;
 
     if (!playerState.playerId) {
@@ -10722,6 +10769,9 @@ function loadGame() {
         saveGame();
     }
     
+    // Apply Compensation/Fix Logic
+    checkAndApplyCompensation();
+
     missionProgress = new Set(savedData.missionProgress || []);
     // squad変数を現在のアクティブなスロットへの参照にする
     squad = playerState.squads[playerState.currentSquadIndex];
@@ -10731,6 +10781,7 @@ function loadGame() {
   } else {
     console.log('No save data found. Starting a new game.');
     playerState.playerId = generateUUID();
+    playerState.compensationVersion = COMPENSATION_VERSION;
     saveGame();
     squad = playerState.squads[0]; // Default ref
   }
