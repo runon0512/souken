@@ -3793,6 +3793,16 @@ const units = [
     ],
     useImg: true, img: 'C7.svg'
   },
+  {
+    id: 41, name: 'エマ・ソフィーティア', element: 'fire', elementJp: '炎', type: 'ルディ王国',
+    baseStats: { hp: 1250, atk: 110, def: 65, spd: 68 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '愛世絢爛', desc: 'HPが多いほど攻撃力が上昇する（最大1.5倍）。' },
+      { name: '華紅雷裂孔', desc: '30%の確率で発動。攻撃が敵全体への75%のダメージ攻撃になり、麻痺(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.75, effect: { type: 'status', status: 'paralysis', turns: 2 } }
+    ],
+    useImg: true, img: 'C40.svg'
+  },
   // Enemies are now part of the same definition
   {
     id: 301, name: 'スライム', element: 'water', elementJp: '水',
@@ -4812,7 +4822,7 @@ for (let i = 0; i < 8; i++) {
     if (!baseChapter) continue;
 
     let newName = baseChapter.name.replace(`第${baseChapterNum[i]}章`, `第${newChapterNum[i]}章`);
-    if (newName === baseChapter.name) newName += " X"; // Fallback if replace fails
+    newName += " X";
 
     const newMissions = baseChapter.missions.map(m => {
         const newEnemies = m.enemies.map(e => ({
@@ -6445,7 +6455,7 @@ function setStoryTab(tab) {
   }
   currentStoryTab = tab;
   const container = document.getElementById('missionGrid');
-  if (tab === 'user') {
+  if (tab === 'user' || tab === 'event') {
       container.style.gridTemplateColumns = '1fr';
   } else {
       container.style.gridTemplateColumns = ''; // デフォルトに戻す
@@ -9557,6 +9567,13 @@ function getBattleStats(unit) {
     s.atk = Math.floor(s.atk * multiplier);
     s.def = Math.floor(s.def * multiplier);
     s.spd = Math.floor(s.spd * multiplier);
+  }
+
+  // パッシブ: エマ・ソフィーティア (ID:41) 愛世絢爛
+  if (unit.id === 41) {
+    const hpRatio = unit.currentHp / unit.stats.hp;
+    const multiplier = 1 + (hpRatio * 0.5); // Max 1.5x at 100% HP
+    s.atk = Math.floor(s.atk * multiplier);
   }
 
   // パッシブ: オリバー (ID:12) フォルテ
