@@ -258,9 +258,9 @@
   }
   
   /* Drag and Drop styles */
-  .squad-slot[draggable="true"] { cursor: grab; }
-  .squad-slot.dragging { opacity: 0.5; border: 1px dashed var(--accent); }
-  .squad-slot.drag-over {
+  .squad-slot[draggable="true"], .editor-unit-slot[draggable="true"] { cursor: grab; }
+  .squad-slot.dragging, .editor-unit-slot.dragging { opacity: 0.5; border: 1px dashed var(--accent); }
+  .squad-slot.drag-over, .editor-unit-slot.drag-over {
     background: rgba(0, 200, 255, 0.2);
     border: 1px solid var(--accent);
     transform: scale(1.02);
@@ -272,7 +272,9 @@
     background: transparent;
   }
   /* Prevent children from interfering with drag events */
-  .squad-slot > * { pointer-events: none; }
+  .squad-slot > *, .editor-unit-slot > * { pointer-events: none; }
+  /* Allow specific interactive elements */
+  .editor-unit-slot .editor-remove-btn { pointer-events: auto; }
 
   /* Ensure content sits above aura overlay in squad slots */
   .squad-slot > * { position: relative; z-index: 2; }
@@ -3187,7 +3189,8 @@
           <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
              <div style="font-weight:bold; margin-bottom:0.5rem;" id="confirmStageName">-</div>
              <div style="font-size:0.8rem; color:var(--text-mid); margin-bottom:0.5rem;" id="confirmStageDesc">-</div>
-             <div style="font-size:0.75rem; color:var(--text-dim);" id="confirmStageConfig">-</div>
+             <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:0.5rem;" id="confirmStageConfig">-</div>
+             <div id="confirmPowerInfo" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:0.5rem; margin-top:0.5rem;"></div>
           </div>
           
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
@@ -6843,6 +6846,63 @@ function closeStageEditor() {
     }
 }
 
+// Editor Drag & Drop Logic
+let draggedEditorEnemyIndex = null;
+
+function handleEditorEnemyDragStart(e, index) {
+    draggedEditorEnemyIndex = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+    setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+
+function handleEditorEnemyDragEnd(e) {
+    if(e.target) e.target.classList.remove('dragging');
+    document.querySelectorAll('.editor-unit-slot').forEach(el => el.classList.remove('drag-over'));
+    draggedEditorEnemyIndex = null;
+}
+
+function handleEditorEnemyDragOver(e) {
+    if (draggedEditorEnemyIndex === null) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleEditorEnemyDragEnter(e) {
+    if (draggedEditorEnemyIndex === null) return;
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleEditorEnemyDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleEditorEnemyDrop(e, targetIndex) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    if (draggedEditorEnemyIndex === null || draggedEditorEnemyIndex === targetIndex) return;
+
+    const enemies = currentEditingStage.enemies;
+    
+    // Guard clause
+    if (draggedEditorEnemyIndex >= enemies.length) return;
+
+    // Move Item
+    const item = enemies.splice(draggedEditorEnemyIndex, 1)[0];
+    
+    // Determine insertion point
+    let insertAt = targetIndex;
+    if (insertAt > enemies.length) insertAt = enemies.length;
+    
+    enemies.splice(insertAt, 0, item);
+    
+    draggedEditorEnemyIndex = null;
+    currentEditingStage.cleared = false;
+    updateEditorUI();
+}
+
 function updateEditorUI() {
     const statusBadge = document.getElementById('editorStatusBadge');
     const btnPublish = document.getElementById('btnPublishStage');
@@ -6880,6 +6940,12 @@ function updateEditorUI() {
         const slot = document.createElement('div');
         slot.className = 'editor-unit-slot' + (enemy ? ' filled' : '');
         
+        // Drop handlers on ALL slots
+        slot.ondragover = handleEditorEnemyDragOver;
+        slot.ondragenter = handleEditorEnemyDragEnter;
+        slot.ondragleave = handleEditorEnemyDragLeave;
+        slot.ondrop = (e) => handleEditorEnemyDrop(e, i);
+        
         if (enemy) {
             const unit = units.find(u => u.id === enemy.id);
             const imgSrc = unit ? (unit.useImg ? unit.img : 'C0.svg') : '';
@@ -6892,6 +6958,10 @@ function updateEditorUI() {
                     ${enemy.equippedId ? '<div style="color:var(--gold); font-size:0.6rem;">🛡️装備有</div>' : ''}
                 </div>
             `;
+            
+            slot.setAttribute('draggable', 'true');
+            slot.ondragstart = (e) => handleEditorEnemyDragStart(e, i);
+            slot.ondragend = handleEditorEnemyDragEnd;
             slot.onclick = () => openEnemySetting(i);
         } else {
             slot.innerHTML = `<div class="editor-plus-sign">＋</div><div style="font-size:0.7rem; color:var(--text-dim); margin-top:0.5rem;">追加</div>`;
@@ -6925,6 +6995,36 @@ function editorNextStep() {
         const feE = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectEnemy)?.name || 'なし';
         const bgName = STAGE_BACKGROUNDS.find(b => b.id === currentEditingStage.bgId)?.name || '標準';
         document.getElementById('confirmStageConfig').innerHTML = `敵:${currentEditingStage.enemies.length}体 / 味方効果:${feP} / 敵効果:${feE} / 背景:${bgName}`;
+        
+        // 戦力計算と表示
+        const enemyConfigs = currentEditingStage.enemies.map(e => ({
+            id: e.id,
+            level: e.level,
+            equipment: e.equippedId ? equipmentItems.find(i => i.id === e.equippedId) : null,
+            potential: 0
+        }));
+        const enemyPower = calculateTotalPower(enemyConfigs);
+        const squadPower = parseInt(document.getElementById('totalPower').textContent) || 0;
+
+        const myCount = squad.length || 1;
+        const enemyCount = currentEditingStage.enemies.length || 1;
+        const myAvg = squadPower / myCount;
+        const enemyAvg = enemyPower / enemyCount;
+
+        const isSafe = myAvg >= enemyAvg;
+        const diff = Math.floor(myAvg - enemyAvg);
+        const diffColor = isSafe ? 'var(--accent3)' : 'var(--accent2)';
+        
+        document.getElementById('confirmPowerInfo').innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; font-family:'Orbitron'; font-size:0.9rem;">
+                <div>自軍平均: <span style="color:var(--accent);">${Math.floor(myAvg).toLocaleString()}</span></div>
+                <div style="font-size:0.8rem; color:${diffColor};">(${diff > 0 ? '+' : ''}${diff.toLocaleString()})</div>
+                <div>敵軍平均: <span style="color:var(--accent2);">${Math.floor(enemyAvg).toLocaleString()}</span></div>
+            </div>
+            <div style="text-align:center; font-size:0.75rem; color:${isSafe ? 'var(--text-mid)' : 'var(--accent2)'}; margin-top:0.3rem;">
+                ${isSafe ? '※平均戦力が上回っているため、テストプレイ開始時に即時クリア可能です。' : '※平均戦力が下回っているため、実戦での勝利が必要です。'}
+            </div>
+        `;
 
         document.getElementById('editorNextBtn').style.display = 'none';
         document.getElementById('btnPublishStage').style.display = 'block';
@@ -7135,7 +7235,12 @@ async function publishStage() {
         }
     });
 
-    if (!currentEditingStage.cleared && squadPower < enemyPower) { showToast('クリアチェックが必要です（戦力不足）'); return; }
+    const myCount = squad.length || 1;
+    const enemyCount = currentEditingStage.enemies.length || 1;
+    const myAvg = squadPower / myCount;
+    const enemyAvg = enemyPower / enemyCount;
+
+    if (!currentEditingStage.cleared && myAvg < enemyAvg) { showToast('クリアチェックが必要です（平均戦力不足）'); return; }
 
     const name = document.getElementById('editorStageName').value.trim();
     const desc = document.getElementById('editorStageDesc').value.trim();
@@ -7373,9 +7478,14 @@ function startClearCheck() {
         }
     });
 
-    if (squadPower >= enemyPower) {
+    const myCount = squad.length || 1;
+    const enemyCount = enemies.length || 1;
+    const myAvg = squadPower / myCount;
+    const enemyAvg = enemyPower / enemyCount;
+
+    if (myAvg >= enemyAvg) {
         currentEditingStage.cleared = true;
-        showToast('戦力差によりクリアチェックをスキップしました');
+        showToast('平均戦力差によりクリアチェックをスキップしました');
         saveDraftStage();
         updateEditorUI();
         return;
