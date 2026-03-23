@@ -809,7 +809,7 @@
     background: rgba(0,0,0,0.5); /* 画像の上なので背景つける */
     color: var(--text-dim);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: var(--card-btn-font, 0.9rem);
+    font-size: 1.1rem;
     font-weight: 700;
     min-height: var(--card-btn-height, 2.5rem);
     height: var(--card-btn-height, 2.5rem);
@@ -1122,7 +1122,7 @@
     background: rgba(0,200,255,0.1);
     color: var(--accent);
     font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
+    font-size: 1.25rem;
     min-height: 2.25rem;
     cursor: pointer;
     transition: all 0.2s;
@@ -1336,8 +1336,7 @@
     transition: all 0.2s, transform 0.4s ease;
     position: relative;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    display: block; /* FlexからBlockに変更して絶対配置を容易に */
   }
   .battle-unit.enemy-unit { border-color: var(--accent2); }
   .battle-unit.player-unit { border-color: var(--accent); }
@@ -1394,19 +1393,19 @@
     display: flex; align-items: center; justify-content: center;
   }
   .b-unit-img {
-    position: relative;
-    width: 100%;
-    height: 55%;
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
     z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(160deg, #0d1a2a, #070e18);
+    padding-bottom: 2.5rem; /* 情報エリアの分だけパディング */
   }
   .b-unit-img img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* 全体を表示 */
     display: block; /* 隙間対策 */
   }
   .b-unit-img .char-silhouette {
@@ -1432,12 +1431,13 @@
     display: block;
   }
   .b-unit-info {
-    position: relative;
+    position: absolute;
+    bottom: 0; left: 0; width: 100%;
     z-index: 3;
     padding: 0.375rem 0.5rem;
-    height: 45%;
-    background: var(--bg-card);
-    border-top: 1px solid var(--border);
+    height: auto;
+    background: linear-gradient(to top, rgba(6,10,15,0.95) 0%, rgba(6,10,15,0.8) 100%); /* 半透明グラデーション */
+    border-top: 1px solid rgba(255,255,255,0.1);
   }
   .b-unit-name { font-size: 0.8125rem; font-weight: 700; color: var(--text-main); text-shadow: 0 1px 3px #000; line-height: 1.3; height: 1.125rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .b-unit-status-effects {
@@ -1565,7 +1565,7 @@
     min-height: 2rem;
     cursor: pointer;
     font-family: 'Orbitron', monospace;
-    font-size: 1rem;
+    font-size: 1.25rem;
   }
   .level-btn:disabled { background: var(--text-dim); cursor: not-allowed; opacity: 0.5; }
 
@@ -2562,7 +2562,7 @@
     background: rgba(0,200,255,0.1);
     color: var(--accent);
     font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
+    font-size: 1.25rem;
     min-height: 3.5rem;
     letter-spacing: 2px;
     cursor: pointer;
@@ -2692,9 +2692,8 @@
     <div class="hstat-label" style="margin-right:8px">虹石</div>
     <div class="hstat-val" style="color:var(--gold)" id="resRainbow">0</div>
   </div>
-  <button class="notification-btn" onclick="openNotificationModal()" title="通知">
-    🔔
-    <div class="notification-badge" id="notificationBadge"></div>
+  <button class="notification-btn" onclick="openNotificationModal()" title="通知" id="notificationBtn">
+    通知0
   </button>
   <div class="header-stats">
     <div class="hstat">
@@ -2855,6 +2854,7 @@
             <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.5rem 1rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
             <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.5rem 1rem; margin:0;">イベント</button> <!-- Kept for structure, but hidden -->
             <button class="filter-btn" id="tab-story-challenge" onclick="setStoryTab('challenge')" style="padding: 0.5rem 1rem; margin:0;">チャレンジ</button>
+            <button class="filter-btn" id="tab-story-collab" onclick="setStoryTab('collab')" style="padding: 0.5rem 1rem; margin:0;">コラボイベント</button>
             <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.5rem 1rem; margin:0;">みんなのステージ</button>
             <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.5rem 1rem; margin:0;">無限の塔 <span class="new-badge">New!</span></button>
       </div>
@@ -2959,7 +2959,7 @@
 
   .stage-action-btn {
     background: transparent; border: 1px solid var(--border); color: var(--text-dim);
-    padding: 0.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: all 0.2s;
+    padding: 0.5rem; border-radius: 4px; cursor: pointer; font-size: 1.5rem; transition: all 0.2s;
   }
   .stage-action-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); background: rgba(0,200,255,0.1); }
   .stage-action-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.1); }
@@ -2986,17 +2986,14 @@
 
   /* NOTIFICATION STYLES */
   .notification-btn {
-    background: transparent; border: none; color: var(--text-dim);
-    font-size: 1.5rem; cursor: pointer; position: relative;
-    margin-right: 1.5rem; transition: color 0.2s;
+    background: transparent; border: none; color: #fff;
+    font-size: 1.1rem; cursor: pointer; position: relative;
+    margin-right: 1.5rem; transition: all 0.2s; font-family: 'Noto Sans JP', sans-serif;
   }
-  .notification-btn:hover { color: var(--text-main); }
-  .notification-badge {
-    position: absolute; top: -2px; right: -2px; width: 10px; height: 10px;
-    background: var(--accent2); border-radius: 50%; border: 2px solid var(--bg-deep);
-    display: none;
+  .notification-btn:hover { opacity: 0.8; }
+  .notification-btn.has-unread {
+    color: #ff4d4d; font-weight: 900; text-shadow: 0 0 5px rgba(255, 77, 77, 0.5);
   }
-  .notification-badge.active { display: block; }
   
   .notification-list {
     display: flex; flex-direction: column; gap: 0.5rem;
@@ -3011,6 +3008,24 @@
   .notif-date { font-size: 0.65rem; color: var(--text-dim); text-align: right; }
   .notif-text { color: var(--text-main); line-height: 1.4; }
   .notif-text strong { color: var(--accent); }
+
+  /* INLINE COMMENTS */
+  .inline-comment-section { margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.5rem; display: block; }
+  .inline-comment-list { max-height: 15rem; overflow-y: auto; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .inline-comment-item { background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+  .inline-comment-header { display: flex; justify-content: space-between; color: var(--text-dim); margin-bottom: 0.25rem; font-size: 0.65rem; }
+  .inline-comment-input-area { display: flex; gap: 0.5rem; }
+  .comment-hidden { display: none; }
+  .comment-show-more-btn {
+    background: none; border: none; color: var(--accent); font-size: 0.7rem; cursor: pointer; padding: 0.25rem; width: 100%; text-align: center; margin-bottom: 0.5rem;
+  }
+  .comment-show-more-btn:hover { text-decoration: underline; color: var(--text-main); }
+  
+  .sort-btn { flex: 1; text-align: center; } /* Make sort buttons even width */
+
+  /* LOCKED UNIT SELECTOR */
+  .unit-selector-item.locked { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; border-color: var(--border); }
+  .unit-selector-item.locked::after { content: '🔒'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: rgba(0,0,0,0.5); }
 
   /* STAGE EDITOR */
   .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; height: 100%; }
@@ -3107,6 +3122,11 @@
   .editor-step-3 { display: none; }
   .editor-step-3.active { display: block; }
   
+  .editor-action-btn {
+    background: rgba(0,200,255,0.1); border: 1px solid var(--accent); color: var(--accent);
+    padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+  }
+  
   .editor-equip-btn {
     width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; justify-content: center; margin-top: 0.5rem;
   }
@@ -3144,7 +3164,10 @@
               </div>
            </div>
            
-           <div style="text-align:center; margin-top:1rem; color:var(--text-dim); font-size:0.8rem;">↓ 敵部隊編成 (最大5体) ↓</div>
+           <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:1rem; padding:0 0.5rem;">
+              <div style="color:var(--text-dim); font-size:0.8rem;">敵部隊編成</div>
+              <button class="editor-action-btn" onclick="copySquadToEditor()">自分の編成をコピー</button>
+           </div>
            <div class="editor-team-container" id="editorVisualSlots">
               <!-- Slots injected here -->
            </div>
@@ -4087,6 +4110,17 @@ const units = [
     ],
     useImg: true, img: 'C39.svg'
   },
+  {
+    id: 40, name: 'ジーク・デストロイ', element: 'none', elementJp: '無', type: 'デストロイワールド',
+    baseStats: { hp: 1180, atk: 90, def: 80, spd: 75 },
+    abilityType: 'impact',
+    abilities: [
+      { name: '救うための一撃', desc: '攻撃時40%で発動。味方の数が少ないほど威力が上がる(5人で1.2倍、1人で3.2倍)。', triggerRate: 0.4, timing: 'before_attack' },
+      { name: 'ダメージの無力化', desc: '死亡時、2回まで復活する(HP30%→15%)。' },
+      { name: '重力の無力化', desc: '戦闘開始時、味方全員に無重力(攻撃UP防御DOWN)を2ターン付与する。', timing: 'on_battle_start' }
+    ],
+    useImg: true, img: 'C540.svg'
+  },
 ];
 
 // Equipment Data
@@ -4701,13 +4735,37 @@ const challengeChapters = [
   },
 ];
 
+const collabChapters = [
+  {
+    name: 'コラボ：デストロイワールド',
+    color: '#800000',
+    missions: [
+      {
+        id: 950,
+        name: 'デストロイワールドコラボ①',
+        description: '異世界からの来訪者、ジーク・デストロイとの戦闘。',
+        enemies: [
+          { id: 315, level: 130, aiType: AI_TYPES.RANDOM },
+          { id: 315, level: 130, aiType: AI_TYPES.RANDOM },
+          { id: 40, level: 260, aura: 15, aiType: AI_TYPES.HIGHEST_ATK }, // Zeek Boss
+          { id: 315, level: 130, aiType: AI_TYPES.RANDOM },
+          { id: 315, level: 130, aiType: AI_TYPES.RANDOM }
+        ],
+        recommendedPower: 0, 
+        reward: 0,
+        firstTimeReward: 0
+      }
+    ]
+  }
+];
+
 storyChapters.push({ name: '第八章：雷の始祖', missions: chapter8Missions });
 
 function getMissionById(id) {
   if (id >= 10000) {
     return generateTowerMission(id - 10000);
   }
-  const allChapters = [...storyChapters, ...eventChapters, ...challengeChapters];
+  const allChapters = [...storyChapters, ...eventChapters, ...challengeChapters, ...collabChapters];
   for (const chapter of allChapters) {
     const m = chapter.missions.find(mis => mis.id === id);
     if (m) return m;
@@ -4786,6 +4844,7 @@ const STATUS_EFFECTS = {
   barrier: { icon: '🛡️', name: '障壁', desc: '防御力が50%上昇する。' },
   curse: { icon: '🤐', name: '呪い', desc: 'アビリティ（スキル）が発動しなくなる。' },
   heavy: { icon: '🏋️', name: '重量化', desc: '速度が1/3になる。' },
+  zero_gravity: { icon: '🌑', name: '無重力', desc: '攻撃力が1.2倍、防御力が0.8倍になる。' },
 };
 
 const AURA_DATA = [
@@ -4834,7 +4893,7 @@ let playerState = {
   playerName: "名無しの剣士",
   playerId: null, // Will be generated
   notifications: [], // { id, text, date, read }
-  stageStats: {}, // { stageId: { hearts: 0, comments: 0 } }
+  stageTracking: {}, // { stageId: { hearts: 0, comments: 0, plays: 0, seen: true } }
 };
 
 function getEnhancedEquipName(item, enhancement) {
@@ -4856,7 +4915,8 @@ let missionProgress = new Set(); // Cleared mission IDs
 let currentStoryTab = 'main';
 let cachedUserStages = []; // Store fetched stages
 let tempUserStageMission = null; // For holding the currently selected user stage mission data
-let currentUserStageSort = 'newest'; // newest, hearts, recommended
+let currentUserStageSort = 'newest'; // newest, hearts, plays, clearRate, recommended
+let userStageLimit = 10; // Pagination limit
 
 // Audio state
 sounds.homeBgm.loop = true;
@@ -6279,8 +6339,12 @@ function renderStoryChapters() {
     renderUserStagesPage();
   } else {
     // イベントまたはチャレンジ：ミッション一覧を表示
-    const targetChapters = currentStoryTab === 'event' ? eventChapters : challengeChapters;
+    let targetChapters;
+    if (currentStoryTab === 'event') targetChapters = eventChapters;
+    else if (currentStoryTab === 'challenge') targetChapters = challengeChapters;
+    else if (currentStoryTab === 'collab') targetChapters = collabChapters;
     
+    if (targetChapters) {
     targetChapters.forEach((chapter) => {
       // Render event missions directly as cards
       // Add Banner
@@ -6301,6 +6365,7 @@ function renderStoryChapters() {
           if (m.id === 901) firstRewardHtml += ` + <span style="color:var(--accent)">リディン</span>`;
           if (m.id === 904) firstRewardHtml += ` + <span style="color:var(--accent)">シャム・グレゴリオ</span>`;
           if (m.id === 911) firstRewardHtml += ` + <span style="color:var(--accent)">💖 色欲の魔石</span>`;
+          if (m.id === 950) firstRewardHtml = `初回報酬: <span style="color:var(--accent)">ジーク・デストロイ</span>`;
  
           const actionHtml = `<button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>`;
 
@@ -6321,6 +6386,7 @@ function renderStoryChapters() {
           container.appendChild(card);
       });
     });
+    }
   }
 }
 
@@ -6417,6 +6483,14 @@ function renderTowerMissions() {
 function sortUserStages(stages) {
   if (currentUserStageSort === 'newest') {
     return stages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else if (currentUserStageSort === 'plays') {
+    return stages.sort((a, b) => (b.plays || 0) - (a.plays || 0));
+  } else if (currentUserStageSort === 'clearRate') {
+    return stages.sort((a, b) => {
+        const rateA = a.plays > 0 ? (a.clears / a.plays) : 0;
+        const rateB = b.plays > 0 ? (b.clears / b.plays) : 0;
+        return rateB - rateA;
+    });
   } else if (currentUserStageSort === 'hearts') {
     return stages.sort((a, b) => b.hearts - a.hearts);
   } else if (currentUserStageSort === 'recommended') {
@@ -6440,6 +6514,8 @@ async function renderUserStagesPage(forceReload = false) {
     } else {
         container.innerHTML = '';
     }
+    
+    if (forceReload) userStageLimit = 10; // Reset pagination
 
     // Post Button & Reload Button
     // Drafts Section
@@ -6489,6 +6565,8 @@ async function renderUserStagesPage(forceReload = false) {
             });
             data = await response.json();
             cachedUserStages = data;
+            processStageNotifications(data); // 通知チェックも行う
+            lastNotificationCheck = Date.now();
         }
 
         container.innerHTML = '';
@@ -6505,14 +6583,19 @@ async function renderUserStagesPage(forceReload = false) {
         sortControls.innerHTML = `
             <span style="color:var(--text-mid); font-size:0.8rem; display:flex; align-items:center;">並び替え:</span>
             <button class="sort-btn ${currentUserStageSort === 'newest' ? 'active' : ''}" onclick="setStageSort('newest')">新しい順</button>
+            <button class="sort-btn ${currentUserStageSort === 'plays' ? 'active' : ''}" onclick="setStageSort('plays')">プレイ数順</button>
+            <button class="sort-btn ${currentUserStageSort === 'clearRate' ? 'active' : ''}" onclick="setStageSort('clearRate')">クリア率順</button>
             <button class="sort-btn ${currentUserStageSort === 'hearts' ? 'active' : ''}" onclick="setStageSort('hearts')">ハート順</button>
             <button class="sort-btn ${currentUserStageSort === 'recommended' ? 'active' : ''}" onclick="setStageSort('recommended')">おすすめ</button>
         `;
         container.appendChild(sortControls);
 
         const sortedData = sortUserStages([...data]);
+        
+        // Pagination Slice
+        const visibleData = sortedData.slice(0, userStageLimit);
 
-        sortedData.forEach(stage => {
+        visibleData.forEach(stage => {
             let squadData;
             let fieldEffectP = 'none';
             let fieldEffectE = 'none';
@@ -6555,6 +6638,17 @@ async function renderUserStagesPage(forceReload = false) {
                 if (feE && feE.id !== 'none') names.push(`敵:${feE.name}`);
                 if (names.length > 0) fieldBadge = `<span style="font-size:0.7rem; background:var(--accent2); color:#000; padding:2px 4px; border-radius:3px; margin-left:0.5rem;">⚠️ ${names.join('/')}</span>`;
             }
+            
+            const commentCount = (stage.comments || []).length;
+            
+            // Clearers List
+            let clearersHtml = '';
+            if (stage.clearers && stage.clearers.length > 0) {
+                clearersHtml = `<div style="grid-column: 1 / -1; font-size:0.75rem; color:var(--text-dim); margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+                    <details><summary style="cursor:pointer;">クリア者 (${stage.clearers.length}名)</summary>
+                    <div style="margin-top:0.25rem; padding-left:0.5rem; line-height:1.4;">${stage.clearers.join(', ')}</div></details>
+                </div>`;
+            }
 
             const card = document.createElement('div');
             card.className = 'mission-card user-stage-list-item';
@@ -6571,7 +6665,7 @@ async function renderUserStagesPage(forceReload = false) {
                     <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
                     <div class="stat-item" title="プレイ数">👤 ${stage.plays || 0}</div>
                     <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
-                    <div class="stat-item" title="コメント数">💬 ${(stage.comments||[]).length}</div>
+                    <div class="stat-item" title="コメント数">💬 ${commentCount}</div>
                     <div class="stat-item" title="推奨戦力">⚔️ ${totalPower}</div>
                 </div>
                 <div class="user-stage-list-actions">
@@ -6581,12 +6675,32 @@ async function renderUserStagesPage(forceReload = false) {
                     <button class="mission-btn" onclick="startUserStageBattle('${stage.id}')">挑戦する</button>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; width: 100%;">
                         <button class="stage-action-btn stage-heart-btn ${stage.isLiked ? 'active' : ''}" onclick="toggleStageHeart('${stage.id}')" style="flex:1;">❤️</button>
-                        <button class="stage-action-btn" onclick="openStageComments('${stage.id}')" style="flex:1;">💬</button>
+                    </div>
+                </div>
+                ${clearersHtml}
+                <div class="inline-comment-section" id="comments-${stage.id}" style="grid-column: 1 / -1;">
+                    ${renderInlineComments(stage.id, stage.comments || [])}
+                    <div class="inline-comment-input-area">
+                        <input type="text" id="commentInput-${stage.id}" class="post-input" placeholder="コメントを入力..." style="margin-bottom:0;" maxlength="50">
+                        <button class="mission-btn" style="width:auto; padding:0 1rem;" onclick="submitInlineComment('${stage.id}')">送信</button>
                     </div>
                 </div>
             `;
             container.appendChild(card);
         });
+        
+        // Show More Button
+        if (sortedData.length > userStageLimit) {
+            const moreBtn = document.createElement('button');
+            moreBtn.className = 'mission-btn';
+            moreBtn.style.cssText = 'grid-column: 1 / -1; margin-top:1rem; background:transparent; border-color:var(--text-dim); color:var(--text-mid);';
+            moreBtn.textContent = 'さらに表示';
+            moreBtn.onclick = () => {
+                userStageLimit += 10;
+                renderUserStagesPage();
+            };
+            container.appendChild(moreBtn);
+        }
 
     } catch (e) {
         if (e.name === 'AbortError') return;
@@ -6598,6 +6712,39 @@ async function renderUserStagesPage(forceReload = false) {
         errDiv.innerHTML = '読み込みエラー<br>API URLを確認してください。<br><span style="font-size:0.8rem; color:var(--text-dim)">' + e.message + '</span>';
         container.appendChild(errDiv);
     }
+}
+
+function renderInlineComments(stageId, comments) {
+    if (comments.length === 0) {
+        return '<div class="inline-comment-list"><div style="color:var(--text-dim); text-align:center; padding:0.5rem; font-size:0.75rem;">コメントなし</div></div>';
+    }
+    
+    // Show first 3, hide others
+    const visible = comments.slice(0, 3);
+    const hidden = comments.slice(3);
+    
+    const renderItem = (c) => `
+        <div class="inline-comment-item">
+            <div class="inline-comment-header"><span>${c.name}</span><span>${new Date(c.date).toLocaleDateString()}</span></div>
+            <div style="line-height:1.4;">${c.text}</div>
+        </div>`;
+
+    let html = `<div class="inline-comment-list" id="commentList-${stageId}">` + visible.map(renderItem).join('');
+    
+    if (hidden.length > 0) {
+        html += `<div id="hiddenComments-${stageId}" class="comment-hidden">` + hidden.map(renderItem).join('') + `</div>`;
+        html += `<button id="showMoreBtn-${stageId}" class="comment-show-more-btn" onclick="showAllComments('${stageId}')">▼ さらに表示 (${hidden.length})</button>`;
+    }
+    
+    html += `</div>`;
+    return html;
+}
+
+function showAllComments(stageId) {
+    const hiddenDiv = document.getElementById(`hiddenComments-${stageId}`);
+    const btn = document.getElementById(`showMoreBtn-${stageId}`);
+    if (hiddenDiv) hiddenDiv.classList.remove('comment-hidden');
+    if (btn) btn.style.display = 'none';
 }
 
 function setStageSort(sortType) {
@@ -6800,6 +6947,23 @@ function editorPrevStep() {
     }
 }
 
+function copySquadToEditor() {
+    if (squad.length === 0) { showToast('部隊が編成されていません'); return; }
+    currentEditingStage.enemies = squad.map(id => {
+        const char = playerState.characters[id];
+        return {
+            id: id,
+            level: char.level,
+            aura: char.aura || 0,
+            equippedId: char.equippedId,
+            aiType: AI_TYPES.RANDOM
+        };
+    });
+    currentEditingStage.cleared = false;
+    updateEditorUI();
+    showToast('編成をコピーしました');
+}
+
 function openUnitSelector() {
     if (currentEditingStage.enemies.length >= 5) { showToast('これ以上配置できません'); return; }
     document.getElementById('unitSelectorOverlay').classList.add('open');
@@ -6817,12 +6981,20 @@ function renderUnitSelector() {
     const filtered = units.filter(u => (!q || u.name.toLowerCase().includes(q)) && u.useImg);
     
     filtered.forEach(u => {
+        const isCollab = u.type === 'デストロイワールド'; // Check for Collab type
+        const isOwned = !!playerState.characters[u.id];
+        const isLocked = isCollab && !isOwned;
+
         const div = document.createElement('div');
-        div.className = 'unit-selector-item';
+        div.className = 'unit-selector-item' + (isLocked ? ' locked' : '');
         div.innerHTML = `<img src="${u.useImg ? u.img : 'C0.svg'}"><div class="unit-selector-id">${u.id}</div><div class="unit-selector-name">${u.name}</div>`;
         div.onclick = () => {
-            addEditorEnemy(u.id);
-            closeUnitSelector();
+            if (isLocked) {
+                showToast('未所持のコラボキャラは使用できません');
+            } else {
+                addEditorEnemy(u.id);
+                closeUnitSelector();
+            }
         };
         grid.appendChild(div);
     });
@@ -6950,7 +7122,21 @@ async function submitUserStage() {
 }
 
 async function publishStage() {
-    if (!currentEditingStage.cleared) { showToast('クリアチェックが必要です'); return; }
+    // Check power for auto-pass
+    const enemyPower = calculateTotalPower(currentEditingStage.enemies);
+    let squadPower = 0;
+    squad.forEach(id => {
+        const char = units.find(u => u.id === id);
+        const state = playerState.characters[id];
+        if (char && state) {
+             const equip = state.equippedId ? equipmentItems.find(e => e.id === state.equippedId) : null;
+             const s = calcStats(char.baseStats, state.level, equip, state.potential);
+             squadPower += Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
+        }
+    });
+
+    if (!currentEditingStage.cleared && squadPower < enemyPower) { showToast('クリアチェックが必要です（戦力不足）'); return; }
+
     const name = document.getElementById('editorStageName').value.trim();
     const desc = document.getElementById('editorStageDesc').value.trim();
     if (!name) { showToast('ステージ名を入力してください'); return; }
@@ -7173,6 +7359,27 @@ function startClearCheck() {
             equipment: equip, aiType: AI_TYPES.RANDOM
         };
     });
+    
+    // Compare Power for Auto-Clear
+    const enemyPower = calculateTotalPower(enemies);
+    let squadPower = 0;
+    squad.forEach(id => {
+        const char = units.find(u => u.id === id);
+        const state = playerState.characters[id];
+        if (char && state) {
+             const equip = state.equippedId ? equipmentItems.find(e => e.id === state.equippedId) : null;
+             const s = calcStats(char.baseStats, state.level, equip, state.potential);
+             squadPower += Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
+        }
+    });
+
+    if (squadPower >= enemyPower) {
+        currentEditingStage.cleared = true;
+        showToast('戦力差によりクリアチェックをスキップしました');
+        saveDraftStage();
+        updateEditorUI();
+        return;
+    }
 
     tempUserStageMission = {
         id: "TEST_PLAY",
@@ -7644,6 +7851,28 @@ async function checkDeathAbilities(unit) {
       }
       return true;
   }
+  
+  // Zeke Destroy (ID: 40) Passive: Damage Nullification
+  if (unit.id === 40) {
+      if (unit.reviveCount === undefined) unit.reviveCount = 0;
+      if (unit.reviveCount < 2) {
+          unit.reviveCount++;
+          const revivePct = unit.reviveCount === 1 ? 0.3 : 0.15;
+          await showCutIn(unit, 'ダメージの無力化');
+          
+          unit.currentHp = Math.floor(unit.stats.hp * revivePct);
+          // Reset negative statuses if needed, or keep them? Usually revive clears them, lets behave like guts for now unless specified.
+          // Assuming "revive" clears simple death state.
+          
+          logBattleMessage(`${unit.name}はダメージを無力化し復活した！(HP${revivePct*100}%)`);
+          updateUnitUI(unit);
+          if (unitEl) {
+              unitEl.classList.remove('defeated');
+              playEffect(unitEl, 'heal');
+          }
+          return true;
+      }
+  }
 
   return false;
 }
@@ -8073,6 +8302,18 @@ async function runBattleSequence() {
         if (attacker.id === 16 && activeAbility.name === '虹斬') {
             attacker.isAdvantageForced = true;
         }
+        
+        // Zeke Destroy (ID: 40) 救うための一撃
+        if (attacker.id === 40 && activeAbility.name === '救うための一撃') {
+            const allies = attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+            const livingAlliesCount = allies.filter(u => u.currentHp > 0).length;
+            // 5 -> 1.2, 1 -> 3.2. Formula: 3.2 - (count - 1) * 0.5
+            // 1: 3.2, 2: 2.7, 3: 2.2, 4: 1.7, 5: 1.2
+            const mult = 3.2 - (livingAlliesCount - 1) * 0.5;
+            damageMultiplier = Math.max(1.2, mult); // Ensure min 1.2
+            logBattleMessage(`味方数${livingAlliesCount}人。威力${damageMultiplier.toFixed(1)}倍！`);
+        }
+        
         if (activeAbility.damageMult) {
             damageMultiplier = activeAbility.damageMult;
         }
@@ -8753,10 +8994,11 @@ function checkWinLoss() {
             formData.append('action', 'postResult');
             formData.append('stageId', mission.rawStageId);
             formData.append('isClear', 'true');
+            formData.append('playerName', playerState.playerName);
             fetch(USER_STAGE_API_URL, { method:'POST', body:formData }).catch(e=>{});
             
-            // Prompt for Comment
-            setTimeout(() => openStageComments(mission.rawStageId), 1000); // Open comments after victory screen closed? Or maybe just suggest it
+            // クリア後にも情報を更新・通知チェック
+            setTimeout(checkNotifications, 1000);
         }
         
         // Add this block for tower progress
@@ -8816,6 +9058,11 @@ function checkWinLoss() {
             playerState.characters[23] = { level: 1, equippedId: null };
             unlockedCharName = 'シャム・グレゴリオ';
             showToast('「シャム・グレゴリオ」が仲間になりました！');
+        }
+        if (mission.id === 950 && !playerState.characters[40]) {
+            playerState.characters[40] = { level: 1, equippedId: null };
+            unlockedCharName = 'ジーク・デストロイ';
+            showToast('「ジーク・デストロイ」が仲間になりました！');
         }
 
         let unlockedItem = null;
@@ -9059,6 +9306,11 @@ function getBattleStats(unit) {
   // ステータス効果: 障壁 (防御50%アップ)
   if (unit.statusEffects.some(e => e.type === 'barrier')) {
     s.def = Math.floor(s.def * 1.5);
+  }
+  // ステータス効果: 無重力 (攻撃1.2, 防御0.8)
+  if (unit.statusEffects.some(e => e.type === 'zero_gravity')) {
+    s.atk = Math.floor(s.atk * 1.2);
+    s.def = Math.floor(s.def * 0.8);
   }
   
   return s;
@@ -9308,6 +9560,17 @@ async function triggerOnBattleStartAbilities() {
                 playEffect(tEl, 'dark');
             }
             logBattleMessage(`${unit.name}のシャットダウン！敵全体の視界を奪った！`);
+        }
+        else if (unit.id === 40 && ab.name === '重力の無力化') { // Zeke Destroy
+            const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+            const living = allies.filter(t => t.currentHp > 0);
+            
+            for (const t of living) {
+                await addStatusEffect(t, 'zero_gravity', 2);
+                const tEl = document.getElementById(`unit-${t.battleId}`);
+                playEffect(tEl, 'magic');
+            }
+            logBattleMessage(`${unit.name}が空間を歪める！味方全員が<span class="info">無重力</span>状態になった！`);
         }
         else if (unit.id === 38) { // Gindo: Axe Throw
             let targetUnit;
@@ -10263,58 +10526,88 @@ function submitNameChange() {
 }
 
 // ===== NOTIFICATIONS =====
-async function checkNotifications() {
+let lastNotificationCheck = 0;
+
+function processStageNotifications(stages) {
     if (!playerState.playerId) return;
     
     // Initialize stage stats if new
-    if (!playerState.stageStats) playerState.stageStats = {};
+    if (!playerState.stageTracking) playerState.stageTracking = {};
     if (!playerState.notifications) playerState.notifications = [];
 
-    try {
-        const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId);
-        const stages = await response.json();
-        
-        // Filter my stages
-        const myStages = stages.filter(s => s.creatorId === playerState.playerId);
-        
-        let hasChanges = false;
-        const isFirstRun = Object.keys(playerState.stageStats).length === 0;
+    let hasChanges = false;
+    const isFirstRun = Object.keys(playerState.stageTracking).length === 0;
 
-        myStages.forEach(stage => {
-            const prev = playerState.stageStats[stage.id] || { hearts: 0, comments: 0 };
-            const currentComments = stage.comments || [];
+    stages.forEach(stage => {
+        const prev = playerState.stageTracking[stage.id];
+        
+        // New Stage Check
+        if (!prev && !isFirstRun) {
+            // 自分以外の投稿のみ通知（自分の投稿は自覚しているため）
+            if (stage.creatorId !== playerState.playerId) {
+                addNotification(`新着ステージ: 「<strong>${stage.name}</strong>」 (by ${stage.creator})`);
+                hasChanges = true;
+            }
+        }
+        
+        // My Stage Stats Check
+        if (stage.creatorId === playerState.playerId) {
+            const prevHearts = prev ? prev.hearts : 0;
+            const prevComments = prev ? prev.comments : 0;
+            const prevPlays = prev ? prev.plays : 0;
             
-            // Check Hearts
-            if (!isFirstRun && stage.hearts > prev.hearts) {
-                const diff = stage.hearts - prev.hearts;
+            const currComments = (stage.comments || []).length;
+            const currPlays = stage.plays || 0;
+
+            // Hearts
+            if (!isFirstRun && stage.hearts > prevHearts) {
+                const diff = stage.hearts - prevHearts;
                 addNotification(`あなたのステージ「<strong>${stage.name}</strong>」にハートが送られました！ (+${diff})`);
                 hasChanges = true;
             }
             
-            // Check Comments
-            if (!isFirstRun && currentComments.length > prev.comments) {
-                const newComments = currentComments.slice(prev.comments);
-                newComments.forEach(c => {
-                    addNotification(`「<strong>${stage.name}</strong>」に <strong>${c.name}</strong> からコメントがありました。<br>"${c.text}"`);
-                });
+            // Comments
+            if (!isFirstRun && currComments > prevComments) {
+                addNotification(`「<strong>${stage.name}</strong>」に新しいコメントがあります。`);
                 hasChanges = true;
             }
             
-            // Update Stats
-            playerState.stageStats[stage.id] = {
-                hearts: stage.hearts,
-                comments: currentComments.length
-            };
-        });
-
-        if (isFirstRun) {
-            saveGame(); // Just save the initial state
-        } else if (hasChanges) {
-            saveGame();
-            updateNotificationBadge();
-            showToast('新着通知があります');
+            // Plays (Multiples of 10)
+            if (!isFirstRun && currPlays > prevPlays) {
+                if (Math.floor(currPlays / 10) > Math.floor(prevPlays / 10)) {
+                    addNotification(`「<strong>${stage.name}</strong>」のプレイ数が ${Math.floor(currPlays/10)*10} を突破しました！`);
+                    hasChanges = true;
+                }
+            }
         }
-        
+
+        // Update Tracking Data
+        playerState.stageTracking[stage.id] = {
+            hearts: stage.hearts,
+            comments: (stage.comments || []).length,
+            plays: stage.plays || 0,
+            seen: true
+        };
+    });
+
+    if (isFirstRun) {
+        saveGame(); // Just save the initial state
+    } else if (hasChanges) {
+        saveGame();
+        updateNotificationBadge();
+        showToast('新着通知があります');
+        playSfx('magic');
+    }
+}
+
+async function checkNotifications() {
+    if (!playerState.playerId) return;
+    
+    try {
+        const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId);
+        const stages = await response.json();
+        processStageNotifications(stages);
+        lastNotificationCheck = Date.now();
     } catch (e) {
         console.error('Notification check failed', e);
     }
@@ -10334,10 +10627,16 @@ function addNotification(text) {
 }
 
 function updateNotificationBadge() {
-    const badge = document.getElementById('notificationBadge');
-    const hasUnread = playerState.notifications.some(n => !n.read);
-    if (hasUnread) badge.classList.add('active');
-    else badge.classList.remove('active');
+    const btn = document.getElementById('notificationBtn');
+    const unreadCount = playerState.notifications.filter(n => !n.read).length;
+    
+    btn.textContent = `通知${unreadCount}`;
+    if (unreadCount > 0) btn.classList.add('has-unread');
+    else btn.classList.remove('has-unread');
+}
+
+function toggleInlineComments(stageId) {
+    // Legacy support
 }
 
 function openNotificationModal() {
@@ -10358,6 +10657,44 @@ function openNotificationModal() {
     updateNotificationBadge();
     saveGame();
     document.getElementById('notificationOverlay').classList.add('open');
+}
+
+async function submitInlineComment(stageId) {
+    const input = document.getElementById(`commentInput-${stageId}`);
+    const comment = input.value.trim();
+    if (!comment) return;
+    
+    if (comment.length > 50) { showToast('50字以内で入力してください'); return; }
+    
+    const btn = input.nextElementSibling;
+    btn.disabled = true;
+    btn.textContent = '...';
+    
+    const formData = new URLSearchParams();
+    formData.append('action', 'postComment');
+    formData.append('stageId', stageId);
+    formData.append('playerId', playerState.playerId);
+    formData.append('playerName', playerState.playerName);
+    formData.append('comment', comment);
+
+    try {
+        await fetch(USER_STAGE_API_URL, {method:'POST', body:formData});
+        showToast('コメントしました'); 
+        input.value = '';
+        // Refresh this stage in the list without full reload if possible, or just reload all
+        // For simplicity and consistency, reload list
+        await renderUserStagesPage(true);
+        // Re-open comment section for this stage after reload
+        setTimeout(() => {
+            const el = document.getElementById(`comments-${stageId}`);
+            // Inline comments section is displayed by default via CSS in renderUserStagesPage loop, so no extra class needed usually.
+        }, 100);
+    } catch(e) {
+        showToast('送信エラー');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '送信';
+    }
 }
 
 function closeNotificationModal(e) { if(e.target.id==='notificationOverlay') closeNotificationModalDirect(); }
@@ -10401,7 +10738,26 @@ function initializeGame() {
     }
     
     // Check notifications on startup
-    setTimeout(checkNotifications, 1000);
+    setTimeout(() => {
+        checkNotifications();
+        lastNotificationCheck = Date.now();
+    }, 1000);
+    
+    // Check notifications every 3 minutes (only if visible)
+    setInterval(() => {
+        if (!document.hidden) {
+            checkNotifications();
+        }
+    }, 3 * 60 * 1000);
+
+    // Check when returning to tab if time has passed
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            if (Date.now() - lastNotificationCheck >= 3 * 60 * 1000) {
+                checkNotifications();
+            }
+        }
+    });
 
     // ログイン時のタワー報酬チェック
     const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
