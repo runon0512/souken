@@ -2756,6 +2756,11 @@
            <button onclick="openCodeViewer()">コード閲覧</button>
         </div>
       </div>
+      <div class="squad-tabs">
+        <button class="squad-tab-btn active" id="squad-tab-0" onclick="switchSquad(0)">1</button>
+        <button class="squad-tab-btn" id="squad-tab-1" onclick="switchSquad(1)">2</button>
+        <button class="squad-tab-btn" id="squad-tab-2" onclick="switchSquad(2)">3</button>
+      </div>
       <div id="squadSlots"></div>
       <div class="squad-power-total">
         <div class="squad-power-label">TOTAL POWER</div>
@@ -3061,6 +3066,22 @@
   .user-profile-header {
     grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; background: var(--bg-card); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);
   }
+
+  /* Squad Tabs */
+  .squad-tabs { display: flex; gap: 4px; margin-bottom: 0.5rem; }
+  .squad-tab-btn {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Orbitron', monospace;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .squad-tab-btn:hover { background: rgba(0,200,255,0.1); color: var(--text-main); }
+  .squad-tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
   
   .sort-btn { flex: 1; text-align: center; } /* Make sort buttons even width */
 
@@ -4973,6 +4994,8 @@ let playerState = {
   ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   towerProgress: 0,
   playerName: "名無しの剣士",
+  squads: [[], [], []], // 3 slots
+  currentSquadIndex: 0,
   playerId: null, // Will be generated
   notifications: [], // { id, text, date, read }
   stageTracking: {}, // { stageId: { hearts: 0, comments: 0, plays: 0, seen: true } }
@@ -5220,6 +5243,22 @@ async function runPreloader() {
 
 // ===== SQUAD DRAG & DROP =====
 let draggedSquadIndex = null;
+
+function switchSquad(index) {
+  if (index < 0 || index > 2) return;
+  playerState.currentSquadIndex = index;
+  squad = playerState.squads[index]; // グローバル参照を更新
+  
+  // Update Tab UI
+  document.querySelectorAll('.squad-tab-btn').forEach((btn, i) => {
+    if (i === index) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+  
+  renderSquad();
+  renderCards();
+  saveGame();
+}
 
 function handleSquadDragStart(e, index) {
   draggedSquadIndex = index;
@@ -6653,7 +6692,8 @@ function sortUserStages(stages) {
     return stages.sort((a, b) => {
         const rateA = a.plays > 0 ? (a.clears / a.plays) : 0;
         const rateB = b.plays > 0 ? (b.clears / b.plays) : 0;
-        return rateB - rateA;
+        if (rateA !== rateB) return rateA - rateB;
+        return (b.plays || 0) - (a.plays || 0);
     });
   } else if (currentUserStageSort === 'hearts') {
     return stages.sort((a, b) => b.hearts - a.hearts);
@@ -10621,6 +10661,13 @@ function loadGame() {
     playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
     playerState.towerProgress = savedData.playerState.towerProgress || 0;
     playerState.playerName = savedData.playerState.playerName || defaultPlayerState.playerName;
+    
+    // Squad Slots Migration
+    playerState.squads = savedData.playerState.squads || [savedData.squad || [], [], []];
+    playerState.currentSquadIndex = savedData.playerState.currentSquadIndex || 0;
+    if (!playerState.squads[1]) playerState.squads[1] = [];
+    if (!playerState.squads[2]) playerState.squads[2] = [];
+    
     playerState.playerId = savedData.playerState.playerId;
 
     if (!playerState.playerId) {
@@ -10629,7 +10676,8 @@ function loadGame() {
     }
     
     missionProgress = new Set(savedData.missionProgress || []);
-    squad = savedData.squad || [];
+    // squad変数を現在のアクティブなスロットへの参照にする
+    squad = playerState.squads[playerState.currentSquadIndex];
     
     console.log('Game loaded from localStorage.');
     showToast('セーブデータをロードしました');
@@ -10637,6 +10685,13 @@ function loadGame() {
     console.log('No save data found. Starting a new game.');
     playerState.playerId = generateUUID();
     saveGame();
+    squad = playerState.squads[0]; // Default ref
+  }
+  
+  // Update Tab UI on load
+  if (document.getElementById(`squad-tab-${playerState.currentSquadIndex}`)) {
+      document.querySelectorAll('.squad-tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`squad-tab-${playerState.currentSquadIndex}`).classList.add('active');
   }
   if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
   if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
