@@ -5246,9 +5246,27 @@ let draggedSquadIndex = null;
 
 function switchSquad(index) {
   if (index < 0 || index > 2) return;
+  // インデックスが変わらない場合は何もしない
+  if (index === playerState.currentSquadIndex) return;
+
+  // 1. 現在の装備状態を保存
+  if (!playerState.squadEquipments) playerState.squadEquipments = [{}, {}, {}];
+  const currentEquips = {};
+  for (const charId in playerState.characters) {
+      currentEquips[charId] = playerState.characters[charId].equippedId || null;
+  }
+  playerState.squadEquipments[playerState.currentSquadIndex] = currentEquips;
+
+  // 2. インデックス切り替え
   playerState.currentSquadIndex = index;
   squad = playerState.squads[index]; // グローバル参照を更新
   
+  // 3. 新しいスロットの装備状態をロード
+  const newEquips = playerState.squadEquipments[index] || {};
+  for (const charId in playerState.characters) {
+      playerState.characters[charId].equippedId = newEquips[charId] || null;
+  }
+
   // Update Tab UI
   document.querySelectorAll('.squad-tab-btn').forEach((btn, i) => {
     if (i === index) btn.classList.add('active');
@@ -10562,6 +10580,14 @@ function handleFileSelect(input) {
       if (playerState.ownedEquipment === undefined) {
         playerState.ownedEquipment = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
       }
+      // Migration for Squad Equipments
+      if (!playerState.squadEquipments) {
+          const initialEquips = {};
+          for (const charId in playerState.characters) {
+              initialEquips[charId] = playerState.characters[charId].equippedId || null;
+          }
+          playerState.squadEquipments = [{...initialEquips}, {...initialEquips}, {...initialEquips}];
+      }
       playerState.towerProgress = data.playerState.towerProgress || 0;
       playerState.playerName = data.playerState.playerName || "名無しの剣士";
 
@@ -10592,6 +10618,14 @@ function handleFileSelect(input) {
 
 // ===== SAVE & LOAD =====
 function saveGame() {
+  // Save current equipment state to the current squad slot before persisting
+  if (!playerState.squadEquipments) playerState.squadEquipments = [{}, {}, {}];
+  const currentEquips = {};
+  for (const charId in playerState.characters) {
+      currentEquips[charId] = playerState.characters[charId].equippedId || null;
+  }
+  playerState.squadEquipments[playerState.currentSquadIndex] = currentEquips;
+
   const saveData = {
     playerState: playerState,
     missionProgress: [...missionProgress], // Convert Set to Array
@@ -10628,6 +10662,7 @@ function loadGame() {
         towerProgress: 0,
         playerName: "名無しの剣士",
         playerId: null,
+        squadEquipments: [{}, {}, {}], // Added default
     };
     
     playerState.rainbowStones = savedData.playerState.rainbowStones !== undefined ? savedData.playerState.rainbowStones : defaultPlayerState.rainbowStones;
@@ -10659,6 +10694,18 @@ function loadGame() {
     
     // Migration for ownedEquipment
     playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
+    
+    // Migration for Squad Equipments
+    if (!savedData.playerState.squadEquipments) {
+        const initialEquips = {};
+        for (const charId in playerState.characters) {
+            initialEquips[charId] = playerState.characters[charId].equippedId || null;
+        }
+        playerState.squadEquipments = [{...initialEquips}, {...initialEquips}, {...initialEquips}];
+    } else {
+        playerState.squadEquipments = savedData.playerState.squadEquipments;
+    }
+
     playerState.towerProgress = savedData.playerState.towerProgress || 0;
     playerState.playerName = savedData.playerState.playerName || defaultPlayerState.playerName;
     
