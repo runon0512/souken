@@ -1700,31 +1700,17 @@
     100% { opacity: 0; transform: translate(-50%, -30px); }
   }
 
-  /* Aura 15: Boss */
-  .char-card.aura-15, .squad-slot.aura-15, .battle-unit.aura-15 {
-    border: 5px solid transparent;
-    border-image-source: linear-gradient(135deg, #660000, #ff0000, #ff8080);
-    border-image-slice: 1;
-    /* 軽量化: 影とアニメーション削除 */
-    box-shadow: none;
-    animation: none;
-    /* box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9);
-    background: linear-gradient(135deg, #330000, #000000);
-    animation: boss-pulse 2s infinite ease-in-out; */
+  /* Aura 11: Celestial */
+  .char-card.aura-11, .squad-slot.aura-11, .battle-unit.aura-11 {
+    /* box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6); */
+    /* animation: celestial-pulse 3s infinite alternate; */
   }
-  .aura-15 .aura-overlay::before {
-    background: radial-gradient(circle, rgba(255,0,0,0.4) 0%, transparent 60%);
-    animation: abyssal-swirl 8s linear infinite; /* reuse animation */
-    transform: scale(2.5);
+  /* Aura 12: Abyssal */
+  .char-card.aura-12, .squad-slot.aura-12, .battle-unit.aura-12 {
+    /* box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8); */
+    /* background: linear-gradient(135deg, #0a001a, #000000); */
+    /* animation: abyssal-pulse 4s infinite ease-in-out; */
   }
-  .battle-unit.aura-15 .b-unit-name {
-    color: #fff;
-    /* 軽量化 */
-    /* text-shadow: 0 0 1.5rem #ff0000, 0 0 3rem #ff4d4d; */
-    background: linear-gradient(90deg, rgba(255,0,0,0.6), transparent);
-    padding-left: 4px;
-  }
-  .battle-unit.aura-15 .b-unit-name::before { content: '👑 '; color: #ff0000; }
 
   /* ===== NEW AURA EFFECTS ===== */
   /* Aura 11: Celestial */
@@ -1733,21 +1719,15 @@
     border-image-source: linear-gradient(135deg, #a8c0ff, #f3d9a5, #ffffff);
     border-image-slice: 1;
     /* 軽量化: 影とアニメーション削除 */
-    box-shadow: none;
-    animation: none;
-    /* box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6);
-    animation: celestial-pulse 3s infinite alternate; */
   }
-  .aura-11 .aura-overlay::before {
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent);
-    animation-duration: 1.5s;
-  }
-  .aura-11 .aura-overlay::after {
-    content: ''; position: absolute; inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,0.8) 0.5px, transparent 0.5px);
-    background-size: 10px 10px;
-    opacity: 0.7;
-    animation: sparkle 1s linear infinite;
+  /* Aura 15: Boss */
+  .char-card.aura-15, .squad-slot.aura-15, .battle-unit.aura-15 {
+    border: 5px solid transparent;
+    border-image-source: linear-gradient(135deg, #660000, #ff0000, #ff8080);
+    border-image-slice: 1;
+    /* box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9); */
+    /* background: linear-gradient(135deg, #330000, #000000); */
+    /* 軽量化: 影とアニメーション削除 */
   }
   .battle-unit.aura-11 .b-unit-name {
     color: #fff;
@@ -1764,25 +1744,6 @@
     border-image-source: linear-gradient(135deg, #4b0082, #9400d3, #c724b1);
     border-image-slice: 1;
     /* 軽量化: 影とアニメーション削除 */
-    box-shadow: none;
-    animation: none;
-    /* box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8);
-    background: linear-gradient(135deg, #0a001a, #000000);
-    animation: abyssal-pulse 4s infinite ease-in-out; */
-  }
-  .aura-12 .aura-overlay::before {
-    background: radial-gradient(circle, rgba(148,0,211,0.3) 0%, transparent 60%);
-    animation: abyssal-swirl 10s linear infinite;
-    transform: scale(2);
-  }
-  .aura-12 .aura-overlay::after {
-    content: ''; position: absolute; inset: 0;
-    background-image:
-      radial-gradient(rgba(255,255,255,0.1) 0.5px, transparent 0.5px),
-      radial-gradient(rgba(148,0,211,0.2) 0.5px, transparent 0.5px);
-    background-size: 50px 50px, 70px 70px;
-    background-position: 0 0, 35px 35px;
-    animation: sparkle-deep-space 6s linear infinite, sparkle-fade 5s ease-in-out infinite alternate;
   }
   .battle-unit.aura-12 .b-unit-name {
     color: #fff;
@@ -1790,6 +1751,11 @@
     /* text-shadow: 0 0 1.5rem #4b0082, 0 0 3rem #9400d3; */
     background: linear-gradient(90deg, rgba(75,0,130,0.6), transparent);
     padding-left: 4px;
+  }
+  .aura-15 .aura-overlay::before {
+    /* background: radial-gradient(circle, rgba(255,0,0,0.4) 0%, transparent 60%); */
+    /* animation: abyssal-swirl 8s linear infinite; */ /* reuse animation */
+    transform: scale(2.5);
   }
   .battle-unit.aura-12 .b-unit-name::before { content: '🌀 '; color: #9400d3; }
   .damage-popup {
@@ -2019,20 +1985,20 @@
   }
   .char-card.aura-8, .squad-slot.aura-8, .battle-unit.aura-8 {
     outline: 4px solid red;
-    animation: rainbow-outline-flow 4s infinite linear;
-    box-shadow: 0 0 40px rgba(255,255,255,0.5), inset 0 0 10px rgba(255,255,255,0.2);
+    /* animation: rainbow-outline-flow 4s infinite linear; */
+    /* box-shadow: 0 0 40px rgba(255,255,255,0.5), inset 0 0 10px rgba(255,255,255,0.2); */
   }
   .char-card.aura-9, .squad-slot.aura-9, .battle-unit.aura-9 {
     outline: 2px solid #fff;
     background: linear-gradient(135deg, #1a0b2e, #0d1520);
-    box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, inset 0 0 20px rgba(255,0,255,0.4);
-    animation: cosmic-pulse 2s infinite alternate;
+    /* box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, inset 0 0 20px rgba(255,0,255,0.4); */
+    /* animation: cosmic-pulse 2s infinite alternate; */
   }
   .char-card.aura-10, .squad-slot.aura-10, .battle-unit.aura-10 {
     outline: 5px solid #4d004d;
     background: #000;
-    box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1);
-    animation: galactic-pulse 4s infinite ease-in-out;
+    /* box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1); */
+    /* animation: galactic-pulse 4s infinite ease-in-out; */
   }
 
   .aura-overlay {
@@ -2047,66 +2013,66 @@
   .aura-overlay::before {
     content: '';
     position: absolute;
-    top: -50%; left: -50%; width: 200%; height: 200%;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
-    transform: rotate(45deg);
-    animation: aura-sheen 3s infinite;
+    /* top: -50%; left: -50%; width: 200%; height: 200%; */
+    /* background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); */
+    /* transform: rotate(45deg); */
+    /* animation: aura-sheen 3s infinite; */
   }
 
-  .aura-1 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(192,192,192,0.4), transparent); }
-  .aura-2 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(255,215,0,0.4), transparent); animation-duration: 2.5s; }
-  .aura-3 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(185,242,255,0.6), rgba(255,255,255,0.8), transparent); animation-duration: 2s; }
-  .aura-4 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(255,77,77,0.5), transparent); animation-duration: 3s; }
-  .aura-5 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(80,200,120,0.6), transparent); animation-duration: 2.8s; }
-  .aura-6 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(77,144,255,0.7), transparent); animation-duration: 2.6s; }
-  .aura-7 .aura-overlay::before { background: linear-gradient(to right, transparent, rgba(179,136,255,0.8), transparent); animation-duration: 2.4s; }
-  .aura-8 .aura-overlay::before { background: linear-gradient(to right, rgba(255,0,0,0.5), rgba(0,255,0,0.5), rgba(0,0,255,0.5)); animation: aura-sheen 2s infinite; }
+  .aura-1 .aura-overlay::before { /* background: linear-gradient(to right, transparent, rgba(192,192,192,0.4), transparent); */ }
+  .aura-2 .aura-overlay::before { /* background: linear-gradient(to right, transparent, rgba(255,215,0,0.4), transparent); animation-duration: 2.5s; */ }
+  .aura-3 .aura-overlay::before { /* background: linear-gradient(to right, transparent, rgba(185,242,255,0.6), rgba(255,255,255,0.8), transparent); animation-duration: 2s; */ }
+  .aura-4 .aura-overlay::before { /* background: linear-gradient(to right, transparent, rgba(255,77,77,0.5), transparent); animation-duration: 3s; */ }
+  .aura-5 .aura-overlay::before { /* background: linear-gradient(to right, transparent, rgba(80,200,120,0.6), transparent); animation-duration: 2.8s; */ }
+  .aura-6 .aura-overlay::before { /* background: linear-gradient(to right, transparent, rgba(77,144,255,0.7), transparent); animation-duration: 2.6s; */ }
+  .aura-7 .aura-overlay::before { /* background: linear-gradient(to right, transparent, rgba(179,136,255,0.8), transparent); animation-duration: 2.4s; */ }
+  .aura-8 .aura-overlay::before { /* background: linear-gradient(to right, rgba(255,0,0,0.5), rgba(0,255,0,0.5), rgba(0,0,255,0.5)); animation: aura-sheen 2s infinite; */ }
   .aura-9 .aura-overlay::before {
-    background: linear-gradient(90deg, transparent, rgba(255,0,255,0.4), rgba(0,255,255,0.4), transparent);
-    animation: aura-sheen 3s infinite;
+    /* background: linear-gradient(90deg, transparent, rgba(255,0,255,0.4), rgba(0,255,255,0.4), transparent); */
+    /* animation: aura-sheen 3s infinite; */
   }
   .aura-10 .aura-overlay::before { display: none; }
   .aura-10 .aura-overlay::before {
-    background: radial-gradient(circle, rgba(179, 136, 255, 0.2) 0%, transparent 40%);
-    animation: galactic-swirl 8s linear infinite;
+    /* background: radial-gradient(circle, rgba(179, 136, 255, 0.2) 0%, transparent 40%); */
+    /* animation: galactic-swirl 8s linear infinite; */
     transform: scale(1.5); /* 親のtransformを上書き */
   }
   
   .aura-3 .aura-overlay::after {
-    content: ''; position: absolute; inset: 0;
-    background-image: radial-gradient(white 1px, transparent 1px);
-    background-size: 20px 20px;
-    opacity: 0.5;
-    animation: sparkle 4s linear infinite;
+    /* content: ''; position: absolute; inset: 0; */
+    /* background-image: radial-gradient(white 1px, transparent 1px); */
+    /* background-size: 20px 20px; */
+    /* opacity: 0.5; */
+    /* animation: sparkle 4s linear infinite; */
   }
   .aura-9 .aura-overlay::after {
-    content: ''; position: absolute; inset: 0;
-    background-image: radial-gradient(white 1px, transparent 1px);
-    background-size: 15px 15px;
-    opacity: 0.8;
-    animation: sparkle 1.5s linear infinite;
+    /* content: ''; position: absolute; inset: 0; */
+    /* background-image: radial-gradient(white 1px, transparent 1px); */
+    /* background-size: 15px 15px; */
+    /* opacity: 0.8; */
+    /* animation: sparkle 1.5s linear infinite; */
   }
   .aura-10 .aura-overlay::after {
-    content: ''; position: absolute; inset: 0;
-    background-image:
-      radial-gradient(rgba(255,255,255,0.8) 0.5px, transparent 0.5px),
-      radial-gradient(rgba(179,136,255,0.5) 0.5px, transparent 0.5px);
-    background-size: 40px 40px, 60px 60px;
-    background-position: 0 0, 30px 30px;
-    animation: sparkle-deep-space 5s linear infinite;
-    animation: sparkle-deep-space 5s linear infinite, sparkle-fade 4s ease-in-out infinite alternate;
+    /* content: ''; position: absolute; inset: 0; */
+    /* background-image: */
+    /*   radial-gradient(rgba(255,255,255,0.8) 0.5px, transparent 0.5px), */
+    /*   radial-gradient(rgba(179,136,255,0.5) 0.5px, transparent 0.5px); */
+    /* background-size: 40px 40px, 60px 60px; */
+    /* background-position: 0 0, 30px 30px; */
+    /* animation: sparkle-deep-space 5s linear infinite; */
+    /* animation: sparkle-deep-space 5s linear infinite, sparkle-fade 4s ease-in-out infinite alternate; */
   }
   
   /* Adjust aura z-index for battle units so info remains visible */
   .battle-unit .aura-overlay { z-index: 2; }
 
   @keyframes aura-sheen {
-    0% { transform: translateX(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) rotate(45deg); }
+    /* 0% { transform: translateX(-100%) rotate(45deg); } */
+    /* 100% { transform: translateX(100%) rotate(45deg); } */
   }
   @keyframes sparkle {
-    0% { background-position: 0 0; }
-    100% { background-position: 20px 20px; }
+    /* 0% { background-position: 0 0; } */
+    /* 100% { background-position: 20px 20px; } */
   }
 
   .aura-badge {
@@ -2126,7 +2092,7 @@
   /* Battle Name Aura Styles */
   .battle-unit.aura-1 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 0.5rem #c0c0c0;
+    /* text-shadow: 0 0 0.5rem #c0c0c0; */
     background: linear-gradient(90deg, rgba(192,192,192,0.3), transparent);
     padding-left: 4px;
   }
@@ -2134,7 +2100,7 @@
 
   .battle-unit.aura-2 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 0.5rem #ffd700, 0 0 0.9375rem #ffaa00;
+    /* text-shadow: 0 0 0.5rem #ffd700, 0 0 0.9375rem #ffaa00; */
     background: linear-gradient(90deg, rgba(255,215,0,0.3), transparent);
     padding-left: 4px;
   }
@@ -2142,17 +2108,17 @@
 
   .battle-unit.aura-3 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 0.625rem #00c8ff, 0 0 1.25rem #fff;
+    /* text-shadow: 0 0 0.625rem #00c8ff, 0 0 1.25rem #fff; */
     background: linear-gradient(90deg, rgba(0,200,255,0.2), rgba(255,255,255,0.4), rgba(0,200,255,0.2));
     background-size: 200% 100%;
-    animation: aura-text-shine 3s infinite linear;
+    /* animation: aura-text-shine 3s infinite linear; */
     padding-left: 4px;
   }
   .battle-unit.aura-3 .b-unit-name::before { content: '♦ '; color: #b9f2ff; font-size: 0.625rem; }
 
   .battle-unit.aura-4 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 5px #000, 0 0 10px #ff0000;
+    /* text-shadow: 0 0 5px #000, 0 0 10px #ff0000; */
     background: linear-gradient(90deg, rgba(255,77,77,0.4), transparent);
     padding-left: 4px;
   }
@@ -2160,7 +2126,7 @@
 
   .battle-unit.aura-5 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 0.625rem #50C878, 0 0 1.25rem #A8FF3E;
+    /* text-shadow: 0 0 0.625rem #50C878, 0 0 1.25rem #A8FF3E; */
     background: linear-gradient(90deg, rgba(80,200,120,0.4), transparent);
     padding-left: 4px;
   }
@@ -2168,7 +2134,7 @@
 
   .battle-unit.aura-6 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 0.75rem #0F52BA, 0 0 1.5rem #4d90ff;
+    /* text-shadow: 0 0 0.75rem #0F52BA, 0 0 1.5rem #4d90ff; */
     background: linear-gradient(90deg, rgba(15,82,186,0.5), transparent);
     padding-left: 4px;
   }
@@ -2176,7 +2142,7 @@
 
   .battle-unit.aura-7 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 0.875rem #9966CC, 0 0 1.75rem #b388ff;
+    /* text-shadow: 0 0 0.875rem #9966CC, 0 0 1.75rem #b388ff; */
     background: linear-gradient(90deg, rgba(153,102,204,0.5), transparent);
     padding-left: 4px;
   }
@@ -2188,14 +2154,14 @@
     background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: rainbow-text-flow 4s infinite linear;
+    /* animation: rainbow-text-flow 4s infinite linear; */
     padding-left: 4px;
   }
   .battle-unit.aura-8 .b-unit-name::before { content: '🌈 '; -webkit-text-fill-color: initial; } /* Reset for emoji */
 
   .battle-unit.aura-9 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 5px #ff00ff, 0 0 10px #00ffff;
+    /* text-shadow: 0 0 5px #ff00ff, 0 0 10px #00ffff; */
     background: linear-gradient(90deg, rgba(255,0,255,0.3), transparent);
     padding-left: 4px;
   }
@@ -2203,7 +2169,7 @@
 
   .battle-unit.aura-10 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 1.25rem #b388ff, 0 0 2.5rem #fff;
+    /* text-shadow: 0 0 1.25rem #b388ff, 0 0 2.5rem #fff; */
     background: linear-gradient(90deg, rgba(77,0,77,0.5), transparent);
     padding-left: 4px;
   }
@@ -2213,21 +2179,21 @@
 
   .battle-unit.aura-11 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 1rem #fff, 0 0 2rem #eee;
+    /* text-shadow: 0 0 1rem #fff, 0 0 2rem #eee; */
     background: linear-gradient(90deg, rgba(255,255,255,0.4), transparent);
     padding-left: 4px;
   }
   .battle-unit.aura-11 .b-unit-name::before { content: '🌟 '; color: #fff; }
   .battle-unit.aura-12 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 1.5rem #4b0082, 0 0 3rem #9400d3;
+    /* text-shadow: 0 0 1.5rem #4b0082, 0 0 3rem #9400d3; */
     background: linear-gradient(90deg, rgba(75,0,130,0.6), transparent);
     padding-left: 4px;
   }
   .battle-unit.aura-12 .b-unit-name::before { content: '🌀 '; color: #9400d3; }
   .battle-unit.aura-15 .b-unit-name {
     color: #fff;
-    text-shadow: 0 0 1.5rem #ff0000, 0 0 3rem #ff4d4d;
+    /* text-shadow: 0 0 1.5rem #ff0000, 0 0 3rem #ff4d4d; */
     background: linear-gradient(90deg, rgba(255,0,0,0.6), transparent);
     padding-left: 4px;
   }
@@ -2287,51 +2253,51 @@
   }
 
   @keyframes cosmic-pulse {
-    0% { box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, inset 0 0 20px rgba(255,0,255,0.4); outline-color: #fff; }
-    100% { box-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffff, 0 0 10px #fff, inset 0 0 30px rgba(0,255,255,0.4); outline-color: #00ffff; }
+    /* 0% { box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, inset 0 0 20px rgba(255,0,255,0.4); outline-color: #fff; } */
+    /* 100% { box-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffff, 0 0 10px #fff, inset 0 0 30px rgba(0,255,255,0.4); outline-color: #00ffff; } */
   }
   @keyframes rainbow-outline-flow {
-    0% { outline-color: red; }
-    14% { outline-color: orange; }
-    28% { outline-color: yellow; }
-    42% { outline-color: green; }
-    57% { outline-color: blue; }
-    71% { outline-color: indigo; }
-    85% { outline-color: violet; }
-    100% { outline-color: red; }
+    /* 0% { outline-color: red; } */
+    /* 14% { outline-color: orange; } */
+    /* 28% { outline-color: yellow; } */
+    /* 42% { outline-color: green; } */
+    /* 57% { outline-color: blue; } */
+    /* 71% { outline-color: indigo; } */
+    /* 85% { outline-color: violet; } */
+    /* 100% { outline-color: red; } */
   }
   @keyframes rainbow-text-flow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    /* 0% { background-position: 0% 50%; } */
+    /* 50% { background-position: 100% 50%; } */
+    /* 100% { background-position: 0% 50%; } */
   }
   @keyframes galactic-pulse {
-    0% {
-      box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1);
-      outline-color: #4d004d;
-    }
-    50% {
-      box-shadow: 0 0 80px rgba(179,136,255,0.9), 0 0 120px rgba(255,255,255,0.3), inset 0 0 40px rgba(77,0,77,0.8);
-      outline-color: #b388ff;
-    }
-    100% {
-      box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1);
-      outline-color: #4d004d;
-    }
+    /* 0% { */
+    /*   box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1); */
+    /*   outline-color: #4d004d; */
+    /* } */
+    /* 50% { */
+    /*   box-shadow: 0 0 80px rgba(179,136,255,0.9), 0 0 120px rgba(255,255,255,0.3), inset 0 0 40px rgba(77,0,77,0.8); */
+    /*   outline-color: #b388ff; */
+    /* } */
+    /* 100% { */
+    /*   box-shadow: 0 0 60px rgba(77,0,77,0.8), inset 0 0 30px rgba(0,0,0,1); */
+    /*   outline-color: #4d004d; */
+    /* } */
   }
   @keyframes celestial-pulse {
-    0% { box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6); }
-    100% { box-shadow: 0 0 50px rgba(255,255,255,0.9), 0 0 100px rgba(255,255,255,0.7), inset 0 0 50px rgba(255,255,255,0.8); }
+    /* 0% { box-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(255,255,255,0.5), inset 0 0 40px rgba(255,255,255,0.6); } */
+    /* 100% { box-shadow: 0 0 50px rgba(255,255,255,0.9), 0 0 100px rgba(255,255,255,0.7), inset 0 0 50px rgba(255,255,255,0.8); } */
   }
   @keyframes abyssal-pulse {
-    0% { box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8); }
-    50% { box-shadow: 0 0 60px rgba(148,0,211,1), 0 0 120px rgba(199,21,133,0.8), inset 0 0 60px rgba(0,0,0,0.9); }
-    100% { box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8); }
+    /* 0% { box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8); } */
+    /* 50% { box-shadow: 0 0 60px rgba(148,0,211,1), 0 0 120px rgba(199,21,133,0.8), inset 0 0 60px rgba(0,0,0,0.9); } */
+    /* 100% { box-shadow: 0 0 50px rgba(75,0,130,0.9), 0 0 100px rgba(148,0,211,0.7), inset 0 0 50px rgba(0,0,0,0.8); } */
   }
   @keyframes boss-pulse {
-    0% { box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9); outline-color: #ff0000; }
-    50% { box-shadow: 0 0 70px rgba(255,100,100,1), 0 0 140px rgba(255,0,0,0.9), inset 0 0 60px rgba(0,0,0,1); outline-color: #ff8080; }
-    100% { box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9); outline-color: #ff0000; }
+    /* 0% { box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9); outline-color: #ff0000; } */
+    /* 50% { box-shadow: 0 0 70px rgba(255,100,100,1), 0 0 140px rgba(255,0,0,0.9), inset 0 0 60px rgba(0,0,0,1); outline-color: #ff8080; } */
+    /* 100% { box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(100,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.9); outline-color: #ff0000; } */
   }
   @keyframes abyssal-swirl {
     from { transform: rotate(0deg) scale(2); }
@@ -2342,12 +2308,12 @@
     to { transform: rotate(360deg) scale(1.5); }
   }
   @keyframes sparkle-deep-space {
-    0% { background-position: 0 0, 30px 30px; }
-    100% { background-position: -40px -40px, -30px -30px; }
+    /* 0% { background-position: 0 0, 30px 30px; } */
+    /* 100% { background-position: -40px -40px, -30px -30px; } */
   }
   @keyframes sparkle-fade {
-    from { opacity: 0.5; }
-    to { opacity: 1; }
+    /* from { opacity: 0.5; } */
+    /* to { opacity: 1; } */
   }
 
   /* RANKING STYLES */
@@ -2999,6 +2965,11 @@
     border-radius: 0.5rem;
     padding: 1rem;
     transition: all 0.2s;
+    grid-template-areas:
+      "info actions"
+      "meta actions"
+      "comments comments";
+    align-items: start;
   }
   .user-stage-list-item:hover {
     border-color: var(--border-bright);
@@ -3006,9 +2977,23 @@
   }
   .user-stage-list-info { flex: 1; min-width: 0; }
   .user-stage-list-stats { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
-  .user-stage-list-actions { grid-column: 2 / 3; grid-row: 1 / 3; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; width: 8rem; }
+  .user-stage-list-actions { grid-area: actions; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; width: 8rem; height: 100%; }
   .user-stage-meta-info { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem; display: flex; gap: 1rem; }
-  .stat-item { font-size: 0.8rem; color: var(--text-mid); display: flex; align-items: center; gap: 0.5rem; }
+  .user-stage-meta-row {
+    grid-area: meta;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+    gap: 1rem;
+  }
+  .user-stage-list-stats {
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .stat-item { font-size: 1.1rem; color: var(--text-mid); display: flex; align-items: center; gap: 0.5rem; }
 
   .sort-controls { grid-column: 1 / -1; display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center; }
   .sort-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
@@ -5036,6 +5021,7 @@ let playerState = {
   ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   towerProgress: 0,
   playerName: "名無しの剣士",
+        squadCharacterStates: [{}, {}, {}],
   squads: [[], [], []], // 3 slots
   currentSquadIndex: 0,
   playerId: null, // Will be generated
@@ -5230,6 +5216,7 @@ async function runPreloader() {
       .filter(u => u.useImg && u.img)
       .map(u => u.img);
   images.push('Title.png');
+  images.push('C0.svg');
   // Remove duplicates
   const uniqueImages = [...new Set(images)];
 
@@ -5287,27 +5274,44 @@ async function runPreloader() {
 let draggedSquadIndex = null;
 
 function switchSquad(index) {
-  if (index < 0 || index > 2) return;
-  // インデックスが変わらない場合は何もしない
-  if (index === playerState.currentSquadIndex) return;
+    if (index < 0 || index > 2) return;
+    if (index === playerState.currentSquadIndex) return;
 
-  // 1. 現在の装備状態を保存
-  if (!playerState.squadEquipments) playerState.squadEquipments = [{}, {}, {}];
-  const currentEquips = {};
-  for (const charId in playerState.characters) {
-      currentEquips[charId] = playerState.characters[charId].equippedId || null;
-  }
-  playerState.squadEquipments[playerState.currentSquadIndex] = currentEquips;
+    // 1. Save current states (level, aura, potential, equip)
+    const currentStates = {};
+    for (const charId in playerState.characters) {
+        const char = playerState.characters[charId];
+        currentStates[charId] = {
+            level: char.level,
+            aura: char.aura || 0,
+            potential: char.potential || 0,
+            equippedId: char.equippedId || null,
+        };
+    }
+    playerState.squadCharacterStates[playerState.currentSquadIndex] = currentStates;
 
-  // 2. インデックス切り替え
-  playerState.currentSquadIndex = index;
-  squad = playerState.squads[index]; // グローバル参照を更新
-  
-  // 3. 新しいスロットの装備状態をロード
-  const newEquips = playerState.squadEquipments[index] || {};
-  for (const charId in playerState.characters) {
-      playerState.characters[charId].equippedId = newEquips[charId] || null;
-  }
+    // 2. Switch index and global squad reference
+    playerState.currentSquadIndex = index;
+    squad = playerState.squads[index];
+
+    // 3. Load new states
+    const newStates = playerState.squadCharacterStates[index] || {};
+
+    for (const charId in playerState.characters) {
+        const state = newStates[charId];
+        if (state) {
+            playerState.characters[charId].level = state.level;
+            playerState.characters[charId].aura = state.aura || 0;
+            playerState.characters[charId].potential = state.potential || 0;
+            playerState.characters[charId].equippedId = state.equippedId || null;
+        } else {
+            // If character is new to this squad's state, reset it
+            playerState.characters[charId].level = 1;
+            playerState.characters[charId].aura = 0;
+            playerState.characters[charId].potential = 0;
+            playerState.characters[charId].equippedId = null;
+        }
+    }
 
   // Update Tab UI
   document.querySelectorAll('.squad-tab-btn').forEach((btn, i) => {
@@ -6030,16 +6034,13 @@ function onLevelSliderChange(val) {
   // New cost calculation
   const requiredAura = getRequiredAuraForLevel(targetLevel);
   let auraUpgradeCost = 0;
-  let auraUpgradeText = '';
+  const isAuraUpgrade = requiredAura > currentAura;
 
-  if (requiredAura > currentAura) {
+  if (isAuraUpgrade) {
       for (let i = currentAura; i < requiredAura; i++) {
           if (AURA_DATA[i]) {
               auraUpgradeCost += AURA_DATA[i].cost;
           }
-      }
-      if (auraUpgradeCost > 0) {
-          auraUpgradeText = ` + 限界突破`;
       }
   }
 
@@ -6047,7 +6048,7 @@ function onLevelSliderChange(val) {
   const totalCost = levelUpCost + auraUpgradeCost;
 
   if (targetDisplay) {
-      targetDisplay.textContent = `Lv.${current} → Lv.${targetLevel}${auraUpgradeText}`;
+      targetDisplay.textContent = `Lv.${current} → Lv.${targetLevel}${isAuraUpgrade ? ' (限界突破)' : ''}`;
       targetDisplay.style.color = isBulk ? 'var(--accent)' : 'var(--text-dim)';
   }
   if (costDisplay) {
@@ -6055,12 +6056,24 @@ function onLevelSliderChange(val) {
       costDisplay.style.color = playerState.rainbowStones >= totalCost ? 'var(--gold)' : 'var(--accent2)';
   }
 
+  // Reset button style first
+  btn.style.background = '';
+  btn.style.color = '';
+  btn.style.borderColor = '';
+
   if (playerState.rainbowStones < totalCost) {
       btn.disabled = true;
       btn.innerHTML = `虹石不足`;
   } else {
       btn.disabled = false;
-      btn.innerHTML = isBulk ? `一括強化 (Lv.${targetLevel})` : `強化 (Lv.${targetLevel})`;
+      if (isAuraUpgrade) {
+          btn.textContent = `限界突破 (Lv.${targetLevel})`;
+          btn.style.background = 'var(--gold)';
+          btn.style.color = '#000';
+          btn.style.borderColor = 'var(--gold)';
+      } else {
+          btn.innerHTML = isBulk ? `一括強化 (Lv.${targetLevel})` : `強化 (Lv.${targetLevel})`;
+      }
   }
 }
 
@@ -6770,6 +6783,30 @@ function sortUserStages(stages) {
   return stages;
 }
 
+async function deleteUserStage(stageId) {
+    if (!confirm('このステージを削除しますか？この操作は元に戻せません。')) return;
+
+    const formData = new URLSearchParams();
+    formData.append('action', 'deleteStage');
+    formData.append('stageId', stageId);
+    formData.append('creatorId', playerState.playerId); // For server-side verification
+
+    showToast('ステージを削除しています...');
+
+    try {
+        const res = await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
+        const json = await res.json();
+        if (json.success) {
+            showToast('ステージを削除しました。');
+            renderUserStagesPage(true); // Force reload
+        } else {
+            throw new Error(json.error || '削除に失敗しました。');
+        }
+    } catch (e) {
+        showToast(`削除エラー: ${e.message}`);
+    }
+}
+
 async function renderUserStagesPage(forceReload = false) {
     const container = document.getElementById('missionGrid');
     
@@ -6933,31 +6970,40 @@ async function renderUserStagesPage(forceReload = false) {
                 </div>`;
             }
 
+            const isMyStage = stage.creatorId === playerState.playerId;
+            let deleteBtnHtml = '';
+            if (isMyStage) {
+                deleteBtnHtml = `<button class="stage-action-btn" onclick="deleteUserStage('${stage.id}')" style="color:var(--accent2); border-color:var(--accent2); flex:1;">削除</button>`;
+            }
+
             const card = document.createElement('div');
             card.className = 'mission-card user-stage-list-item';
             card.innerHTML = `
                 <div class="user-stage-list-info">
                     <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
                     <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
+                </div>
+                <div class="user-stage-meta-row">
                     <div class="user-stage-meta-info">
                         <span>作成者: <span class="comment-author-link" onclick="openUserProfile('${stage.creatorId}', '${stage.creator}')">${stage.creator}</span></span>
                         <span>投稿日: ${new Date(stage.createdAt).toLocaleDateString()}</span>
                     </div>
-                </div>
-                <div class="user-stage-list-stats">
-                    <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
-                    <div class="stat-item" title="プレイ数">👤 ${stage.plays || 0}</div>
-                    <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
-                    <div class="stat-item" title="コメント数">💬 ${commentCount}</div>
-                    <div class="stat-item" title="推奨戦力">⚔️ ${totalPower}</div>
+                    <div class="user-stage-list-stats">
+                        <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
+                        <div class="stat-item" title="プレイ数">👤 ${stage.plays || 0}</div>
+                        <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
+                        <div class="stat-item" title="コメント数">💬 ${commentCount}</div>
+                        <div class="stat-item" title="推奨戦力">⚔️ ${totalPower}</div>
+                    </div>
                 </div>
                 <div class="user-stage-list-actions">
                     <div class="mission-reward-info" style="text-align: right; margin-bottom: 0.5rem;">
                         <div class="first-clear">💎 ${rewardVal.toLocaleString()}</div>
                     </div>
                     <button class="mission-btn" onclick="startUserStageBattle('${stage.id}')">挑戦する</button>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; width: 100%;">
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; width: 100%; align-items: stretch;">
                         <button class="stage-action-btn stage-heart-btn ${stage.isLiked ? 'active' : ''}" onclick="toggleStageHeart('${stage.id}')" style="flex:1;">❤️</button>
+                        ${deleteBtnHtml}
                     </div>
                 </div>
                 ${clearersHtml}
@@ -10691,13 +10737,22 @@ function handleFileSelect(input) {
       if (playerState.ownedEquipment === undefined) {
         playerState.ownedEquipment = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
       }
-      // Migration for Squad Equipments
-      if (!playerState.squadEquipments) {
-          const initialEquips = {};
+      // Migration for squad-specific states
+      if (!playerState.squadCharacterStates) {
+          console.log("Migrating to squad-specific character states...");
+          playerState.squadCharacterStates = [{}, {}, {}];
+          const baseState = {};
           for (const charId in playerState.characters) {
-              initialEquips[charId] = playerState.characters[charId].equippedId || null;
+              baseState[charId] = {
+                  level: playerState.characters[charId].level,
+                  aura: playerState.characters[charId].aura || 0,
+                  potential: playerState.characters[charId].potential || 0,
+                  equippedId: playerState.characters[charId].equippedId || null,
+              };
           }
-          playerState.squadEquipments = [{...initialEquips}, {...initialEquips}, {...initialEquips}];
+          playerState.squadCharacterStates[0] = JSON.parse(JSON.stringify(baseState));
+          playerState.squadCharacterStates[1] = JSON.parse(JSON.stringify(baseState));
+          playerState.squadCharacterStates[2] = JSON.parse(JSON.stringify(baseState));
       }
       playerState.towerProgress = data.playerState.towerProgress || 0;
       playerState.playerName = data.playerState.playerName || "名無しの剣士";
@@ -10732,14 +10787,6 @@ function handleFileSelect(input) {
 
 // ===== SAVE & LOAD =====
 function saveGame() {
-  // Save current equipment state to the current squad slot before persisting
-  if (!playerState.squadEquipments) playerState.squadEquipments = [{}, {}, {}];
-  const currentEquips = {};
-  for (const charId in playerState.characters) {
-      currentEquips[charId] = playerState.characters[charId].equippedId || null;
-  }
-  playerState.squadEquipments[playerState.currentSquadIndex] = currentEquips;
-
   const saveData = {
     playerState: playerState,
     missionProgress: [...missionProgress], // Convert Set to Array
@@ -10775,6 +10822,7 @@ function loadGame() {
         ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         towerProgress: 0,
         playerName: "名無しの剣士",
+        squadCharacterStates: [{}, {}, {}],
         playerId: null,
         squadEquipments: [{}, {}, {}], // Added default
     };
@@ -10809,15 +10857,24 @@ function loadGame() {
     // Migration for ownedEquipment
     playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
     
-    // Migration for Squad Equipments
-    if (!savedData.playerState.squadEquipments) {
-        const initialEquips = {};
+    // Migration for squad-specific states
+    if (!savedData.playerState.squadCharacterStates) {
+        console.log("Migrating to squad-specific character states...");
+        playerState.squadCharacterStates = [{}, {}, {}];
+        const baseState = {};
         for (const charId in playerState.characters) {
-            initialEquips[charId] = playerState.characters[charId].equippedId || null;
+            baseState[charId] = {
+                level: playerState.characters[charId].level,
+                aura: playerState.characters[charId].aura || 0,
+                potential: playerState.characters[charId].potential || 0,
+                equippedId: playerState.characters[charId].equippedId || null,
+            };
         }
-        playerState.squadEquipments = [{...initialEquips}, {...initialEquips}, {...initialEquips}];
+        playerState.squadCharacterStates[0] = JSON.parse(JSON.stringify(baseState));
+        playerState.squadCharacterStates[1] = JSON.parse(JSON.stringify(baseState));
+        playerState.squadCharacterStates[2] = JSON.parse(JSON.stringify(baseState));
     } else {
-        playerState.squadEquipments = savedData.playerState.squadEquipments;
+        playerState.squadCharacterStates = savedData.playerState.squadCharacterStates;
     }
 
     playerState.towerProgress = savedData.playerState.towerProgress || 0;
@@ -10837,6 +10894,23 @@ function loadGame() {
         saveGame();
     }
     
+    // Apply the states for the current squad
+    const currentSquadStates = playerState.squadCharacterStates[playerState.currentSquadIndex] || {};
+    for (const charId in playerState.characters) {
+        const state = currentSquadStates[charId];
+        if (state) {
+            playerState.characters[charId].level = state.level;
+            playerState.characters[charId].aura = state.aura || 0;
+            playerState.characters[charId].potential = state.potential || 0;
+            playerState.characters[charId].equippedId = state.equippedId || null;
+        } else {
+            playerState.characters[charId].level = 1;
+            playerState.characters[charId].aura = 0;
+            playerState.characters[charId].potential = 0;
+            playerState.characters[charId].equippedId = null;
+        }
+    }
+
     // Apply Compensation/Fix Logic
     checkAndApplyCompensation();
 
@@ -11157,25 +11231,6 @@ function addNotification(text) {
         date: new Date().toISOString(),
         read: false
     });
-    
-    // Manage size: Prefer removing read notifications
-    const SOFT_LIMIT = 50;
-    
-    if (playerState.notifications.length > SOFT_LIMIT) {
-        let removed = false;
-        // Search from end (oldest) for a read notification
-        for (let i = playerState.notifications.length - 1; i >= 0; i--) {
-            if (playerState.notifications[i].read) {
-                playerState.notifications.splice(i, 1);
-                removed = true;
-                break;
-            }
-        }
-        // If no read notifications found (all unread), keep them up to a hard limit
-        if (!removed && playerState.notifications.length > 200) {
-            playerState.notifications.pop();
-        }
-    }
 }
 
 function updateNotificationBadge() {
@@ -11205,6 +11260,12 @@ function openNotificationModal() {
         list.appendChild(item);
         n.read = true; // Mark as read on open
     });
+    
+    // Cleanup old notifications after marking as read
+    const MAX_NOTIFICATIONS = 50;
+    if (playerState.notifications.length > MAX_NOTIFICATIONS) {
+        playerState.notifications.splice(MAX_NOTIFICATIONS); // Keep the 50 newest
+    }
     
     updateNotificationBadge();
     saveGame();
@@ -11277,6 +11338,37 @@ function checkAndGrantTowerRewards(currentFloor, showToasts = false) {
     return grantedChars; // 付与されたキャラクターの配列を返す
 }
 
+function warmUpAuraAnimations() {
+    const warmer = document.createElement('div');
+    warmer.style.position = 'absolute';
+    warmer.style.left = '-9999px';
+    warmer.style.top = '-9999px';
+    warmer.style.width = '10px';
+    warmer.style.height = '10px';
+    warmer.style.pointerEvents = 'none';
+    warmer.style.zIndex = '-1';
+    document.body.appendChild(warmer);
+
+    const classesToWarmUp = [
+        ...AURA_DATA.map(a => a.class),
+        'aura-15', // Boss aura
+        'anim-slash', 'anim-magic', 'anim-dark', 'anim-shoot',
+        'anim-heal', 'anim-impact', 'anim-guard-vertical', 'anim-grand-fire'
+    ];
+
+    let i = 0;
+    const cycle = () => {
+        if (i < classesToWarmUp.length) {
+            warmer.innerHTML = `<div class="${classesToWarmUp[i]}"></div>`;
+            i++;
+            setTimeout(cycle, 50);
+        } else {
+            document.body.removeChild(warmer);
+        }
+    };
+    setTimeout(cycle, 200); // Start after a short delay
+}
+
 // ===== INIT =====
 async function initializeGame() {
     loadSettings();
@@ -11313,6 +11405,9 @@ async function initializeGame() {
 
     // Run Preloader (Await assets)
     await runPreloader();
+
+    // Warm up CSS animations to prevent stutter on first use
+    warmUpAuraAnimations();
 
     // ログイン時のタワー報酬チェック
     const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
