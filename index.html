@@ -1919,6 +1919,23 @@
   .anim-guard-vertical { width: 100%; height: 100%; background: linear-gradient(to top, transparent, rgba(255,255,255,0.8), transparent); animation: eff-guard-v 0.5s forwards; }
   @keyframes eff-guard-v { 0% { transform: scaleY(0); opacity: 0; } 50% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1.5); opacity: 0; } }
 
+  .anim-grand-fire {
+    position: absolute; inset: -50%;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .anim-grand-fire::before {
+    content: ''; position: absolute; width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(255,69,0,0.8), transparent 70%);
+    animation: eff-grand-fire 0.8s ease-out forwards;
+    mix-blend-mode: screen;
+  }
+  @keyframes eff-grand-fire {
+    0% { transform: scale(0.2); opacity: 0; }
+    30% { opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
   /* ===== AURA EFFECTS ===== */
   .char-card.aura-1, .squad-slot.aura-1, .battle-unit.aura-1 {
     outline: 2px solid #e0e0e0;
@@ -4194,6 +4211,17 @@ const units = [
     ],
     useImg: true, img: 'C540.svg'
   },
+  {
+    id: 42, name: 'フレイ・べルージュ', element: 'fire', elementJp: '炎', type: 'デストロイワールド',
+    baseStats: { hp: 1220, atk: 115, def: 60, spd: 85 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '焔', desc: '攻撃対象が火種状態の時発動。350%のダメージを与え、燃焼(5ターン)を付与する。', timing: 'before_attack', damageMult: 3.5, effect: { type: 'status', status: 'burn', turns: 5 } },
+      { name: '炎神のベルランス', desc: '60%の確率で発動。攻撃時に火種(3ターン)を付与する。', triggerRate: 0.6, timing: 'before_attack', effect: { type: 'status', status: 'ember', turns: 3 } },
+      { name: '熱戦', desc: '自身が燃焼状態の時、攻撃力が1.5倍になる。' }
+    ],
+    useImg: true, img: 'C541.svg'
+  },
 ];
 
 // Equipment Data
@@ -4827,6 +4855,19 @@ const collabChapters = [
         recommendedPower: 0, 
         reward: 0,
         firstTimeReward: 0
+      },
+      {
+        id: 951,
+        name: 'デストロイワールドコラボ②',
+        description: '炎神フレイ・べルージュとの戦闘。',
+        enemies: [
+          { id: 42, level: 260, aura: 15, aiType: AI_TYPES.HIGHEST_ATK }, // Frey Boss
+          { id: 315, level: 130, aiType: AI_TYPES.RANDOM }, { id: 315, level: 130, aiType: AI_TYPES.RANDOM },
+          { id: 315, level: 130, aiType: AI_TYPES.RANDOM }, { id: 315, level: 130, aiType: AI_TYPES.RANDOM }
+        ],
+        recommendedPower: 0,
+        reward: 0,
+        firstTimeReward: 0
       }
     ]
   }
@@ -4948,6 +4989,7 @@ const STATUS_EFFECTS = {
   curse: { icon: '🤐', name: '呪い', desc: 'アビリティ（スキル）が発動しなくなる。' },
   heavy: { icon: '🏋️', name: '重量化', desc: '速度が1/3になる。' },
   zero_gravity: { icon: '🌑', name: '無重力', desc: '攻撃力が1.2倍、防御力が0.8倍になる。' },
+  ember: { icon: '🧨', name: '火種', desc: '炎神の刻印。特定のスキルの発動条件となる。' },
 };
 
 const AURA_DATA = [
@@ -5014,7 +5056,7 @@ let squad = []; // ids
 let currentView = 'roster';
 let currentFilter = 'all';
 let searchQuery = '';
-let currentSort = 'id';
+let currentSort = 'power';
 let modalCharId = null;
 let missionProgress = new Set(); // Cleared mission IDs
 let currentStoryTab = 'main';
@@ -6587,6 +6629,7 @@ function renderStoryChapters() {
           if (m.id === 904) firstRewardHtml += ` + <span style="color:var(--accent)">シャム・グレゴリオ</span>`;
           if (m.id === 911) firstRewardHtml += ` + <span style="color:var(--accent)">💖 色欲の魔石</span>`;
           if (m.id === 950) firstRewardHtml = `初回報酬: <span style="color:var(--accent)">ジーク・デストロイ</span>`;
+          if (m.id === 951) firstRewardHtml = `初回報酬: <span style="color:var(--accent)">フレイ・べルージュ</span>`;
  
           const actionHtml = `<button class="mission-btn" onclick="startBattle(${m.id})">任務開始</button>`;
 
@@ -6779,8 +6822,9 @@ async function renderUserStagesPage(forceReload = false) {
         postBtnContainer.innerHTML = `
             ${draftsHtml}
             <div style="display:flex; gap:0.5rem;">
-            <button class="mission-btn" onclick="openPostStageModal()" style="flex:1; padding:1rem; font-size:1.1rem;">＋ 自分の部隊を投稿する</button>
-            <button class="mission-btn" onclick="renderUserStagesPage(true)" style="width: 4rem; padding:1rem; font-size:1.5rem;" title="リストを更新">↻</button>
+            <button class="mission-btn" onclick="openPostStageModal()" style="flex:1; padding:1rem; font-size:1.1rem;">＋ 投稿</button>
+            <button class="mission-btn" onclick="openUserProfile(playerState.playerId, playerState.playerName)" style="flex:1; padding:1rem; font-size:1.1rem; background:rgba(0,200,255,0.1); border:1px solid var(--accent); color:var(--accent);">自分の作品</button>
+            <button class="mission-btn" onclick="renderUserStagesPage(true)" style="width: 4rem; padding:1rem; font-size:1.5rem; flex-shrink:0;" title="リストを更新">↻</button>
             </div>
         `;
     }
@@ -8518,6 +8562,18 @@ async function runBattleSequence() {
         const target = getTarget(attacker, targets);
       
         const targetEl = document.getElementById(`unit-${target.battleId}`);
+
+        // Frey (ID: 42) Skill 3: Homura override
+        if (attacker.id === 42) {
+            const hasEmber = target.statusEffects.some(e => e.type === 'ember');
+            if (hasEmber) {
+                const homura = attacker.abilities.find(a => a.name === '焔');
+                if (homura) {
+                    activeAbility = homura;
+                }
+            }
+        }
+
         attackerEl.classList.add('is-attacking');
         await sleep(600 / battleSpeedMultiplier);
 
@@ -9419,6 +9475,11 @@ function checkWinLoss() {
             unlockedCharName = 'ジーク・デストロイ';
             showToast('「ジーク・デストロイ」が仲間になりました！');
         }
+        if (mission.id === 951 && !playerState.characters[42]) {
+            playerState.characters[42] = { level: 1, equippedId: null };
+            unlockedCharName = 'フレイ・べルージュ';
+            showToast('「フレイ・べルージュ」が仲間になりました！');
+        }
 
         let unlockedItem = null;
         if (mission.id === 911) {
@@ -9572,6 +9633,8 @@ function playEffect(targetEl, type) {
     playSfx('slash');
   } else if (type === 'magic' || type === 'dark' || type === 'shoot') {
     playSfx('magic');
+  } else if (type === 'grand-fire') {
+    playSfx('magic'); // Fire uses magic sound
   }
 
   overlay.innerHTML = `<div class="anim-${type}"></div>`;
@@ -9632,6 +9695,11 @@ function getBattleStats(unit) {
     const hpRatio = unit.currentHp / unit.stats.hp;
     const multiplier = 1 + (hpRatio * 0.5); // Max 1.5x at 100% HP
     s.atk = Math.floor(s.atk * multiplier);
+  }
+
+  // パッシブ: フレイ (ID:42) 熱戦
+  if (unit.id === 42 && unit.statusEffects.some(e => e.type === 'burn')) {
+    s.atk = Math.floor(s.atk * 1.5);
   }
 
   // パッシブ: オリバー (ID:12) フォルテ
@@ -11089,9 +11157,24 @@ function addNotification(text) {
         date: new Date().toISOString(),
         read: false
     });
-    // Keep only last 20
-    if (playerState.notifications.length > 20) {
-        playerState.notifications.pop();
+    
+    // Manage size: Prefer removing read notifications
+    const SOFT_LIMIT = 50;
+    
+    if (playerState.notifications.length > SOFT_LIMIT) {
+        let removed = false;
+        // Search from end (oldest) for a read notification
+        for (let i = playerState.notifications.length - 1; i >= 0; i--) {
+            if (playerState.notifications[i].read) {
+                playerState.notifications.splice(i, 1);
+                removed = true;
+                break;
+            }
+        }
+        // If no read notifications found (all unread), keep them up to a hard limit
+        if (!removed && playerState.notifications.length > 200) {
+            playerState.notifications.pop();
+        }
     }
 }
 
