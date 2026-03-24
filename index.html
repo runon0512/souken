@@ -1917,11 +1917,15 @@
   @keyframes st-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; } }
   @keyframes st-flicker { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
   @keyframes st-float { 0% { transform: translateY(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-10px); opacity: 0; } }
+  @keyframes paralysis-flash {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(255, 255, 0, 0.5); }
+  }
 
   .visual-burn { position: absolute; inset: 0; box-shadow: inset 0 0 30px rgba(255,69,0,0.6); background: rgba(255,69,0,0.1); animation: st-pulse 1s infinite; }
   .visual-poison { position: absolute; inset: 0; box-shadow: inset 0 0 30px rgba(128,0,128,0.6); background: rgba(128,0,128,0.1); animation: st-pulse 2s infinite; }
   .visual-drown { position: absolute; inset: 0; box-shadow: inset 0 0 30px rgba(0,0,139,0.6); background: rgba(0,0,139,0.2); animation: st-pulse 2s infinite; }
-  .visual-paralysis { position: absolute; inset: 0; background: repeating-linear-gradient(45deg, rgba(255,255,0,0.1) 0px, rgba(255,255,0,0.1) 5px, transparent 5px, transparent 10px); box-shadow: inset 0 0 20px rgba(255,255,0,0.4); animation: st-flicker 0.1s infinite; }
+  .visual-paralysis { position: absolute; inset: 0; animation: paralysis-flash 0.3s infinite; box-shadow: inset 0 0 20px rgba(255,255,0,0.4); }
   .visual-sleep { position: absolute; inset: 0; background: rgba(0,0,50,0.5); animation: st-pulse 3s infinite; }
   .visual-sleep::after { content: 'Zzz'; position: absolute; right: 10%; top: 20%; color: #fff; font-size: 1rem; animation: st-float 2s infinite; font-weight: bold; }
   .visual-freeze { position: absolute; inset: 0; background: rgba(0,255,255,0.2); box-shadow: inset 0 0 20px rgba(0,255,255,0.4); border: 1px solid rgba(255,255,255,0.6); }
@@ -5001,8 +5005,6 @@ let playerState = {
   lastLoginDate: null,
   ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   towerProgress: 0,
-  playerName: "名無しの剣士",
-        squadCharacterStates: [{}, {}, {}],
   squads: [[], [], []], // 3 slots
   currentSquadIndex: 0,
   playerId: null, // Will be generated
@@ -5255,44 +5257,12 @@ async function runPreloader() {
 let draggedSquadIndex = null;
 
 function switchSquad(index) {
-    if (index < 0 || index > 2) return;
-    if (index === playerState.currentSquadIndex) return;
+  if (index < 0 || index > 2) return;
+  if (index === playerState.currentSquadIndex) return;
 
-    // 1. Save current states (level, aura, potential, equip)
-    const currentStates = {};
-    for (const charId in playerState.characters) {
-        const char = playerState.characters[charId];
-        currentStates[charId] = {
-            level: char.level,
-            aura: char.aura || 0,
-            potential: char.potential || 0,
-            equippedId: char.equippedId || null,
-        };
-    }
-    playerState.squadCharacterStates[playerState.currentSquadIndex] = currentStates;
-
-    // 2. Switch index and global squad reference
-    playerState.currentSquadIndex = index;
-    squad = playerState.squads[index];
-
-    // 3. Load new states
-    const newStates = playerState.squadCharacterStates[index] || {};
-
-    for (const charId in playerState.characters) {
-        const state = newStates[charId];
-        if (state) {
-            playerState.characters[charId].level = state.level;
-            playerState.characters[charId].aura = state.aura || 0;
-            playerState.characters[charId].potential = state.potential || 0;
-            playerState.characters[charId].equippedId = state.equippedId || null;
-        } else {
-            // If character is new to this squad's state, reset it
-            playerState.characters[charId].level = 1;
-            playerState.characters[charId].aura = 0;
-            playerState.characters[charId].potential = 0;
-            playerState.characters[charId].equippedId = null;
-        }
-    }
+  // 1. Switch index and global squad reference
+  playerState.currentSquadIndex = index;
+  squad = playerState.squads[index];
 
   // Update Tab UI
   document.querySelectorAll('.squad-tab-btn').forEach((btn, i) => {
@@ -5300,6 +5270,7 @@ function switchSquad(index) {
     else btn.classList.remove('active');
   });
   
+  // Re-render UI. Character states are now global, so no loading/saving is needed.
   renderSquad();
   renderCards();
   saveGame();
@@ -8308,7 +8279,7 @@ async function runBattleSequence() {
   renderBattleUnits();
 
   document.getElementById('battleActionBtn').disabled = true;
-  document.getElementById('retireBattleBtn').disabled = true; // Disable during sequence execution to prevent race conditions
+  document.getElementById('retireBattleBtn').disabled = false; // Enable surrender
   document.getElementById('closeBattleBtn').disabled = true;
   logBattleMessage(`<span class="info">戦闘開始！</span>`);
 
@@ -8343,6 +8314,22 @@ async function runBattleSequence() {
   let turnCount = 1;
 
   while (!battleState.isFinished) {
+    if (turnCount > 30) {
+        battleState.isFinished = true;
+        const isUserStage = battleState.mission.isUserStage;
+        const msg = isUserStage ? "30ターン経過。タイムオーバー（敗北）" : "30ターン経過。引き分け";
+        const color = isUserStage ? "var(--accent2)" : "var(--text-mid)";
+        logBattleMessage(`<span class="info" style="color:${color}">${msg}</span>`);
+        
+        document.getElementById('battleActionBtn').textContent = '閉じる';
+        document.getElementById('retireBattleBtn').disabled = true;
+        document.getElementById('battleActionBtn').disabled = false;
+        document.getElementById('battleActionBtn').onclick = closeBattle;
+        document.getElementById('closeBattleBtn').disabled = false;
+        
+        break;
+    }
+
     logBattleMessage(`<span class="info">--- ターン ${turnCount} ---</span>`);
 
     for (const attacker of turnQueue) {
@@ -9385,7 +9372,7 @@ async function runBattleSequence() {
     // In a real game, this might represent one "round" and the loop would continue.
   }
 
-  document.getElementById('retireBattleBtn').disabled = false;
+  document.getElementById('retireBattleBtn').disabled = true;
   document.querySelectorAll('.battle-unit').forEach(el => el.classList.remove('is-attacking'));
 
   document.getElementById('closeBattleBtn').disabled = false;
@@ -10803,9 +10790,7 @@ function loadGame() {
         ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         towerProgress: 0,
         playerName: "名無しの剣士",
-        squadCharacterStates: [{}, {}, {}],
         playerId: null,
-        squadEquipments: [{}, {}, {}], // Added default
     };
     
     playerState.rainbowStones = savedData.playerState.rainbowStones !== undefined ? savedData.playerState.rainbowStones : defaultPlayerState.rainbowStones;
@@ -10839,23 +10824,20 @@ function loadGame() {
     playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
     
     // Migration for squad-specific states
-    if (!savedData.playerState.squadCharacterStates) {
-        console.log("Migrating to squad-specific character states...");
-        playerState.squadCharacterStates = [{}, {}, {}];
-        const baseState = {};
+    if (savedData.playerState.squadCharacterStates) {
+        console.log("Migrating from squad-specific states to a unified character state...");
+        // Unify to squad set 1's state as requested
+        const unifiedState = savedData.playerState.squadCharacterStates[0] || {};
         for (const charId in playerState.characters) {
-            baseState[charId] = {
-                level: playerState.characters[charId].level,
-                aura: playerState.characters[charId].aura || 0,
-                potential: playerState.characters[charId].potential || 0,
-                equippedId: playerState.characters[charId].equippedId || null,
-            };
+            if (unifiedState[charId]) {
+                playerState.characters[charId].level = unifiedState[charId].level;
+                playerState.characters[charId].aura = unifiedState[charId].aura || 0;
+                playerState.characters[charId].potential = unifiedState[charId].potential || 0;
+                playerState.characters[charId].equippedId = unifiedState[charId].equippedId || null;
+            }
         }
-        playerState.squadCharacterStates[0] = JSON.parse(JSON.stringify(baseState));
-        playerState.squadCharacterStates[1] = JSON.parse(JSON.stringify(baseState));
-        playerState.squadCharacterStates[2] = JSON.parse(JSON.stringify(baseState));
-    } else {
-        playerState.squadCharacterStates = savedData.playerState.squadCharacterStates;
+        // We can delete the old property from our current state
+        delete playerState.squadCharacterStates;
     }
 
     playerState.towerProgress = savedData.playerState.towerProgress || 0;
@@ -10873,23 +10855,6 @@ function loadGame() {
     if (!playerState.playerId) {
         playerState.playerId = generateUUID();
         saveGame();
-    }
-    
-    // Apply the states for the current squad
-    const currentSquadStates = playerState.squadCharacterStates[playerState.currentSquadIndex] || {};
-    for (const charId in playerState.characters) {
-        const state = currentSquadStates[charId];
-        if (state) {
-            playerState.characters[charId].level = state.level;
-            playerState.characters[charId].aura = state.aura || 0;
-            playerState.characters[charId].potential = state.potential || 0;
-            playerState.characters[charId].equippedId = state.equippedId || null;
-        } else {
-            playerState.characters[charId].level = 1;
-            playerState.characters[charId].aura = 0;
-            playerState.characters[charId].potential = 0;
-            playerState.characters[charId].equippedId = null;
-        }
     }
 
     // Apply Compensation/Fix Logic
@@ -10987,24 +10952,38 @@ function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUni
 }
 
 async function toggleStageHeart(stageId) {
+    const stage = cachedUserStages.find(s => s.id == stageId);
+    if (!stage) return;
+
+    if (stage.isLiked) {
+        showToast('すでにハートを送っています');
+        return;
+    }
+
+    // Optimistic Update
+    stage.hearts++;
+    stage.isLiked = true;
+    showToast('ハートを送りました！');
+    renderUserStagesPage(); // Re-render from cache
+
+    // Send to server in background
     const formData = new URLSearchParams();
     formData.append('action', 'toggleHeart');
     formData.append('stageId', stageId);
     formData.append('playerId', playerState.playerId);
     
-    try {
-        const res = await fetch(USER_STAGE_API_URL, {method:'POST', body:formData});
-        const json = await res.json();
-        if (json.status === 'already_hearted') {
-            showToast('すでにハートを送っています');
-        } else {
-            showToast('ハートを送りました！ (報酬UP!)');
-            // Optimistic update
-            const stage = cachedUserStages.find(s => s.id == stageId);
-            if(stage) { stage.hearts++; stage.isLiked = true; }
-            renderUserStagesPage(); // refresh stats
-        }
-    } catch(e) { showToast('通信エラー'); }
+    fetch(USER_STAGE_API_URL, { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(json => {
+            if (json.success === false || json.status === 'error') {
+                stage.hearts--;
+                stage.isLiked = false;
+                renderUserStagesPage();
+                showToast('ハートの送信に失敗しました');
+            }
+        }).catch(e => {
+            showToast('通信エラーが発生しました');
+        });
 }
 
 let currentCommentStageId = null;
@@ -11255,39 +11234,48 @@ function openNotificationModal() {
 
 async function submitInlineComment(stageId) {
     const input = document.getElementById(`commentInput-${stageId}`);
-    const comment = input.value.trim();
-    if (!comment) return;
-    
-    if (comment.length > 50) { showToast('50字以内で入力してください'); return; }
+    const commentText = input.value.trim();
+    if (!commentText) return;
+
+    if (commentText.length > 50) { showToast('50字以内で入力してください'); return; }
     
     const btn = input.nextElementSibling;
     btn.disabled = true;
     btn.textContent = '...';
-    
+
+    // Optimistic update
+    const stage = cachedUserStages.find(s => s.id == stageId);
+    if (stage) {
+        const newComment = {
+            name: playerState.playerName,
+            playerId: playerState.playerId,
+            text: commentText,
+            date: new Date().toISOString()
+        };
+        if (!stage.comments) stage.comments = [];
+        stage.comments.push(newComment);
+        input.value = '';
+        showToast('コメントしました');
+        renderUserStagesPage(); // Re-render from cache
+    }
+
     const formData = new URLSearchParams();
     formData.append('action', 'postComment');
     formData.append('stageId', stageId);
     formData.append('playerId', playerState.playerId);
     formData.append('playerName', playerState.playerName);
-    formData.append('comment', comment);
+    formData.append('comment', commentText);
 
     try {
-        await fetch(USER_STAGE_API_URL, {method:'POST', body:formData});
-        showToast('コメントしました'); 
-        input.value = '';
-        // Refresh this stage in the list without full reload if possible, or just reload all
-        // For simplicity and consistency, reload list
-        await renderUserStagesPage(true);
-        // Re-open comment section for this stage after reload
-        setTimeout(() => {
-            const el = document.getElementById(`comments-${stageId}`);
-            // Inline comments section is displayed by default via CSS in renderUserStagesPage loop, so no extra class needed usually.
-        }, 100);
+        const response = await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.error || 'Server error');
+        }
     } catch(e) {
-        showToast('送信エラー');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '送信';
+        showToast('コメントの送信に失敗しました');
+        if (stage) stage.comments.pop(); // Revert
+        renderUserStagesPage(); // Re-render to show reverted state
     }
 }
 
