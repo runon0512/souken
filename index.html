@@ -1328,7 +1328,53 @@
     font-weight: 700;
   }
   .battle-field { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 1.25rem; gap: 1.25rem; }
-  .battle-team { display: flex; justify-content: center; gap: 1rem; }
+  /* Field Effects Visuals */
+  .field-visual-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0; /* Behind units */
+    border-radius: 0.5rem;
+    overflow: hidden;
+    animation: field-pulse 1.5s infinite;
+  }
+
+  @keyframes field-pulse {
+    0%, 100% { box-shadow: inset 0 0 2rem var(--field-color-1, rgba(255,255,255,0)); }
+    50% { box-shadow: inset 0 0 4rem var(--field-color-2, rgba(255,255,255,0)); }
+  }
+
+  .field-visual-overlay.field-miasma {
+    --field-color-1: rgba(128, 0, 128, 0.3);
+    --field-color-2: rgba(128, 0, 128, 0.6);
+  }
+
+  .field-visual-overlay.field-heavy_gravity {
+    --field-color-1: rgba(100, 100, 100, 0.3);
+    --field-color-2: rgba(100, 100, 100, 0.6);
+  }
+
+  .field-visual-overlay.field-berserk {
+    --field-color-1: rgba(255, 0, 0, 0.3);
+    --field-color-2: rgba(255, 0, 0, 0.6);
+  }
+
+  .field-visual-overlay.field-lightning_storm {
+    --field-color-1: rgba(255, 215, 0, 0.3);
+    --field-color-2: rgba(255, 215, 0, 0.6);
+  }
+
+  .field-visual-overlay.field-anti_magic {
+    --field-color-1: rgba(179, 136, 255, 0.3);
+    --field-color-2: rgba(179, 136, 255, 0.6);
+  }
+
+  .field-visual-overlay.field-heal_reverse {
+    --field-color-1: rgba(0, 255, 127, 0.3);
+    --field-color-2: rgba(0, 255, 127, 0.6);
+  }
+
+  .battle-team { display: flex; justify-content: center; gap: 1rem; position: relative; }
   .battle-unit {
     width: 10rem;
     height: 13.75rem;
@@ -3863,7 +3909,7 @@ const units = [
     id: 313, name: 'パール・リリスコート', element: 'water', elementJp: '水',
     baseStats: { hp: 940, atk: 93, def: 81, spd: 72 }, abilityType: 'magic',
     abilities: [
-      { name: 'アクアリウム', desc: '攻撃後、40%の確率で発動し相手に「溺没」（燃焼や独と同じ効果）を３Ｔ付与します。', triggerRate: 0.4, timing: 'after_attack', effect: { type: 'status', status: 'drown', turns: 3 } },
+      { name: 'アクアリウム', desc: '攻撃後、40%の確率で発動し相手に「溺没」（燃焼や毒と同じ効果）を３Ｔ付与します。', triggerRate: 0.4, timing: 'after_attack', effect: { type: 'status', status: 'drown', turns: 3 } },
       { name: '防御の構え', desc: '被弾時に30%で20%のダメージをカットします。', triggerRate: 0.3, timing: 'on_defense', damageCut: 0.2 }
     ],
     useImg: true, img: 'C310.svg',
@@ -4191,6 +4237,21 @@ const units = [
       { name: '熱戦', desc: '自身が燃焼状態の時、攻撃力が1.5倍になる。' }
     ],
     useImg: true, img: 'C541.svg'
+  },
+  {
+    id: 43,
+    name: 'キアラ・ベルハイネ',
+    element: 'fire',
+    elementJp: '炎',
+    type: 'デストロイワールド',
+    baseStats: { hp: 1280, atk: 105, def: 75, spd: 78 },
+    abilityType: 'slash',
+    abilities: [
+      { name: '次元斬・空断', desc: '40%の確率で発動。無属性の攻撃。自身の攻撃力に-100から+100の範囲の乱数を加えたダメージを与える(防御無視)。', timing: 'before_attack', triggerRate: 0.4 },
+      { name: '主様のために', desc: '毎ターン、最もHP割合が低い味方のHPを最大値の10%回復する。' }
+    ],
+    useImg: true,
+    img: 'C41.svg',
   },
 ];
 
@@ -6735,30 +6796,6 @@ function sortUserStages(stages) {
   return stages;
 }
 
-async function deleteUserStage(stageId) {
-    if (!confirm('このステージを削除しますか？この操作は元に戻せません。')) return;
-
-    const formData = new URLSearchParams();
-    formData.append('action', 'deleteStage');
-    formData.append('stageId', stageId);
-    formData.append('creatorId', playerState.playerId); // For server-side verification
-
-    showToast('ステージを削除しています...');
-
-    try {
-        const res = await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
-        const json = await res.json();
-        if (json.success) {
-            showToast('ステージを削除しました。');
-            renderUserStagesPage(true); // Force reload
-        } else {
-            throw new Error(json.error || '削除に失敗しました。');
-        }
-    } catch (e) {
-        showToast(`削除エラー: ${e.message}`);
-    }
-}
-
 async function renderUserStagesPage(forceReload = false) {
     const container = document.getElementById('missionGrid');
     
@@ -6868,105 +6905,7 @@ async function renderUserStagesPage(forceReload = false) {
         const visibleData = sortedData.slice(0, userStageLimit);
 
         visibleData.forEach(stage => {
-            let squadData;
-            let fieldEffectP = 'none';
-            let fieldEffectE = 'none';
-            let bgId = 'default';
-            try {
-                const parsed = JSON.parse(stage.squadData);
-                if (parsed.isCustom) {
-                    squadData = parsed.enemies;
-                    // Legacy support or new separate fields
-                    fieldEffectP = parsed.fieldEffectPlayer || parsed.fieldEffect || 'none';
-                    fieldEffectE = parsed.fieldEffectEnemy || parsed.fieldEffect || 'none';
-                    bgId = parsed.bgId || 'default';
-                } else {
-                    squadData = parsed; // Legacy format (array)
-                }
-            } catch(e) { squadData = []; }
-
-            let totalPower = 0;
-            squadData.forEach(s => {
-                const u = units.find(unit => unit.id === s.id);
-                if (u) {
-                    const stats = calcStats(u.baseStats, s.level, null, 0); // Enemy potential usu. 0
-                    totalPower += stats.hp + stats.atk*2 + stats.def + stats.spd;
-                }
-            });
-
-            const playRate = stage.plays > 0 ? Math.round((stage.clears / stage.plays) * 100) : 0;
-            const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
-            const isCleared = missionProgress.has("user_" + stage.id);
-            
-            // Reward Calculation: Total Power
-            const rewardVal = Math.min(totalPower, 100000);
-            
-            let fieldBadge = '';
-            if (fieldEffectP !== 'none' || fieldEffectE !== 'none') {
-                let names = [];
-                const feP = FIELD_EFFECTS.find(f => f.id === fieldEffectP);
-                if (feP && feP.id !== 'none') names.push(`味:${feP.name}`);
-                const feE = FIELD_EFFECTS.find(f => f.id === fieldEffectE);
-                if (feE && feE.id !== 'none') names.push(`敵:${feE.name}`);
-                if (names.length > 0) fieldBadge = `<span style="font-size:0.7rem; background:var(--accent2); color:#000; padding:2px 4px; border-radius:3px; margin-left:0.5rem;">⚠️ ${names.join('/')}</span>`;
-            }
-            
-            const commentCount = (stage.comments || []).length;
-            
-            // Clearers List
-            let clearersHtml = '';
-            if (stage.clearers && stage.clearers.length > 0) {
-                clearersHtml = `<div style="grid-column: 1 / -1; font-size:0.75rem; color:var(--text-dim); margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
-                    <details><summary style="cursor:pointer;">クリア者 (${stage.clearers.length}名)</summary>
-                    <div style="margin-top:0.25rem; padding-left:0.5rem; line-height:1.4;">${stage.clearers.join(', ')}</div></details>
-                </div>`;
-            }
-
-            const isMyStage = stage.creatorId === playerState.playerId;
-            let deleteBtnHtml = '';
-            if (isMyStage) {
-                deleteBtnHtml = `<button class="stage-action-btn" onclick="deleteUserStage('${stage.id}')" style="color:var(--accent2); border-color:var(--accent2); flex:1;">削除</button>`;
-            }
-
-            const card = document.createElement('div');
-            card.className = 'mission-card user-stage-list-item';
-            card.innerHTML = `
-                <div class="user-stage-list-info">
-                    <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
-                    <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
-                </div>
-                <div class="user-stage-meta-row">
-                    <div class="user-stage-meta-info">
-                        <span>作成者: <span class="comment-author-link" onclick="openUserProfile('${stage.creatorId}', '${stage.creator}')">${stage.creator}</span></span>
-                        <span>投稿日: ${new Date(stage.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <div class="user-stage-list-stats">
-                        <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
-                        <div class="stat-item" title="プレイ数">👤 ${stage.plays || 0}</div>
-                        <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
-                        <div class="stat-item" title="コメント数">💬 ${commentCount}</div>
-                        <div class="stat-item" title="推奨戦力">⚔️ ${totalPower}</div>
-                    </div>
-                </div>
-                <div class="user-stage-list-actions">
-                    <div class="mission-reward-info" style="text-align: right; margin-bottom: 0.5rem;">
-                        <div class="first-clear">💎 ${rewardVal.toLocaleString()}</div>
-                    </div>
-                    <button class="mission-btn" onclick="startUserStageBattle('${stage.id}')">挑戦する</button>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; width: 100%; align-items: stretch;">
-                        <button class="stage-action-btn stage-heart-btn ${stage.isLiked ? 'active' : ''}" onclick="toggleStageHeart('${stage.id}')" style="flex:1;">❤️</button>
-                        ${deleteBtnHtml}
-                    </div>
-                </div>
-                ${clearersHtml}
-                <div class="inline-comment-section" id="comments-${stage.id}" style="grid-column: 1 / -1;">
-                    ${renderInlineComments(stage.id, stage.comments || [])}
-                    <div class="inline-comment-input-area">
-                        <input type="text" id="commentInput-${stage.id}" class="post-input" placeholder="コメントを入力..." style="margin-bottom:0;" maxlength="50">
-                        <button class="mission-btn" style="width:auto; padding:0 1rem;" onclick="submitInlineComment('${stage.id}')">送信</button>
-                    </div>
-                </div>
-            `;
+            const card = renderUserStageCard(stage);
             container.appendChild(card);
         });
         
@@ -7036,6 +6975,103 @@ function showAllComments(stageId) {
 function setStageSort(sortType) {
     currentUserStageSort = sortType;
     renderUserStagesPage();
+}
+
+function renderUserStageCard(stage) {
+    let squadData;
+    let fieldEffectP = 'none';
+    let fieldEffectE = 'none';
+    let bgId = 'default';
+    try {
+        const parsed = JSON.parse(stage.squadData);
+        if (parsed.isCustom) {
+            squadData = parsed.enemies;
+            // Legacy support or new separate fields
+            fieldEffectP = parsed.fieldEffectPlayer || parsed.fieldEffect || 'none';
+            fieldEffectE = parsed.fieldEffectEnemy || parsed.fieldEffect || 'none';
+            bgId = parsed.bgId || 'default';
+        } else {
+            squadData = parsed; // Legacy format (array)
+        }
+    } catch(e) { squadData = []; }
+
+    let totalPower = 0;
+    squadData.forEach(s => {
+        const u = units.find(unit => unit.id === s.id);
+        if (u) {
+            const stats = calcStats(u.baseStats, s.level, null, 0); // Enemy potential usu. 0
+            totalPower += stats.hp + stats.atk*2 + stats.def + stats.spd;
+        }
+    });
+
+    const playRate = stage.plays > 0 ? Math.round((stage.clears / stage.plays) * 100) : 0;
+    const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
+    const isCleared = missionProgress.has("user_" + stage.id);
+    
+    // Reward Calculation: Total Power
+    const rewardVal = Math.min(totalPower, 100000);
+    
+    let fieldBadge = '';
+    if (fieldEffectP !== 'none' || fieldEffectE !== 'none') {
+        let names = [];
+        const feP = FIELD_EFFECTS.find(f => f.id === fieldEffectP);
+        if (feP && feP.id !== 'none') names.push(`味:${feP.name}`);
+        const feE = FIELD_EFFECTS.find(f => f.id === fieldEffectE);
+        if (feE && feE.id !== 'none') names.push(`敵:${feE.name}`);
+        if (names.length > 0) fieldBadge = `<span style="font-size:0.7rem; background:var(--accent2); color:#000; padding:2px 4px; border-radius:3px; margin-left:0.5rem;">⚠️ ${names.join('/')}</span>`;
+    }
+    
+    const commentCount = (stage.comments || []).length;
+    
+    // Clearers List
+    let clearersHtml = '';
+    if (stage.clearers && stage.clearers.length > 0) {
+        clearersHtml = `<div style="grid-column: 1 / -1; font-size:0.75rem; color:var(--text-dim); margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+            <details><summary style="cursor:pointer;">クリア者 (${stage.clearers.length}名)</summary>
+            <div style="margin-top:0.25rem; padding-left:0.5rem; line-height:1.4;">${stage.clearers.join(', ')}</div></details>
+        </div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'mission-card user-stage-list-item';
+    card.id = `user-stage-card-${stage.id}`;
+    card.innerHTML = `
+        <div class="user-stage-list-info">
+            <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
+            <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
+        </div>
+        <div class="user-stage-meta-row">
+            <div class="user-stage-meta-info">
+                <span>作成者: <span class="comment-author-link" onclick="openUserProfile('${stage.creatorId}', '${stage.creator}')">${stage.creator}</span></span>
+                <span>投稿日: ${new Date(stage.createdAt).toLocaleDateString()}</span>
+            </div>
+            <div class="user-stage-list-stats">
+                <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
+                <div class="stat-item" title="プレイ数">👤 ${stage.plays || 0}</div>
+                <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
+                <div class="stat-item" title="コメント数">💬 ${commentCount}</div>
+                <div class="stat-item" title="推奨戦力">⚔️ ${totalPower}</div>
+            </div>
+        </div>
+        <div class="user-stage-list-actions">
+            <div class="mission-reward-info" style="text-align: right; margin-bottom: 0.5rem;">
+                <div class="first-clear">💎 ${rewardVal.toLocaleString()}</div>
+            </div>
+            <button class="mission-btn" onclick="startUserStageBattle('${stage.id}')">挑戦する</button>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; width: 100%; align-items: stretch;">
+                <button class="stage-action-btn stage-heart-btn ${stage.isLiked ? 'active' : ''}" onclick="toggleStageHeart('${stage.id}')" style="flex:1;">❤️</button>
+            </div>
+        </div>
+        ${clearersHtml}
+        <div class="inline-comment-section" id="comments-${stage.id}" style="grid-column: 1 / -1;">
+            ${renderInlineComments(stage.id, stage.comments || [])}
+            <div class="inline-comment-input-area">
+                <input type="text" id="commentInput-${stage.id}" class="post-input" placeholder="コメントを入力..." style="margin-bottom:0;" maxlength="50">
+                <button class="mission-btn" style="width:auto; padding:0 1rem;" onclick="submitInlineComment('${stage.id}')">送信</button>
+            </div>
+        </div>
+    `;
+    return card;
 }
 
 // ===== STAGE EDITOR =====
@@ -7908,21 +7944,6 @@ async function startBattle(missionId, skipDialogue = false) {
   if (battleContainer) {
       battleContainer.style.background = bgData.css;
   }
-  
-  // Apply Field Visuals
-  const pTeamEl = document.getElementById('playerTeam');
-  const eTeamEl = document.getElementById('enemyTeam');
-  
-  // Reset previous visuals if any (though innerHTML wipes them usually, better safe)
-  // We wrap teams in a container relative? No, battle-team is flex item.
-  // Let's modify renderBattleUnits to include a visual layer or add it to battle-field
-  // Easier: add/remove classes or elements to #playerTeam / #enemyTeam
-  pTeamEl.style.position = 'relative';
-  eTeamEl.style.position = 'relative';
-  
-  // We'll handle visuals in renderBattleUnits or just append overlays now
-  // Actually, appending now is fine, but renderBattleUnits wipes content.
-  // So let's update renderBattleUnits to preserve or re-add them.
 
   document.getElementById('battleOverlay').classList.add('open');
 }
@@ -8113,17 +8134,22 @@ async function processUnitDeath(unit) {
         if (callum.statusEffects.some(e => e.type === 'curse')) {
             logBattleMessage(`${callum.name}は呪いでスキルを発動できない！`);
         } else {
-            await showCutIn(callum, '完全治療');
-            const healAmount = Math.floor(unit.stats.hp * 0.5);
-            unit.currentHp = Math.floor(unit.stats.hp * 0.5);
-            logBattleMessage(`${callum.name}の完全治療！${unit.name}が復活した！`);
-            updateUnitUI(unit);
-            const unitEl = document.getElementById(`unit-${unit.battleId}`);
-            playEffect(unitEl, 'heal');
-            showDamageNumber(unitEl, healAmount, 'heal');
-            callum.passiveUsed = true;
-            if (unitEl) unitEl.classList.remove('defeated');
-            return;
+            const targetField = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+            if (targetField === 'heal_reverse') {
+                logBattleMessage(`${callum.name}の完全治療が反転！ ${unit.name}は復活できなかった！`);
+            } else {
+                await showCutIn(callum, '完全治療');
+                const healAmount = Math.floor(unit.stats.hp * 0.5);
+                unit.currentHp = healAmount;
+                logBattleMessage(`${callum.name}の完全治療！${unit.name}が復活した！`);
+                updateUnitUI(unit);
+                const unitEl = document.getElementById(`unit-${unit.battleId}`);
+                playEffect(unitEl, 'heal');
+                showDamageNumber(unitEl, healAmount, 'heal');
+                callum.passiveUsed = true;
+                if (unitEl) unitEl.classList.remove('defeated');
+                return true; // Indicate revival
+            }
         }
     }
 
@@ -8212,14 +8238,22 @@ async function checkDeathAbilities(unit) {
   // Shion (ID: 18) Passive: Fate Control
   if (unit.id === 18 && !unit.passiveUsed) {
       unit.passiveUsed = true;
-      await showCutIn(unit, '運命支配');
-      unit.currentHp = Math.floor(unit.stats.hp * 0.1);
-      unit.statusEffects = []; // Clear all debuffs
-      logBattleMessage(`${unit.name}は運命を支配し、死を拒絶した！`);
-      updateUnitUI(unit);
-      if (unitEl) {
-          unitEl.classList.remove('defeated');
-          playEffect(unitEl, 'heal');
+      const targetField = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+      if (targetField === 'heal_reverse') {
+          logBattleMessage(`${unit.name}の運命支配が反転し、復活できなかった！`);
+          return false;
+      } else {
+          await showCutIn(unit, '運命支配');
+          const healAmount = Math.floor(unit.stats.hp * 0.1);
+          unit.currentHp = healAmount;
+          unit.statusEffects = []; // Clear all debuffs
+          logBattleMessage(`${unit.name}は運命を支配し、死を拒絶した！`);
+          updateUnitUI(unit);
+          if (unitEl) {
+              unitEl.classList.remove('defeated');
+              playEffect(unitEl, 'heal');
+              showDamageNumber(unitEl, healAmount, 'heal');
+          }
       }
       return true;
   }
@@ -8253,19 +8287,24 @@ async function checkDeathAbilities(unit) {
   if (unit.id === 40) {
       if (unit.reviveCount === undefined) unit.reviveCount = 0;
       if (unit.reviveCount < 2) {
-          unit.reviveCount++;
           const revivePct = unit.reviveCount === 1 ? 0.3 : 0.15;
-          await showCutIn(unit, 'ダメージの無力化');
-          
-          unit.currentHp = Math.floor(unit.stats.hp * revivePct);
-          // Reset negative statuses if needed, or keep them? Usually revive clears them, lets behave like guts for now unless specified.
-          // Assuming "revive" clears simple death state.
-          
-          logBattleMessage(`${unit.name}はダメージを無力化し復活した！(HP${revivePct*100}%)`);
-          updateUnitUI(unit);
-          if (unitEl) {
-              unitEl.classList.remove('defeated');
-              playEffect(unitEl, 'heal');
+          const healAmount = Math.floor(unit.stats.hp * revivePct);
+          const targetField = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+
+          if (targetField === 'heal_reverse') {
+              logBattleMessage(`${unit.name}のダメージ無力化が反転し、復活できなかった！`);
+              return false;
+          } else {
+              unit.reviveCount++;
+              await showCutIn(unit, 'ダメージの無力化');
+              unit.currentHp = healAmount;
+              logBattleMessage(`${unit.name}はダメージを無力化し復活した！(HP${revivePct*100}%)`);
+              updateUnitUI(unit);
+              if (unitEl) {
+                  unitEl.classList.remove('defeated');
+                  playEffect(unitEl, 'heal');
+                  showDamageNumber(unitEl, healAmount, 'heal');
+              }
           }
           return true;
       }
@@ -8369,8 +8408,21 @@ async function runBattleSequence() {
         // --- FIELD EFFECT HANDLING (Start of turn) ---
         const myField = attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
         if (myField && myField !== 'none') {
-            if (myField === 'miasma') {
-                await addStatusEffect(attacker, 'poison', 1);
+            if (myField === 'miasma' && attacker.currentHp > 0) {
+                const dotDamage = Math.floor(attacker.stats.hp / 8);
+                attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
+                logBattleMessage(`${attacker.name}は<span class="damage">瘴気</span>で ${dotDamage} のダメージを受けた！`);
+                updateUnitUI(attacker);
+                const attackerElForDot = document.getElementById(`unit-${attacker.battleId}`);
+                showDamageNumber(attackerElForDot, dotDamage);
+                if (attackerElForDot) {
+                    attackerElForDot.classList.add('is-taking-damage');
+                    setTimeout(() => attackerElForDot.classList.remove('is-taking-damage'), 400);
+                }
+                if (attacker.currentHp <= 0) {
+                    await processUnitDeath(attacker);
+                    canAct = false; // ターンをスキップ
+                }
             }
             if (myField === 'lightning_storm') {
                 if (Math.random() < 0.2) {
@@ -8386,7 +8438,7 @@ async function runBattleSequence() {
         // --- STATUS EFFECT HANDLING (START OF TURN) ---
         const effectsCopy = [...attacker.statusEffects]; // Iterate over a copy
         for (const effect of effectsCopy) {
-            if (!effect) continue;
+            if (!effect || !canAct) continue; // 瘴気で死んだら処理しない
             switch (effect.type) {
                 case 'burn': // Fallthrough
                 case 'poison':
@@ -8424,10 +8476,21 @@ async function runBattleSequence() {
         // Equipment: Regen
         if (attacker.equipment && attacker.equipment.effect && attacker.equipment.effect.type === 'regen') {
             const regenAmt = Math.floor(attacker.stats.hp * attacker.equipment.effect.val);
-            attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + regenAmt);
-            // logBattleMessage(`${attacker.name}は徐々に回復している... (+${regenAmt})`);
-            updateUnitUI(attacker);
-            showDamageNumber(attackerEl, regenAmt, 'heal');
+            const myField = attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+            if (myField === 'heal_reverse') {
+                attacker.currentHp = Math.max(0, attacker.currentHp - regenAmt);
+                logBattleMessage(`${attacker.name}の回復効果が反転！ <span class="damage">${regenAmt}</span>のダメージ！`);
+                updateUnitUI(attacker);
+                showDamageNumber(attackerEl, regenAmt, 'damage');
+                if (attacker.currentHp <= 0) {
+                    await processUnitDeath(attacker);
+                    canAct = false; // Stop turn if died from regen reversal
+                }
+            } else if (attacker.currentHp < attacker.stats.hp) {
+                attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + regenAmt);
+                updateUnitUI(attacker);
+                showDamageNumber(attackerEl, regenAmt, 'heal');
+            }
         }
 
         if (attacker.currentHp <= 0) {
@@ -8444,12 +8507,12 @@ async function runBattleSequence() {
         if (checkWinLoss()) break;
 
         if (!canAct) {
-            await sleep(800 / battleSpeedMultiplier);
-            continue;
+          await sleep(800 / battleSpeedMultiplier);
+          continue;
         }
 
         // Passive: Den Alvaro (ID: 6) Support
-        if (attacker.id === 6) {
+        if (attacker.id === 6 || attacker.id === 43) {
             const allies = attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
             const livingAllies = allies.filter(u => u.currentHp > 0);
             if (livingAllies.length > 0) {
@@ -8463,13 +8526,24 @@ async function runBattleSequence() {
                     }
                 }
                 const healAmt = Math.floor(targetAlly.stats.hp * 0.1);
-                if (healAmt > 0 && targetAlly.currentHp < targetAlly.stats.hp) {
-                    targetAlly.currentHp = Math.min(targetAlly.stats.hp, targetAlly.currentHp + healAmt);
+                if (healAmt > 0) {
+                    const targetField = targetAlly.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+                    const healAbilityName = attacker.id === 6 ? '支援' : '主様のために';
                     const targetAllyEl = document.getElementById(`unit-${targetAlly.battleId}`);
-                    logBattleMessage(`${attacker.name}の支援！${targetAlly.name}のHPが回復！`);
-                    updateUnitUI(targetAlly);
-                    playEffect(targetAllyEl, 'heal');
-                    showDamageNumber(targetAllyEl, healAmt, 'heal');
+
+                    if (targetField === 'heal_reverse') {
+                        targetAlly.currentHp = Math.max(0, targetAlly.currentHp - healAmt);
+                        logBattleMessage(`${attacker.name}の${healAbilityName}が反転！ ${targetAlly.name}に<span class="damage">${healAmt}</span>のダメージ！`);
+                        updateUnitUI(targetAlly);
+                        showDamageNumber(targetAllyEl, healAmt, 'damage');
+                        if (targetAlly.currentHp <= 0) await processUnitDeath(targetAlly);
+                    } else if (targetAlly.currentHp < targetAlly.stats.hp) {
+                        targetAlly.currentHp = Math.min(targetAlly.stats.hp, targetAlly.currentHp + healAmt);
+                        logBattleMessage(`${attacker.name}の${healAbilityName}！${targetAlly.name}のHPが回復！`);
+                        updateUnitUI(targetAlly);
+                        playEffect(targetAllyEl, 'heal');
+                        showDamageNumber(targetAllyEl, healAmt, 'heal');
+                    }
                 }
             }
         }
@@ -8744,8 +8818,28 @@ async function runBattleSequence() {
         }
       }
 
-        const damage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
-        
+        let damage;
+        let advText = '';
+        let damageType = 'damage';
+
+        if (activeAbility && activeAbility.name === '次元斬・空断') {
+            const randomAdd = Math.floor(Math.random() * 201) - 100;
+            damage = Math.max(1, getBattleStats(attacker).atk + randomAdd);
+            // 無属性攻撃なのでadvTextは空のまま
+        } else {
+            damage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
+            // 属性相性エフェクト
+            const advantage = getElementalMultiplier(attacker.element, target.element);
+            if (advantage > 1.0) {
+              advText = ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>';
+              showPassivePopup(targetEl, "WEAK!"); // 簡易エフェクト
+              damageType = 'weak';
+            } else if (advantage < 1.0) {
+              advText = ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>';
+              showPassivePopup(targetEl, "RESIST"); // 簡易エフェクト
+            }
+        }
+
         // Apply Damage to Target
         let actualDamage = damage;
         
@@ -8921,8 +9015,6 @@ async function runBattleSequence() {
 
         // 属性相性エフェクト
       const advantage = getElementalMultiplier(attacker.element, target.element);
-      let advText = '';
-      let damageType = 'damage';
       if (advantage > 1.0) {
         advText = ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>';
         showPassivePopup(targetEl, "WEAK!"); // 簡易エフェクト
@@ -8962,7 +9054,7 @@ async function runBattleSequence() {
 
         playEffect(targetEl, activeAbility ? (attacker.abilityType || 'magic') : 'impact');
         recordDamage(attacker, actualDamage);
-        logBattleMessage(`${attacker.name} の ${attackName}！ ${target.name} に <span class="damage">${damage}</span>${advText} のダメージ！`);
+        logBattleMessage(`${attacker.name} の ${attackName}！ ${target.name} に <span class="damage">${actualDamage}</span>${advText} のダメージ！`);
         updateUnitUI(target);
         const damageClass = activeAbility ? 'is-taking-skill-damage' : 'is-taking-damage';
         const animDuration = activeAbility ? 500 : 400;
@@ -10073,18 +10165,24 @@ async function triggerOnBattleStartAbilities() {
                  const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
                  let anyHealed = false;
                  for (const ally of allies) {
-                   if (ally.currentHp > 0 && ally.currentHp < ally.stats.hp) {
+                   if (ally.currentHp > 0) {
                      const heal = Math.floor(ally.stats.hp * 0.02);
                      if (heal > 0) {
-                       ally.currentHp = Math.min(ally.stats.hp, ally.currentHp + heal);
-                       updateUnitUI(ally);
-                       showDamageNumber(document.getElementById(`unit-${ally.battleId}`), heal, 'heal');
-                       anyHealed = true;
+                        const targetField = ally.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+                        if (targetField === 'heal_reverse') {
+                            ally.currentHp = Math.max(0, ally.currentHp - heal);
+                            if (ally.currentHp <= 0) await processUnitDeath(ally);
+                        } else if (ally.currentHp < ally.stats.hp) {
+                            ally.currentHp = Math.min(ally.stats.hp, ally.currentHp + heal);
+                        }
+                        updateUnitUI(ally);
+                        showDamageNumber(document.getElementById(`unit-${ally.battleId}`), heal, targetField === 'heal_reverse' ? 'damage' : 'heal');
+                        anyHealed = true;
                      }
                    }
                  }
                  if (anyHealed) {
-                    logBattleMessage(`${unit.name}の${ab.name}。味方全体が回復。`);
+                    logBattleMessage(`${unit.name}の${ab.name}。味方全体に効果。`);
                     await sleep(400 / battleSpeedMultiplier);
                  }
               }
@@ -10964,28 +11062,24 @@ async function toggleStageHeart(stageId) {
     stage.hearts++;
     stage.isLiked = true;
     showToast('ハートを送りました！');
-    renderUserStagesPage(); // Re-render from cache
+    
+    // Replace card instead of full re-render
+    const oldCard = document.getElementById(`user-stage-card-${stage.id}`);
+    if (oldCard) {
+        const newCard = renderUserStageCard(stage);
+        oldCard.parentNode.replaceChild(newCard, oldCard);
+    }
 
-    // Send to server in background
+    // Fire and Forget to Server
     const formData = new URLSearchParams();
     formData.append('action', 'toggleHeart');
     formData.append('stageId', stageId);
     formData.append('playerId', playerState.playerId);
     
-    fetch(USER_STAGE_API_URL, { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(json => {
-            if (json.success === false || json.status === 'error') {
-                stage.hearts--;
-                stage.isLiked = false;
-                renderUserStagesPage();
-                showToast('ハートの送信に失敗しました');
-            }
-        }).catch(e => {
-            showToast('通信エラーが発生しました');
-        });
+    fetch(USER_STAGE_API_URL, { method: 'GET' })
+        .then(() => fetch(USER_STAGE_API_URL, { method: 'POST', body: formData }))
+        .catch(e => console.error("Heart submission failed in background:", e));
 }
-
 let currentCommentStageId = null;
 function openStageComments(stageId) {
     currentCommentStageId = stageId;
@@ -11021,29 +11115,68 @@ async function submitComment() {
     const comment = input.value.trim();
     if (comment) {
         if (comment.length > 50) { showToast('50字以内で入力してください'); return; }
+        
+        const btn = document.querySelector('#commentsBox .modal-add-btn');
+        btn.disabled = true;
+        btn.textContent = '送信中...';
+
+        // --- Data & UI Update (Optimistic) ---
+        const stage = cachedUserStages.find(s => s.id == currentCommentStageId);
+        if (stage) {
+            if (!stage.comments) stage.comments = [];
+
+            // Find and remove existing comment by the same player
+            const existingCommentIndex = stage.comments.findIndex(c => {
+                // Match by ID first, then fallback to name if ID is missing (for older comments)
+                if (c.playerId) return c.playerId === playerState.playerId;
+                return c.name === playerState.playerName;
+            });
+
+            if (existingCommentIndex > -1) {
+                stage.comments.splice(existingCommentIndex, 1);
+            }
+
+            // Add the new comment
+            stage.comments.push({
+                name: playerState.playerName,
+                playerId: playerState.playerId,
+                text: comment,
+                date: new Date().toISOString()
+            });
+
+            // Re-render the comments list in the modal
+            const list = document.getElementById('commentsList');
+            list.innerHTML = '';
+            stage.comments.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header"><span>${c.name}</span><span>${new Date(c.date).toLocaleDateString()}</span></div>
+                    <div class="comment-text">${c.text}</div>
+                `;
+                list.appendChild(div);
+            });
+            list.scrollTop = list.scrollHeight;
+        }
+        
+        showToast('コメントしました'); 
+        input.value = '';
+        
+        // --- Fire and Forget to Server ---
         const formData = new URLSearchParams();
         formData.append('action', 'postComment');
         formData.append('stageId', currentCommentStageId);
         formData.append('playerId', playerState.playerId);
         formData.append('playerName', playerState.playerName);
         formData.append('comment', comment);
-        
-        const btn = document.querySelector('#commentsBox .modal-add-btn');
-        btn.disabled = true;
-        btn.textContent = '送信中...';
-        
-        try {
-            await fetch(USER_STAGE_API_URL, {method:'POST', body:formData});
-            showToast('コメントしました'); 
-            input.value = '';
-            await renderUserStagesPage(true); // Force reload stages to get new comment
-            openStageComments(currentCommentStageId); // Refresh the open modal
-        } catch(e) {
-            showToast('送信エラー');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '送信';
-        }
+
+        fetch(USER_STAGE_API_URL, { method: 'GET' })
+            .then(() => fetch(USER_STAGE_API_URL, {method:'POST', body:formData}))
+            .catch(e => console.error("Comment submission failed in background:", e));
+
+        // Re-enable button
+        btn.disabled = false;
+        btn.textContent = '送信';
     }
 }
 
@@ -11242,8 +11375,8 @@ async function submitInlineComment(stageId) {
     const btn = input.nextElementSibling;
     btn.disabled = true;
     btn.textContent = '...';
-
-    // Optimistic update
+    
+    // --- Optimistic UI & Data Update ---
     const stage = cachedUserStages.find(s => s.id == stageId);
     if (stage) {
         const newComment = {
@@ -11253,30 +11386,45 @@ async function submitInlineComment(stageId) {
             date: new Date().toISOString()
         };
         if (!stage.comments) stage.comments = [];
-        stage.comments.push(newComment);
-        input.value = '';
-        showToast('コメントしました');
-        renderUserStagesPage(); // Re-render from cache
-    }
 
+        // Find and remove existing comment by the same player
+        const existingCommentIndex = stage.comments.findIndex(c => {
+            // Match by ID first, then fallback to name if ID is missing (for older comments)
+            if (c.playerId) return c.playerId === playerState.playerId;
+            return c.name === playerState.playerName;
+        });
+
+        if (existingCommentIndex > -1) {
+            stage.comments.splice(existingCommentIndex, 1);
+        }
+
+        // Add the new comment
+        stage.comments.push(newComment);
+
+        // Replace card to update UI atomically
+        const oldCard = document.getElementById(`user-stage-card-${stageId}`);
+        if (oldCard) {
+            const newCard = renderUserStageCard(stage);
+            oldCard.parentNode.replaceChild(newCard, oldCard);
+            // Restore focus to the input field after re-render
+            const newInput = document.getElementById(`commentInput-${stageId}`);
+            if (newInput) newInput.focus();
+        }
+    }
+    
+    showToast('コメントしました');
+
+    // --- Fire and Forget to Server ---
     const formData = new URLSearchParams();
     formData.append('action', 'postComment');
     formData.append('stageId', stageId);
     formData.append('playerId', playerState.playerId);
     formData.append('playerName', playerState.playerName);
     formData.append('comment', commentText);
-
-    try {
-        const response = await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error || 'Server error');
-        }
-    } catch(e) {
-        showToast('コメントの送信に失敗しました');
-        if (stage) stage.comments.pop(); // Revert
-        renderUserStagesPage(); // Re-render to show reverted state
-    }
+    
+    fetch(USER_STAGE_API_URL, { method: 'GET' })
+        .then(() => fetch(USER_STAGE_API_URL, { method: 'POST', body: formData }))
+        .catch(e => console.error("Inline comment submission failed in background:", e));
 }
 
 function closeNotificationModal(e) { if(e.target.id==='notificationOverlay') closeNotificationModalDirect(); }
