@@ -1,3 +1,4 @@
+Uncaught ReferenceError: initImageEditor is not defined
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -3338,7 +3339,18 @@
       <!-- Step 2: Stats -->
       <div class="creator-step" style="display:none;" id="creatorStep2"></div>
       <!-- Step 3: Finalize -->
-      <div class="creator-step" style="display:none;" id="creatorStep3"></div>
+      <div class="creator-step" style="display:none;" id="creatorStep3">
+        <h4>3. 名前と容姿</h4>
+        <input type="text" id="customCharNameInput" class="post-input" placeholder="キャラクター名 (必須)" maxlength="15">
+        <div class="image-editor-layout" style="margin-top: 1rem;">
+          <div class="image-editor-preview">
+            <canvas id="customCharCanvas" width="200" height="200"></canvas>
+          </div>
+          <div class="image-editor-controls" id="imageEditorControls">
+            <!-- Controls will be injected by JS -->
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer" style="display: flex; justify-content: space-between;"></div>
   </div>
@@ -4085,7 +4097,7 @@ const units = [
     useImg: true, img: 'C20.svg'
   },
   {
-    id: 319, name: 'グルディー・ヴァーナク', element: 'dark', elementJp: '闇',
+    id: 319, name: 'グルディー・ヴァーナク', element: 'fire', elementJp: '炎',
     baseStats: { hp: 1400, atk: 160, def: 120, spd: 90 },
     abilityType: 'magic',
     abilities: [
@@ -4218,7 +4230,7 @@ const units = [
     useImg: true, img: 'C35.svg'
   },
   {
-    id: 322, name: 'グルディー・ヴァーナク（色欲解放）', element: 'dark', elementJp: '闇', type: 'ロベリア',
+    id: 322, name: 'グルディー・ヴァーナク（色欲解放）', element: 'fire', elementJp: '炎', type: 'ロベリア',
     baseStats: { hp: 1400, atk: 160, def: 120, spd: 90 },
     abilityType: 'magic',
     abilities: [
@@ -5016,12 +5028,18 @@ const elementalAdvantage = {
 function calculateTotalPower(enemies) {
   let total = 0;
   enemies.forEach(eConfig => {
-    const unit = units.find(u => u.id === eConfig.id);
-    if (unit) {
+    let unit = units.find(u => u.id === eConfig.id);
+    
+    if (!unit && eConfig.isCustom) {
+      unit = eConfig;
+    }
+
+    if (unit && unit.baseStats) {
       const level = eConfig.level || 1;
       const equip = eConfig.equipment || null;
       const potential = eConfig.potential || 0;
-      const s = calcStats(unit.baseStats, level, equip, potential);
+      const enhancement = eConfig.enhancement;
+      const s = calcStats(unit.baseStats, level, equip, potential, enhancement);
       total += Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
     }
   });
@@ -7359,10 +7377,8 @@ function editorNextStep() {
         
         // 戦力計算と表示
         const enemyConfigs = currentEditingStage.enemies.map(e => ({
-            id: e.id,
-            level: e.level,
+            ...e,
             equipment: e.equippedId ? equipmentItems.find(i => i.id === e.equippedId) : null,
-            enhancement: e.enhancement,
             potential: 0
         }));
         const enemyPower = calculateTotalPower(enemyConfigs);
@@ -7518,15 +7534,45 @@ function openCustomCharCreator(charToEdit = null) {
     closeUnitSelector();
     creatorCurrentStep = 1;
     
+    const defaultImageData = {
+        gender: 'W',
+        background: { id: 1, x: 0, y: 0 },
+        back: { id: 1, x: 0, y: 0, color: '#4a4a4a' },
+        face: { id: 1, x: 0, y: 0, hue: 0, brightness: 100 },
+        eyes: { id: 4, x: 0, y: 0, color: '#5a95e3', size: 100 },
+        front: { id: 1, x: 0, y: 0, color: '#4a4a4a' },
+        cover: { id: 1, x: 0, y: 0 },
+    };
+
     if (charToEdit) {
         editingCustomCharId = charToEdit.id;
         customCharData = JSON.parse(JSON.stringify(charToEdit));
+        
+        // Fallback for older custom characters without image data or new parts
+        if (!customCharData.imageData) {
+            customCharData.imageData = defaultImageData;
+        } else {
+            // Ensure all parts and properties exist
+            for (const part in defaultImageData) {
+                if (!customCharData.imageData[part]) {
+                    customCharData.imageData[part] = defaultImageData[part];
+                } else {
+                    // Ensure all properties within the part exist
+                    for (const prop in defaultImageData[part]) {
+                        if (customCharData.imageData[part][prop] === undefined) {
+                            customCharData.imageData[part][prop] = defaultImageData[part][prop];
+                        }
+                    }
+                }
+            }
+        }
     } else {
         editingCustomCharId = null;
         customCharData = {
             name: '',
             abilities: [],
-            baseStats: { hp: 1000, atk: 86, def: 87, spd: 87 } // HP Fixed, others total 260
+            baseStats: { hp: 1000, atk: 86, def: 87, spd: 87 }, // HP Fixed, others total 260
+            imageData: defaultImageData
         };
     }
     
@@ -7566,7 +7612,15 @@ function creatorNextStep() {
                 customCharData.abilities.push(ability);
             }
         }
+    } else if (creatorCurrentStep === 2) {
+        // Stat allocation is done via direct manipulation of customCharData, so just move to next step
     } else if (creatorCurrentStep === 3) {
+        const name = document.getElementById('customCharNameInput').value.trim();
+        if (!name) {
+            showToast('キャラクター名を入力してください');
+            return;
+        }
+        customCharData.name = name;
         createCustomCharacter();
         return;
     }
@@ -7604,7 +7658,7 @@ function updateCreatorStepUI() {
 
     if (creatorCurrentStep === 1) initSkillBuilder();
     if (creatorCurrentStep === 2) initStatAllocator();
-    if (creatorCurrentStep === 3) renderCustomCharConfirm();
+    if (creatorCurrentStep === 3) initImageEditor();
 }
 
 function createSkillBuilder(index) {
@@ -7940,7 +7994,9 @@ function createCustomCharacter() {
                 ...playerState.customCharacters[charIdx],
                 name: name,
                 baseStats: customCharData.baseStats,
-                abilities: customCharData.abilities
+                abilities: customCharData.abilities,
+                imageData: customCharData.imageData, // Save image recipe
+                img: imgDataUrl // Save generated image
             };
             showToast('キャラクターを更新しました');
         }
@@ -7955,7 +8011,8 @@ function createCustomCharacter() {
         elementJp: '無',
         type: 'カスタム',
         useImg: true,
-        img: 'C0.svg',
+            img: imgDataUrl, // Use the generated data URL
+            imageData: customCharData.imageData, // Save the recipe for editing
         icon: '👤'
     };
 
@@ -7971,6 +8028,116 @@ function createCustomCharacter() {
 
     saveGame();
     closeCustomCharCreator();
+}
+
+let imgDataUrl = ''; // To store the canvas data URL
+
+function initImageEditor() {
+    const controlsContainer = document.getElementById('imageEditorControls');
+    if (!controlsContainer) return;
+
+    const parts = {
+        gender: { name: '性別', options: { 'W': '女性', 'M': '男性' } },
+        back: { name: '後ろ髪', max: 5 },
+        face: { name: '顔', max: 5 },
+        eyes: { name: '目', max: 5, position: true },
+        front: { name: '前髪', max: 5 },
+    };
+
+    let html = '';
+    for (const [part, config] of Object.entries(parts)) {
+        html += `<div style="margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">`;
+        html += `<label style="font-size:0.8rem; color:var(--text-mid);">${config.name}</label>`;
+        if (config.options) { // 性別
+            html += `<div style="display:flex; gap:0.5rem;">`;
+            for (const [value, text] of Object.entries(config.options)) {
+                const isChecked = customCharData.imageData.gender === value;
+                html += `<button class="sort-btn ${isChecked ? 'active' : ''}" onclick="updateImagePart('${part}', '${value}')">${text}</button>`;
+            }
+            html += `</div>`;
+        } else { // 他のパーツ
+            html += `<div style="display:flex; align-items:center; gap:0.5rem;">`;
+            html += `<button class="level-btn" onclick="cycleImagePart('${part}', -1, ${config.max})">◀</button>`;
+            html += `<span id="label-${part}" style="width:2rem; text-align:center;">${customCharData.imageData[part].id}</span>`;
+            html += `<button class="level-btn" onclick="cycleImagePart('${part}', 1, ${config.max})">▶</button>`;
+            html += `</div>`;
+        }
+        
+        // 瞳の位置調整UI
+        if (config.position) {
+            const eyeData = customCharData.imageData.eyes;
+            html += `<div style="margin-top: 0.5rem;">
+                        <label style="font-size:0.7rem;">X: <input type="range" min="-20" max="20" value="${eyeData.x}" oninput="updateEyePosition('x', this.value)"></label>
+                        <label style="font-size:0.7rem;">Y: <input type="range" min="-20" max="20" value="${eyeData.y}" oninput="updateEyePosition('y', this.value)"></label>
+                     </div>`;
+        }
+
+        html += `</div>`;
+    }
+
+    controlsContainer.innerHTML = html;
+    drawCustomChar();
+}
+
+function updateEyePosition(axis, value) {
+    customCharData.imageData.eyes[axis] = parseInt(value);
+    drawCustomChar();
+}
+
+function updateImagePart(part, value) {
+    if (part === 'gender') {
+        customCharData.imageData.gender = value;
+    }
+    // Redraw everything
+    initImageEditor();
+}
+
+function cycleImagePart(part, direction, max) {
+    let currentId = customCharData.imageData[part].id;
+    currentId += direction;
+    if (currentId > max) currentId = 1;
+    if (currentId < 1) currentId = max;
+    customCharData.imageData[part].id = currentId;
+    document.getElementById(`label-${part}`).textContent = currentId;
+    drawCustomChar();
+}
+
+async function drawCustomChar() {
+    const canvas = document.getElementById('customCharCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const data = customCharData.imageData;
+    const gender = data.gender;
+    const order = ['back', 'face', 'eyes', 'front'];
+
+    const loadImage = (src) => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+
+    try {
+        for (const part of order) {
+            const partData = data[part];
+            // Path format: backW-1.svg
+            const imgPath = `${part}${gender}-${partData.id}.svg`;
+            const img = await loadImage(imgPath);
+            ctx.drawImage(img, partData.x, partData.y);
+        }
+        imgDataUrl = canvas.toDataURL();
+    } catch (e) {
+        console.warn("Error drawing custom character (image parts might be missing):", e);
+        // Draw a placeholder if images fail to load
+        ctx.fillStyle = '#333';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.font = '20px sans-serif';
+        ctx.fillText('画像なし', canvas.width / 2, canvas.height / 2);
+        imgDataUrl = canvas.toDataURL();
+    }
 }
 
 let editingEnemyIndex = -1;
@@ -8321,8 +8488,10 @@ function startClearCheck() {
     const enemies = currentEditingStage.enemies.map(s => {
         const equip = s.equippedId ? equipmentItems.find(e => e.id == s.equippedId) : null;
         return {
-            id: s.id, level: s.level, aura: s.aura, potential: 0,
-            equipment: equip, enhancement: s.enhancement, aiType: AI_TYPES.RANDOM
+            ...s,
+            potential: 0,
+            equipment: equip,
+            aiType: AI_TYPES.RANDOM
         };
     });
     
