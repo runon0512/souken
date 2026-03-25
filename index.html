@@ -5836,7 +5836,17 @@ function formatAbilityDetails(ability) {
 }
 
   function updateModal(isBattleContext = false, battleUnit = null) {
-  const c = units.find(u => u.id === modalCharId);
+  let c = units.find(u => u.id === modalCharId);
+  
+  // Custom Character Fallback
+  if (!c) {
+      if (battleUnit && battleUnit.isCustom) {
+          c = battleUnit;
+      } else if (playerState.customCharacters) {
+          c = playerState.customCharacters.find(u => u.id == modalCharId); // Loose equality for string IDs
+      }
+  }
+
   if (!c) return;
 
   const typeHtml = c.type ? `&nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.type}</span>` : '';
@@ -5857,6 +5867,7 @@ function formatAbilityDetails(ability) {
       equipId = battleUnit.equipment ? battleUnit.equipment.id : null;
       aura = battleUnit.aura || 0;
       potential = battleUnit.potential || 0;
+      // Custom chars might not have separate stats object, rely on battleUnit properties
       s = getBattleStats(battleUnit); // Use dynamically calculated battle stats to reflect passives/effects
       equip = battleUnit.equipment;
     } else if (isOwned) {
@@ -5867,18 +5878,30 @@ function formatAbilityDetails(ability) {
       equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
       s = calcStats(c.baseStats, level, equip, potential);
     } else {
-      // Not owned, not in battle -> show base Lv1 stats
-      level = 1;
+      // Not owned (or Custom View), not in battle
+      level = c.level || 50; // Default for custom view
+      if (c.isCustom) {
+          // For custom chars in list, show them as is
+          s = c.baseStats; // Base stats are already the stats for custom chars (fixed scaling usually)
+          // If we want to show scaled stats:
+          // s = calcStats(c.baseStats, level, null, 0); 
+      } else {
+          level = 1;
+          s = c.baseStats;
+      }
       equipId = null;
       potential = 0;
       aura = 0;
       equip = null;
-      s = c.baseStats;
     }
     const currentMaxLevel = isOwned ? getMaxLevel(aura) : 0;
     const absoluteMaxLevel = getMaxLevel(12); // Max possible player level
     const affordableMaxLevel = isOwned ? getMaxAffordableLevel(level, aura, playerState.rainbowStones) : 0;
     const sliderMax = Math.max(level, affordableMaxLevel);
+
+    // Power Calc
+    const powerVal = Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
+    document.getElementById('modalSubtitle').innerHTML += ` <span style="margin-left:10px; color:var(--accent); font-weight:bold;">PWR: ${powerVal}</span>`;
 
     // Favorite Button State
     const favBtn = document.getElementById('modalFavBtn');
@@ -6010,7 +6033,7 @@ function formatAbilityDetails(ability) {
   document.getElementById('modalAbilities').innerHTML = c.abilities.map(a =>
     `<div class="ability-card">
       <div class="ability-card-name">◆ ${a.name}</div>
-      <div class="ability-card-desc">${a.desc}</div>
+      <div class="ability-card-desc">${a.isCustom ? getCustomAbilityDescription(a) : a.desc}</div>
       ${formatAbilityDetails(a)}
     </div>`).join('');
 
@@ -7425,14 +7448,6 @@ function renderUnitSelector() {
     const grid = document.getElementById('unitSelectorGrid');
     grid.innerHTML = '';
     
-    // Add custom character creation button at the top
-    const customBtn = document.createElement('div');
-    customBtn.className = 'unit-selector-item';
-    customBtn.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; background: var(--bg-card-hover); border-style: dashed;';
-    customBtn.innerHTML = `<div style="font-size: 2rem; color: var(--accent);">+</div><div style="font-size:0.7rem; margin-top:0.25rem;">カスタム作成</div>`;
-    customBtn.onclick = openCustomCharCreator;
-    grid.appendChild(customBtn);
-
     // All units including enemies (Only with images)
     const filtered = units.filter(u => (!q || u.name.toLowerCase().includes(q)) && u.useImg);
     
@@ -7454,6 +7469,41 @@ function renderUnitSelector() {
         };
         grid.appendChild(div);
     });
+
+    // Add custom character creation button BELOW standard units
+    const customBtn = document.createElement('div');
+    customBtn.className = 'unit-selector-item';
+    customBtn.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; background: var(--bg-card-hover); border-style: dashed;';
+    customBtn.innerHTML = `<div style="font-size: 2rem; color: var(--accent);">+</div><div style="font-size:0.7rem; margin-top:0.25rem;">カスタム作成</div>`;
+    customBtn.onclick = openCustomCharCreator;
+    grid.appendChild(customBtn);
+
+    // Render Saved Custom Characters
+    if (playerState.customCharacters) {
+        const filteredCustom = playerState.customCharacters.filter(u => !q || u.name.toLowerCase().includes(q));
+        filteredCustom.forEach(u => {
+            const div = document.createElement('div');
+            div.className = 'unit-selector-item';
+            div.innerHTML = `
+                <img src="${u.img || 'C0.svg'}">
+                <div class="unit-selector-name">${u.name}</div>
+                <div style="position:absolute;top:0;left:0;font-size:0.6rem;background:rgba(0,0,0,0.6);padding:1px 3px;color:#aaa;">Custom</div>
+                <div class="custom-edit-btn" style="position:absolute; top:0; right:0; width:1.5rem; height:1.5rem; background:rgba(0,0,0,0.7); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.8rem; z-index:5;">✎</div>
+            `;
+            div.querySelector('.custom-edit-btn').onclick = (e) => {
+                e.stopPropagation();
+                editCustomCharacter(u.id);
+            };
+            div.onclick = () => {
+                if (currentEditingStage.enemies.length >= 5) { showToast('これ以上配置できません'); return; }
+                currentEditingStage.enemies.push({ ...u, level: 50, equippedId: null, aura: 0 });
+                currentEditingStage.cleared = false;
+                updateEditorUI();
+                closeUnitSelector();
+            };
+            grid.appendChild(div);
+        });
+    }
 }
 
 function addEditorEnemy(id) {
@@ -7470,16 +7520,33 @@ function removeEditorEnemy(idx) {
 
 let customCharData = {};
 let creatorCurrentStep = 1;
+let editingCustomCharId = null;
 
-function openCustomCharCreator() {
+function openCustomCharCreator(charToEdit = null) {
     closeUnitSelector();
     creatorCurrentStep = 1;
-    customCharData = {
-        abilities: [],
-        baseStats: { hp: 63, atk: 62, def: 62, spd: 63 } // Default balanced
-    };
+    
+    if (charToEdit) {
+        editingCustomCharId = charToEdit.id;
+        customCharData = JSON.parse(JSON.stringify(charToEdit));
+    } else {
+        editingCustomCharId = null;
+        customCharData = {
+            name: '',
+            abilities: [],
+            baseStats: { hp: 1000, atk: 86, def: 87, spd: 87 } // HP Fixed, others total 260
+        };
+    }
+    
     updateCreatorStepUI();
     document.getElementById('customCharCreatorOverlay').classList.add('open');
+}
+
+function editCustomCharacter(id) {
+    const char = playerState.customCharacters.find(c => c.id === id);
+    if (char) {
+        openCustomCharCreator(char);
+    }
 }
 
 function closeCustomCharCreator() {
@@ -7550,36 +7617,40 @@ function updateCreatorStepUI() {
 
 function createSkillBuilder(index) {
     const statusOptions = Object.keys(STATUS_EFFECTS).map(key => `<option value="${key}">${STATUS_EFFECTS[key].name}</option>`).join('');
+    const ab = customCharData.abilities[index - 1] || {};
+    
+    const sel = (val, expect) => val === expect ? 'selected' : '';
 
     return `
         <div class="skill-builder" id="skill-builder-${index}" style="border: 1px solid var(--border); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
             <h4>スキル ${index}</h4>
-            <input type="text" class="post-input skill-name-input" placeholder="スキル名 (任意)">
+            <input type="text" class="post-input skill-name-input" placeholder="スキル名 (任意)" value="${ab.name || ''}">
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
                 <div>
                     <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">対象</label>
                     <select class="post-input skill-target-select" style="padding:0.5rem; margin:0;" onchange="toggleSkillBuilderInputs(${index})">
-                        <option value="single_enemy">敵単体</option>
-                        <option value="all_enemies">敵全体</option>
-                        <option value="self">自身</option>
-                        <option value="lowest_hp_ally">最もHPが低い味方</option>
-                        <option value="all_allies">味方全体</option>
+                        <option value="single_enemy" ${sel(ab.target, 'single_enemy')}>敵単体</option>
+                        <option value="all_enemies" ${sel(ab.target, 'all_enemies')}>敵全体</option>
+                        <option value="self" ${sel(ab.target, 'self')}>自身</option>
+                        <option value="lowest_hp_ally" ${sel(ab.target, 'lowest_hp_ally')}>最もHPが低い味方</option>
+                        <option value="all_allies" ${sel(ab.target, 'all_allies')}>味方全体</option>
                     </select>
                 </div>
                 <div>
                     <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">発動条件</label>
                     <select class="post-input skill-trigger-select" style="padding:0.5rem; margin:0;" onchange="toggleSkillBuilderInputs(${index})">
-                        <option value="before_attack">攻撃前 (確率)</option>
-                        <option value="after_attack">攻撃後 (確率)</option>
-                        <option value="on_hit">被弾時 (確率)</option>
-                        <option value="on_battle_start">開幕時 (確率)</option>
-                        <option value="hp_below">HPがn%以下</option>
+                        <option value="before_attack" ${sel(ab.trigger, 'before_attack')}>攻撃前 (確率)</option>
+                        <option value="after_attack" ${sel(ab.trigger, 'after_attack')}>攻撃後 (確率)</option>
+                        <option value="on_hit" ${sel(ab.trigger, 'on_hit')}>被弾時 (反撃/確率)</option>
+                        <option value="on_defense" ${sel(ab.trigger, 'on_defense')}>被弾時 (防御/確率)</option>
+                        <option value="on_battle_start" ${sel(ab.trigger, 'on_battle_start')}>開幕時 (確率)</option>
+                        <option value="hp_below" ${sel(ab.trigger, 'hp_below')}>HPがn%以下</option>
                     </select>
                 </div>
                 <div class="skill-trigger-value-container">
                     <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">発動確率 (%)</label>
-                    <input type="number" class="post-input skill-trigger-value" placeholder="例: 30" min="1" max="100" value="30" style="padding:0.5rem; margin:0;">
+                    <input type="number" class="post-input skill-trigger-value" placeholder="例: 30" min="1" max="100" value="${ab.triggerValue || 30}" style="padding:0.5rem; margin:0;">
                 </div>
             </div>
 
@@ -7587,15 +7658,16 @@ function createSkillBuilder(index) {
                 <div>
                     <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">効果</label>
                     <select class="post-input skill-effect-select" style="padding:0.5rem; margin:0;" onchange="toggleSkillBuilderInputs(${index})">
-                        <option value="attack">攻撃</option>
-                        <option value="heal">回復</option>
-                        <option value="status">状態異常付与</option>
-                        <option value="attack_status">攻撃 & 状態異常</option>
+                        <option value="attack" ${sel(ab.effect, 'attack')}>攻撃</option>
+                        <option value="heal" ${sel(ab.effect, 'heal')}>回復</option>
+                        <option value="status" ${sel(ab.effect, 'status')}>状態異常付与</option>
+                        <option value="attack_status" ${sel(ab.effect, 'attack_status')}>攻撃 & 状態異常</option>
+                        <option value="damage_cut" ${sel(ab.effect, 'damage_cut')}>ダメージカット</option>
                     </select>
                 </div>
                 <div class="skill-effect-value-container">
                     <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">効果量 (%)</label>
-                    <input type="number" class="post-input skill-effect-value" placeholder="例: 150" min="1" value="100" style="padding:0.5rem; margin:0;">
+                    <input type="number" class="post-input skill-effect-value" placeholder="例: 150" min="1" value="${ab.effectValue || 100}" style="padding:0.5rem; margin:0;">
                 </div>
             </div>
 
@@ -7603,11 +7675,15 @@ function createSkillBuilder(index) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                     <div>
                         <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">状態異常</label>
-                        <select class="post-input skill-status-select" style="padding:0.5rem; margin:0;">${statusOptions}</select>
+                        <select class="post-input skill-status-select" style="padding:0.5rem; margin:0;">
+                            ${Object.keys(STATUS_EFFECTS).map(key => 
+                                `<option value="${key}" ${sel(ab.statusEffect, key)}>${STATUS_EFFECTS[key].name}</option>`
+                            ).join('')}
+                        </select>
                     </div>
                     <div>
                         <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">ターン数</label>
-                        <input type="number" class="post-input skill-status-turns" min="1" max="9" value="3" style="padding:0.5rem; margin:0;">
+                        <input type="number" class="post-input skill-status-turns" min="1" max="9" value="${ab.statusTurns || 3}" style="padding:0.5rem; margin:0;">
                     </div>
                 </div>
             </div>
@@ -7617,10 +7693,20 @@ function createSkillBuilder(index) {
 
 function toggleSkillBuilderInputs(index) {
     const builder = document.getElementById(`skill-builder-${index}`);
-    const targetSelectValue = builder.querySelector('.skill-target-select').value;
+    const targetSelect = builder.querySelector('.skill-target-select');
     const triggerSelectValue = builder.querySelector('.skill-trigger-select').value;
     const effectSelect = builder.querySelector('.skill-effect-select');
     const currentEffectValue = effectSelect.value;
+
+    // If effect is damage_cut, force target to self
+    if (currentEffectValue === 'damage_cut') {
+        targetSelect.value = 'self';
+        targetSelect.disabled = true;
+    } else {
+        targetSelect.disabled = false;
+    }
+
+    const targetSelectValue = targetSelect.value;
 
     const isAllyTarget = ['self', 'lowest_hp_ally', 'all_allies'].includes(targetSelectValue);
 
@@ -7629,7 +7715,8 @@ function toggleSkillBuilderInputs(index) {
         attack: '攻撃',
         heal: '回復',
         status: '状態異常付与',
-        attack_status: '攻撃 & 状態異常'
+        attack_status: '攻撃 & 状態異常',
+        damage_cut: 'ダメージカット'
     };
 
     let availableEffects;
@@ -7642,6 +7729,10 @@ function toggleSkillBuilderInputs(index) {
     // If trigger is 'after_attack', it must be a follow-up attack (追撃)
     if (triggerSelectValue === 'after_attack') {
         availableEffects = availableEffects.filter(e => e === 'attack' || e === 'attack_status');
+    }
+    // If trigger is 'on_defense', mostly damage cut or status
+    if (triggerSelectValue === 'on_defense') {
+        availableEffects = ['damage_cut', 'status'];
     }
 
     effectSelect.innerHTML = availableEffects.map(key => `<option value="${key}">${effectOptions[key]}</option>`).join('');
@@ -7685,6 +7776,9 @@ function toggleSkillBuilderInputs(index) {
     } else if (newEffectValue === 'heal') {
         effectValueLabel.textContent = '最大HP回復量 (%)';
         effectValueContainer.style.display = 'block';
+    } else if (newEffectValue === 'damage_cut') {
+        effectValueLabel.textContent = '軽減率 (%)';
+        effectValueContainer.style.display = 'block';
     } else { // status only
         effectValueContainer.style.display = 'none';
     }
@@ -7706,8 +7800,11 @@ function initSkillBuilder() {
 
 function initStatAllocator() {
     const container = document.getElementById('creatorStep2');
-    const stats = ['hp', 'atk', 'def', 'spd'];
-    let allocatorHtml = `<h4>2. ステータス割り振り (合計250)</h4><div id="statAllocator">`;
+    const stats = ['atk', 'def', 'spd']; // HP excluded
+    let allocatorHtml = `<h4>2. ステータス割り振り (ATK/DEF/SPD 合計260)</h4>
+    <div style="margin-bottom:1rem; padding:0.5rem; background:rgba(255,255,255,0.1); border-radius:4px; text-align:center;">
+       <strong>HP: 1000 (固定)</strong>
+    </div><div id="statAllocator">`;
     stats.forEach(stat => {
         allocatorHtml += `
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 1rem 0;">
@@ -7721,38 +7818,47 @@ function initStatAllocator() {
                 </div>
             </div>`;
     });
-    allocatorHtml += `</div><div style="text-align:right; font-family:'Orbitron'; margin-top:1rem;">残り: <span id="statRemainingDisplay">0</span></div>`;
+    allocatorHtml += `</div><div style="text-align:right; font-family:'Orbitron'; margin-top:1rem;">残りPt: <span id="statRemainingDisplay">0</span></div>`;
     container.innerHTML = allocatorHtml;
     updateStatDisplays();
 }
 
 function adjustStat(stat, amount) {
-    const totalSoFar = Object.values(customCharData.baseStats).reduce((a, b) => a + b, 0);
-    const remaining = 250 - totalSoFar;
-    const current = customCharData.baseStats[stat];
+    const stats = customCharData.baseStats;
+    const currentTotal = stats.atk + stats.def + stats.spd;
+    const remaining = 260 - currentTotal;
+    const current = stats[stat];
     
     let finalAmount = amount;
     if (amount > 0 && remaining < amount) finalAmount = remaining;
     if (amount < 0 && current + amount < 1) finalAmount = 1 - current;
     
-    customCharData.baseStats[stat] += finalAmount;
+    stats[stat] += finalAmount;
     updateStatDisplays();
 }
 
 function updateStatDisplays() {
     let total = 0;
-    for (const stat in customCharData.baseStats) {
+    const stats = ['atk', 'def', 'spd'];
+    for (const stat of stats) {
         document.getElementById(`stat-${stat}-val`).textContent = customCharData.baseStats[stat];
         total += customCharData.baseStats[stat];
     }
-    document.getElementById('statRemainingDisplay').textContent = 250 - total;
+    document.getElementById('statRemainingDisplay').textContent = 260 - total;
 }
 
 function getCustomAbilityDescription(ability) {
     if (!ability.isCustom) return ability.desc;
 
     const targets = { 'single_enemy': '敵単体', 'all_enemies': '敵全体', 'self': '自身', 'lowest_hp_ally': '最もHPが低い味方', 'all_allies': '味方全体' };
-    const triggers = { 'before_attack': `攻撃前${ability.triggerValue}%で`, 'after_attack': `攻撃後${ability.triggerValue}%で`, 'on_hit': `被弾時${ability.triggerValue}%で`, 'on_battle_start': `開幕時${ability.triggerValue}%で`, 'hp_below': `HPが${ability.triggerValue}%以下になったら` };
+    const triggers = { 
+        'before_attack': `攻撃前${ability.triggerValue}%で`, 
+        'after_attack': `攻撃後${ability.triggerValue}%で`, 
+        'on_hit': `被弾時(反撃)${ability.triggerValue}%で`, 
+        'on_defense': `被弾時(防御)${ability.triggerValue}%で`, 
+        'on_battle_start': `開幕時${ability.triggerValue}%で`, 
+        'hp_below': `HPが${ability.triggerValue}%以下になったら` 
+    };
     
     let effectDesc = '';
     const statusInfo = STATUS_EFFECTS[ability.statusEffect]?.name || '';
@@ -7770,14 +7876,20 @@ function getCustomAbilityDescription(ability) {
         case 'attack_status':
             effectDesc = `攻撃力の${ability.effectValue}%で攻撃し、${statusInfo}(${ability.statusTurns}T)を付与`;
             break;
+        case 'damage_cut':
+            effectDesc = `受けるダメージを${ability.effectValue}%軽減`;
+            break;
     }
 
+    if (ability.trigger === 'on_defense' && ability.effect === 'damage_cut') {
+        return `被弾時、${ability.triggerValue}%の確率で受けるダメージを${ability.effectValue}%軽減する。`;
+    }
     return `${triggers[ability.trigger]}、${targets[ability.target]}に${effectDesc}。`;
 }
 
 function renderCustomCharConfirm() {
     const container = document.getElementById('creatorStep3');
-    const name = document.getElementById('customCharNameInput')?.value || '名無しの戦士';
+    const name = customCharData.name || document.getElementById('customCharNameInput')?.value || '名無しの戦士';
     const stats = customCharData.baseStats;
     const abilities = customCharData.abilities;
 
@@ -7799,6 +7911,19 @@ function createCustomCharacter() {
     if (!name) { showToast('キャラクター名を入力してください'); return; }
     if (currentEditingStage.enemies.length >= 5) { showToast('これ以上配置できません'); return; }
 
+    if (editingCustomCharId) {
+        // Update existing
+        const charIdx = playerState.customCharacters.findIndex(c => c.id === editingCustomCharId);
+        if (charIdx > -1) {
+            playerState.customCharacters[charIdx] = {
+                ...playerState.customCharacters[charIdx],
+                name: name,
+                baseStats: customCharData.baseStats,
+                abilities: customCharData.abilities
+            };
+            showToast('キャラクターを更新しました');
+        }
+    } else {
     const newChar = {
         id: 'custom_' + Date.now(),
         isCustom: true,
@@ -7813,10 +7938,17 @@ function createCustomCharacter() {
         icon: '👤'
     };
 
+    // Save to global list
+    if (!playerState.customCharacters) playerState.customCharacters = [];
+    playerState.customCharacters.push(newChar);
+    
     // Add to editor enemies with default level/aura
     currentEditingStage.enemies.push({ ...newChar, level: 50, aura: 0, equippedId: null });
     currentEditingStage.cleared = false;
     updateEditorUI();
+    }
+
+    saveGame();
     closeCustomCharCreator();
 }
 
@@ -7827,7 +7959,9 @@ function openEnemySetting(idx) {
     editingEnemyIndex = idx;
     const enemy = currentEditingStage.enemies[idx];
     tempEditingEnemy = {...enemy}; // Clone
-    const unit = units.find(u => u.id === enemy.id);
+    
+    let unit = units.find(u => u.id === enemy.id);
+    if (!unit && enemy.isCustom) unit = enemy;
     
     document.getElementById('enemySettingImg').src = unit.useImg ? unit.img : 'C0.svg';
     document.getElementById('enemySettingName').textContent = unit.name;
@@ -9318,6 +9452,16 @@ async function runBattleSequence() {
                             actualDamage = Math.floor(actualDamage * 0.9); // 10% cut
                             logBattleMessage(`${target.name}の${ab.name}！ダメージを10%軽減！`);
                             playEffect(targetEl, 'guard-vertical');
+                        } else if (ab.effect?.type === 'damage_cut') {
+                            // Generic Damage Cut Effect (Custom Skills)
+                            const cutRate = (ab.effectValue || 0) / 100;
+                            actualDamage = Math.floor(actualDamage * (1 - cutRate));
+                            logBattleMessage(`${target.name}の${ab.name}！ダメージを${ab.effectValue}%軽減！`);
+                            playEffect(targetEl, 'guard-vertical');
+                            // Optional status effect trigger on defense
+                            if (ab.statusEffect) {
+                                await addStatusEffect(attacker, ab.statusEffect, ab.statusTurns || 2);
+                            }
                         }
                     }
                 }
@@ -11287,6 +11431,7 @@ function loadGame() {
         towerProgress: 0,
         playerName: "名無しの剣士",
         playerId: null,
+        customCharacters: [],
     };
     
     playerState.rainbowStones = savedData.playerState.rainbowStones !== undefined ? savedData.playerState.rainbowStones : defaultPlayerState.rainbowStones;
@@ -11347,6 +11492,7 @@ function loadGame() {
     
     playerState.compensationVersion = savedData.playerState.compensationVersion;
     playerState.playerId = savedData.playerState.playerId;
+    playerState.customCharacters = savedData.playerState.customCharacters || [];
 
     if (!playerState.playerId) {
         playerState.playerId = generateUUID();
