@@ -7535,11 +7535,11 @@ function openCustomCharCreator(charToEdit = null) {
     
     const defaultImageData = {
         gender: 'W',
-        background: { x: 0, y: 0 },
-        back: { id: 1, x: 0, y: 0, color: '#4a4a4a' },
+        'back-ground': { x: 0, y: 0 },
+        back: { id: 1, x: 0, y: 0, color: '#4a4a4a' }, // 後ろ髪
         face: { id: 1, x: 0, y: 0, hue: 0, brightness: 100 },
-        eyes: { id: 4, x: 0, y: 0, color: '#3366ff', size: 100 },
-        front: { id: 1, x: 0, y: 0, color: '#4a4a4a' },
+        eyes: { id: 4, x: 0, y: 0, color: '#3366ff' },
+        front: { id: 1, x: 0, y: 0, color: '#4a4a4a' }, // 前髪
         cover: { x: 0, y: 0 },
     };
 
@@ -8056,23 +8056,35 @@ function initImageEditor() {
             html += `</div>`;
         } else { // 他のパーツ
             html += `<div style="display:flex; align-items:center; gap:0.5rem;">`;
-            html += `<button class="level-btn" onclick="cycleImagePart('${part}', -1, ${config.max})">◀</button>`;
-            html += `<span id="label-${part}" style="width:2rem; text-align:center;">${customCharData.imageData[part].id}</span>`;
-            html += `<button class="level-btn" onclick="cycleImagePart('${part}', 1, ${config.max})">▶</button>`;
+            html += `<button class="level-btn" onclick="cycleImagePart('${part}', -1)">◀</button>`;
+            html += `<span id="label-${part}" style="width:2rem; text-align:center;">${data[part].id}</span>`;
+            html += `<button class="level-btn" onclick="cycleImagePart('${part}', 1)">▶</button>`;
             html += `</div>`;
         }
         
-        // 瞳の位置調整UI
-        if (config.position) {
-            const eyeData = customCharData.imageData.eyes;
+        // カラーピッカー
+        if (part === 'front' || part === 'eyes') {
+            const label = part === 'front' ? '髪色' : '瞳の色';
+            const currentColor = part === 'front' ? data.front.color : data.eyes.color;
             html += `<div style="margin-top: 0.5rem;">
-                        <label style="font-size:0.7rem;">X: <input type="range" min="-20" max="20" value="${eyeData.x}" oninput="updateEyePosition('x', this.value)"></label>
-                        <label style="font-size:0.7rem;">Y: <input type="range" min="-20" max="20" value="${eyeData.y}" oninput="updateEyePosition('y', this.value)"></label>
+                        <label style="font-size:0.7rem;">${label}: <input type="color" value="${currentColor}" oninput="updatePartColor('${part === 'front' ? 'hair' : 'eyes'}', this.value)"></label>
+                     </div>`;
+        }
+
+        // 位置調整UI
+        if (config.position) {
+            const eyeData = data.eyes;
+            html += `<div style="margin-top: 0.5rem;">
+                        <label style="font-size:0.7rem;">位置(Y): <input type="range" min="-10" max="10" value="${eyeData.y}" oninput="updateEyePosition('y', this.value)"></label>
                      </div>`;
         }
 
         html += `</div>`;
     }
+
+    // back-ground, cover は選択肢にないが描画には必要
+    if (!data['back-ground']) data['back-ground'] = { x: 0, y: 0 };
+    if (!data['cover']) data['cover'] = { x: 0, y: 0 };
 
     controlsContainer.innerHTML = html;
     drawCustomChar();
@@ -8120,10 +8132,31 @@ async function drawCustomChar() {
     try {
         for (const part of order) {
             const partData = data[part];
-            // Path format: backW-1.svg
-            const imgPath = `${part}${gender}-${partData.id}.svg`;
+            if (!partData) continue;
+
+            let imgPath;
+            if (part === 'back-ground' || part === 'cover') {
+                imgPath = `${part}.svg`;
+            } else {
+                imgPath = `${part}${gender}-${partData.id}.svg`;
+            }
+
             const img = await loadImage(imgPath);
-            ctx.drawImage(img, partData.x, partData.y);
+            const yPos = CUSTOM_Y_OFFSETS[part] + (partData.y || 0);
+            
+            if (['back', 'front', 'eyes'].includes(part) && partData.color) {
+                // 色付け処理用のテンポラリキャンバス
+                const tCanvas = document.createElement('canvas');
+                tCanvas.width = canvas.width; tCanvas.height = canvas.height;
+                const tCtx = tCanvas.getContext('2d');
+                tCtx.drawImage(img, partData.x || 0, yPos);
+                tCtx.globalCompositeOperation = 'source-in';
+                tCtx.fillStyle = partData.color;
+                tCtx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(tCanvas, 0, 0);
+            } else {
+                ctx.drawImage(img, partData.x || 0, yPos);
+            }
         }
         imgDataUrl = canvas.toDataURL();
     } catch (e) {
