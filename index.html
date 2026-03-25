@@ -8035,6 +8035,7 @@ function initImageEditor() {
     const controlsContainer = document.getElementById('imageEditorControls');
     if (!controlsContainer) return;
 
+    const data = customCharData.imageData;
     const parts = {
         gender: { name: '性別', options: { 'W': '女性', 'M': '男性' } },
         back: { name: '後ろ髪', max: 5 },
@@ -8050,7 +8051,7 @@ function initImageEditor() {
         if (config.options) { // 性別
             html += `<div style="display:flex; gap:0.5rem;">`;
             for (const [value, text] of Object.entries(config.options)) {
-                const isChecked = customCharData.imageData.gender === value;
+                const isChecked = data.gender === value;
                 html += `<button class="sort-btn ${isChecked ? 'active' : ''}" onclick="updateImagePart('${part}', '${value}')">${text}</button>`;
             }
             html += `</div>`;
