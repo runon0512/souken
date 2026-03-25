@@ -7045,15 +7045,7 @@ function renderUserStageCard(stage) {
         }
     } catch(e) { squadData = []; }
 
-    let totalPower = 0;
-    squadData.forEach(s => {
-        const u = units.find(unit => unit.id === s.id);
-        if (u) {
-            const stats = calcStats(u.baseStats, s.level, null, 0); // Enemy potential usu. 0
-            totalPower += stats.hp + stats.atk*2 + stats.def + stats.spd;
-        }
-    });
-
+    const totalPower = calculateTotalPower(squadData);
     const playRate = stage.plays > 0 ? Math.round((stage.clears / stage.plays) * 100) : 0;
     const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
     const isCleared = missionProgress.has("user_" + stage.id);
@@ -8261,13 +8253,9 @@ async function startUserStageBattle(stageId) {
     const enemies = enemyData.map(s => {
         const equip = s.equippedId ? equipmentItems.find(e => e.id == s.equippedId) : null;
         return {
-            id: s.id,
-            level: s.level,
-            aura: s.aura,
-            potential: s.potential,
+            ...s, // Preserve all properties from the saved custom character
             equipment: equip,
-            enhancement: s.enhancement,
-            aiType: AI_TYPES.RANDOM // Default AI for now
+            aiType: AI_TYPES.RANDOM
         };
     });
 
@@ -8311,16 +8299,12 @@ function startClearCheck() {
     
     // Compare Power for Auto-Clear
     const enemyPower = calculateTotalPower(enemies);
-    let squadPower = 0;
-    squad.forEach(id => {
+    const squadPower = calculateTotalPower(squad.map(id => {
         const char = units.find(u => u.id === id);
         const state = playerState.characters[id];
-        if (char && state) {
-             const equip = state.equippedId ? equipmentItems.find(e => e.id === state.equippedId) : null;
-             const s = calcStats(char.baseStats, state.level, equip, state.potential);
-             squadPower += Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
-        }
-    });
+        if (!char || !state) return null;
+        return { ...char, ...state };
+    }).filter(Boolean));
 
     const myCount = squad.length || 1;
     const enemyCount = enemies.length || 1;
@@ -8407,6 +8391,11 @@ async function startBattle(missionId, skipDialogue = false) {
           unit = { ...enemyConfig, stats, currentHp: stats.hp, isPlayer: false, battleId: `e-${enemyConfig.id}-${i}`, statusEffects: [] };
       } else {
           const enemy = units.find(u => u.id === enemyConfig.id);
+          if (!enemy) {
+              console.error(`Enemy unit with ID ${enemyConfig.id} not found in mission ${mission.id}.`);
+              const dummyStats = { hp: 1, atk: 1, def: 1, spd: 1 };
+              return { id: enemyConfig.id, name: 'Unknown', baseStats: dummyStats, stats: dummyStats, currentHp: 1, isPlayer: false, battleId: `e-unknown-${i}`, statusEffects: [] };
+          }
           // Enemy Level Scaling
           const level = enemyConfig.level || 1;
           
