@@ -4243,7 +4243,7 @@ const units = [
     name: 'キアラ・ベルハイネ',
     element: 'fire',
     elementJp: '炎',
-    type: 'デストロイワールド',
+    type: 'B.D.',
     baseStats: { hp: 1280, atk: 105, def: 75, spd: 78 },
     abilityType: 'slash',
     abilities: [
@@ -5217,11 +5217,12 @@ function getMaxAffordableLevel(currentLevel, currentAura, currentStones) {
     let stepCost = calculateLevelUpCost(level, nextLevel);
     
     const reqAura = getRequiredAuraForLevel(nextLevel);
-    if (reqAura > aura) {
-      for (let i = aura; i < reqAura; i++) {
-        if (AURA_DATA[i]) stepCost += AURA_DATA[i].cost;
-      }
-    }
+    // オーラ費用は撤廃
+    // if (reqAura > aura) {
+    //   for (let i = aura; i < reqAura; i++) {
+    //     if (AURA_DATA[i]) stepCost += AURA_DATA[i].cost;
+    //   }
+    // }
     
     if (cost + stepCost > currentStones) break;
     
@@ -6049,13 +6050,14 @@ function onLevelSliderChange(val) {
   let auraUpgradeCost = 0;
   const isAuraUpgrade = requiredAura > currentAura;
 
-  if (isAuraUpgrade) {
-      for (let i = currentAura; i < requiredAura; i++) {
-          if (AURA_DATA[i]) {
-              auraUpgradeCost += AURA_DATA[i].cost;
-          }
-      }
-  }
+  // オーラ費用は撤廃
+  // if (isAuraUpgrade) {
+  //     for (let i = currentAura; i < requiredAura; i++) {
+  //         if (AURA_DATA[i]) {
+  //             auraUpgradeCost += AURA_DATA[i].cost;
+  //         }
+  //     }
+  // }
 
   const levelUpCost = calculateLevelUpCost(current, targetLevel);
   const totalCost = levelUpCost + auraUpgradeCost;
@@ -6107,13 +6109,14 @@ function doLevelUp() {
   
   const requiredAura = getRequiredAuraForLevel(targetLevel);
   let auraUpgradeCost = 0;
-  if (requiredAura > currentAura) {
-      for (let i = currentAura; i < requiredAura; i++) {
-          if (AURA_DATA[i]) {
-              auraUpgradeCost += AURA_DATA[i].cost;
-          }
-      }
-  }
+  // オーラ費用は撤廃
+  // if (requiredAura > currentAura) {
+  //     for (let i = currentAura; i < requiredAura; i++) {
+  //         if (AURA_DATA[i]) {
+  //             auraUpgradeCost += AURA_DATA[i].cost;
+  //         }
+  //     }
+  // }
 
   const levelUpCost = calculateLevelUpCost(currentLevel, targetLevel);
   const totalCost = levelUpCost + auraUpgradeCost;
@@ -6177,9 +6180,10 @@ function doLevelDown() {
   }
   
   // Aura refund
-  for(let i=0; i < currentAura; i++) {
-    if (AURA_DATA[i]) refund += AURA_DATA[i].cost;
-  }
+  // オーラ費用撤廃のためレベルダウン時のオーラ費用返還も停止
+  // for(let i=0; i < currentAura; i++) {
+  //   if (AURA_DATA[i]) refund += AURA_DATA[i].cost;
+  // }
   
   if (confirm(`レベルとオーラを初期化して、虹石 ${refund} 個を回収しますか？`)) {
     playerState.rainbowStones += refund;
@@ -10684,7 +10688,7 @@ function viewSquadFromCode() {
   }
 }
 
-const COMPENSATION_VERSION = '20260323_fix_v1';
+const COMPENSATION_VERSION = '20260325_aura_free';
 
 function checkAndApplyCompensation() {
   if (playerState.compensationVersion === COMPENSATION_VERSION) return;
@@ -10708,23 +10712,13 @@ function checkAndApplyCompensation() {
   }
   playerState.rainbowStones += refund;
 
-  // 2. Reduce Stones if Overflowing
-  if (playerState.rainbowStones > 104000936) {
-    playerState.rainbowStones -= 104000936;
-  }
-
-  // 3. Distribute Compensation
-  playerState.rainbowStones += 4000;
-  if (!playerState.characters[36]) { // Raimel (ID: 36)
-    playerState.characters[36] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+  if (refund > 0) {
+      alert("【アップデートのお知らせ】\n\nレベルアップ時のオーラ強化費用を撤廃しました。\nこれに伴い、全キャラクターのレベルとオーラをリセットし、消費された虹石（レベル強化費＋オーラ強化費）を全て返還いたしました。\n\nご迷惑をおかけしましたことをお詫び申し上げます。");
   }
 
   // 4. Mark & Save
   playerState.compensationVersion = COMPENSATION_VERSION;
   saveGame();
-
-  // 5. Notify
-  alert("私の不手際により一部のプレイヤーに多大な迷惑をおかけしました。こちらが補償です。");
 }
 
 // ===== FILE SAVE/LOAD =====
