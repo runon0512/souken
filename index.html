@@ -8095,21 +8095,50 @@ function updateEyePosition(axis, value) {
     drawCustomChar();
 }
 
+function updatePartColor(type, color) {
+    if (type === 'hair') {
+        customCharData.imageData.front.color = color;
+        customCharData.imageData.back.color = color;
+    } else {
+        customCharData.imageData.eyes.color = color;
+    }
+    drawCustomChar();
+}
+
 function updateImagePart(part, value) {
     if (part === 'gender') {
         customCharData.imageData.gender = value;
+        // 性別変更時にIDを範囲内に調整
+        ['front', 'back', 'eyes'].forEach(p => {
+            const cfg = CUSTOM_PART_CONFIG[value][p];
+            if (customCharData.imageData[p].id < cfg.min || customCharData.imageData[p].id > cfg.max) {
+                customCharData.imageData[p].id = cfg.min;
+            }
+        });
     }
-    // Redraw everything
     initImageEditor();
 }
 
-function cycleImagePart(part, direction, max) {
-    let currentId = customCharData.imageData[part].id;
+function cycleImagePart(part, direction) {
+    const data = customCharData.imageData;
+    const gender = data.gender;
+    const cfg = CUSTOM_PART_CONFIG[gender][part];
+    
+    let currentId = data[part].id;
     currentId += direction;
-    if (currentId > max) currentId = 1;
-    if (currentId < 1) currentId = max;
-    customCharData.imageData[part].id = currentId;
-    document.getElementById(`label-${part}`).textContent = currentId;
+
+    if (cfg) {
+        // 制限があるパーツ（前髪など）
+        if (currentId > cfg.max) currentId = cfg.min;
+        if (currentId < cfg.min) currentId = cfg.max;
+    } else {
+        // 制限がないパーツ（顔など）は1-5固定
+        if (currentId > 5) currentId = 1;
+        if (currentId < 1) currentId = 5;
+    }
+
+    data[part].id = currentId;
+    document.getElementById(`label-${part}`).textContent = data[part].id;
     drawCustomChar();
 }
 
@@ -8120,7 +8149,7 @@ async function drawCustomChar() {
 
     const data = customCharData.imageData;
     const gender = data.gender;
-    const order = ['back', 'face', 'eyes', 'front'];
+    const order = ['back-ground', 'back', 'face', 'eyes', 'front', 'cover'];
 
     const loadImage = (src) => new Promise((resolve, reject) => {
         const img = new Image();
