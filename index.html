@@ -7467,7 +7467,7 @@ function renderUnitSelector() {
     customBtn.className = 'unit-selector-item';
     customBtn.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; background: var(--bg-card-hover); border-style: dashed;';
     customBtn.innerHTML = `<div style="font-size: 2rem; color: var(--accent);">+</div><div style="font-size:0.7rem; margin-top:0.25rem;">カスタム作成</div>`;
-    customBtn.onclick = openCustomCharCreator;
+    customBtn.onclick = () => openCustomCharCreator(null);
     grid.appendChild(customBtn);
 
     // Render Saved Custom Characters
@@ -7792,12 +7792,30 @@ function initSkillBuilder() {
 
 function initStatAllocator() {
     const container = document.getElementById('creatorStep2');
-    const stats = ['atk', 'def', 'spd']; // HP excluded
-    let allocatorHtml = `<h4>2. ステータス割り振り (ATK/DEF/SPD 合計260)</h4>
-    <div style="margin-bottom:1rem; padding:0.5rem; background:rgba(255,255,255,0.1); border-radius:4px; text-align:center;">
-       <strong>HP: 1000 (固定)</strong>
-    </div><div id="statAllocator">`;
-    stats.forEach(stat => {
+    const otherStats = ['atk', 'def', 'spd'];
+    let allocatorHtml = `<h4>2. ステータス割り振り (Lv.1時点)</h4>`;
+
+    // HP section
+    allocatorHtml += `
+        <div style="margin-bottom:1rem; padding:0.75rem; background:rgba(0,0,0,0.2); border-radius:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:bold; text-transform:uppercase;">HP (800 ~ 1200)</span>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <button class="level-btn" onclick="adjustHpStat(-50)">-50</button>
+                    <button class="level-btn" onclick="adjustHpStat(-10)">-10</button>
+                    <span id="stat-hp-val" style="font-family:'Orbitron'; font-size:1.2rem; width:4rem; text-align:center;">${customCharData.baseStats.hp}</span>
+                    <button class="level-btn" onclick="adjustHpStat(10)">+10</button>
+                    <button class="level-btn" onclick="adjustHpStat(50)">+50</button>
+                </div>
+            </div>
+        </div>`;
+
+    // Other stats section
+    allocatorHtml += `<div style="margin-top:1.5rem; padding:0.75rem; background:rgba(0,0,0,0.2); border-radius:4px;">
+        <h5 style="color:var(--text-mid); margin-bottom:0.5rem; font-size:0.8rem;">ATK/DEF/SPD (合計260)</h5>
+        <div id="statAllocator">`;
+
+    otherStats.forEach(stat => {
         allocatorHtml += `
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 1rem 0;">
                 <span style="font-weight:bold; text-transform:uppercase;">${stat}</span>
@@ -7810,8 +7828,17 @@ function initStatAllocator() {
                 </div>
             </div>`;
     });
-    allocatorHtml += `</div><div style="text-align:right; font-family:'Orbitron'; margin-top:1rem;">残りPt: <span id="statRemainingDisplay">0</span></div>`;
+    allocatorHtml += `</div><div style="text-align:right; font-family:'Orbitron'; margin-top:1rem;">残りPt: <span id="statRemainingDisplay">0</span></div></div>`;
     container.innerHTML = allocatorHtml;
+    updateStatDisplays();
+}
+
+function adjustHpStat(amount) {
+    const stats = customCharData.baseStats;
+    let newHp = stats.hp + amount;
+    if (newHp < 800) newHp = 800;
+    if (newHp > 1200) newHp = 1200;
+    stats.hp = newHp;
     updateStatDisplays();
 }
 
@@ -7830,9 +7857,11 @@ function adjustStat(stat, amount) {
 }
 
 function updateStatDisplays() {
+    document.getElementById('stat-hp-val').textContent = customCharData.baseStats.hp;
+
     let total = 0;
-    const stats = ['atk', 'def', 'spd'];
-    for (const stat of stats) {
+    const otherStats = ['atk', 'def', 'spd'];
+    for (const stat of otherStats) {
         document.getElementById(`stat-${stat}-val`).textContent = customCharData.baseStats[stat];
         total += customCharData.baseStats[stat];
     }
@@ -8387,8 +8416,30 @@ async function startBattle(missionId, skipDialogue = false) {
     enemyUnits: mission.enemies.map((enemyConfig, i) => {
       let unit, equip = null;
       if (enemyConfig.isCustom) {
-          const stats = enemyConfig.baseStats;
-          unit = { ...enemyConfig, stats, currentHp: stats.hp, isPlayer: false, battleId: `e-${enemyConfig.id}-${i}`, statusEffects: [] };
+          const level = enemyConfig.level || 50;
+          const stats = calcStats(enemyConfig.baseStats, level, enemyConfig.equipment, 0, enemyConfig.enhancement);
+          
+          // Map Custom Abilities to Battle Format
+          const battleAbilities = (enemyConfig.abilities || []).map(ab => {
+             if (!ab.isCustom) return ab;
+             return {
+                 ...ab,
+                 timing: ab.trigger,
+                 triggerRate: (ab.triggerValue || 0) / 100,
+                 damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
+                 isAoe: ab.target === 'all_enemies',
+                 effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { 
+                     type: 'status', 
+                     status: ab.statusEffect, 
+                     turns: ab.statusTurns 
+                 } : (ab.effect === 'damage_cut' ? { type: 'damage_cut' } : undefined)
+             };
+          });
+
+          unit = { 
+              ...enemyConfig, stats, currentHp: stats.hp, isPlayer: false, battleId: `e-${enemyConfig.id}-${i}`, statusEffects: [],
+              level, abilities: battleAbilities
+          };
       } else {
           const enemy = units.find(u => u.id === enemyConfig.id);
           if (!enemy) {
