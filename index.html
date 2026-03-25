@@ -8029,6 +8029,22 @@ function createCustomCharacter() {
     closeCustomCharCreator();
 }
 
+// 性別ごとのパーツ制限設定
+const CUSTOM_PART_CONFIG = {
+    W: { front: { min: 1, max: 8 }, back: { min: 1, max: 3 }, eyes: { min: 4, max: 6 } },
+    M: { front: { min: 1, max: 2 }, back: { min: 1, max: 1 }, eyes: { min: 2, max: 3 } }
+};
+
+// ベース位置からのY座標オフセット設定
+const CUSTOM_Y_OFFSETS = {
+    'back-ground': 0,
+    'back': 0,
+    'face': 0,
+    'eyes': 0,
+    'front': 0,
+    'cover': 0
+};
+
 let imgDataUrl = ''; // To store the canvas data URL
 
 function initImageEditor() {
@@ -8038,10 +8054,10 @@ function initImageEditor() {
     const data = customCharData.imageData;
     const parts = {
         gender: { name: '性別', options: { 'W': '女性', 'M': '男性' } },
-        back: { name: '後ろ髪', max: 5 },
-        face: { name: '顔', max: 5 },
-        eyes: { name: '目', max: 5, position: true },
-        front: { name: '前髪', max: 5 },
+        back: { name: '後ろ髪' },
+        face: { name: '顔' },
+        eyes: { name: '目', position: true },
+        front: { name: '前髪' },
     };
 
     let html = '';
