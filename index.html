@@ -3321,6 +3321,29 @@
   </div>
 </div>
 
+<!-- CUSTOM CHAR CREATOR MODAL -->
+<div class="modal-overlay" id="customCharCreatorOverlay">
+  <div class="modal" style="width: 40rem;">
+    <div class="modal-header">
+      <div class="modal-title">カスタムキャラクター作成</div>
+      <button class="modal-close" onclick="closeCustomCharCreator()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Step 1: Skills -->
+      <div class="creator-step active" id="creatorStep1">
+        <div id="skillBuilderContainer">
+          <!-- Builders will be injected by JS -->
+        </div>
+      </div>
+      <!-- Step 2: Stats -->
+      <div class="creator-step" style="display:none;" id="creatorStep2"></div>
+      <!-- Step 3: Finalize -->
+      <div class="creator-step" style="display:none;" id="creatorStep3"></div>
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: space-between;"></div>
+  </div>
+</div>
+
 <!-- ENEMY SETTING MODAL -->
 <div class="modal-overlay" id="enemySettingOverlay">
   <div class="modal" style="width: 20rem;">
@@ -7227,7 +7250,7 @@ function handleEditorEnemyDrop(e, targetIndex) {
 }
 
 function updateEditorUI() {
-    const statusBadge = document.getElementById('editorStatusBadge');
+    const statusBadge = document.getElementById('editorStatusBadge'); // May not exist on step 1
     const btnPublish = document.getElementById('btnPublishStage');
     
     // Status Update
@@ -7270,7 +7293,7 @@ function updateEditorUI() {
         slot.ondrop = (e) => handleEditorEnemyDrop(e, i);
         
         if (enemy) {
-            const unit = units.find(u => u.id === enemy.id);
+            const unit = enemy.isCustom ? enemy : units.find(u => u.id === enemy.id);
             const imgSrc = unit ? (unit.useImg ? unit.img : 'C0.svg') : '';
             slot.innerHTML = `
                 <div class="editor-remove-btn" onclick="removeEditorEnemy(${i}); event.stopPropagation();">✕</div>
@@ -7402,6 +7425,14 @@ function renderUnitSelector() {
     const grid = document.getElementById('unitSelectorGrid');
     grid.innerHTML = '';
     
+    // Add custom character creation button at the top
+    const customBtn = document.createElement('div');
+    customBtn.className = 'unit-selector-item';
+    customBtn.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; background: var(--bg-card-hover); border-style: dashed;';
+    customBtn.innerHTML = `<div style="font-size: 2rem; color: var(--accent);">+</div><div style="font-size:0.7rem; margin-top:0.25rem;">カスタム作成</div>`;
+    customBtn.onclick = openCustomCharCreator;
+    grid.appendChild(customBtn);
+
     // All units including enemies (Only with images)
     const filtered = units.filter(u => (!q || u.name.toLowerCase().includes(q)) && u.useImg);
     
@@ -7426,6 +7457,7 @@ function renderUnitSelector() {
 }
 
 function addEditorEnemy(id) {
+    if (currentEditingStage.enemies.length >= 5) { showToast('これ以上配置できません'); return; }
     currentEditingStage.enemies.push({ id: id, level: 50, equippedId: null, aura: 0 });
     currentEditingStage.cleared = false;
     updateEditorUI();
@@ -7434,6 +7466,358 @@ function removeEditorEnemy(idx) {
     currentEditingStage.enemies.splice(idx, 1);
     currentEditingStage.cleared = false;
     updateEditorUI();
+}
+
+let customCharData = {};
+let creatorCurrentStep = 1;
+
+function openCustomCharCreator() {
+    closeUnitSelector();
+    creatorCurrentStep = 1;
+    customCharData = {
+        abilities: [],
+        baseStats: { hp: 63, atk: 62, def: 62, spd: 63 } // Default balanced
+    };
+    updateCreatorStepUI();
+    document.getElementById('customCharCreatorOverlay').classList.add('open');
+}
+
+function closeCustomCharCreator() {
+    document.getElementById('customCharCreatorOverlay').classList.remove('open');
+}
+
+function creatorNextStep() {
+    if (creatorCurrentStep === 1) {
+        customCharData.abilities = [];
+        for (let i = 1; i <= 2; i++) {
+            const builder = document.getElementById(`skill-builder-${i}`);
+            const name = builder.querySelector('.skill-name-input').value.trim();
+            if (name) {
+                const ability = {
+                    isCustom: true,
+                    name: name,
+                    target: builder.querySelector('.skill-target-select').value,
+                    trigger: builder.querySelector('.skill-trigger-select').value,
+                    triggerValue: parseInt(builder.querySelector('.skill-trigger-value').value) || 0,
+                    effect: builder.querySelector('.skill-effect-select').value,
+                    effectValue: parseInt(builder.querySelector('.skill-effect-value').value) || 0,
+                    statusEffect: builder.querySelector('.skill-status-select').value,
+                    statusTurns: parseInt(builder.querySelector('.skill-status-turns').value) || 3,
+                };
+                customCharData.abilities.push(ability);
+            }
+        }
+    } else if (creatorCurrentStep === 3) {
+        createCustomCharacter();
+        return;
+    }
+    creatorCurrentStep++;
+    updateCreatorStepUI();
+}
+
+function creatorPrevStep() {
+    creatorCurrentStep--;
+    updateCreatorStepUI();
+}
+
+function updateCreatorStepUI() {
+    document.querySelectorAll('#customCharCreatorOverlay .creator-step').forEach(el => el.style.display = 'none');
+    document.getElementById(`creatorStep${creatorCurrentStep}`).style.display = 'block';
+    
+    const footer = document.querySelector('#customCharCreatorOverlay .modal-footer');
+    footer.innerHTML = '';
+
+    if (creatorCurrentStep > 1) {
+        const pBtn = document.createElement('button');
+        pBtn.className = 'mission-btn';
+        pBtn.textContent = '戻る';
+        pBtn.onclick = creatorPrevStep;
+        footer.appendChild(pBtn);
+    } else {
+        footer.appendChild(document.createElement('div')); // Placeholder for alignment
+    }
+
+    const nBtn = document.createElement('button');
+    nBtn.className = 'mission-btn';
+    nBtn.textContent = creatorCurrentStep === 3 ? '作成完了' : '次へ';
+    nBtn.onclick = creatorNextStep;
+    footer.appendChild(nBtn);
+
+    if (creatorCurrentStep === 1) initSkillBuilder();
+    if (creatorCurrentStep === 2) initStatAllocator();
+    if (creatorCurrentStep === 3) renderCustomCharConfirm();
+}
+
+function createSkillBuilder(index) {
+    const statusOptions = Object.keys(STATUS_EFFECTS).map(key => `<option value="${key}">${STATUS_EFFECTS[key].name}</option>`).join('');
+
+    return `
+        <div class="skill-builder" id="skill-builder-${index}" style="border: 1px solid var(--border); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+            <h4>スキル ${index}</h4>
+            <input type="text" class="post-input skill-name-input" placeholder="スキル名 (任意)">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+                <div>
+                    <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">対象</label>
+                    <select class="post-input skill-target-select" style="padding:0.5rem; margin:0;" onchange="toggleSkillBuilderInputs(${index})">
+                        <option value="single_enemy">敵単体</option>
+                        <option value="all_enemies">敵全体</option>
+                        <option value="self">自身</option>
+                        <option value="lowest_hp_ally">最もHPが低い味方</option>
+                        <option value="all_allies">味方全体</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">発動条件</label>
+                    <select class="post-input skill-trigger-select" style="padding:0.5rem; margin:0;" onchange="toggleSkillBuilderInputs(${index})">
+                        <option value="before_attack">攻撃前 (確率)</option>
+                        <option value="after_attack">攻撃後 (確率)</option>
+                        <option value="on_hit">被弾時 (確率)</option>
+                        <option value="on_battle_start">開幕時 (確率)</option>
+                        <option value="hp_below">HPがn%以下</option>
+                    </select>
+                </div>
+                <div class="skill-trigger-value-container">
+                    <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">発動確率 (%)</label>
+                    <input type="number" class="post-input skill-trigger-value" placeholder="例: 30" min="1" max="100" value="30" style="padding:0.5rem; margin:0;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+                <div>
+                    <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">効果</label>
+                    <select class="post-input skill-effect-select" style="padding:0.5rem; margin:0;" onchange="toggleSkillBuilderInputs(${index})">
+                        <option value="attack">攻撃</option>
+                        <option value="heal">回復</option>
+                        <option value="status">状態異常付与</option>
+                        <option value="attack_status">攻撃 & 状態異常</option>
+                    </select>
+                </div>
+                <div class="skill-effect-value-container">
+                    <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">効果量 (%)</label>
+                    <input type="number" class="post-input skill-effect-value" placeholder="例: 150" min="1" value="100" style="padding:0.5rem; margin:0;">
+                </div>
+            </div>
+
+            <div class="skill-status-container" style="display:none; margin-top: 0.75rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">状態異常</label>
+                        <select class="post-input skill-status-select" style="padding:0.5rem; margin:0;">${statusOptions}</select>
+                    </div>
+                    <div>
+                        <label class="modal-section-title" style="font-size:0.7rem; margin-bottom:4px; padding:0; border:0;">ターン数</label>
+                        <input type="number" class="post-input skill-status-turns" min="1" max="9" value="3" style="padding:0.5rem; margin:0;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function toggleSkillBuilderInputs(index) {
+    const builder = document.getElementById(`skill-builder-${index}`);
+    const targetSelectValue = builder.querySelector('.skill-target-select').value;
+    const triggerSelectValue = builder.querySelector('.skill-trigger-select').value;
+    const effectSelect = builder.querySelector('.skill-effect-select');
+    const currentEffectValue = effectSelect.value;
+
+    const isAllyTarget = ['self', 'lowest_hp_ally', 'all_allies'].includes(targetSelectValue);
+
+    // 1. Filter Effect Select based on Target and Trigger
+    const effectOptions = {
+        attack: '攻撃',
+        heal: '回復',
+        status: '状態異常付与',
+        attack_status: '攻撃 & 状態異常'
+    };
+
+    let availableEffects;
+    if (isAllyTarget) {
+        availableEffects = ['heal', 'status'];
+    } else { // is Enemy Target
+        availableEffects = ['attack', 'status', 'attack_status'];
+    }
+    
+    // If trigger is 'after_attack', it must be a follow-up attack (追撃)
+    if (triggerSelectValue === 'after_attack') {
+        availableEffects = availableEffects.filter(e => e === 'attack' || e === 'attack_status');
+    }
+
+    effectSelect.innerHTML = availableEffects.map(key => `<option value="${key}">${effectOptions[key]}</option>`).join('');
+
+    // Preserve selection if possible
+    if (availableEffects.includes(currentEffectValue)) {
+        effectSelect.value = currentEffectValue;
+    }
+    
+    const newEffectValue = effectSelect.value; // The value after filtering
+
+    // 2. Filter Status Select based on Target
+    const beneficialStatuses = { strengthen: STATUS_EFFECTS.strengthen, barrier: STATUS_EFFECTS.barrier, zero_gravity: STATUS_EFFECTS.zero_gravity };
+    const detrimentalStatuses = { ...STATUS_EFFECTS };
+    // Remove beneficial statuses from the detrimental list
+    Object.keys(beneficialStatuses).forEach(key => delete detrimentalStatuses[key]);
+
+    let availableStatuses = isAllyTarget ? beneficialStatuses : detrimentalStatuses;
+    const statusSelect = builder.querySelector('.skill-status-select');
+    const currentStatus = statusSelect.value;
+    statusSelect.innerHTML = Object.keys(availableStatuses).map(key => `<option value="${key}">${availableStatuses[key].name}</option>`).join('');
+    // Preserve status selection if possible
+    if (Object.keys(availableStatuses).includes(currentStatus)) {
+        statusSelect.value = currentStatus;
+    }
+
+    const triggerValueContainer = builder.querySelector('.skill-trigger-value-container');
+    const triggerValueLabel = triggerValueContainer.querySelector('label');
+    
+    if (triggerSelectValue === 'hp_below') {
+        triggerValueLabel.textContent = 'HP閾値 (%)';
+    } else {
+        triggerValueLabel.textContent = '発動確率 (%)';
+    }
+
+    const effectValueContainer = builder.querySelector('.skill-effect-value-container');
+    const effectValueLabel = effectValueContainer.querySelector('label');
+    if (newEffectValue === 'attack' || newEffectValue === 'attack_status') {
+        effectValueLabel.textContent = '攻撃力 (%)';
+        effectValueContainer.style.display = 'block';
+    } else if (newEffectValue === 'heal') {
+        effectValueLabel.textContent = '最大HP回復量 (%)';
+        effectValueContainer.style.display = 'block';
+    } else { // status only
+        effectValueContainer.style.display = 'none';
+    }
+
+    const statusContainer = builder.querySelector('.skill-status-container');
+    if (newEffectValue === 'status' || newEffectValue === 'attack_status') {
+        statusContainer.style.display = 'block';
+    } else {
+        statusContainer.style.display = 'none';
+    }
+}
+
+function initSkillBuilder() {
+    const container = document.getElementById('skillBuilderContainer');
+    container.innerHTML = createSkillBuilder(1) + createSkillBuilder(2);
+    toggleSkillBuilderInputs(1);
+    toggleSkillBuilderInputs(2);
+}
+
+function initStatAllocator() {
+    const container = document.getElementById('creatorStep2');
+    const stats = ['hp', 'atk', 'def', 'spd'];
+    let allocatorHtml = `<h4>2. ステータス割り振り (合計250)</h4><div id="statAllocator">`;
+    stats.forEach(stat => {
+        allocatorHtml += `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 1rem 0;">
+                <span style="font-weight:bold; text-transform:uppercase;">${stat}</span>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <button class="level-btn" onclick="adjustStat('${stat}', -10)">-10</button>
+                    <button class="level-btn" onclick="adjustStat('${stat}', -1)">-</button>
+                    <span id="stat-${stat}-val" style="font-family:'Orbitron'; font-size:1.2rem; width:3rem; text-align:center;">${customCharData.baseStats[stat]}</span>
+                    <button class="level-btn" onclick="adjustStat('${stat}', 1)">+</button>
+                    <button class="level-btn" onclick="adjustStat('${stat}', 10)">+10</button>
+                </div>
+            </div>`;
+    });
+    allocatorHtml += `</div><div style="text-align:right; font-family:'Orbitron'; margin-top:1rem;">残り: <span id="statRemainingDisplay">0</span></div>`;
+    container.innerHTML = allocatorHtml;
+    updateStatDisplays();
+}
+
+function adjustStat(stat, amount) {
+    const totalSoFar = Object.values(customCharData.baseStats).reduce((a, b) => a + b, 0);
+    const remaining = 250 - totalSoFar;
+    const current = customCharData.baseStats[stat];
+    
+    let finalAmount = amount;
+    if (amount > 0 && remaining < amount) finalAmount = remaining;
+    if (amount < 0 && current + amount < 1) finalAmount = 1 - current;
+    
+    customCharData.baseStats[stat] += finalAmount;
+    updateStatDisplays();
+}
+
+function updateStatDisplays() {
+    let total = 0;
+    for (const stat in customCharData.baseStats) {
+        document.getElementById(`stat-${stat}-val`).textContent = customCharData.baseStats[stat];
+        total += customCharData.baseStats[stat];
+    }
+    document.getElementById('statRemainingDisplay').textContent = 250 - total;
+}
+
+function getCustomAbilityDescription(ability) {
+    if (!ability.isCustom) return ability.desc;
+
+    const targets = { 'single_enemy': '敵単体', 'all_enemies': '敵全体', 'self': '自身', 'lowest_hp_ally': '最もHPが低い味方', 'all_allies': '味方全体' };
+    const triggers = { 'before_attack': `攻撃前${ability.triggerValue}%で`, 'after_attack': `攻撃後${ability.triggerValue}%で`, 'on_hit': `被弾時${ability.triggerValue}%で`, 'on_battle_start': `開幕時${ability.triggerValue}%で`, 'hp_below': `HPが${ability.triggerValue}%以下になったら` };
+    
+    let effectDesc = '';
+    const statusInfo = STATUS_EFFECTS[ability.statusEffect]?.name || '';
+
+    switch (ability.effect) {
+        case 'attack':
+            effectDesc = `攻撃力の${ability.effectValue}%で攻撃`;
+            break;
+        case 'heal':
+            effectDesc = `最大HPの${ability.effectValue}%回復`;
+            break;
+        case 'status':
+            effectDesc = `${statusInfo}(${ability.statusTurns}T)を付与`;
+            break;
+        case 'attack_status':
+            effectDesc = `攻撃力の${ability.effectValue}%で攻撃し、${statusInfo}(${ability.statusTurns}T)を付与`;
+            break;
+    }
+
+    return `${triggers[ability.trigger]}、${targets[ability.target]}に${effectDesc}。`;
+}
+
+function renderCustomCharConfirm() {
+    const container = document.getElementById('creatorStep3');
+    const name = document.getElementById('customCharNameInput')?.value || '名無しの戦士';
+    const stats = customCharData.baseStats;
+    const abilities = customCharData.abilities;
+
+    container.innerHTML = `
+        <h4>3. 名前と最終確認</h4>
+        <input type="text" id="customCharNameInput" class="post-input" placeholder="キャラクター名 (必須)" maxlength="15" value="${name}">
+        <div id="customCharConfirm" style="margin-top:1rem; padding:1rem; background:rgba(0,0,0,0.2); border-radius:4px;">
+            <p><strong>ステータス:</strong> HP:${stats.hp} / ATK:${stats.atk} / DEF:${stats.def} / SPD:${stats.spd}</p>
+            <p><strong>スキル:</strong></p>
+            <ul style="padding-left:1.5rem; font-size:0.9rem;">
+                ${abilities.map(ab => `<li><strong>${ab.name}</strong>: ${getCustomAbilityDescription(ab)}</li>`).join('') || '<li>スキルなし</li>'}
+            </ul>
+        </div>
+    `;
+}
+
+function createCustomCharacter() {
+    const name = document.getElementById('customCharNameInput').value.trim();
+    if (!name) { showToast('キャラクター名を入力してください'); return; }
+    if (currentEditingStage.enemies.length >= 5) { showToast('これ以上配置できません'); return; }
+
+    const newChar = {
+        id: 'custom_' + Date.now(),
+        isCustom: true,
+        name: name,
+        baseStats: customCharData.baseStats,
+        abilities: customCharData.abilities,
+        element: 'none',
+        elementJp: '無',
+        type: 'カスタム',
+        useImg: true,
+        img: 'C0.svg',
+        icon: '👤'
+    };
+
+    // Add to editor enemies with default level/aura
+    currentEditingStage.enemies.push({ ...newChar, level: 50, aura: 0, equippedId: null });
+    currentEditingStage.cleared = false;
+    updateEditorUI();
+    closeCustomCharCreator();
 }
 
 let editingEnemyIndex = -1;
@@ -7851,10 +8235,10 @@ async function startBattle(missionId, skipDialogue = false) {
   
   let mission;
   if (missionId === "TEMP_USER_STAGE") {
-      mission = tempUserStageMission;
-      if (!mission) return;
+    mission = tempUserStageMission;
+    if (!mission) { console.error("Temp mission not found"); return; }
   } else {
-      mission = getMissionById(missionId);
+    mission = getMissionById(missionId);
   }
   
   if (!mission) { console.error("Mission not found", missionId); return; }
@@ -7883,25 +8267,36 @@ async function startBattle(missionId, skipDialogue = false) {
       return unit;
     }),
     enemyUnits: mission.enemies.map((enemyConfig, i) => {
-      const enemy = units.find(u => u.id === enemyConfig.id);
-      // Enemy Level Scaling
-      const level = enemyConfig.level || 1;
-      
-      // Calculate Enemy Aura based on level or config
-      let aura = enemyConfig.aura || 0;
-      if (aura === 0 && level > 20) {
-          aura = Math.min(10, Math.ceil((level - 20) / 5));
+      let unit, equip = null;
+      if (enemyConfig.isCustom) {
+          const stats = enemyConfig.baseStats;
+          unit = { ...enemyConfig, stats, currentHp: stats.hp, isPlayer: false, battleId: `e-${enemyConfig.id}-${i}`, statusEffects: [] };
+      } else {
+          const enemy = units.find(u => u.id === enemyConfig.id);
+          // Enemy Level Scaling
+          const level = enemyConfig.level || 1;
+          
+          // Calculate Enemy Aura based on level or config
+          let aura = enemyConfig.aura || 0;
+          if (aura === 0 && level > 20) {
+              aura = Math.min(10, Math.ceil((level - 20) / 5));
+          }
+
+          // Enemy Equipment
+          equip = enemyConfig.equipment || null;
+          const enhancement = enemyConfig.enhancement || null;
+          // Enemies don't use potential yet (or default 0)
+          const stats = calcStats(enemy.baseStats, level, equip, 0, enhancement);
+
+          unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip, enhancement: enhancement };
       }
-
-      // Enemy Equipment
-      const equip = enemyConfig.equipment || null;
-      const enhancement = enemyConfig.enhancement || null;
-      // Enemies don't use potential yet (or default 0)
-      const stats = calcStats(enemy.baseStats, level, equip, 0, enhancement);
-
-      let unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip, enhancement: enhancement };
       if (equip && equip.effect && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
       if (equip && equip.effect && equip.effect.type === 'guts') unit.guts = true;
+      
+      // Initialize triggered flags for custom abilities
+      if (unit.isCustom && unit.abilities) {
+          unit.abilities.forEach(ab => ab.triggered = false);
+      }
       
       return unit;
     }),
@@ -8015,13 +8410,22 @@ function renderUnit(unit) {
   const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100);
   let unitImageHtml;
   const bgClass = unit.isPlayer ? '' : 'enemy-icon-bg';
-  const auraData = unit.aura && unit.aura > 0 ? AURA_DATA.find(a => a.class === `aura-${unit.aura}`) : null;
+  const auraData = unit.aura && unit.aura > 0 ? AURA_DATA[unit.aura - 1] : null;
   const auraClass = auraData ? auraData.class : '';
-  const imgSrc = unit.useImg ? unit.img : 'C0.svg';
+  const imgSrc = unit.isCustom ? 'C0.svg' : (unit.useImg ? unit.img : 'C0.svg');
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
   
   const equipEnhancement = unit.isPlayer ? (unit.equipment ? playerState.equipmentEnhancements?.[unit.equipment.id] : null) : unit.enhancement;
-  const equipAuraClass = (unit.isPlayer && equipEnhancement) ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
+  let equipAuraClass = '';
+  if (equipEnhancement) {
+      const rankAura = RANK_AURA_MAP[equipEnhancement.rank];
+      if (rankAura) {
+          const auraIndex = parseInt(rankAura.split('-')[1]) - 1;
+          if (AURA_DATA[auraIndex]) {
+              equipAuraClass = AURA_DATA[auraIndex].class;
+          }
+      }
+  }
 
   const equipHtml = unit.equipment ? `<div class="b-unit-equip ${equipAuraClass}" title="${unit.equipment.name}\n${unit.equipment.desc}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${unit.equipment.icon}</div>` : '';
   
