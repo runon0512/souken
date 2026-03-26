@@ -2818,6 +2818,7 @@
   // GASのウェブアプリURLをここに貼り付けてください（両方に同じURLを入れてください）
   const USER_STAGE_API_URL = "https://script.google.com/macros/s/AKfycbxjHXNJgcujuBjsYNHHvcU3a2vv-Y-z_C0MF1JHwNIZ5P45AIgIqX2U9LPtKm2wVrwA/exec"; 
   const USAGE_API_URL = "https://script.google.com/macros/s/AKfycbyFmb4wo8d0XXqHZGXUifQK8_O6fZPBnPIdZ5dwOtbWg9hPAbpVKAbiJdwEnu-e22uu/exec"; // キャラ使用率取得用の新しいGAS URLをここに貼り付けてください
+  const TOWER_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbyhjfVQr5yfnzEz1TIRRsktsNlBEdYBkIEObJXRyzWwVSr73QuVrIR4I1S4cNuTP5G9/exec"; // 無限の塔ランキング用のGAS URLをここに貼り付けてください
 </script>
 <body>
 
@@ -2866,6 +2867,7 @@
       <div style="margin-top: 2rem; display: flex; gap: 1rem;">
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="setView('status')">状態異常図鑑</button>
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="setView('equipment')">装備一覧</button>
+         <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="openRankingModal()">塔ランキング</button>
       </div>
       <button class="settings-btn-home" onclick="openSettingsModal()">⚙️ SETTINGS</button>
     </div>
@@ -3589,6 +3591,20 @@
     <div class="modal-body">
       <div class="equip-grid" id="equipList" style="grid-template-columns: 1fr 1fr; gap: 0.5rem;">
         <!-- Items injected here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RANKING MODAL -->
+<div class="modal-overlay" id="rankingOverlay" onclick="if(event.target===this) this.classList.remove('open')">
+  <div class="modal" style="width: 30rem;">
+    <div class="modal-header">
+      <div class="modal-title">無限の塔ランキング</div>
+      <button class="modal-close" onclick="document.getElementById('rankingOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="rankingList" class="ranking-list">
       </div>
     </div>
   </div>
@@ -10843,6 +10859,7 @@ function checkWinLoss() {
                 
                 playerState.towerProgress = floor;
                 unlockedTowerChars = checkAndGrantTowerRewards(floor);
+                postTowerScore(floor); // 新記録をポスト
             }
         }
 
@@ -11620,6 +11637,46 @@ function closeLoginBonusModal() {
     saveGame();
 }
 
+async function postTowerScore(floor) {
+    if (!TOWER_RANKING_API_URL || !TOWER_RANKING_API_URL.startsWith('http')) return false;
+    const formData = new URLSearchParams();
+    formData.append('action', 'postScore');
+    formData.append('playerId', playerState.playerId);
+    formData.append('playerName', playerState.playerName);
+    formData.append('floor', floor);
+    try {
+        await fetch(TOWER_RANKING_API_URL, { method: 'POST', body: formData });
+        return true;
+    } catch (e) {
+        console.error("Tower ranking post failed", e);
+        return false;
+    }
+}
+
+async function openRankingModal() {
+    const overlay = document.getElementById('rankingOverlay');
+    const list = document.getElementById('rankingList');
+    overlay.classList.add('open');
+    list.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">ランキング取得中...</div>';
+
+    try {
+        const response = await fetch(TOWER_RANKING_API_URL + '?action=getRanking');
+        const data = await response.json();
+        renderRanking(data);
+    } catch (e) {
+        list.innerHTML = '<div style="text-align:center; color:var(--accent2); padding:2rem;">取得に失敗しました</div>';
+    }
+}
+
+function renderRanking(data) {
+    const list = document.getElementById('rankingList');
+    if (!data || data.length === 0) {
+        list.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">ランキングデータがありません</div>';
+        return;
+    }
+    list.innerHTML = data.map((item, i) => `<div class="ranking-item ${item.playerId === playerState.playerId ? 'self' : ''} rank-${i+1}"><div class="rank-num">${i+1}</div><div class="rank-name">${item.playerName}</div><div class="rank-score">${item.floor}階</div></div>`).join('');
+}
+
 function getEnchantment() {
     const rand = Math.random() * 100;
     let rank, value;
@@ -12295,6 +12352,7 @@ function loadGame() {
     playerState.squads = savedData.playerState.squads || [savedData.squad || [], [], []];
     playerState.squadNames = savedData.playerState.squadNames || ["第1部隊", "第2部隊", "第3部隊"];
     playerState.currentSquadIndex = savedData.playerState.currentSquadIndex || 0;
+        playerState.towerRankInitialized = savedData.playerState.towerRankInitialized || false;
     if (!playerState.squads[1]) playerState.squads[1] = [];
     if (!playerState.squads[2]) playerState.squads[2] = [];
     
@@ -12960,6 +13018,16 @@ async function initializeGame() {
     const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
     if (grantedChars.length > 0) {
         saveGame();
+    }
+
+    // ランキング初回送信（ログイン時、未初期化の場合のみ）
+    if (!playerState.towerRankInitialized && TOWER_RANKING_API_URL) {
+        postTowerScore(playerState.towerProgress || 0).then(success => {
+            if (success) {
+                playerState.towerRankInitialized = true;
+                saveGame();
+            }
+        });
     }
 
     setView('home');
