@@ -304,8 +304,8 @@
     background: rgba(13,21,32,0.4);
     cursor: pointer;
     transition: all 0.2s;
-    height: 6rem;
-    width: 14rem;
+    height: 5rem;
+    width: 10rem;
     position: relative;
     overflow: hidden;
   }
@@ -350,8 +350,8 @@
   .slot-num {
     font-family: 'Orbitron', monospace;
     font-size: 1rem;
+    width: 1rem;
     color: var(--text-dim);
-    width: 1.25rem;
     flex-shrink: 0;
     text-align: center;
   }
@@ -359,6 +359,8 @@
   .slot-img-wrap {
     width: 3.5rem;
     height: 5rem;
+    width: 3rem;
+    height: 4rem;
     border-radius: 0.1875rem;
     overflow: hidden;
     background: rgba(0,200,255,0.05);
@@ -397,13 +399,13 @@
   .slot-name {
     font-size: 0.85rem;
     font-weight: 700;
+    font-size: 0.75rem;
     color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.2;
   }
-
   .slot-role {
     font-size: 0.8rem;
     color: var(--text-dim);
@@ -412,7 +414,7 @@
 
   .slot-power {
     font-family: 'Orbitron', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--accent);
   }
 
@@ -421,7 +423,7 @@
     border: none;
     border-bottom: 1px solid var(--border);
     color: var(--gold);
-    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.8rem;
     font-size: 0.9rem;
     font-weight: 700;
     width: 100%;
@@ -439,6 +441,7 @@
     flex-direction: column;
     justify-content: center;
     height: 6rem;
+    height: 5rem;
   }
 
   .squad-power-label {
@@ -451,7 +454,7 @@
 
   .squad-power-val {
     font-family: 'Orbitron', monospace;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--accent);
     text-shadow: 0 0 0.75rem rgba(0,200,255,0.5);
@@ -2954,7 +2957,7 @@
   <!-- MISSION PANEL -->
   <div class="roster-panel" id="missionPanel" style="display: none;">
     <div class="roster-toolbar" style="align-items: center;">
-      <div style="display:flex; align-items:center; gap:1rem; flex-wrap: wrap;">
+      <div style="display:flex; align-items:center; gap:1rem; flex-wrap: wrap;"> 
         <button class="filter-btn" onclick="setView('battleMenu')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
           ← 戻る
         </button>
@@ -5615,8 +5618,7 @@ function renderSquad() {
     slot.className = 'squad-slot' + (c ? ' filled' : '') + (auraData ? ` ${auraData.class}` : '');
     if (c) {
       slot.innerHTML = `
-        ${auraData ? `<div class="aura-overlay"></div>` : ''}
-        <div class="slot-num">${i+1}</div>
+        ${auraData ? `<div class="aura-overlay"></div>` : ''}        
         <div class="slot-img-wrap"><img src="${c.useImg ? c.img : 'C0.svg'}" alt="${c.name}"></div>
         <div class="slot-info">
           <div class="slot-name">${c.name}</div>
@@ -7115,21 +7117,24 @@ async function renderUserStagesPage(forceReload = false) {
     } else {
         // Default Mode Buttons
         if (drafts.length > 0) {
-            draftsHtml = `<div style="background:var(--bg-card); padding:0.5rem; border-radius:4px; border:1px solid var(--border); margin-bottom:0.5rem;">
-            <div style="font-size:0.8rem; color:var(--text-mid); margin-bottom:0.5rem;">下書きステージ</div>
-            ${drafts.map((d, i) => `
-                <div class="draft-stage-item">
-                    <div style="flex:1;">
-                        <span style="font-weight:bold;">${d.name || '名称未設定'}</span>
-                        <span class="draft-status ${d.cleared ? 'cleared' : 'draft'}">${d.cleared ? 'クリア済' : '未クリア'}</span>
+            draftsHtml = `
+                <details style="margin-bottom:0.5rem;">
+                    <summary style="font-size:0.9rem; color:var(--text-main); font-weight:bold; cursor:pointer; padding:0.5rem; background:var(--bg-card); border:1px solid var(--border); border-radius:4px;">下書きステージ (${drafts.length})</summary>
+                    <div style="background:var(--bg-card); padding:0.5rem; border-radius:4px; border:1px solid var(--border); border-top:none;">
+                        ${drafts.map((d, i) => `
+                            <div class="draft-stage-item">
+                                <div style="flex:1;">
+                                    <span style="font-weight:bold;">${d.name || '名称未設定'}</span>
+                                    <span class="draft-status ${d.cleared ? 'cleared' : 'draft'}">${d.cleared ? 'クリア済' : '未クリア'}</span>
+                                </div>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="sort-btn" onclick="loadDraftToEditor(${i})">編集</button>
+                                    <button class="sort-btn" onclick="deleteDraft(${i})" style="color:var(--accent2); border-color:var(--accent2);">削除</button>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-                    <div style="display:flex; gap:0.5rem;">
-                        <button class="sort-btn" onclick="loadDraftToEditor(${i})">編集</button>
-                        <button class="sort-btn" onclick="deleteDraft(${i})" style="color:var(--accent2); border-color:var(--accent2);">削除</button>
-                    </div>
-                </div>
-            `).join('')}
-        </div>`;
+                </details>`;
         }
 
         postBtnContainer.innerHTML = `
@@ -12767,40 +12772,20 @@ async function submitInlineComment(stageId) {
 async function recordCharacterUsage(ids) {
     if (!USAGE_API_URL || !USAGE_API_URL.startsWith('http')) return;
     const formData = new URLSearchParams();
+    const filteredIds = ids.filter(id => !String(id).startsWith('custom_')); // Exclude custom characters
+    if (filteredIds.length === 0) return; // Don't send if no non-custom characters
     formData.append('action', 'record');
-    formData.append('ids', JSON.stringify(ids));
+    formData.append('ids', JSON.stringify(filteredIds)); // Send filtered IDs
     try {
         await fetch(USAGE_API_URL, { method: 'POST', body: formData });
     } catch (e) { console.error("Usage record failed", e); }
 }
-
-async function openUsageStatsModal() {
-    document.getElementById('usageStatsOverlay').classList.add('open');
-    const body = document.getElementById('usageStatsBody');
-    body.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">データを取得中...</div>';
-    
-    if (!USAGE_API_URL || !USAGE_API_URL.startsWith('http')) {
-        body.innerHTML = '<div style="text-align:center; color:var(--accent2); padding:2rem;">使用率APIのURLが設定されていません。<br><span style="font-size:0.8rem; color:var(--text-dim);">管理者に新しいGASのURLを設定するよう依頼してください。</span></div>';
-        return;
-    }
-
-    try {
-        const res = await fetch(USAGE_API_URL + '?action=getStats');
-        const data = await res.json();
-        renderUsageStats(data);
-    } catch (e) {
-        body.innerHTML = '<div style="text-align:center; color:var(--accent2); padding:2rem;">データの取得に失敗しました。</div>';
-    }
-}
-
 function renderUsageStats(data) {
     const body = document.getElementById('usageStatsBody');
     
     // Merge with all units to show 0%
     const allCharIds = [...units.filter(u => u.id < 300).map(u => u.id)];
-    if (playerState.customCharacters) {
-        allCharIds.push(...playerState.customCharacters.map(u => u.id));
-    }
+    // Removed: if (playerState.customCharacters) { allCharIds.push(...playerState.customCharacters.map(u => u.id)); }
 
     const statsMap = {};
     if (data && data.stats) {
