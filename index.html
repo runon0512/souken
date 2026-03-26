@@ -117,6 +117,7 @@
     font-family: 'Orbitron', monospace;
     font-weight: 900;
     font-size: 1.75rem;
+    cursor: pointer;
     letter-spacing: 0.25rem;
     color: var(--accent);
     text-shadow: 0 0 1.5rem rgba(0,200,255,0.6);
@@ -2830,7 +2831,7 @@
 <!-- HEADER -->
 <header>
   <div class="header-left">
-    <div class="logo">Souken<span>WoF</span></div>
+    <div class="logo" onclick="setView('home')">Souken<span>WoF</span></div>
     <div class="header-divider"></div>
     <div class="header-subtitle">部隊管理システム</div>
   </div>
@@ -2958,7 +2959,7 @@
   <div class="roster-panel" id="missionPanel" style="display: none;">
     <div class="roster-toolbar" style="align-items: center;">
       <div style="display:flex; align-items:center; gap:1rem; flex-wrap: wrap;"> 
-        <button class="filter-btn" onclick="setView('battleMenu')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+        <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
           ← 戻る
         </button>
         <div id="missionSquadSwitcher" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border);">
@@ -3779,6 +3780,13 @@ let settings = {
 };
 
 /* CSS for Tutorial injected via JS or here */
+function openSettingsModal() {
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
 </script>
 <style>
   /* TUTORIAL STYLES */
@@ -12780,6 +12788,22 @@ async function recordCharacterUsage(ids) {
         await fetch(USAGE_API_URL, { method: 'POST', body: formData });
     } catch (e) { console.error("Usage record failed", e); }
 }
+
+async function openUsageStatsModal() {
+    const overlay = document.getElementById('usageStatsOverlay');
+    const body = document.getElementById('usageStatsBody');
+    overlay.classList.add('open');
+    body.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">読み込み中...</div>';
+
+    try {
+        const response = await fetch(USAGE_API_URL + '?action=getStats');
+        const data = await response.json();
+        renderUsageStats(data);
+    } catch (e) {
+        body.innerHTML = '<div style="text-align:center; color:var(--accent2); padding:2rem;">データの取得に失敗しました</div>';
+    }
+}
+
 function renderUsageStats(data) {
     const body = document.getElementById('usageStatsBody');
     
