@@ -2756,6 +2756,7 @@
 <script>
   // GASのウェブアプリURLをここに貼り付けてください（両方に同じURLを入れてください）
   const USER_STAGE_API_URL = "https://script.google.com/macros/s/AKfycbxjHXNJgcujuBjsYNHHvcU3a2vv-Y-z_C0MF1JHwNIZ5P45AIgIqX2U9LPtKm2wVrwA/exec"; 
+  const USAGE_API_URL = "https://script.google.com/macros/s/AKfycbyFmb4wo8d0XXqHZGXUifQK8_O6fZPBnPIdZ5dwOtbWg9hPAbpVKAbiJdwEnu-e22uu/exec"; // キャラ使用率取得用の新しいGAS URLをここに貼り付けてください
 </script>
 <body>
 
@@ -3395,6 +3396,19 @@
         <button class="mission-btn" id="editorNextBtn" onclick="editorNextStep()" style="width:auto;">次へ</button>
         <button class="mission-btn" id="btnPublishStage" onclick="publishStage()" disabled style="display:none; width:auto; opacity:0.5;">公開する</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- USAGE STATS MODAL -->
+<div class="modal-overlay" id="usageStatsOverlay">
+  <div class="modal" style="width: 35rem; max-height: 80vh; display: flex; flex-direction: column;">
+    <div class="modal-header">
+      <div class="modal-title">キャラクター使用率 (高難易度/ユーザー)</div>
+      <button class="modal-close" onclick="document.getElementById('usageStatsOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="usageStatsBody" style="flex: 1; overflow-y: auto; padding: 1rem;">
+      <div style="text-align:center; color:var(--text-dim);">読み込み中...</div>
     </div>
   </div>
 </div>
@@ -7065,6 +7079,7 @@ async function renderUserStagesPage(forceReload = false) {
             <div style="display:flex; gap:0.5rem;">
             <button class="mission-btn" onclick="openPostStageModal()" style="flex:1; padding:1rem; font-size:1.1rem;">＋ 投稿</button>
             <button class="mission-btn" onclick="openUserProfile(playerState.playerId, playerState.playerName)" style="flex:1; padding:1rem; font-size:1.1rem; background:rgba(0,200,255,0.1); border:1px solid var(--accent); color:var(--accent);">自分の作品</button>
+            <button class="mission-btn" onclick="openUsageStatsModal()" style="flex:1; padding:1rem; font-size:1.1rem; background:rgba(255,215,0,0.1); border:1px solid var(--gold); color:var(--gold);">📊 使用率</button>
             <button class="mission-btn" onclick="renderUserStagesPage(true)" style="width: 4rem; padding:1rem; font-size:1.5rem; flex-shrink:0;" title="リストを更新">↻</button>
             </div>
         `;
@@ -9433,6 +9448,18 @@ async function runBattleSequence() {
   document.getElementById('retireBattleBtn').disabled = false; // Enable surrender
   document.getElementById('closeBattleBtn').disabled = true;
   logBattleMessage(`<span class="info">戦闘開始！</span>`);
+
+  // Record Character Usage (Conditions: User Stage, Tower 100+, Story 5+)
+  if (!battleState.usageRecorded) {
+      const mission = battleState.mission;
+      const isTower100 = mission.isTower && (mission.id - 10000 >= 100);
+      const isStory5Plus = !mission.isTower && !mission.isUserStage && mission.id >= 500;
+      
+      if (mission.isUserStage || isTower100 || isStory5Plus) {
+          battleState.usageRecorded = true;
+          recordCharacterUsage(battleState.playerUnits.map(u => u.id));
+      }
+  }
 
   // Play Count Increment (Once per battle start)
   if (battleState.mission.isUserStage && !battleState.playCounted) {
@@ -12636,6 +12663,65 @@ async function submitInlineComment(stageId) {
     fetch(USER_STAGE_API_URL, { method: 'GET' })
         .then(() => fetch(USER_STAGE_API_URL, { method: 'POST', body: formData }))
         .catch(e => console.error("Inline comment submission failed in background:", e));
+}
+
+async function recordCharacterUsage(ids) {
+    if (!USAGE_API_URL || !USAGE_API_URL.startsWith('http')) return;
+    const formData = new URLSearchParams();
+    formData.append('action', 'record');
+    formData.append('ids', JSON.stringify(ids));
+    try {
+        await fetch(USAGE_API_URL, { method: 'POST', body: formData });
+    } catch (e) { console.error("Usage record failed", e); }
+}
+
+async function openUsageStatsModal() {
+    document.getElementById('usageStatsOverlay').classList.add('open');
+    const body = document.getElementById('usageStatsBody');
+    body.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">データを取得中...</div>';
+    
+    if (!USAGE_API_URL || !USAGE_API_URL.startsWith('http')) {
+        body.innerHTML = '<div style="text-align:center; color:var(--accent2); padding:2rem;">使用率APIのURLが設定されていません。<br><span style="font-size:0.8rem; color:var(--text-dim);">管理者に新しいGASのURLを設定するよう依頼してください。</span></div>';
+        return;
+    }
+
+    try {
+        const res = await fetch(USAGE_API_URL + '?action=getStats');
+        const data = await res.json();
+        renderUsageStats(data);
+    } catch (e) {
+        body.innerHTML = '<div style="text-align:center; color:var(--accent2); padding:2rem;">データの取得に失敗しました。</div>';
+    }
+}
+
+function renderUsageStats(data) {
+    const body = document.getElementById('usageStatsBody');
+    if (!data || data.total === 0) {
+        body.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">まだデータがありません。</div>';
+        return;
+    }
+
+    const sorted = data.stats.sort((a, b) => b.count - a.count);
+    let html = `<div style="margin-bottom:1.5rem; text-align:center; font-size:0.9rem; color:var(--text-mid); background:rgba(0,0,0,0.2); padding:0.5rem; border-radius:4px;">計測対象: ユーザーステージ / 塔100階~ / 5章~<br>総計測数: <span style="color:var(--accent); font-weight:bold;">${data.total}</span> 戦</div>`;
+    
+    sorted.forEach(s => {
+        const char = units.find(u => u.id == s.id) || (playerState.customCharacters && playerState.customCharacters.find(u => u.id == s.id));
+        if (!char) return;
+        const rate = ((s.count / data.total) * 100).toFixed(1);
+        html += `
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem; background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:4px; border:1px solid var(--border);">
+                <img src="${char.useImg ? char.img : 'C0.svg'}" style="width:3rem; height:3rem; border-radius:4px; object-fit:cover; background:#000;">
+                <div style="flex:1;">
+                    <div style="font-weight:bold; font-size:0.9rem;">${char.name}</div>
+                    <div style="font-size:0.7rem; color:var(--text-dim);">${char.elementJp} / ${char.type || 'その他'}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-family:'Orbitron'; font-size:1.1rem; color:var(--gold);">${rate}%</div>
+                    <div style="font-size:0.6rem; color:var(--text-dim);">${s.count}回使用</div>
+                </div>
+            </div>`;
+    });
+    body.innerHTML = html;
 }
 
 function closeNotificationModal(e) { if(e.target.id==='notificationOverlay') closeNotificationModalDirect(); }
