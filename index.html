@@ -8272,7 +8272,7 @@ async function drawCustomChar() {
             const img = await loadImage(imgPath);
             
             // 解像度維持のためスケーリング。パーツの縦横比を維持して描画。
-            const scale = (part === 'back-ground' || part === 'cover') ? 1.0 : 2.8;
+            const scale = (part === 'back-ground' || part === 'cover') ? 1.0 : 3;
             const drawW = canvas.width * scale;
             const drawH = (drawW * img.height) / img.width; // 元の画像比率を維持
 
