@@ -7548,7 +7548,7 @@ function openCustomCharCreator(charToEdit = null) {
         gender: 'W',
         'back-ground': { x: 0, y: 0 },
         back: { id: 1, x: 0, y: 0, color: '#4a4a4a' }, // 後ろ髪
-        face: { id: 1, x: 0, y: 0, hue: 0, brightness: 100 },
+        face: { id: 1, x: 0, y: 0, color: '#ffdbac' },
         eyes: { id: 4, x: 0, y: 0, color: '#3366ff' },
         front: { id: 1, x: 0, y: 0, color: '#4a4a4a' }, // 前髪
         cover: { x: 0, y: 0 },
@@ -8119,11 +8119,12 @@ function initImageEditor() {
         }
         
         // カラーピッカー
-        if (part === 'front' || part === 'eyes') {
-            const label = part === 'front' ? '髪色' : '瞳の色';
-            const currentColor = part === 'front' ? data.front.color : data.eyes.color;
+        if (['front', 'eyes', 'face'].includes(part)) {
+            const labels = { front: '髪色', eyes: '瞳の色', face: '肌の色' };
+            const colorTypes = { front: 'hair', eyes: 'eyes', face: 'skin' };
+            const currentColor = data[part].color;
             html += `<div style="margin-top: 0.5rem;">
-                        <label style="font-size:0.7rem;">${label}: <input type="color" value="${currentColor}" oninput="updatePartColor('${part === 'front' ? 'hair' : 'eyes'}', this.value)"></label>
+                        <label style="font-size:0.7rem;">${labels[part]}: <input type="color" value="${currentColor}" oninput="updatePartColor('${colorTypes[part]}', this.value)"></label>
                      </div>`;
         }
 
@@ -8189,8 +8190,10 @@ function updatePartColor(type, color) {
     if (type === 'hair') {
         customCharData.imageData.front.color = color;
         customCharData.imageData.back.color = color;
-    } else {
+    } else if (type === 'eyes') {
         customCharData.imageData.eyes.color = color;
+    } else if (type === 'skin') {
+        customCharData.imageData.face.color = color;
     }
     drawCustomChar();
 }
@@ -8269,7 +8272,7 @@ async function drawCustomChar() {
             const img = await loadImage(imgPath);
             
             // 解像度維持のためスケーリング。パーツの縦横比を維持して描画。
-            const scale = (part === 'back-ground' || part === 'cover') ? 1.0 : 2.5;
+            const scale = (part === 'back-ground' || part === 'cover') ? 1.0 : 3.25;
             const drawW = canvas.width * scale;
             const drawH = (drawW * img.height) / img.width; // 元の画像比率を維持
 
@@ -8296,7 +8299,7 @@ async function drawCustomChar() {
                 }
             }
             
-            if (['back', 'front', 'eyes'].includes(part) && partData.color) {
+            if (['back', 'front', 'eyes', 'face'].includes(part) && partData.color) {
                 // 1. まず元のパーツをそのまま描画（元の枠線や影をそのまま活かす）
                 ctx.drawImage(img, xPos, yPos, drawW, drawH);
 
