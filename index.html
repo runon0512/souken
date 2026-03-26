@@ -8035,14 +8035,23 @@ const CUSTOM_PART_CONFIG = {
     M: { front: { min: 1, max: 2 }, back: { min: 1, max: 1 }, eyes: { min: 2, max: 3 } }
 };
 
-// ベース位置からのY座標オフセット設定
+// 各パーツのベース位置オフセット（cover.svgを基準に、ここ数値を書き換えて調整してください）
+const CUSTOM_X_OFFSETS = {
+    'back-ground': 0,
+    'back':        0,
+    'face':        0,
+    'eyes':        0,
+    'front':       0,
+    'cover':       0
+};
+
 const CUSTOM_Y_OFFSETS = {
     'back-ground': 0,
-    'back': 0,
-    'face': 0,
-    'eyes': 0,
-    'front': 0,
-    'cover': 0
+    'back':        0,
+    'face':        0,
+    'eyes':        0,
+    'front':       0,
+    'cover':       0
 };
 
 let imgDataUrl = ''; // To store the canvas data URL
@@ -8188,20 +8197,22 @@ async function drawCustomChar() {
             }
 
             const img = await loadImage(imgPath);
-            const yPos = CUSTOM_Y_OFFSETS[part] + (partData.y || 0);
+            const xPos = (CUSTOM_X_OFFSETS[part] || 0) + (partData.x || 0);
+            const yPos = (CUSTOM_Y_OFFSETS[part] || 0) + (partData.y || 0);
             
             if (['back', 'front', 'eyes'].includes(part) && partData.color) {
-                // 色付け処理用のテンポラリキャンバス
+                // パーツが赤色ベースなので、source-inで選択色に塗りつぶします
                 const tCanvas = document.createElement('canvas');
                 tCanvas.width = canvas.width; tCanvas.height = canvas.height;
                 const tCtx = tCanvas.getContext('2d');
-                tCtx.drawImage(img, partData.x || 0, yPos);
+                tCtx.drawImage(img, xPos, yPos);
+                tCtx.drawImage(img, xPos, yPos);
                 tCtx.globalCompositeOperation = 'source-in';
                 tCtx.fillStyle = partData.color;
                 tCtx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(tCanvas, 0, 0);
             } else {
-                ctx.drawImage(img, partData.x || 0, yPos);
+                ctx.drawImage(img, xPos, yPos);
             }
         }
         imgDataUrl = canvas.toDataURL();
