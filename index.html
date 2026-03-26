@@ -4365,6 +4365,21 @@ const units = [
     useImg: true,
     img: 'C41.svg',
   },
+  {
+    id: 44,
+    name: 'ヒデ・ヒロム',
+    element: 'none',
+    elementJp: '無',
+    type: 'ルディ王国',
+    baseStats: { hp: 1200, atk: 110, def: 65, spd: 88 },
+    abilityType: 'shoot',
+    abilities: [
+      { name: '五色の銃', desc: '40%の確率で発動。攻撃が属性相性有利として計算される。', triggerRate: 0.4, timing: 'before_attack', isAdvantageForced: true },
+      { name: '妄想', desc: '攻撃後、60%の確率で発動。攻撃対象にランダムなデバフを3ターン付与する。', triggerRate: 0.6, timing: 'after_attack' }
+    ],
+    useImg: true,
+    img: 'C42.svg',
+  },
 ];
 
 // Equipment Data
