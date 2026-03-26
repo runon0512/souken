@@ -3343,7 +3343,7 @@
         <input type="text" id="customCharNameInput" class="post-input" placeholder="キャラクター名 (必須)" maxlength="15">
         <div class="image-editor-layout" style="margin-top: 1rem;">
           <div class="image-editor-preview">
-            <canvas id="customCharCanvas" width="200" height="200"></canvas>
+            <canvas id="customCharCanvas" width="400" height="400"></canvas>
           </div>
           <div class="image-editor-controls" id="imageEditorControls">
             <!-- Controls will be injected by JS -->
@@ -8049,19 +8049,19 @@ const CUSTOM_PART_CONFIG = {
 // 各パーツのベース位置オフセット（cover.svgを基準に、ここ数値を書き換えて調整してください）
 const CUSTOM_X_OFFSETS = {
     'back-ground': 0,
-    'back':        -40,
-    'face':        -40,
-    'eyes':        -40,
-    'front':       -40,
+    'back':        0,
+    'face':        0,
+    'eyes':        0,
+    'front':       0,
     'cover':       0
 };
 
 const CUSTOM_Y_OFFSETS = {
     'back-ground': 0,
-    'back':        -40,
-    'face':        -40,
-    'eyes':        -40,
-    'front':       -40,
+    'back':        0,
+    'face':        0,
+    'eyes':        0,
+    'front':       0,
     'cover':       0
 };
 
@@ -8213,13 +8213,13 @@ async function drawCustomChar() {
             
             if (['back', 'front', 'eyes'].includes(part) && partData.color) {
                 // 1. まず元のパーツをそのまま描画（元の枠線や影をそのまま活かす）
-                ctx.drawImage(img, xPos, yPos);
+                ctx.drawImage(img, xPos, yPos, canvas.width, canvas.height);
 
                 // 2. 色付け用のテンポラリキャンバスでシルエットを作成
                 const tCanvas = document.createElement('canvas');
                 tCanvas.width = canvas.width; tCanvas.height = canvas.height;
                 const tCtx = tCanvas.getContext('2d');
-                tCtx.drawImage(img, xPos, yPos);
+                tCtx.drawImage(img, xPos, yPos, canvas.width, canvas.height);
                 tCtx.globalCompositeOperation = 'source-in'; // 画像の形だけに限定
                 tCtx.fillStyle = partData.color;
                 tCtx.fillRect(0, 0, canvas.width, canvas.height);
@@ -8229,7 +8229,7 @@ async function drawCustomChar() {
                 ctx.drawImage(tCanvas, 0, 0);
                 ctx.globalCompositeOperation = 'source-over'; // 設定を戻す
             } else {
-                ctx.drawImage(img, xPos, yPos);
+                ctx.drawImage(img, xPos, yPos, canvas.width, canvas.height);
             }
         }
         imgDataUrl = canvas.toDataURL();
@@ -8861,7 +8861,7 @@ function renderUnit(unit) {
   const bgClass = unit.isPlayer ? '' : 'enemy-icon-bg';
   const auraData = unit.aura && unit.aura > 0 ? AURA_DATA[unit.aura - 1] : null;
   const auraClass = auraData ? auraData.class : '';
-  const imgSrc = unit.isCustom ? 'C0.svg' : (unit.useImg ? unit.img : 'C0.svg');
+  const imgSrc = unit.useImg ? unit.img : 'C0.svg';
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
   
   const equipEnhancement = unit.isPlayer ? (unit.equipment ? playerState.equipmentEnhancements?.[unit.equipment.id] : null) : unit.enhancement;
