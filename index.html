@@ -8896,7 +8896,7 @@ async function startBattle(missionId, skipDialogue = false) {
                  type: 'status', 
                  status: ab.statusEffect, 
                  turns: ab.statusTurns 
-             } : (ab.effect === 'damage_cut' ? { type: 'damage_cut' } : (ab.effect === 'heal' ? { type: 'heal' } : undefined))
+             } : (ab.effect === 'damage_cut' ? { type: 'damage_cut', value: ab.effectValue } : (ab.effect === 'heal' ? { type: 'heal', value: ab.effectValue } : undefined))
          };
       });
 
@@ -8926,7 +8926,7 @@ async function startBattle(missionId, skipDialogue = false) {
                      type: 'status', 
                      status: ab.statusEffect, 
                      turns: ab.statusTurns 
-                 } : (ab.effect === 'damage_cut' ? { type: 'damage_cut' } : (ab.effect === 'heal' ? { type: 'heal' } : undefined))
+                 } : (ab.effect === 'damage_cut' ? { type: 'damage_cut', value: ab.effectValue } : (ab.effect === 'heal' ? { type: 'heal', value: ab.effectValue } : undefined))
              };
           });
 
@@ -9650,7 +9650,9 @@ async function runBattleSequence() {
             let rate = ab.triggerRate || 0;
             if (fieldAntiMagic) rate *= 0.5;
             
-            if (ab.timing === 'before_attack' && Math.random() < rate) {
+            const isHpTrigger = ab.timing === 'hp_below' && (attacker.currentHp / attacker.stats.hp * 100) <= (ab.triggerValue || 0);
+
+            if ((ab.timing === 'before_attack' && Math.random() < rate) || isHpTrigger) {
               activeAbility = ab;
               break; // 1ターンに1つの攻撃スキルのみ発動と仮定
             }
@@ -9714,8 +9716,9 @@ async function runBattleSequence() {
                 if (activeAbility.effect?.type === 'status') {
                     await addStatusEffect(aoeTarget, activeAbility.effect.status, activeAbility.effect.turns);
                 }
-                if (activeAbility.effect?.type === 'heal') {
-                    const healAmt = Math.floor(aoeTarget.stats.hp * (activeAbility.effectValue / 100));
+                if (isHealOnly) {
+                    const healPct = activeAbility.effect?.value || activeAbility.effectValue || 0;
+                    const healAmt = Math.floor(aoeTarget.stats.hp * (healPct / 100));
                     aoeTarget.currentHp = Math.min(aoeTarget.stats.hp, aoeTarget.currentHp + healAmt);
                     logBattleMessage(`${aoeTarget.name}のHPが<span class="heal">${healAmt}</span>回復！`);
                     updateUnitUI(aoeTarget);
@@ -9723,15 +9726,20 @@ async function runBattleSequence() {
                     showDamageNumber(document.getElementById(`unit-${aoeTarget.battleId}`), healAmt, 'heal');
                 }
 
-                if (actualDamage > 0) {
+                if (actualDamage > 0 || isStatusOnly) {
                 const adv = getElementalMultiplier(attacker.element, aoeTarget.element);
                 let advText = adv > 1.0 ? ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>' : adv < 1.0 ? ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>' : '';
 
-                logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に<span class="damage">${actualDamage}</span>${advText}のダメージ！`);
+                if (isStatusOnly) {
+                    logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に効果！`);
+                } else {
+                    logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に<span class="damage">${actualDamage}</span>${advText}のダメージ！`);
+                }
+
                 const targetEl = document.getElementById(`unit-${aoeTarget.battleId}`);
                 updateUnitUI(aoeTarget);
                 playEffect(targetEl, attacker.abilityType || 'magic');
-                showDamageNumber(targetEl, actualDamage, adv > 1.0 ? 'weak' : 'damage');
+                if (actualDamage > 0) showDamageNumber(targetEl, actualDamage, adv > 1.0 ? 'weak' : 'damage');
                 targetEl.classList.add('is-taking-skill-damage');
                 setTimeout(() => targetEl.classList.remove('is-taking-skill-damage'), 500);
                 }
@@ -11293,23 +11301,29 @@ async function triggerOnBattleStartAbilities() {
             
             for (const t of skillTargets) {
                 if (!t) continue;
-                if (ab.effect === 'attack' || ab.effect === 'attack_status') {
-                    const damage = Math.floor(calculateDamage(unit, t) * (ab.damageMult || 1.0));
+
+                const effType = ab.effect?.type || ab.effect;
+                const damageMult = ab.damageMult || (effType === 'attack' || effType === 'attack_status' ? 1.0 : undefined);
+
+                if (damageMult !== undefined) {
+                    const damage = Math.floor(calculateDamage(unit, t) * damageMult);
                     t.currentHp = Math.max(0, t.currentHp - damage);
                     recordDamage(unit, damage);
                     logBattleMessage(`${t.name}に<span class="damage">${damage}</span>のダメージ！`);
                     updateUnitUI(t);
                     showDamageNumber(document.getElementById(`unit-${t.battleId}`), damage);
                 }
-                if (ab.effect === 'heal') {
-                    const healAmt = Math.floor(t.stats.hp * (ab.effectValue / 100));
+                if (effType === 'heal') {
+                    const healAmt = Math.floor(t.stats.hp * ( (ab.effectValue || ab.effect?.value || 0) / 100));
                     t.currentHp = Math.min(t.stats.hp, t.currentHp + healAmt);
                     logBattleMessage(`${t.name}のHPが<span class="heal">${healAmt}</span>回復した！`);
                     updateUnitUI(t);
                     showDamageNumber(document.getElementById(`unit-${t.battleId}`), healAmt, 'heal');
                 }
-                if (ab.effect === 'status' || ab.effect === 'attack_status') {
-                    await addStatusEffect(t, ab.statusEffect, ab.statusTurns);
+                if (effType === 'status' || effType === 'attack_status') {
+                    const status = ab.effect?.status || ab.statusEffect;
+                    const turns = ab.effect?.turns || ab.statusTurns;
+                    await addStatusEffect(t, status, turns);
                 }
             }
         }
