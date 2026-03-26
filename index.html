@@ -2888,6 +2888,9 @@
       <button class="filter-btn" onclick="setFilter('light')" id="filter-light">
         <span style="color:var(--elem-light)">●</span> 光属性 <span class="count" id="cnt-light">-</span>
       </button>
+      <button class="filter-btn" onclick="setFilter('none')" id="filter-none">
+        <span style="color:var(--elem-none)">●</span> 無属性 <span class="count" id="cnt-none">-</span>
+      </button>
       <div style="margin-top:0.75rem;font-size:0.5625rem;color:var(--text-dim);text-align:center;border:1px solid var(--border);padding:0.25rem;border-radius:0.25rem;">
         <span style="color:var(--elem-water)">水</span> &gt; <span style="color:var(--elem-fire)">炎</span> &gt; <span style="color:var(--elem-thunder)">雷</span> &gt; <span style="color:var(--elem-water)">水</span><br>
         <span style="color:var(--elem-light)">光</span> ⇔ <span style="color:var(--elem-dark)">闇</span>
@@ -3351,6 +3354,17 @@
       <div id="editorStep2" class="editor-step-2">
           <div class="section-title">ステージ情報</div>
           <input type="text" id="editorStageName" class="post-input" placeholder="ステージ名 (必須)" maxlength="20">
+          <label style="font-size:0.7rem; color:var(--text-dim); display:block; margin-bottom:0.25rem;">ジャンル</label>
+          <select id="editorStageGenre" class="post-input" style="margin-bottom:0.75rem;">
+              <option value="設定しない">設定しない</option>
+              <option value="原作再現">原作再現</option>
+              <option value="マイ編成">マイ編成</option>
+              <option value="鬼畜">鬼畜</option>
+              <option value="ボス戦">ボス戦</option>
+              <option value="新キャラ">新キャラ</option>
+              <option value="検証">検証</option>
+              <option value="その他">その他</option>
+          </select>
           <textarea id="editorStageDesc" class="post-input" placeholder="ステージ概要 (100字以内)" maxlength="100" style="height:4rem; resize:none;"></textarea>
       </div>
 
@@ -4084,7 +4098,7 @@ const units = [
     abilityType: 'slash',
     abilities: [
       { name: '虹斬', desc: '攻撃前に発動し、相性有利で攻撃し、衰弱を2ターン付与。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 2 } },
-      { name: '無能力の意地', desc: 'スキルによる攻撃を受けたときに攻撃を50%ブロックします。', timing: 'on_skill_defense' },
+      { name: '「無」の意地', desc: '戦闘開始時、自分と無属性の味方に強化を5ターン付与する。', timing: 'on_battle_start' },
     ],
     useImg: true, img: 'C11.svg'
   },
@@ -4271,7 +4285,7 @@ const units = [
     baseStats: { hp: 1080, atk: 125, def: 70, spd: 85 }, // Attack
     abilityType: 'slash',
     abilities: [
-      { name: '気炎万丈', desc: '攻撃前、35%の確率で発動。自身に強化を3ターン付与する。', triggerRate: 0.35, timing: 'before_attack' },
+      { name: '気炎万丈', desc: '戦闘開始時、炎属性の味方と自分に5ターンの強化を付与する。', timing: 'on_battle_start' },
       { name: '不屈の闘志', desc: '状態異常にならない。' }
     ],
     useImg: true, img: 'C31.svg'
@@ -5802,8 +5816,8 @@ function setFilter(f) {
 }
 
 function updateFilterCounts() {
-  const ownedChars = units.filter(u => playerState.characters.hasOwnProperty(u.id));
-  const elems = ['fire','water','thunder','dark','light'];
+  const ownedChars = units.filter(u => playerState.characters.hasOwnProperty(u.id) && u.id < 300); // Only playable characters
+  const elems = ['fire','water','thunder','dark','light', 'none'];
   document.getElementById('cnt-all').textContent = ownedChars.length;
   elems.forEach(e => {
     const el = document.getElementById('cnt-' + e);
@@ -7201,6 +7215,9 @@ function renderUserStageCard(stage) {
     const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
     const isCleared = missionProgress.has("user_" + stage.id);
     
+    const genre = stage.genre || '設定しない';
+    const genreHtml = genre !== '設定しない' ? `<span style="font-size:0.7rem; background:rgba(255,255,255,0.1); border:1px solid var(--border); padding:2px 6px; border-radius:10px; margin-left:0.5rem; color:var(--text-mid);">${genre}</span>` : '';
+    
     // Reward Calculation: Total Power
     const rewardVal = Math.min(totalPower, 100000);
     
@@ -7230,7 +7247,7 @@ function renderUserStageCard(stage) {
     card.id = `user-stage-card-${stage.id}`;
     card.innerHTML = `
         <div class="user-stage-list-info">
-            <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
+            <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${genreHtml}${fieldBadge}</div>
             <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
         </div>
         <div class="user-stage-meta-row">
@@ -7271,6 +7288,7 @@ function renderUserStageCard(stage) {
 let currentEditingStage = {
     name: '',
     desc: '',
+    genre: '設定しない',
     enemies: [], // { id, level, equippedId, aura }
     fieldEffectPlayer: 'none',
     fieldEffectEnemy: 'none',
@@ -7334,6 +7352,7 @@ function openStageEditorUI() {
 
     document.getElementById('editorStageName').value = currentEditingStage.name;
     document.getElementById('editorStageDesc').value = currentEditingStage.desc;
+    document.getElementById('editorStageGenre').value = currentEditingStage.genre || '設定しない';
 
     // Reset to Step 1
     editorCurrentStep = 1;
@@ -7495,6 +7514,7 @@ function editorNextStep() {
     } else if (editorCurrentStep === 2) {
         currentEditingStage.name = document.getElementById('editorStageName').value.trim();
         currentEditingStage.desc = document.getElementById('editorStageDesc').value.trim();
+        currentEditingStage.genre = document.getElementById('editorStageGenre').value;
         if (!currentEditingStage.name) { showToast('ステージ名を入力してください'); return; }
         
         document.getElementById('editorStep2').classList.remove('active');
@@ -7506,7 +7526,7 @@ function editorNextStep() {
         const feP = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectPlayer)?.name || 'なし';
         const feE = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectEnemy)?.name || 'なし';
         const bgName = STAGE_BACKGROUNDS.find(b => b.id === currentEditingStage.bgId)?.name || '標準';
-        document.getElementById('confirmStageConfig').innerHTML = `敵:${currentEditingStage.enemies.length}体 / 味方効果:${feP} / 敵効果:${feE} / 背景:${bgName}`;
+        document.getElementById('confirmStageConfig').innerHTML = `ジャンル:${currentEditingStage.genre} / 敵:${currentEditingStage.enemies.length}体 / 味方効果:${feP} / 敵効果:${feE} / 背景:${bgName}`;
         
         // 戦力計算と表示
         const enemyConfigs = currentEditingStage.enemies.map(e => ({
@@ -7522,7 +7542,7 @@ function editorNextStep() {
         const myAvg = squadPower / myCount;
         const enemyAvg = enemyPower / enemyCount;
 
-        const isSafe = squad.length === 5 && myAvg >= enemyAvg;
+        const isSafe = squad.length === 5 && squadPower >= enemyPower && myAvg >= enemyAvg;
         const diff = Math.floor(myAvg - enemyAvg);
         const diffColor = isSafe ? 'var(--accent3)' : 'var(--accent2)';
         
@@ -7533,7 +7553,7 @@ function editorNextStep() {
                 <div>敵軍平均: <span style="color:var(--accent2);">${Math.floor(enemyAvg).toLocaleString()}</span></div>
             </div>
             <div style="text-align:center; font-size:0.75rem; color:${isSafe ? 'var(--text-mid)' : 'var(--accent2)'}; margin-top:0.3rem;">
-                ${isSafe ? '※5人編成かつ平均戦力が上回っているため、テストプレイ開始時に即時クリア可能です。' : '※5人編成ではないか平均戦力が下回っているため、実戦での勝利が必要です。'}
+                ${isSafe ? '※5人編成かつ戦力（合計・平均）が上回っているため、即時クリア可能です。' : '※5人編成ではないか戦力が下回っているため、実戦での勝利が必要です。'}
             </div>
         `;
 
@@ -8614,6 +8634,7 @@ async function publishStage() {
         formData.append('description', desc);
         formData.append('creatorName', playerState.playerName);
         formData.append('creatorId', playerState.playerId);
+        formData.append('genre', currentEditingStage.genre || '設定しない');
         formData.append('squadData', JSON.stringify(payload));
 
         await fetch(USER_STAGE_API_URL, { method: 'POST', body: formData });
@@ -8826,9 +8847,9 @@ function startClearCheck() {
     const myAvg = squadPower / myCount;
     const enemyAvg = enemyPower / enemyCount;
 
-    if (squad.length === 5 && myAvg >= enemyAvg) {
+    if (squad.length === 5 && squadPower >= enemyPower && myAvg >= enemyAvg) {
         currentEditingStage.cleared = true;
-        showToast('平均戦力差によりクリアチェックをスキップしました');
+        showToast('総合・平均戦力差によりクリアチェックをスキップしました');
         saveDraftStage();
         updateEditorUI();
         return;
@@ -11229,7 +11250,8 @@ async function triggerOnBattleStartAbilities() {
                     const tEl = document.getElementById(`unit-${t.battleId}`);
                     playEffect(tEl, 'heal'); // バフエフェクトとしてhealを代用
                 }
-                logBattleMessage(`${skillName}！味方の${targetElement === 'thunder' ? '雷' : '闇'}属性ユニットが強化された！`);
+                const elemJp = {thunder:'雷', water:'水', fire:'炎', dark:'闇'}[targetElement];
+                logBattleMessage(`${skillName}！味方の${elemJp}属性ユニットが強化された！`);
             }
         }
         else if (unit.id === 22) { // キャル・エクレア「多重障壁」
