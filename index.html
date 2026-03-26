@@ -7522,7 +7522,7 @@ function editorNextStep() {
         const myAvg = squadPower / myCount;
         const enemyAvg = enemyPower / enemyCount;
 
-        const isSafe = myAvg >= enemyAvg;
+        const isSafe = squad.length === 5 && myAvg >= enemyAvg;
         const diff = Math.floor(myAvg - enemyAvg);
         const diffColor = isSafe ? 'var(--accent3)' : 'var(--accent2)';
         
@@ -7533,7 +7533,7 @@ function editorNextStep() {
                 <div>敵軍平均: <span style="color:var(--accent2);">${Math.floor(enemyAvg).toLocaleString()}</span></div>
             </div>
             <div style="text-align:center; font-size:0.75rem; color:${isSafe ? 'var(--text-mid)' : 'var(--accent2)'}; margin-top:0.3rem;">
-                ${isSafe ? '※平均戦力が上回っているため、テストプレイ開始時に即時クリア可能です。' : '※平均戦力が下回っているため、実戦での勝利が必要です。'}
+                ${isSafe ? '※5人編成かつ平均戦力が上回っているため、テストプレイ開始時に即時クリア可能です。' : '※5人編成ではないか平均戦力が下回っているため、実戦での勝利が必要です。'}
             </div>
         `;
 
@@ -8588,7 +8588,7 @@ async function publishStage() {
     const myAvg = squadPower / myCount;
     const enemyAvg = enemyPower / enemyCount;
 
-    if (!currentEditingStage.cleared && myAvg < enemyAvg) { showToast('クリアチェックが必要です（平均戦力不足）'); return; }
+    if (!currentEditingStage.cleared && (squad.length < 5 || myAvg < enemyAvg)) { showToast('クリアチェックが必要です'); return; }
 
     const name = document.getElementById('editorStageName').value.trim();
     const desc = document.getElementById('editorStageDesc').value.trim();
@@ -8826,7 +8826,7 @@ function startClearCheck() {
     const myAvg = squadPower / myCount;
     const enemyAvg = enemyPower / enemyCount;
 
-    if (myAvg >= enemyAvg) {
+    if (squad.length === 5 && myAvg >= enemyAvg) {
         currentEditingStage.cleared = true;
         showToast('平均戦力差によりクリアチェックをスキップしました');
         saveDraftStage();
