@@ -1376,8 +1376,8 @@
 
   .battle-team { display: flex; justify-content: center; gap: 1rem; position: relative; }
   .battle-unit {
-    width: 10rem;
-    height: 13.75rem;
+    width: 11rem;
+    aspect-ratio: 105 / 118;
     border: 1px solid var(--border);
     border-radius: 0.5rem;
     background: var(--bg-card);
@@ -1448,7 +1448,7 @@
     align-items: center;
     justify-content: center;
     background: linear-gradient(160deg, #0d1a2a, #070e18);
-    padding-bottom: 2.5rem; /* 情報エリアの分だけパディング */
+    padding-bottom: 2rem; /* 高さ調整に合わせてパディングも微調整 */
   }
   .b-unit-img img {
     width: 100%;
@@ -7581,6 +7581,8 @@ function openCustomCharCreator(charToEdit = null) {
         customCharData = {
             name: '',
             abilities: [],
+            element: 'none',
+            elementJp: '無',
             baseStats: { hp: 1000, atk: 86, def: 87, spd: 87 }, // HP Fixed, others total 260
             imageData: defaultImageData
         };
@@ -8266,10 +8268,11 @@ async function drawCustomChar() {
 
             const img = await loadImage(imgPath);
             
-            // cover, background 以外は 2.5倍
+            // 解像度維持のためスケーリング。パーツの縦横比を維持して描画。
             const scale = (part === 'back-ground' || part === 'cover') ? 1.0 : 2.5;
             const drawW = canvas.width * scale;
-            const drawH = canvas.height * scale;
+            const drawH = (drawW * img.height) / img.width; // 元の画像比率を維持
+
             // スケールさせた上で中央に配置
             const xPos = (canvas.width - drawW) / 2 + (CUSTOM_X_OFFSETS[part] || 0) + (partData.x || 0);
             const yPos = (canvas.height - drawH) / 2 + (CUSTOM_Y_OFFSETS[part] || 0) + (partData.y || 0);
