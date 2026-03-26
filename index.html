@@ -8017,8 +8017,8 @@ function createCustomCharacter() {
         name: name,
         baseStats: customCharData.baseStats,
         abilities: customCharData.abilities,
-        element: 'none',
-        elementJp: '無',
+        element: customCharData.element || 'none',
+        elementJp: customCharData.elementJp || '無',
         type: 'カスタム',
         useImg: true,
             img: imgDataUrl, // Use the generated data URL
@@ -8042,7 +8042,7 @@ function createCustomCharacter() {
 
 // 性別ごとのパーツ制限設定
 const CUSTOM_PART_CONFIG = {
-    W: { front: { min: 1, max: 8 }, back: { min: 1, max: 3 }, eyes: { min: 4, max: 6 } },
+    W: { front: { min: 1, max: 8 }, back: { min: 1, max: 6 }, eyes: { min: 4, max: 6 } },
     M: { front: { min: 1, max: 2 }, back: { min: 1, max: 1 }, eyes: { min: 2, max: 3 } }
 };
 
@@ -8074,6 +8074,7 @@ function initImageEditor() {
     const data = customCharData.imageData;
     const parts = {
         gender: { name: '性別', options: { 'W': '女性', 'M': '男性' } },
+        element: { name: '属性', options: { 'fire': '炎', 'water': '水', 'thunder': '雷', 'dark': '闇', 'light': '光' } },
         back: { name: '後ろ髪' },
         face: { name: '顔' },
         eyes: { name: '目', position: true },
@@ -8081,13 +8082,14 @@ function initImageEditor() {
     };
 
     let html = '';
+    // --- パーツ設定 ---
     for (const [part, config] of Object.entries(parts)) {
         html += `<div style="margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">`;
         html += `<label style="font-size:0.8rem; color:var(--text-mid);">${config.name}</label>`;
         if (config.options) { // 性別
             html += `<div style="display:flex; gap:0.5rem;">`;
             for (const [value, text] of Object.entries(config.options)) {
-                const isChecked = data.gender === value;
+                const isChecked = (part === 'gender' ? data.gender : customCharData.element) === value;
                 html += `<button class="sort-btn ${isChecked ? 'active' : ''}" onclick="updateImagePart('${part}', '${value}')">${text}</button>`;
             }
             html += `</div>`;
@@ -8119,11 +8121,33 @@ function initImageEditor() {
         html += `</div>`;
     }
 
+    // --- 追加図形設定 ---
+    if (!data.shape) data.shape = { type: 'none', color: '#ffb800', ratio: 1.0 };
+    html += `<div style="margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">`;
+    html += `<label style="font-size:0.8rem; color:var(--text-mid);">装飾図形</label>`;
+    html += `<div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">`;
+    [['none','なし'], ['rect','四角'], ['circle','円']].forEach(([v, t]) => {
+        html += `<button class="sort-btn ${data.shape.type === v ? 'active' : ''}" onclick="updateShapeProperty('type', '${v}')">${t}</button>`;
+    });
+    html += `</div>`;
+    if (data.shape.type !== 'none') {
+        html += `<div style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <label style="font-size:0.7rem;">図形の色: <input type="color" value="${data.shape.color}" oninput="updateShapeProperty('color', this.value)"></label>
+                    <label style="font-size:0.7rem;">縦横比: <input type="range" min="0.2" max="2.0" step="0.1" value="${data.shape.ratio}" oninput="updateShapeProperty('ratio', this.value)"></label>
+                 </div>`;
+    }
+    html += `</div>`;
+
     // back-ground, cover は選択肢にないが描画には必要
     if (!data['back-ground']) data['back-ground'] = { x: 0, y: 0 };
     if (!data['cover']) data['cover'] = { x: 0, y: 0 };
 
     controlsContainer.innerHTML = html;
+    drawCustomChar();
+}
+
+function updateShapeProperty(prop, value) {
+    customCharData.imageData.shape[prop] = (prop === 'ratio') ? parseFloat(value) : value;
     drawCustomChar();
 }
 
@@ -8152,6 +8176,9 @@ function updateImagePart(part, value) {
                 customCharData.imageData[p].id = cfg.min;
             }
         });
+    } else if (part === 'element') {
+        customCharData.element = value;
+        customCharData.elementJp = { fire:'炎', water:'水', thunder:'雷', dark:'闇', light:'光' }[value];
     }
     initImageEditor();
 }
@@ -8208,28 +8235,53 @@ async function drawCustomChar() {
             }
 
             const img = await loadImage(imgPath);
-            const xPos = (CUSTOM_X_OFFSETS[part] || 0) + (partData.x || 0);
-            const yPos = (CUSTOM_Y_OFFSETS[part] || 0) + (partData.y || 0);
+            
+            // cover, background 以外は 2.5倍
+            const scale = (part === 'back-ground' || part === 'cover') ? 1.0 : 2.5;
+            const drawW = canvas.width * scale;
+            const drawH = canvas.height * scale;
+            // スケールさせた上で中央に配置
+            const xPos = (canvas.width - drawW) / 2 + (CUSTOM_X_OFFSETS[part] || 0) + (partData.x || 0);
+            const yPos = (canvas.height - drawH) / 2 + (CUSTOM_Y_OFFSETS[part] || 0) + (partData.y || 0);
+
+            // 図形の描画（coverの直前）
+            if (part === 'cover' && data.shape && data.shape.type !== 'none') {
+                ctx.strokeStyle = data.shape.color;
+                ctx.lineWidth = 8;
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const baseSize = 280;
+                const rw = baseSize * data.shape.ratio;
+                const rh = baseSize;
+                
+                if (data.shape.type === 'rect') {
+                    ctx.strokeRect(cx - rw / 2, cy - rh / 2, rw, rh);
+                } else if (data.shape.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.ellipse(cx, cy, rw / 2, rh / 2, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
             
             if (['back', 'front', 'eyes'].includes(part) && partData.color) {
                 // 1. まず元のパーツをそのまま描画（元の枠線や影をそのまま活かす）
-                ctx.drawImage(img, xPos, yPos, canvas.width, canvas.height);
+                ctx.drawImage(img, xPos, yPos, drawW, drawH);
 
                 // 2. 色付け用のテンポラリキャンバスでシルエットを作成
                 const tCanvas = document.createElement('canvas');
                 tCanvas.width = canvas.width; tCanvas.height = canvas.height;
                 const tCtx = tCanvas.getContext('2d');
-                tCtx.drawImage(img, xPos, yPos, canvas.width, canvas.height);
+                tCtx.drawImage(img, xPos, yPos, drawW, drawH);
                 tCtx.globalCompositeOperation = 'source-in'; // 画像の形だけに限定
                 tCtx.fillStyle = partData.color;
                 tCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // 3. 'color' 合成モードで色味だけを適用（元の画像の輝度・ディテールを保護）
-                ctx.globalCompositeOperation = 'color';
+                // 3. 'hue' 合成モードで色相だけを適用（黒や白などの無彩色を保護）
+                ctx.globalCompositeOperation = 'hue';
                 ctx.drawImage(tCanvas, 0, 0);
                 ctx.globalCompositeOperation = 'source-over'; // 設定を戻す
             } else {
-                ctx.drawImage(img, xPos, yPos, canvas.width, canvas.height);
+                ctx.drawImage(img, xPos, yPos, drawW, drawH);
             }
         }
         imgDataUrl = canvas.toDataURL();
