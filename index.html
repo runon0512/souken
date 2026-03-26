@@ -9931,6 +9931,7 @@ async function runBattleSequence() {
         let advText = '';
         let damageType = 'damage';
         let isHeal = activeAbility?.effect?.type === 'heal';
+        let isNonDamaging = activeAbility && activeAbility.damageMult === undefined && (activeAbility.effect?.type === 'status' || activeAbility.effect?.type === 'heal' || activeAbility.effect?.type === 'damage_cut');
 
         if (activeAbility && activeAbility.name === '次元斬・空断') {
             const randomAdd = Math.floor(Math.random() * 201) - 100;
