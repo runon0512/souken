@@ -3255,13 +3255,6 @@
   .draft-status.cleared { background: var(--accent3); color: #000; font-weight: bold; }
   .draft-status.draft { background: var(--text-dim); color: #fff; }
 
-  /* SQUAD STAGE STYLES (ベースカラーを黄色に変更) */
-  .mission-card.is-squad-stage { border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
-  .mission-card.is-squad-stage:hover { border-color: #fff; background: rgba(255, 215, 0, 0.1); }
-  .mission-card.is-squad-stage .mission-title { color: var(--gold); }
-  .mission-card.is-squad-stage .cleared-check { color: var(--gold); }
-  .mission-card.is-squad-stage .mission-btn { border-color: var(--gold); color: var(--gold); background: rgba(255, 215, 0, 0.1); }
-
   /* VISUAL EDITOR STYLES */
   .editor-scene {
     flex: 1; display: flex; flex-direction: column; gap: 1rem;
@@ -3359,13 +3352,6 @@
           <div class="section-title">ステージ情報</div>
           <input type="text" id="editorStageName" class="post-input" placeholder="ステージ名 (必須)" maxlength="20">
           <textarea id="editorStageDesc" class="post-input" placeholder="ステージ概要 (100字以内)" maxlength="100" style="height:4rem; resize:none;"></textarea>
-          <div style="margin-top: 1rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-              <label id="squadPostLabel" style="display:flex; align-items:center; gap:0.5rem; color:var(--text-mid); cursor:pointer;">
-                  <input type="checkbox" id="cbIsSquadPost" onchange="toggleSquadPost(this.checked)">
-                  編成として投稿 (全員Lv.80 / 強化解除で対戦)
-              </label>
-              <p id="squadPostHint" style="font-size:0.7rem; color:var(--accent2); margin-top:0.25rem; display:none;">※プレイヤブルキャラクター以外が含まれているため選択できません</p>
-          </div>
       </div>
 
       <!-- STEP 3: CONFIRM & ACTIONS -->
@@ -4285,7 +4271,7 @@ const units = [
     baseStats: { hp: 1080, atk: 125, def: 70, spd: 85 }, // Attack
     abilityType: 'slash',
     abilities: [
-      { name: '気炎万丈', desc: '戦闘開始時、炎属性の味方と自分に強化を5ターン付与する。', timing: 'on_battle_start' },
+      { name: '気炎万丈', desc: '攻撃前、35%の確率で発動。自身に強化を3ターン付与する。', triggerRate: 0.35, timing: 'before_attack' },
       { name: '不屈の闘志', desc: '状態異常にならない。' }
     ],
     useImg: true, img: 'C31.svg'
@@ -7197,7 +7183,6 @@ function renderUserStageCard(stage) {
     let fieldEffectP = 'none';
     let fieldEffectE = 'none';
     let bgId = 'default';
-    let isSquadPost = false;
     try {
         const parsed = JSON.parse(stage.squadData);
         if (parsed.isCustom) {
@@ -7206,7 +7191,6 @@ function renderUserStageCard(stage) {
             fieldEffectP = parsed.fieldEffectPlayer || parsed.fieldEffect || 'none';
             fieldEffectE = parsed.fieldEffectEnemy || parsed.fieldEffect || 'none';
             bgId = parsed.bgId || 'default';
-            isSquadPost = !!parsed.isSquadPost;
         } else {
             squadData = parsed; // Legacy format (array)
         }
@@ -7232,8 +7216,6 @@ function renderUserStageCard(stage) {
     
     const commentCount = (stage.comments || []).length;
     
-    const squadBadge = isSquadPost ? `<span style="font-size:0.7rem; background:var(--gold); color:#000; padding:2px 4px; border-radius:3px; margin-left:0.5rem; font-family:'Orbitron'; font-weight:bold;">SQUAD</span>` : '';
-
     // Clearers List
     let clearersHtml = '';
     if (stage.clearers && stage.clearers.length > 0) {
@@ -7244,11 +7226,11 @@ function renderUserStageCard(stage) {
     }
 
     const card = document.createElement('div');
-    card.className = 'mission-card user-stage-list-item' + (isSquadPost ? ' is-squad-stage' : '');
+    card.className = 'mission-card user-stage-list-item';
     card.id = `user-stage-card-${stage.id}`;
     card.innerHTML = `
         <div class="user-stage-list-info">
-            <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}${squadBadge}</div>
+            <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
             <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
         </div>
         <div class="user-stage-meta-row">
@@ -7449,24 +7431,6 @@ function updateEditorUI() {
         btnPublish.disabled = true;
         btnPublish.style.opacity = 0.5;
     }
-    
-    // Check for playable only (編成として投稿のバリデーション)
-    const allPlayable = currentEditingStage.enemies.every(e => {
-        const u = e.isCustom ? e : units.find(x => x.id === e.id);
-        return isUnitPlayable(u);
-    });
-    
-    const cb = document.getElementById('cbIsSquadPost');
-    const hint = document.getElementById('squadPostHint');
-    if (allPlayable && currentEditingStage.enemies.length > 0) {
-        cb.disabled = false;
-        hint.style.display = 'none';
-    } else {
-        cb.checked = false;
-        currentEditingStage.isSquadPost = false;
-        cb.disabled = true;
-        hint.style.display = currentEditingStage.enemies.length > 0 ? 'block' : 'none';
-    }
 
     // Descriptions
     const feP = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectPlayer);
@@ -7497,13 +7461,12 @@ function updateEditorUI() {
         if (enemy) {
             const unit = enemy.isCustom ? enemy : units.find(u => u.id === enemy.id);
             const imgSrc = unit ? (unit.useImg ? unit.img : 'C0.svg') : '';
-            const displayLevel = currentEditingStage.isSquadPost ? 80 : enemy.level;
             slot.innerHTML = `
                 <div class="editor-remove-btn" onclick="removeEditorEnemy(${i}); event.stopPropagation();">✕</div>
                 <img src="${imgSrc}" class="editor-slot-img">
                 <div class="editor-slot-info">
                     <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${unit ? unit.name : '?'}</div>
-                    <div style="color:var(--accent); font-size:0.65rem;">Lv.${displayLevel}</div>
+                    <div style="color:var(--accent); font-size:0.65rem;">Lv.${enemy.level}</div>
                     ${enemy.equippedId ? '<div style="color:var(--gold); font-size:0.6rem;">🛡️装備有</div>' : ''}
                 </div>
             `;
@@ -7518,12 +7481,6 @@ function updateEditorUI() {
         }
         slotContainer.appendChild(slot);
     }
-}
-
-function toggleSquadPost(checked) {
-    currentEditingStage.isSquadPost = checked;
-    currentEditingStage.cleared = false;
-    updateEditorUI();
 }
 
 let editorCurrentStep = 1;
@@ -8513,15 +8470,7 @@ function openEnemySetting(idx) {
     
     document.getElementById('enemySettingImg').src = unit.useImg ? unit.img : 'C0.svg';
     document.getElementById('enemySettingName').textContent = unit.name;
-    
-    const levelInput = document.getElementById('enemySettingLevel');
-    if (currentEditingStage.isSquadPost) {
-        levelInput.disabled = true;
-        levelInput.value = 80;
-    } else {
-        levelInput.disabled = false;
-        levelInput.value = enemy.level;
-    }
+    document.getElementById('enemySettingLevel').value = enemy.level;
     
     // Aura UI
     const isBoss = enemy.aura === 15;
@@ -8655,8 +8604,7 @@ async function publishStage() {
         enemies: currentEditingStage.enemies,
         fieldEffectPlayer: currentEditingStage.fieldEffectPlayer,
         fieldEffectEnemy: currentEditingStage.fieldEffectEnemy,
-        bgId: currentEditingStage.bgId,
-        isSquadPost: !!currentEditingStage.isSquadPost
+        bgId: currentEditingStage.bgId
     };
 
     try {
@@ -8840,8 +8788,7 @@ async function startUserStageBattle(stageId) {
         rawStageId: stage.id,
         fieldEffectPlayer: fieldEffectP,
         fieldEffectEnemy: fieldEffectE,
-        bgId: bgId,
-        isSquadPost: isSquadPost
+        bgId: bgId
     };
 
     // Pass this mission directly to startBattle
@@ -8898,8 +8845,7 @@ function startClearCheck() {
         fieldEffectPlayer: currentEditingStage.fieldEffectPlayer,
         fieldEffectEnemy: currentEditingStage.fieldEffectEnemy,
         isTestPlay: true,
-        bgId: currentEditingStage.bgId,
-        isSquadPost: !!currentEditingStage.isSquadPost
+        bgId: currentEditingStage.bgId
     };
     
     // Save current editing state to temp storage or it's in global var
@@ -8950,8 +8896,7 @@ async function startBattle(missionId, skipDialogue = false) {
       const aura = state ? (state.aura || 0) : 0;
       const potential = state ? (state.potential || 0) : 0;
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-      const enhancement = mission.isSquadPost ? null : undefined;
-      const stats = calcStats(char.baseStats, level, equip, potential, enhancement); // squad投稿時は強化無効
+      const stats = calcStats(char.baseStats, level, equip, potential, undefined); // Use playerState enhancement
       
       // カスタムキャラと通常キャラのスキルを戦闘用フォーマットにマッピング
       const battleAbilities = (char.abilities || []).map(ab => {
@@ -9012,7 +8957,7 @@ async function startBattle(missionId, skipDialogue = false) {
               return { id: enemyConfig.id, name: 'Unknown', baseStats: dummyStats, stats: dummyStats, currentHp: 1, isPlayer: false, battleId: `e-unknown-${i}`, statusEffects: [] };
           }
           // Enemy Level Scaling
-          const level = mission.isSquadPost ? 80 : (enemyConfig.level || 1);
+          const level = enemyConfig.level || 1;
           
           // Calculate Enemy Aura based on level or config
           let aura = enemyConfig.aura || 0;
@@ -9022,7 +8967,7 @@ async function startBattle(missionId, skipDialogue = false) {
 
           // Enemy Equipment
           equip = enemyConfig.equipment || null;
-          const enhancement = mission.isSquadPost ? null : (enemyConfig.enhancement || null);
+          const enhancement = enemyConfig.enhancement || null;
           // Enemies don't use potential yet (or default 0)
           const stats = calcStats(enemy.baseStats, level, equip, 0, enhancement);
 
@@ -9495,13 +9440,7 @@ async function runBattleSequence() {
   await triggerOnBattleStartAbilities();
   if (battleState.isFinished) return;
 
-  // 速度が同じなら1/2で決めるロジックを追加
-  const turnQueue = [...battleState.playerUnits, ...battleState.enemyUnits].sort((a, b) => {
-      const spdA = getBattleStats(a).spd;
-      const spdB = getBattleStats(b).spd;
-      if (spdB !== spdA) return spdB - spdA;
-      return Math.random() - 0.5;
-  });
+  const turnQueue = [...battleState.playerUnits, ...battleState.enemyUnits].sort((a, b) => b.stats.spd - a.stats.spd);
   let turnCount = 1;
 
   while (!battleState.isFinished) {
@@ -9980,6 +9919,12 @@ async function runBattleSequence() {
         if (attacker.id === 10) damageMultiplier = 1.3;
         if (attacker.id === 13 && activeAbility.name === '圧縮の札') {
             attacker.isAdvantageForced = true;
+        }
+        // ナック・ビリアン (ID: 27) 気炎万丈
+        if (attacker.id === 27 && activeAbility.name === '気炎万丈') {
+             await addStatusEffect(attacker, 'strengthen', 3);
+             logBattleMessage(`${attacker.name}は気炎を上げ、強化された！`);
+             playEffect(attackerEl, 'heal');
         }
 
         if (attacker.id === 18 && activeAbility.name === '五色の魔法') {
@@ -11270,9 +11215,9 @@ async function triggerOnBattleStartAbilities() {
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
-        else if (unit.id === 15 || unit.id === 306 || unit.id === 26 || unit.id === 27) { // 属性攻撃強化系
-            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : (unit.id === 27 ? 'fire' : 'dark'));
-            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : (unit.id === 27 ? '気炎万丈' : '闇攻撃強化'));
+        else if (unit.id === 15 || unit.id === 306 || unit.id === 26) { // リディン(雷), シャール(闇), スルト(水) の属性攻撃強化
+            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : 'dark');
+            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : '闇攻撃強化');
             
             // 味方全体（自分含む）で、指定属性のキャラを対象にする
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
@@ -11284,8 +11229,7 @@ async function triggerOnBattleStartAbilities() {
                     const tEl = document.getElementById(`unit-${t.battleId}`);
                     playEffect(tEl, 'heal'); // バフエフェクトとしてhealを代用
                 }
-                const elemName = { fire: '炎', water: '水', thunder: '雷', dark: '闇', light: '光' }[targetElement];
-                logBattleMessage(`${skillName}！味方の${elemName}属性ユニットが強化された！`);
+                logBattleMessage(`${skillName}！味方の${targetElement === 'thunder' ? '雷' : '闇'}属性ユニットが強化された！`);
             }
         }
         else if (unit.id === 22) { // キャル・エクレア「多重障壁」
