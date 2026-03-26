@@ -7857,7 +7857,20 @@ function initSkillBuilder() {
 function initStatAllocator() {
     const container = document.getElementById('creatorStep2');
     const otherStats = ['atk', 'def', 'spd'];
-    let allocatorHtml = `<h4>2. ステータス割り振り (Lv.1時点)</h4>`;
+    let allocatorHtml = `<h4>2. 属性とステータス</h4>`;
+
+    // Element Section
+    allocatorHtml += `
+        <div style="margin-bottom:1rem; padding:0.75rem; background:rgba(0,0,0,0.2); border-radius:4px;">
+            <label class="modal-section-title" style="display:block; margin-bottom:0.5rem; border:0;">属性を選択</label>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">`;
+    const elements = { 'fire': '炎', 'water': '水', 'thunder': '雷', 'dark': '闇', 'light': '光', 'none': '無' };
+    for (const [val, text] of Object.entries(elements)) {
+        const isChecked = (customCharData.element || 'none') === val;
+        allocatorHtml += `<button class="sort-btn ${isChecked ? 'active' : ''}" style="flex:1; min-width:3rem;" onclick="updateImagePart('element', '${val}')">${text}</button>`;
+    }
+    allocatorHtml += `</div>
+        </div>`;
 
     // HP section
     allocatorHtml += `
@@ -7921,15 +7934,18 @@ function adjustStat(stat, amount) {
 }
 
 function updateStatDisplays() {
+    if (!document.getElementById('stat-hp-val')) return;
     document.getElementById('stat-hp-val').textContent = customCharData.baseStats.hp;
 
     let total = 0;
     const otherStats = ['atk', 'def', 'spd'];
     for (const stat of otherStats) {
-        document.getElementById(`stat-${stat}-val`).textContent = customCharData.baseStats[stat];
+        const el = document.getElementById(`stat-${stat}-val`);
+        if (el) el.textContent = customCharData.baseStats[stat];
         total += customCharData.baseStats[stat];
     }
-    document.getElementById('statRemainingDisplay').textContent = 260 - total;
+    const remEl = document.getElementById('statRemainingDisplay');
+    if (remEl) remEl.textContent = 260 - total;
 }
 
 function getCustomAbilityDescription(ability) {
@@ -8058,10 +8074,10 @@ const CUSTOM_X_OFFSETS = {
 
 const CUSTOM_Y_OFFSETS = {
     'back-ground': 0,
-    'back':        0,
-    'face':        0,
-    'eyes':        0,
-    'front':       0,
+    'back':        30,
+    'face':        30,
+    'eyes':        30,
+    'front':       30,
     'cover':       0
 };
 
@@ -8074,7 +8090,6 @@ function initImageEditor() {
     const data = customCharData.imageData;
     const parts = {
         gender: { name: '性別', options: { 'W': '女性', 'M': '男性' } },
-        element: { name: '属性', options: { 'fire': '炎', 'water': '水', 'thunder': '雷', 'dark': '闇', 'light': '光' } },
         back: { name: '後ろ髪' },
         face: { name: '顔' },
         eyes: { name: '目', position: true },
@@ -8089,7 +8104,7 @@ function initImageEditor() {
         if (config.options) { // 性別
             html += `<div style="display:flex; gap:0.5rem;">`;
             for (const [value, text] of Object.entries(config.options)) {
-                const isChecked = (part === 'gender' ? data.gender : customCharData.element) === value;
+                const isChecked = data.gender === value;
                 html += `<button class="sort-btn ${isChecked ? 'active' : ''}" onclick="updateImagePart('${part}', '${value}')">${text}</button>`;
             }
             html += `</div>`;
@@ -8122,7 +8137,7 @@ function initImageEditor() {
     }
 
     // --- 追加図形設定 ---
-    if (!data.shape) data.shape = { type: 'none', color: '#ffb800', ratio: 1.0 };
+    if (!data.shape) data.shape = { type: 'none', color: '#ffb800', ratio: 1.0, size: 280, x: 0, y: 0 };
     html += `<div style="margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">`;
     html += `<label style="font-size:0.8rem; color:var(--text-mid);">装飾図形</label>`;
     html += `<div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">`;
@@ -8132,8 +8147,12 @@ function initImageEditor() {
     html += `</div>`;
     if (data.shape.type !== 'none') {
         html += `<div style="display:flex; flex-direction:column; gap:0.5rem;">
-                    <label style="font-size:0.7rem;">図形の色: <input type="color" value="${data.shape.color}" oninput="updateShapeProperty('color', this.value)"></label>
-                    <label style="font-size:0.7rem;">縦横比: <input type="range" min="0.2" max="2.0" step="0.1" value="${data.shape.ratio}" oninput="updateShapeProperty('ratio', this.value)"></label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                        <label style="font-size:0.7rem;">色: <input type="color" value="${data.shape.color}" oninput="updateShapeProperty('color', this.value)" style="width:100%"></label>
+                        <label style="font-size:0.7rem;">サイズ: <input type="range" min="50" max="500" value="${data.shape.size || 280}" oninput="updateShapeProperty('size', this.value)"></label>
+                        <label style="font-size:0.7rem;">縦横比: <input type="range" min="0.2" max="2.0" step="0.1" value="${data.shape.ratio}" oninput="updateShapeProperty('ratio', this.value)"></label>
+                        <label style="font-size:0.7rem;">位置(X/Y): <div style="display:flex; gap:2px;"><input type="range" min="-200" max="200" value="${data.shape.x || 0}" oninput="updateShapeProperty('x', this.value)"><input type="range" min="-200" max="200" value="${data.shape.y || 0}" oninput="updateShapeProperty('y', this.value)"></div></label>
+                    </div>
                  </div>`;
     }
     html += `</div>`;
@@ -8147,7 +8166,7 @@ function initImageEditor() {
 }
 
 function updateShapeProperty(prop, value) {
-    customCharData.imageData.shape[prop] = (prop === 'ratio') ? parseFloat(value) : value;
+    customCharData.imageData.shape[prop] = (prop === 'color' || prop === 'type') ? value : parseFloat(value);
     drawCustomChar();
 }
 
@@ -8248,10 +8267,10 @@ async function drawCustomChar() {
             if (part === 'cover' && data.shape && data.shape.type !== 'none') {
                 ctx.strokeStyle = data.shape.color;
                 ctx.lineWidth = 8;
-                const cx = canvas.width / 2;
-                const cy = canvas.height / 2;
-                const baseSize = 280;
-                const rw = baseSize * data.shape.ratio;
+                const cx = canvas.width / 2 + (data.shape.x || 0);
+                const cy = canvas.height / 2 + (data.shape.y || 0);
+                const baseSize = data.shape.size || 280;
+                const rw = baseSize * (data.shape.ratio || 1.0);
                 const rh = baseSize;
                 
                 if (data.shape.type === 'rect') {
