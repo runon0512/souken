@@ -191,6 +191,41 @@
     overflow: hidden;
   }
 
+  /* ===== HOME & MENU SCREENS ===== */
+  .home-menu-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    padding-bottom: 5rem;
+  }
+  .menu-btn {
+    width: 30rem;
+    height: 7rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 0.5rem;
+    background: rgba(0, 200, 255, 0.05);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 15px var(--accent);
+  }
+  .menu-btn:hover {
+    background: rgba(0, 200, 255, 0.15);
+    box-shadow: 0 0 40px var(--accent);
+    transform: scale(1.05);
+  }
+
   /* ===== SIDEBAR ===== */
   aside {
     border-right: 1px solid var(--border);
@@ -502,6 +537,8 @@
     aspect-ratio: 105 / 118;
     display: block;
   }
+  .char-card[draggable="true"] { cursor: grab; }
+  .char-card.dragging { opacity: 0.4; transform: scale(0.95); }
 
   .char-card::before {
     content: '';
@@ -2760,6 +2797,31 @@
 </header>
 
 <main>
+  <!-- HOME PANEL -->
+  <div class="roster-panel" id="homePanel" style="display: none;">
+    <div class="home-menu-container">
+      <div class="logo" style="font-size: 4rem; margin-bottom: 2rem;">Souken<span>WoF</span></div>
+      <button class="menu-btn" onclick="setView('formation')">編成 / 強化</button>
+      <button class="menu-btn" style="border-color: var(--accent2); color: var(--accent2); text-shadow: 0 0 15px var(--accent2);" onclick="setView('battleMenu')">バトル</button>
+      <button class="menu-btn" style="border-color: var(--gold); color: var(--gold); text-shadow: 0 0 15px var(--gold);" onclick="setView('gacha')">ガチャ</button>
+      
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+         <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="setView('status')">状態異常図鑑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BATTLE MENU PANEL -->
+  <div class="roster-panel" id="battleMenuPanel" style="display: none;">
+    <div class="home-menu-container">
+      <div class="roster-title" style="font-size: 1.5rem; margin-bottom: 1rem;">作戦を選択してください</div>
+      <button class="menu-btn" onclick="setView('missions'); setStoryTab('main');">ストーリー</button>
+      <button class="menu-btn" style="border-color: var(--accent3); color: var(--accent3); text-shadow: 0 0 15px var(--accent3);" onclick="setView('missions'); setStoryTab('user');">ユーザーステージ</button>
+      <button class="menu-btn" style="border-color: var(--accent2); color: var(--accent2); text-shadow: 0 0 15px var(--accent2);" onclick="setView('missions'); setStoryTab('tower');">無限の塔</button>
+      <button class="filter-btn" style="width: 10rem; text-align: center; margin-top: 2rem;" onclick="setView('home')">戻る</button>
+    </div>
+  </div>
+
   <!-- SIDEBAR -->
   <aside>
     <div class="squad-section">
@@ -2784,6 +2846,7 @@
 
     <div class="filter-section">
       <div class="section-title">表示切替</div>
+      <button class="filter-btn" onclick="setView('home')" style="border-color: var(--accent2); color: var(--accent2);">🏠 ホームに戻る</button>
       <button class="filter-btn active" onclick="setView('roster')" id="view-roster">
         キャラクター一覧
       </button>
@@ -2871,6 +2934,9 @@
   <!-- ROSTER PANEL -->
   <div class="roster-panel" id="rosterPanel">
     <div class="roster-toolbar">
+      <button class="filter-btn" onclick="setView('home')" id="backFromRoster" style="width: auto; padding: 0.5rem 1rem; margin: 0; display:none;">
+        ← ホーム
+      </button>
       <div style="display:flex; align-items:center; gap:1rem;">
         <div class="roster-title">キャラクター一覧</div>
         <select class="sort-select" onchange="handleSort(this.value)">
@@ -2894,6 +2960,9 @@
   <!-- EQUIPMENT PANEL -->
   <div class="roster-panel" id="equipPanel" style="display: none;">
     <div class="roster-toolbar">
+      <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+        ← ホーム
+      </button>
       <div class="roster-title">所持装備一覧</div>
     </div>
     <div class="card-grid" id="equipGridDisplay" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));"></div>
@@ -2903,6 +2972,9 @@
   <div class="roster-panel" id="missionPanel" style="display: none;">
     <div class="roster-toolbar" style="align-items: center;">
       <div style="display:flex; align-items:center; gap:1rem;">
+        <button class="filter-btn" onclick="setView('battleMenu')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+          ← 戻る
+        </button>
         <div class="roster-title" id="missionViewTitle">ストーリー選択</div>
         <div id="storyCategoryTabs" style="display:none; gap:0.5rem;">
             <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.5rem 1rem; margin:0;">メイン</button> <!-- Kept for structure, but hidden -->
@@ -2923,6 +2995,9 @@
   <!-- GACHA PANEL -->
   <div class="roster-panel" id="gachaPanel" style="display: none;">
     <div class="roster-toolbar">
+      <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+        ← ホーム
+      </button>
       <div class="roster-title">ガチャ</div>
     </div>
     <div id="gachaContainer">
@@ -2933,6 +3008,9 @@
   <!-- STATUS PANEL -->
   <div class="roster-panel" id="statusPanel" style="display: none;">
     <div class="roster-toolbar">
+      <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+        ← ホーム
+      </button>
       <div class="roster-title">状態異常一覧</div>
     </div>
     <div id="statusGrid" class="equip-grid" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; max-height: none;">
@@ -5368,6 +5446,7 @@ async function runPreloader() {
 
 // ===== SQUAD DRAG & DROP =====
 let draggedSquadIndex = null;
+let draggedRosterCharId = null;
 
 function switchSquad(index) {
   if (index < 0 || index > 2) return;
@@ -5396,6 +5475,13 @@ function handleSquadDragStart(e, index) {
   setTimeout(() => e.target.classList.add('dragging'), 0);
 }
 
+function handleRosterDragStart(e, charId) {
+  draggedRosterCharId = charId;
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', charId);
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+
 function handleSquadDragEnd(e) {
   e.target.classList.remove('dragging');
   document.querySelectorAll('.squad-slot').forEach(el => el.classList.remove('drag-over'));
@@ -5403,13 +5489,13 @@ function handleSquadDragEnd(e) {
 }
 
 function handleSquadDragOver(e) {
-  if (draggedSquadIndex === null) return;
+  if (draggedSquadIndex === null && draggedRosterCharId === null) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
 }
 
 function handleSquadDragEnter(e) {
-  if (draggedSquadIndex === null) return;
+  if (draggedSquadIndex === null && draggedRosterCharId === null) return;
   e.preventDefault();
   e.currentTarget.classList.add('drag-over');
 }
@@ -5627,6 +5713,12 @@ function renderCards() {
     `;
     if (auraData) card.classList.add(auraClass);
     card.onclick = () => openModal(c.id);
+    
+    // Make roster cards draggable
+    card.setAttribute('draggable', isOwned ? 'true' : 'false');
+    card.ondragstart = (e) => handleRosterDragStart(e, c.id);
+    card.ondragend = (e) => { e.target.classList.remove('dragging'); draggedRosterCharId = null; };
+
     fragment.appendChild(card);
   });
   grid.appendChild(fragment);
@@ -5653,11 +5745,23 @@ function setView(view) {
   }
 
   currentView = view;
-  document.getElementById('rosterPanel').style.display = view === 'roster' ? 'block' : 'none';
+  
+  // Sidebar Visibility
+  const isFormationView = view === 'roster' || view === 'formation';
+  const isMenuView = view === 'home' || view === 'battleMenu';
+  
+  document.querySelector('aside').style.display = isFormationView ? 'block' : 'none';
+  document.querySelector('main').style.gridTemplateColumns = isFormationView ? '18rem 1fr' : '1fr';
+
+  // Panels Visibility
+  document.getElementById('homePanel').style.display = view === 'home' ? 'block' : 'none';
+  document.getElementById('battleMenuPanel').style.display = view === 'battleMenu' ? 'block' : 'none';
+  document.getElementById('rosterPanel').style.display = (view === 'roster' || view === 'formation') ? 'block' : 'none';
   document.getElementById('missionPanel').style.display = view === 'missions' ? 'block' : 'none';
   document.getElementById('equipPanel').style.display = view === 'equipment' ? 'block' : 'none';
   document.getElementById('gachaPanel').style.display = view === 'gacha' ? 'block' : 'none';
   document.getElementById('statusPanel').style.display = view === 'status' ? 'block' : 'none';
+  
   document.querySelectorAll('.filter-section button').forEach(b => b.classList.remove('active'));
   const viewBtn = document.getElementById('view-' + view);
   if(viewBtn) viewBtn.classList.add('active');
@@ -6051,11 +6155,15 @@ function formatAbilityDetails(ability) {
   // Get enhancement for display
   const equipEnhancement = isBattleContext && battleUnit ? battleUnit.enhancement : (equipId ? playerState.equipmentEnhancements?.[equipId] : null);
   const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
+  const enchantBtn = equip ? `<button class="level-btn" style="font-size:10px;padding:0.5rem 1rem; background:var(--accent2); border-color:var(--accent2);" onclick="event.stopPropagation(); openEnchantModal(${equip.id})">強化</button>` : '';
 
   equipDisplay.innerHTML = `
     <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer;">
       <div>${equip ? `<div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;"><div class="${equipAuraClass}" style="width:1.5em; height:1.5em; display:flex; align-items:center; justify-content:center; border-radius:4px; position:relative;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div> <span>${getEnhancedEquipName(equip, equipEnhancement)}</span> <span style="font-size:0.7em; color:var(--accent)">${equipEnhancement ? `(+${equipEnhancement.value}%)` : ''}</span></div><div style="font-size:10px;color:var(--text-mid); margin-top:4px;">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
-      <button class="level-btn" style="font-size:10px;padding:0.5rem 1rem">変更</button>
+      <div style="display:flex; gap:5px;">
+        <button class="level-btn" style="font-size:10px;padding:0.5rem 1rem">変更</button>
+        ${enchantBtn}
+      </div>
     </div>`;
 
   document.getElementById('modalAbilities').innerHTML = c.abilities.map(a =>
@@ -8076,10 +8184,10 @@ const CUSTOM_X_OFFSETS = {
 
 const CUSTOM_Y_OFFSETS = {
     'back-ground': 0,
-    'back':        60,
-    'face':        60,
-    'eyes':        60,
-    'front':       60,
+    'back':        40,
+    'face':        40,
+    'eyes':        40,
+    'front':       40,
     'cover':       0
 };
 
@@ -12484,7 +12592,7 @@ async function initializeGame() {
         saveGame();
     }
 
-    setView('roster');
+    setView('home');
     renderSquad();
     renderCards();    
     // Update UI sliders from loaded settings
