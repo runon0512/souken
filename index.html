@@ -4285,7 +4285,7 @@ const units = [
     baseStats: { hp: 1080, atk: 125, def: 70, spd: 85 }, // Attack
     abilityType: 'slash',
     abilities: [
-      { name: '気炎万丈', desc: '攻撃前、35%の確率で発動。自身に強化を3ターン付与する。', triggerRate: 0.35, timing: 'before_attack' },
+      { name: '気炎万丈', desc: '戦闘開始時、炎属性の味方と自分に強化を5ターン付与する。', timing: 'on_battle_start' },
       { name: '不屈の闘志', desc: '状態異常にならない。' }
     ],
     useImg: true, img: 'C31.svg'
@@ -9981,12 +9981,6 @@ async function runBattleSequence() {
         if (attacker.id === 13 && activeAbility.name === '圧縮の札') {
             attacker.isAdvantageForced = true;
         }
-        // ナック・ビリアン (ID: 27) 気炎万丈
-        if (attacker.id === 27 && activeAbility.name === '気炎万丈') {
-             await addStatusEffect(attacker, 'strengthen', 3);
-             logBattleMessage(`${attacker.name}は気炎を上げ、強化された！`);
-             playEffect(attackerEl, 'heal');
-        }
 
         if (attacker.id === 18 && activeAbility.name === '五色の魔法') {
             attacker.isAdvantageForced = true;
@@ -11276,9 +11270,9 @@ async function triggerOnBattleStartAbilities() {
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
-        else if (unit.id === 15 || unit.id === 306 || unit.id === 26) { // リディン(雷), シャール(闇), スルト(水) の属性攻撃強化
-            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : 'dark');
-            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : '闇攻撃強化');
+        else if (unit.id === 15 || unit.id === 306 || unit.id === 26 || unit.id === 27) { // 属性攻撃強化系
+            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : (unit.id === 27 ? 'fire' : 'dark'));
+            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : (unit.id === 27 ? '気炎万丈' : '闇攻撃強化'));
             
             // 味方全体（自分含む）で、指定属性のキャラを対象にする
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
@@ -11290,7 +11284,8 @@ async function triggerOnBattleStartAbilities() {
                     const tEl = document.getElementById(`unit-${t.battleId}`);
                     playEffect(tEl, 'heal'); // バフエフェクトとしてhealを代用
                 }
-                logBattleMessage(`${skillName}！味方の${targetElement === 'thunder' ? '雷' : '闇'}属性ユニットが強化された！`);
+                const elemName = { fire: '炎', water: '水', thunder: '雷', dark: '闇', light: '光' }[targetElement];
+                logBattleMessage(`${skillName}！味方の${elemName}属性ユニットが強化された！`);
             }
         }
         else if (unit.id === 22) { // キャル・エクレア「多重障壁」
