@@ -5516,7 +5516,8 @@ let draggedRosterCharId = null;
 
 function switchSquad(index) {
   if (index < 0 || index > 2) return;
-  if (index === playerState.currentSquadIndex) return;
+  // If already on the current squad, just re-render to update UI
+  // if (index === playerState.currentSquadIndex) return;
 
   // 1. Switch index and global squad reference
   playerState.currentSquadIndex = index;
@@ -5654,8 +5655,10 @@ function renderSquad() {
     const pot = playerState.characters[id] ? (playerState.characters[id].potential || 0) : 0;
     return s + (c ? getPower(c, playerState.characters[id].level, pot) : 0);
   }, 0);
-  document.getElementById('totalPower').textContent = total;
-  document.getElementById('hSquadPower').textContent = total;
+  const totalPowerEl = document.getElementById('totalPower');
+  if (totalPowerEl) totalPowerEl.textContent = total;
+  const hSquadPowerEl = document.getElementById('hSquadPower');
+  if (hSquadPowerEl) hSquadPowerEl.textContent = total;
 
   // Update name input if needed
   if (document.getElementById('squadNameInput')) document.getElementById('squadNameInput').value = playerState.squadNames[playerState.currentSquadIndex];
@@ -5816,20 +5819,27 @@ function setView(view) {
   currentView = view;
   
   // Sidebar Visibility
-  const isFormationView = view === 'roster';
-  const isMenuView = view === 'home' || view === 'battleMenu';
+  const isFormationView = view === 'roster'; // Only roster view shows the formation top area
   
-  document.getElementById('formationTopArea').style.display = isFormationView ? 'block' : 'none';
+  const formationTopAreaEl = document.getElementById('formationTopArea');
+  if (formationTopAreaEl) formationTopAreaEl.style.display = isFormationView ? 'block' : 'none';
   // main grid columns are now 1fr by default
 
   // Panels Visibility
-  document.getElementById('homePanel').style.display = view === 'home' ? 'block' : 'none';
-  document.getElementById('battleMenuPanel').style.display = view === 'battleMenu' ? 'block' : 'none';
-  document.getElementById('rosterPanel').style.display = view === 'roster' ? 'block' : 'none';
-  document.getElementById('missionPanel').style.display = view === 'missions' ? 'block' : 'none';
-  document.getElementById('equipPanel').style.display = view === 'equipment' ? 'block' : 'none';
-  document.getElementById('gachaPanel').style.display = view === 'gacha' ? 'block' : 'none';
-  document.getElementById('statusPanel').style.display = view === 'status' ? 'block' : 'none';
+  const homePanelEl = document.getElementById('homePanel');
+  if (homePanelEl) homePanelEl.style.display = view === 'home' ? 'block' : 'none';
+  const battleMenuPanelEl = document.getElementById('battleMenuPanel');
+  if (battleMenuPanelEl) battleMenuPanelEl.style.display = view === 'battleMenu' ? 'block' : 'none';
+  const rosterPanelEl = document.getElementById('rosterPanel');
+  if (rosterPanelEl) rosterPanelEl.style.display = view === 'roster' ? 'block' : 'none';
+  const missionPanelEl = document.getElementById('missionPanel');
+  if (missionPanelEl) missionPanelEl.style.display = view === 'missions' ? 'block' : 'none';
+  const equipPanelEl = document.getElementById('equipPanel');
+  if (equipPanelEl) equipPanelEl.style.display = view === 'equipment' ? 'block' : 'none';
+  const gachaPanelEl = document.getElementById('gachaPanel');
+  if (gachaPanelEl) gachaPanelEl.style.display = view === 'gacha' ? 'block' : 'none';
+  const statusPanelEl = document.getElementById('statusPanel');
+  if (statusPanelEl) statusPanelEl.style.display = view === 'status' ? 'block' : 'none';
   
   document.querySelectorAll('.filter-section button').forEach(b => b.classList.remove('active'));
   const viewBtn = document.getElementById('view-' + view);
@@ -6056,7 +6066,8 @@ function formatAbilityDetails(ability) {
   if (!c) return;
 
   const typeHtml = c.type ? `&nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.type}</span>` : '';
-  document.getElementById('modalName').textContent = c.name;
+  const modalNameEl = document.getElementById('modalName');
+  if (modalNameEl) modalNameEl.textContent = c.name;
   document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span>${typeHtml}`;
 
   const imgSrc = c.useImg ? c.img : 'C0.svg';
@@ -6106,10 +6117,12 @@ function formatAbilityDetails(ability) {
     const sliderMax = Math.max(level, affordableMaxLevel);
 
     // Power Calc
-    const powerVal = Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
-    document.getElementById('modalSubtitle').innerHTML += ` <span style="margin-left:10px; color:var(--accent); font-weight:bold;">PWR: ${powerVal}</span>`;
+    const powerVal = Math.floor(s.hp + s.atk * 2 + s.def + s.spd); // Calculate power
+    const modalSubtitleEl = document.getElementById('modalSubtitle');
+    if (modalSubtitleEl) modalSubtitleEl.innerHTML += ` <span style="margin-left:10px; color:var(--accent); font-weight:bold;">PWR: ${powerVal}</span>`;
 
     // Favorite Button State
+    const modalFavBtnEl = document.getElementById('modalFavBtn');
     const favBtn = document.getElementById('modalFavBtn');
     if (isBattleContext || !isOwned) {
       favBtn.style.display = 'none';
@@ -6119,9 +6132,11 @@ function formatAbilityDetails(ability) {
       favBtn.className = 'fav-btn' + (charState.isFavorite ? ' active' : '');
     }
 
-  document.getElementById('modalCurrentStatsTitle').textContent = isBattleContext ? '戦闘中ステータス' : (isOwned ? '現在のステータス' : '基礎ステータス (Lv.1)');
+  const modalCurrentStatsTitleEl = document.getElementById('modalCurrentStatsTitle');
+  if (modalCurrentStatsTitleEl) modalCurrentStatsTitleEl.textContent = isBattleContext ? '戦闘中ステータス' : (isOwned ? '現在のステータス' : '基礎ステータス (Lv.1)');
 
-  document.getElementById('modalStats').innerHTML = `
+  const modalStatsEl = document.getElementById('modalStats');
+  if (modalStatsEl) modalStatsEl.innerHTML = `
     <div class="mstat"><span class="mstat-label">HP</span><span class="mstat-val" style="color:#ff8080">${s.hp}</span></div>
     <div class="mstat"><span class="mstat-label">ATK</span><span class="mstat-val" style="color:var(--accent2)">${s.atk}</span></div>
     <div class="mstat"><span class="mstat-label">DEF</span><span class="mstat-val" style="color:var(--accent)">${s.def}</span></div>
@@ -6129,8 +6144,11 @@ function formatAbilityDetails(ability) {
   `;
 
   // Base Stats
-  document.getElementById('modalBaseStatsSection').style.display = (isOwned && !isBattleContext) ? 'block' : 'none';
-  document.getElementById('modalBaseStats').innerHTML = `
+  const modalBaseStatsSectionEl = document.getElementById('modalBaseStatsSection');
+  if (modalBaseStatsSectionEl) modalBaseStatsSectionEl.style.display = (isOwned && !isBattleContext) ? 'block' : 'none';
+  
+  const modalBaseStatsEl = document.getElementById('modalBaseStats');
+  if (modalBaseStatsEl) modalBaseStatsEl.innerHTML = `
     <div class="mstat"><span class="mstat-label">HP</span><span class="mstat-val" style="color:#ff8080">${c.baseStats.hp}</span></div>
     <div class="mstat"><span class="mstat-label">ATK</span><span class="mstat-val" style="color:var(--accent2)">${c.baseStats.atk}</span></div>
     <div class="mstat"><span class="mstat-label">DEF</span><span class="mstat-val" style="color:var(--accent)">${c.baseStats.def}</span></div>
@@ -6139,7 +6157,8 @@ function formatAbilityDetails(ability) {
 
   // Level Control
   const levelControl = document.querySelector('.level-control');
-  if (isOwned && !isBattleContext) {
+  // Ensure levelControl exists before trying to set its style
+  if (levelControl && isOwned && !isBattleContext) {
     levelControl.style.display = 'block';
     
     let sliderHtml = '';
@@ -6231,7 +6250,8 @@ function formatAbilityDetails(ability) {
   const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
   const enchantBtn = equip ? `<button class="level-btn" style="font-size:10px;padding:0.5rem 1rem; background:var(--accent2); border-color:var(--accent2);" onclick="event.stopPropagation(); openEnchantModal(${equip.id})">強化</button>` : '';
 
-  equipDisplay.innerHTML = `
+  // Ensure equipDisplay exists before setting innerHTML
+  if (equipDisplay) equipDisplay.innerHTML = `
     <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer;">
       <div>${equip ? `<div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;"><div class="${equipAuraClass}" style="width:1.5em; height:1.5em; display:flex; align-items:center; justify-content:center; border-radius:4px; position:relative;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div> <span>${getEnhancedEquipName(equip, equipEnhancement)}</span> <span style="font-size:0.7em; color:var(--accent)">${equipEnhancement ? `(+${equipEnhancement.value}%)` : ''}</span></div><div style="font-size:10px;color:var(--text-mid); margin-top:4px;">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
       <div style="display:flex; gap:5px;">
@@ -6240,7 +6260,8 @@ function formatAbilityDetails(ability) {
       </div>
     </div>`;
 
-  document.getElementById('modalAbilities').innerHTML = c.abilities.map(a =>
+  const modalAbilitiesEl = document.getElementById('modalAbilities');
+  if (modalAbilitiesEl) modalAbilitiesEl.innerHTML = c.abilities.map(a =>
     `<div class="ability-card">
       <div class="ability-card-name">◆ ${a.name}</div>
       <div class="ability-card-desc">${a.isCustom ? getCustomAbilityDescription(a) : a.desc}</div>
@@ -6853,9 +6874,11 @@ function renderStoryChapters() {
   const container = document.getElementById('missionGrid');
   const tabs = document.getElementById('storyCategoryTabs');
   const backBtn = document.getElementById('backToStoriesBtn');
-  const title = document.getElementById('missionViewTitle');
+  const missionViewTitleEl = document.getElementById('missionViewTitle');
 
-  title.textContent = '任務';
+  if (missionViewTitleEl) missionViewTitleEl.textContent = '任務';
+  // Ensure elements exist before trying to access their properties
+  if (!tabs || !backBtn || !container) return;
   tabs.style.display = 'flex';
   backBtn.style.display = 'none';
   container.innerHTML = ''; // Clear previous content
@@ -7488,10 +7511,12 @@ function handleEditorEnemyDrop(e, targetIndex) {
 function updateEditorUI() {
     const statusBadge = document.getElementById('editorStatusBadge'); // May not exist on step 1
     const btnPublish = document.getElementById('btnPublishStage');
+    const fieldDescPlayerEl = document.getElementById('fieldDescPlayer');
+    const fieldDescEnemyEl = document.getElementById('fieldDescEnemy');
+    const editorScenePreviewEl = document.getElementById('editorScenePreview');
     
     // Status Update
-    if (currentEditingStage.cleared) {
-        statusBadge.textContent = "クリア済 (公開可能)";
+    if (statusBadge && currentEditingStage.cleared) {
         statusBadge.className = "draft-status cleared";
         btnPublish.disabled = false;
         btnPublish.style.opacity = 1;
@@ -7503,15 +7528,15 @@ function updateEditorUI() {
     }
 
     // Descriptions
-    const feP = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectPlayer);
-    document.getElementById('fieldDescPlayer').textContent = feP ? feP.desc : '';
-    const feE = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectEnemy);
-    document.getElementById('fieldDescEnemy').textContent = feE ? feE.desc : '';
+    const feP = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectPlayer); // Always exists
+    if (fieldDescPlayerEl) fieldDescPlayerEl.textContent = feP ? feP.desc : '';
+    const feE = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectEnemy); // Always exists
+    if (fieldDescEnemyEl) fieldDescEnemyEl.textContent = feE ? feE.desc : '';
 
     // Update Visual Scene Background
     const bgData = STAGE_BACKGROUNDS.find(b => b.id === (currentEditingStage.bgId || 'default')) || STAGE_BACKGROUNDS[0];
-    document.getElementById('editorScenePreview').style.background = bgData.css;
-
+    if (editorScenePreviewEl) editorScenePreviewEl.style.background = bgData.css;
+    
     // Render Slots
     const slotContainer = document.getElementById('editorVisualSlots');
     slotContainer.innerHTML = '';
@@ -7596,7 +7621,8 @@ function editorNextStep() {
         const isSafe = squad.length === 5 && squadPower >= enemyPower && myAvg >= enemyAvg;
         const diff = Math.floor(myAvg - enemyAvg);
         const diffColor = isSafe ? 'var(--accent3)' : 'var(--accent2)';
-        
+
+        const confirmPowerInfoEl = document.getElementById('confirmPowerInfo');
         document.getElementById('confirmPowerInfo').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; font-family:'Orbitron'; font-size:0.9rem;">
                 <div>自軍平均: <span style="color:var(--accent);">${Math.floor(myAvg).toLocaleString()}</span></div>
@@ -7608,8 +7634,10 @@ function editorNextStep() {
             </div>
         `;
 
-        document.getElementById('editorNextBtn').style.display = 'none';
-        document.getElementById('btnPublishStage').style.display = 'block';
+        const editorNextBtnEl = document.getElementById('editorNextBtn');
+        if (editorNextBtnEl) editorNextBtnEl.style.display = 'none';
+        const btnPublishStageEl = document.getElementById('btnPublishStage');
+        if (btnPublishStageEl) btnPublishStageEl.style.display = 'block';
         
         editorCurrentStep = 3;
     }
@@ -8130,10 +8158,12 @@ function adjustStat(stat, amount) {
 }
 
 function updateStatDisplays() {
-    if (!document.getElementById('stat-hp-val')) return;
-    document.getElementById('stat-hp-val').textContent = customCharData.baseStats.hp;
+    const statHpValEl = document.getElementById('stat-hp-val');
+    if (statHpValEl) statHpValEl.textContent = customCharData.baseStats.hp;
+    else return; // If HP stat element doesn't exist, other stat elements likely don't either.
 
     let total = 0;
+    // Ensure elements exist before trying to set their textContent
     const otherStats = ['atk', 'def', 'spd'];
     for (const stat of otherStats) {
         const el = document.getElementById(`stat-${stat}-val`);
@@ -8540,9 +8570,12 @@ function openEnemySetting(idx) {
     if (!unit && enemy.isCustom) unit = enemy;
     
     document.getElementById('enemySettingImg').src = unit.useImg ? unit.img : 'C0.svg';
-    document.getElementById('enemySettingName').textContent = unit.name;
-    document.getElementById('enemySettingLevel').value = enemy.level;
-    
+    const enemySettingNameEl = document.getElementById('enemySettingName');
+    if (enemySettingNameEl) enemySettingNameEl.textContent = unit.name;
+    const enemySettingLevelEl = document.getElementById('enemySettingLevel');
+    if (enemySettingLevelEl) enemySettingLevelEl.value = enemy.level;
+
+
     // Aura UI
     const isBoss = enemy.aura === 15;
     const radios = document.getElementsByName('enemyAuraType');
@@ -8561,7 +8594,8 @@ function toggleEnemyAuraSetting() {
 
 function updateEditorEquipDisplay() {
     const display = document.getElementById('enemySettingEquipDisplay');
-    const equipId = tempEditingEnemy.equippedId;
+    if (!display) return; // Ensure display element exists
+    const equipId = tempEditingEnemy ? tempEditingEnemy.equippedId : null;
     if (equipId) {
         const item = equipmentItems.find(e => e.id === equipId);
         display.innerHTML = `<div style="font-size:1.2rem;">${item.icon}</div><div>${item.name}</div>`;
@@ -8592,7 +8626,8 @@ function selectEditorEquip(id) {
 function closeEnemySetting() { document.getElementById('enemySettingOverlay').classList.remove('open'); }
 function applyEnemySetting() {
     if (editingEnemyIndex < 0) return;
-    const enemy = currentEditingStage.enemies[editingEnemyIndex];
+    const enemy = currentEditingStage.enemies[editingEnemyIndex]; // This should exist if editingEnemyIndex is valid
+    if (!enemy) return;
     enemy.level = parseInt(document.getElementById('enemySettingLevel').value) || 1;
     
     // Apply Aura
@@ -8950,7 +8985,8 @@ async function startBattle(missionId, skipDialogue = false) {
 
   playBgm('battle');
 
-  // Set speed from settings
+  const battleTitleEl = document.getElementById('battleTitle');
+  if (battleTitleEl) battleTitleEl.textContent = mission.name;
   setBattleSpeed(settings.battleSpeed || 2);
 
   battleState = {
@@ -9066,10 +9102,13 @@ async function startBattle(missionId, skipDialogue = false) {
   };
   battleState.isStarted = false;
 
-  document.getElementById('battleTitle').textContent = mission.name;
+  if (battleTitleEl) battleTitleEl.textContent = mission.name;
   renderBattleUnits();
   logBattleMessage(`<span class="info">戦闘準備完了...</span>`);
   
+  const battleActionBtnEl = document.getElementById('battleActionBtn');
+  const retireBattleBtnEl = document.getElementById('retireBattleBtn');
+  const closeBattleBtnEl = document.getElementById('closeBattleBtn');
   // Log Field Effect
   if (battleState.fieldEffectPlayer !== 'none') {
       const fe = FIELD_EFFECTS.find(f => f.id === battleState.fieldEffectPlayer);
@@ -9086,11 +9125,13 @@ async function startBattle(missionId, skipDialogue = false) {
       }
   }
 
-  document.getElementById('battleActionBtn').disabled = false;
-  document.getElementById('battleActionBtn').textContent = '戦闘開始';
-  document.getElementById('retireBattleBtn').disabled = false;
-  document.getElementById('closeBattleBtn').disabled = true;
-  document.getElementById('closeBattleBtn').disabled = false;
+  if (battleActionBtnEl) {
+    battleActionBtnEl.disabled = false;
+    battleActionBtnEl.textContent = '戦闘開始';
+  }
+  if (retireBattleBtnEl) retireBattleBtnEl.disabled = false;
+  if (closeBattleBtnEl) closeBattleBtnEl.disabled = false;
+
 
   // Apply Background
   const bgData = STAGE_BACKGROUNDS.find(b => b.id === battleState.bgId) || STAGE_BACKGROUNDS[0];
@@ -9240,10 +9281,13 @@ function retireBattle() {
   if (battleState.isFinished) return;
   if (confirm('戦闘をリタイアしますか？')) {
     battleState.isFinished = true; // Stop the battle loop
-    logBattleMessage(`<span class="info">戦闘をリタイアしました。</span>`);
-    document.getElementById('battleActionBtn').disabled = true;
-    document.getElementById('retireBattleBtn').disabled = true;
-    document.getElementById('closeBattleBtn').disabled = false;
+    logBattleMessage(`<span class="info">戦闘をリタイアしました。</span>`); // This is fine
+    const battleActionBtnEl = document.getElementById('battleActionBtn');
+    if (battleActionBtnEl) battleActionBtnEl.disabled = true;
+    const retireBattleBtnEl = document.getElementById('retireBattleBtn');
+    if (retireBattleBtnEl) retireBattleBtnEl.disabled = true;
+    const closeBattleBtnEl = document.getElementById('closeBattleBtn');
+    if (closeBattleBtnEl) closeBattleBtnEl.disabled = false;
     
     // Remove active turn highlights
     document.querySelectorAll('.battle-unit.is-turn-active').forEach(el => el.classList.remove('is-turn-active'));
@@ -9480,9 +9524,12 @@ async function runBattleSequence() {
   battleState.isStarted = true;
   renderBattleUnits();
 
-  document.getElementById('battleActionBtn').disabled = true;
-  document.getElementById('retireBattleBtn').disabled = false; // Enable surrender
-  document.getElementById('closeBattleBtn').disabled = true;
+  const battleActionBtnEl = document.getElementById('battleActionBtn');
+  if (battleActionBtnEl) battleActionBtnEl.disabled = true;
+  const retireBattleBtnEl = document.getElementById('retireBattleBtn');
+  if (retireBattleBtnEl) retireBattleBtnEl.disabled = false; // Enable surrender
+  const closeBattleBtnEl = document.getElementById('closeBattleBtn');
+  if (closeBattleBtnEl) closeBattleBtnEl.disabled = true;
   logBattleMessage(`<span class="info">戦闘開始！</span>`);
 
   // Record Character Usage (Conditions: User Stage, Tower 100+, Story 5+)
@@ -9534,12 +9581,14 @@ async function runBattleSequence() {
         const msg = isUserStage ? "30ターン経過。タイムオーバー（敗北）" : "30ターン経過。引き分け";
         const color = isUserStage ? "var(--accent2)" : "var(--text-mid)";
         logBattleMessage(`<span class="info" style="color:${color}">${msg}</span>`);
-        
-        document.getElementById('battleActionBtn').textContent = '閉じる';
-        document.getElementById('retireBattleBtn').disabled = true;
-        document.getElementById('battleActionBtn').disabled = false;
-        document.getElementById('battleActionBtn').onclick = closeBattle;
-        document.getElementById('closeBattleBtn').disabled = false;
+
+        const battleActionBtnEl = document.getElementById('battleActionBtn');
+        if (battleActionBtnEl) battleActionBtnEl.textContent = '閉じる';
+        const retireBattleBtnEl = document.getElementById('retireBattleBtn');
+        if (retireBattleBtnEl) retireBattleBtnEl.disabled = true;
+        if (battleActionBtnEl) battleActionBtnEl.disabled = false;
+        if (battleActionBtnEl) battleActionBtnEl.onclick = closeBattle;
+        if (closeBattleBtnEl) closeBattleBtnEl.disabled = false;
         
         break;
     }
@@ -10846,10 +10895,12 @@ function checkWinLoss() {
         battleState.isFinished = true;
         isGameOver = true;
         logBattleMessage(`<span class="info">敗北...</span>`);
-        document.getElementById('battleActionBtn').textContent = '閉じる';
-        document.getElementById('retireBattleBtn').disabled = true;
-        document.getElementById('battleActionBtn').disabled = false;
-        document.getElementById('battleActionBtn').onclick = closeBattle;
+        const battleActionBtnEl = document.getElementById('battleActionBtn');
+        if (battleActionBtnEl) battleActionBtnEl.textContent = '閉じる';
+        const retireBattleBtnEl = document.getElementById('retireBattleBtn');
+        if (retireBattleBtnEl) retireBattleBtnEl.disabled = true;
+        if (battleActionBtnEl) battleActionBtnEl.disabled = false;
+        if (battleActionBtnEl) battleActionBtnEl.onclick = closeBattle;
     }
 
     if (isGameOver && livingPlayers === 0) document.getElementById('closeBattleBtn').disabled = false;
@@ -10870,7 +10921,8 @@ async function showCutIn(unit, abilityName) {
   const overlay = document.getElementById('cutinOverlay');
   const charWrap = document.getElementById('cutinChar');
   const text = document.getElementById('cutinText');
-
+  // Ensure elements exist before trying to access their properties
+  if (!overlay || !charWrap || !text) return;
   const imgSrc = unit.useImg ? unit.img : 'C0.svg';
   charWrap.innerHTML = `<img src="${imgSrc}" style="height:100%;width:auto;filter:drop-shadow(0 0 20px var(--accent))">`;
   
@@ -11144,7 +11196,8 @@ function calculateDamage(attacker, defender) {
 function updateUnitUI(unit) {
   const unitEl = document.getElementById(`unit-${unit.battleId}`);
   if (!unitEl) return;
-  const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100);
+  const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100); // Always calculate
+  // Ensure elements exist before trying to set their properties
   unitEl.querySelector('.b-unit-hp-bar').style.width = `${hpPercent}%`;
   unitEl.querySelector('.b-unit-hp-text').textContent = `${unit.currentHp} / ${unit.stats.hp}`;
 
@@ -11480,7 +11533,8 @@ function closeBattle() {
   document.getElementById('battleOverlay').classList.remove('open');
   playBgm('home');
   document.querySelector('.battle-container').style.background = 'var(--bg-mid)'; // Reset bg
-  // Reset button for next battle
+  // Reset buttons for next battle
+  // Ensure elements exist before trying to access their properties
   document.getElementById('retireBattleBtn').disabled = true;
   document.getElementById('battleActionBtn').onclick = runBattleSequence;
   const chapterIndex = storyChapters.findIndex(c => c.missions.some(m => m.id === battleState.mission.id));
@@ -11507,7 +11561,8 @@ async function triggerLoginBonus() {
     const overlay = document.getElementById('loginBonusOverlay');
     const resultDiv = document.querySelector('#rouletteResult div');
     const receiveBtn = overlay.querySelector('.modal-add-btn');
-
+    // Ensure elements exist before trying to access their properties
+    if (!overlay || !resultDiv || !receiveBtn) return;
     // 1. モーダルを開き、アニメーションの準備をします
     resultDiv.textContent = `💎 0`;
     receiveBtn.disabled = true;
@@ -11590,7 +11645,8 @@ function openEnchantModal(itemId) {
     const footer = document.getElementById('enchantFooter');
     const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
     const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
-    const rankColors = {'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
+    const rankColors = {'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'}; // Always exists
+    if (!body || !footer) return; // Ensure elements exist
 
     let currentHtml = '<div style="color: var(--text-dim);">付与効果なし</div>';
     let currentAuraClass = '';
@@ -11629,7 +11685,8 @@ async function performEnchant(itemId) {
     
     // Animation
     playSfx('magic');
-    const flash = document.getElementById('enchantFlash');
+    const flash = document.getElementById('enchantFlash'); // Always exists
+    if (!flash) return; // Ensure flash element exists
     const icon = document.getElementById('enchantTargetIcon');
     
     flash.style.animation = 'none';
@@ -11643,7 +11700,8 @@ async function performEnchant(itemId) {
 
     tempEnchantResult = getEnchantment();
     const resultArea = document.getElementById('enchantResultArea');
-    const footer = document.getElementById('enchantFooter');
+    const footerEl = document.getElementById('enchantFooter');
+    if (!resultArea || !footerEl) return; // Ensure elements exist
     const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
     const rankColors = {'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
     const color = rankColors[tempEnchantResult.rank];
@@ -11662,7 +11720,7 @@ async function performEnchant(itemId) {
         </div>
       </div>`;
       
-    footer.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="closeEnchantModalDirect()">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
+    footerEl.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="closeEnchantModalDirect()">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
     saveGame();
 }
 
@@ -11680,7 +11738,8 @@ async function startGachaAnimation() {
   const container = document.getElementById('gachaAnimContainer');
   const skipBtn = document.getElementById('skipGachaAnimationBtn');
   const bg = document.querySelector('.gacha-anim-bg');
-
+  // Ensure elements exist before trying to access their properties
+  if (!overlay || !container || !skipBtn || !bg) return;
   container.innerHTML = '';
   skipBtn.style.display = 'block';
   bg.style.display = 'block';
@@ -11717,7 +11776,8 @@ function skipGachaAnimation() {
 
 function finishGachaAnimation() {
   if (!currentGachaResults) return;
-  const overlay = document.getElementById('gachaAnimationOverlay');
+  const overlay = document.getElementById('gachaAnimationOverlay'); // Always exists
+  if (!overlay) return; // Ensure overlay element exists
   if (overlay.classList.contains('open')) {
       document.getElementById('gachaAnimationOverlay').classList.remove('open');
       openGachaResultModal(currentGachaResults);
@@ -11730,7 +11790,8 @@ function finishGachaAnimation() {
 // ===== GACHA =====
 function renderGachaPanel() {
   const container = document.getElementById('gachaContainer');
-  const canAfford1 = playerState.rainbowStones >= 10000;
+  if (!container) return; // Ensure container exists
+  const canAfford1 = playerState.rainbowStones >= 10000; // Always exists
   const canAfford10 = playerState.rainbowStones >= 90000;
 
   container.innerHTML = `
@@ -11900,6 +11961,7 @@ function copySquadCode() {
 function viewSquadFromCode() {
   const code = document.getElementById('squadCodeTextarea').value.trim();
   const resultContainer = document.getElementById('squadViewerResult');
+  if (!resultContainer) return; // Ensure resultContainer exists
   resultContainer.innerHTML = '';
   if (!code) {
     showToast('コードを入力してください。');
@@ -12897,7 +12959,8 @@ async function initializeGame() {
         document.getElementById('skipTutorialCheck').checked = settings.skipTutorial || false;
     }
     
-    // Set initial card size
+    // Set initial card size. Ensure select element exists.
+    const sizeSelectEl = document.getElementById('sizeSelect');
     const initialSize = settings.cardSize || 'large';
     setCardSize(initialSize);
     if (document.getElementById('sizeSelect')) {
@@ -12923,7 +12986,7 @@ async function initializeGame() {
     if (playerState.playerName === "名無しの剣士") {
         openNameEntryModal(true);
     } else {
-        // 設定画面の表示更新
+        // 設定画面の表示更新. Ensure settingPlayerNameDisplay exists.
         const settingDisplay = document.getElementById('settingPlayerNameDisplay');
         if(settingDisplay) settingDisplay.textContent = playerState.playerName;
     }
