@@ -499,7 +499,7 @@
     transition: all 0.25s;
     position: relative;
     /* アスペクト比 65:90 */
-    aspect-ratio: 65 / 90;
+    aspect-ratio: 105 / 118;
     display: block;
   }
 
@@ -3343,7 +3343,7 @@
         <input type="text" id="customCharNameInput" class="post-input" placeholder="キャラクター名 (必須)" maxlength="15">
         <div class="image-editor-layout" style="margin-top: 1rem;">
           <div class="image-editor-preview">
-            <canvas id="customCharCanvas" width="260" height="360"></canvas>
+            <canvas id="customCharCanvas" width="315" height="354"></canvas>
           </div>
           <div class="image-editor-controls" id="imageEditorControls">
             <!-- Controls will be injected by JS -->
@@ -8074,10 +8074,10 @@ const CUSTOM_X_OFFSETS = {
 
 const CUSTOM_Y_OFFSETS = {
     'back-ground': 0,
-    'back':        0,
-    'face':        0,
-    'eyes':        0,
-    'front':       0,
+    'back':        -60,
+    'face':        -60,
+    'eyes':        -60,
+    'front':       -60,
     'cover':       0
 };
 
