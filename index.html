@@ -2959,7 +2959,7 @@
   <div class="roster-panel" id="missionPanel" style="display: none;">
     <div class="roster-toolbar" style="align-items: center;">
       <div style="display:flex; align-items:center; gap:1rem; flex-wrap: wrap;"> 
-        <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+        <button class="filter-btn" onclick="setView('battleMenu')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
           ← 戻る
         </button>
         <div id="missionSquadSwitcher" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border);">
@@ -2970,6 +2970,7 @@
            <span id="battleSquadNameDisplay" style="font-size:0.8rem; color:var(--gold); margin-left:0.5rem; font-weight:bold;"></span>
         </div>
         <div class="header-divider"></div>
+        <div class="roster-title" id="missionViewTitle">任務選択</div>
         <div id="storyCategoryTabs" style="display:none; gap:0.5rem; flex:1;">
             <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.5rem 1rem; margin:0;">メイン</button>
             <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.5rem 1rem; margin:0;">イベント</button>
@@ -3077,6 +3078,9 @@
         <div style="display:flex; gap:0.5rem; align-items:center;">
           <div id="settingPlayerNameDisplay" style="flex:1; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--text-main); padding:8px; font-size:1rem; border-radius:4px;">名無しの剣士</div>
           <button class="filter-btn" onclick="openNameEntryModal()">名前変更</button>
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dim);">
+          プレイヤーID: <span id="settingPlayerIdDisplay" style="color: var(--text-mid);"></span>
         </div>
         <div style="margin-top: 1rem;">
           <label style="display:flex; align-items:center; gap:0.5rem; font-size: 1rem; color:var(--text-mid); cursor:pointer;">
