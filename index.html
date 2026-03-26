@@ -9288,12 +9288,11 @@ async function runBattleSequence() {
 
         // --- STATUS EFFECT HANDLING (START OF TURN) ---
         const effectsCopy = [...attacker.statusEffects]; // Iterate over a copy
-        for (const effect of effectsCopy) {
-            if (!effect || !canAct) continue; // 瘴気で死んだら処理しない
-            switch (effect.type) {
-                case 'burn': // Fallthrough
-                case 'poison':
-                case 'drown':
+        if (attacker.currentHp > 0) {
+            // 1. 継続ダメージ (DoT) の処理: 行動不能に関わらず発生
+            for (const effect of effectsCopy) {
+                if (!effect) continue;
+                if (['burn', 'poison', 'drown'].includes(effect.type)) {
                     const effectInfo = STATUS_EFFECTS[effect.type];
                     const dotDamage = Math.floor(attacker.stats.hp / 8);
                     attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
@@ -9305,22 +9304,26 @@ async function runBattleSequence() {
                         attackerElForDot.classList.add('is-taking-damage');
                         setTimeout(() => attackerElForDot.classList.remove('is-taking-damage'), 400);
                     }
-                    break;
-                case 'paralysis':
-                case 'blind':
-                    if (Math.random() < 0.3) {
-                        const effectName = effect.type === 'paralysis' ? '麻痺' : '盲目';
+                    if (attacker.currentHp <= 0) break;
+                }
+            }
+            
+            // 2. 行動制限系の処理: 生存している場合のみ
+            if (attacker.currentHp > 0 && canAct) {
+                for (const effect of effectsCopy) {
+                    if (!effect || !canAct) continue;
+                    if (['paralysis', 'blind'].includes(effect.type)) {
+                        if (Math.random() < 0.3) {
+                            const effectName = effect.type === 'paralysis' ? '麻痺' : '盲目';
+                            logBattleMessage(`${attacker.name}は<span class="info">${effectName}</span>で動けない！`);
+                            canAct = false;
+                        }
+                    } else if (['sleep', 'freeze', 'flinch'].includes(effect.type)) {
+                        const effectName = effect.type === 'sleep' ? '睡眠' : (effect.type === 'freeze' ? '凍結' : '怯み');
                         logBattleMessage(`${attacker.name}は<span class="info">${effectName}</span>で動けない！`);
                         canAct = false;
                     }
-                    break;
-                case 'sleep':
-                case 'freeze':
-                case 'flinch':
-                    const effectName = effect.type === 'sleep' ? '睡眠' : (effect.type === 'freeze' ? '凍結' : '怯み');
-                    logBattleMessage(`${attacker.name}は<span class="info">${effectName}</span>で動けない！`);
-                    canAct = false;
-                    break;
+                }
             }
         }
 
