@@ -8074,10 +8074,10 @@ const CUSTOM_X_OFFSETS = {
 
 const CUSTOM_Y_OFFSETS = {
     'back-ground': 0,
-    'back':        30,
-    'face':        30,
-    'eyes':        30,
-    'front':       30,
+    'back':        60,
+    'face':        60,
+    'eyes':        60,
+    'front':       60,
     'cover':       0
 };
 
@@ -8137,7 +8137,14 @@ function initImageEditor() {
     }
 
     // --- 追加図形設定 ---
-    if (!data.shape) data.shape = { type: 'none', color: '#ffb800', ratio: 1.0, size: 280, x: 0, y: 0 };
+    if (!data.shape) data.shape = {};
+    if (data.shape.type === undefined) data.shape.type = 'none';
+    if (data.shape.color === undefined) data.shape.color = '#ffb800';
+    if (data.shape.ratio === undefined) data.shape.ratio = 1.0;
+    if (data.shape.size === undefined) data.shape.size = 280;
+    if (data.shape.x === undefined) data.shape.x = 0;
+    if (data.shape.y === undefined) data.shape.y = 0;
+
     html += `<div style="margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">`;
     html += `<label style="font-size:0.8rem; color:var(--text-mid);">装飾図形</label>`;
     html += `<div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">`;
@@ -8168,6 +8175,7 @@ function initImageEditor() {
 function updateShapeProperty(prop, value) {
     customCharData.imageData.shape[prop] = (prop === 'color' || prop === 'type') ? value : parseFloat(value);
     drawCustomChar();
+    initImageEditor(); // UIの状態（ボタンのactiveクラスやスライダーの表示・非表示）を更新
 }
 
 function updateEyePosition(axis, value) {
