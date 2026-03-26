@@ -9936,7 +9936,7 @@ async function runBattleSequence() {
             const randomAdd = Math.floor(Math.random() * 201) - 100;
             damage = Math.max(1, getBattleStats(attacker).atk + randomAdd);
             // 無属性攻撃なのでadvTextは空のまま
-        } else if (!isHeal) {
+        } else if (!isNonDamaging) {
             damage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
             // 属性相性エフェクト
             const advantage = getElementalMultiplier(attacker.element, target.element);
@@ -9951,7 +9951,7 @@ async function runBattleSequence() {
         }
 
         // Apply Damage to Target
-        let actualDamage = isHeal ? 0 : damage;
+        let actualDamage = isNonDamaging ? 0 : damage;
         
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0 && (!activeAbility || !activeAbility.ignoresDefenseSkills)) {
@@ -10514,7 +10514,12 @@ async function runBattleSequence() {
               if (chaseAbility.name === '毒突き') chaseMult = 0.5;
               if (chaseAbility.name === '雷撃斬') chaseMult = 0.5;
 
-              const chaseDamage = Math.floor(calculateDamage(attacker, target) * (chaseAbility.damageMult || chaseMult));
+              let chaseDamage = 0;
+              if (chaseAbility.damageMult !== undefined) {
+                  chaseDamage = Math.floor(calculateDamage(attacker, target) * chaseAbility.damageMult);
+              } else {
+                  chaseDamage = Math.floor(calculateDamage(attacker, target) * chaseMult);
+              }
               let actualChaseDamage = chaseDamage;
 
               // 追撃に対する防御スキルチェック
