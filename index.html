@@ -3343,7 +3343,7 @@
         <input type="text" id="customCharNameInput" class="post-input" placeholder="キャラクター名 (必須)" maxlength="15">
         <div class="image-editor-layout" style="margin-top: 1rem;">
           <div class="image-editor-preview">
-            <canvas id="customCharCanvas" width="400" height="400"></canvas>
+            <canvas id="customCharCanvas" width="260" height="360"></canvas>
           </div>
           <div class="image-editor-controls" id="imageEditorControls">
             <!-- Controls will be injected by JS -->
@@ -8074,10 +8074,10 @@ const CUSTOM_X_OFFSETS = {
 
 const CUSTOM_Y_OFFSETS = {
     'back-ground': 0,
-    'back':        60,
-    'face':        60,
-    'eyes':        60,
-    'front':       60,
+    'back':        0,
+    'face':        0,
+    'eyes':        0,
+    'front':       0,
     'cover':       0
 };
 
@@ -8203,9 +8203,12 @@ function updateImagePart(part, value) {
                 customCharData.imageData[p].id = cfg.min;
             }
         });
+        initImageEditor();
     } else if (part === 'element') {
         customCharData.element = value;
-        customCharData.elementJp = { fire:'炎', water:'水', thunder:'雷', dark:'闇', light:'光' }[value];
+        customCharData.elementJp = { fire:'炎', water:'水', thunder:'雷', dark:'闇', light:'光', none:'無' }[value] || '無';
+        initStatAllocator();
+        return; // ステータス画面では画像エディタの初期化は不要
     }
     initImageEditor();
 }
