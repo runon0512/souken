@@ -8869,16 +8869,39 @@ async function startBattle(missionId, skipDialogue = false) {
   battleState = {
     mission: mission,
     playerUnits: squad.map(id => {
-      const char = units.find(u => u.id === id);
-      const level = playerState.characters[id].level;
-      const equipId = playerState.characters[id].equippedId;
-      const aura = playerState.characters[id].aura || 0;
-      const potential = playerState.characters[id].potential || 0;
+      let char = units.find(u => u.id === id);
+      if (!char && playerState.customCharacters) {
+          char = playerState.customCharacters.find(u => u.id == id);
+      }
+      if (!char) return null;
+
+      const state = playerState.characters[id];
+      const level = state ? state.level : 1;
+      const equipId = state ? state.equippedId : null;
+      const aura = state ? (state.aura || 0) : 0;
+      const potential = state ? (state.potential || 0) : 0;
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
       const stats = calcStats(char.baseStats, level, equip, potential, undefined); // Use playerState enhancement
       
+      // カスタムキャラと通常キャラのスキルを戦闘用フォーマットにマッピング
+      const battleAbilities = (char.abilities || []).map(ab => {
+         if (!ab.isCustom) return ab;
+         return {
+             ...ab,
+             timing: ab.trigger,
+             triggerRate: (ab.triggerValue || 0) / 100,
+             damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
+             isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
+             effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { 
+                 type: 'status', 
+                 status: ab.statusEffect, 
+                 turns: ab.statusTurns 
+             } : (ab.effect === 'damage_cut' ? { type: 'damage_cut' } : (ab.effect === 'heal' ? { type: 'heal' } : undefined))
+         };
+      });
+
       // Init battle props
-      let unit = { ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip };
+      let unit = { ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip, abilities: battleAbilities };
       if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
       if (equip && equip.effect.type === 'guts') unit.guts = true;
       
@@ -8898,12 +8921,12 @@ async function startBattle(missionId, skipDialogue = false) {
                  timing: ab.trigger,
                  triggerRate: (ab.triggerValue || 0) / 100,
                  damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
-                 isAoe: ab.target === 'all_enemies',
+                 isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
                  effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { 
                      type: 'status', 
                      status: ab.statusEffect, 
                      turns: ab.statusTurns 
-                 } : (ab.effect === 'damage_cut' ? { type: 'damage_cut' } : undefined)
+                 } : (ab.effect === 'damage_cut' ? { type: 'damage_cut' } : (ab.effect === 'heal' ? { type: 'heal' } : undefined))
              };
           });
 
@@ -9643,13 +9666,23 @@ async function runBattleSequence() {
             await showCutIn(attacker, activeAbility.name);
             await sleep(600 / battleSpeedMultiplier);
 
-            const aoeTargets = (attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits).filter(u => u.currentHp > 0);
+            let aoeTargets = [];
+            if (activeAbility.target === 'all_allies') {
+                aoeTargets = (attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits).filter(u => u.currentHp > 0);
+            } else {
+                aoeTargets = (attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits).filter(u => u.currentHp > 0);
+            }
+
             for (const aoeTarget of aoeTargets) {
                 if (aoeTarget.currentHp <= 0) continue;
 
-                const damage = Math.floor(calculateDamage(attacker, aoeTarget) * (activeAbility.damageMult || 0.8));
-                let actualDamage = damage;
-                
+                let actualDamage = 0;
+                if (activeAbility.effect?.type === 'heal') {
+                    actualDamage = 0;
+                } else {
+                    actualDamage = Math.floor(calculateDamage(attacker, aoeTarget) * (activeAbility.damageMult || 0.8));
+                }
+
                 // Simplified defense check for AoE
                 if (aoeTarget.abilities && actualDamage > 0) {
                     // 呪い状態なら防御スキルも発動しない
@@ -9681,7 +9714,16 @@ async function runBattleSequence() {
                 if (activeAbility.effect?.type === 'status') {
                     await addStatusEffect(aoeTarget, activeAbility.effect.status, activeAbility.effect.turns);
                 }
-                
+                if (activeAbility.effect?.type === 'heal') {
+                    const healAmt = Math.floor(aoeTarget.stats.hp * (activeAbility.effectValue / 100));
+                    aoeTarget.currentHp = Math.min(aoeTarget.stats.hp, aoeTarget.currentHp + healAmt);
+                    logBattleMessage(`${aoeTarget.name}のHPが<span class="heal">${healAmt}</span>回復！`);
+                    updateUnitUI(aoeTarget);
+                    playEffect(document.getElementById(`unit-${aoeTarget.battleId}`), 'heal');
+                    showDamageNumber(document.getElementById(`unit-${aoeTarget.battleId}`), healAmt, 'heal');
+                }
+
+                if (actualDamage > 0) {
                 const adv = getElementalMultiplier(attacker.element, aoeTarget.element);
                 let advText = adv > 1.0 ? ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>' : adv < 1.0 ? ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>' : '';
 
@@ -9692,6 +9734,7 @@ async function runBattleSequence() {
                 showDamageNumber(targetEl, actualDamage, adv > 1.0 ? 'weak' : 'damage');
                 targetEl.classList.add('is-taking-skill-damage');
                 setTimeout(() => targetEl.classList.remove('is-taking-skill-damage'), 500);
+                }
 
                 if (aoeTarget.currentHp <= 0) {
                     await processUnitDeath(aoeTarget);
@@ -9703,7 +9746,17 @@ async function runBattleSequence() {
         const targets = (attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits).filter(u => u.currentHp > 0);
         if (targets.length === 0) continue;
         
-        const target = getTarget(attacker, targets);
+        let target;
+        if (activeAbility) {
+            if (activeAbility.target === 'self') target = attacker;
+            else if (activeAbility.target === 'lowest_hp_ally') {
+                const allies = attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+                target = allies.filter(u => u.currentHp > 0).reduce((p, c) => (p.currentHp/p.stats.hp < c.currentHp/c.stats.hp ? p : c));
+            }
+            else target = getTarget(attacker, targets);
+        } else {
+            target = getTarget(attacker, targets);
+        }
       
         const targetEl = document.getElementById(`unit-${target.battleId}`);
 
@@ -9874,15 +9927,16 @@ async function runBattleSequence() {
         }
       }
 
-        let damage;
+        let damage = 0;
         let advText = '';
         let damageType = 'damage';
+        let isHeal = activeAbility?.effect?.type === 'heal';
 
         if (activeAbility && activeAbility.name === '次元斬・空断') {
             const randomAdd = Math.floor(Math.random() * 201) - 100;
             damage = Math.max(1, getBattleStats(attacker).atk + randomAdd);
             // 無属性攻撃なのでadvTextは空のまま
-        } else {
+        } else if (!isHeal) {
             damage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
             // 属性相性エフェクト
             const advantage = getElementalMultiplier(attacker.element, target.element);
@@ -9897,7 +9951,7 @@ async function runBattleSequence() {
         }
 
         // Apply Damage to Target
-        let actualDamage = damage;
+        let actualDamage = isHeal ? 0 : damage;
         
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0 && (!activeAbility || !activeAbility.ignoresDefenseSkills)) {
@@ -10093,6 +10147,14 @@ async function runBattleSequence() {
         // スキルによる追加効果
         if (activeAbility && activeAbility.effect?.type === 'status') {
             await addStatusEffect(target, activeAbility.effect.status, activeAbility.effect.turns);
+        }
+        if (isHeal) {
+            const healAmt = Math.floor(target.stats.hp * (activeAbility.effectValue / 100));
+            target.currentHp = Math.min(target.stats.hp, target.currentHp + healAmt);
+            logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${target.name}のHPが<span class="heal">${healAmt}</span>回復！`);
+            updateUnitUI(target);
+            playEffect(targetEl, 'heal');
+            showDamageNumber(targetEl, healAmt, 'heal');
         }
 
       // パッシブ効果: 炎支配 (通常攻撃時)
@@ -10452,7 +10514,7 @@ async function runBattleSequence() {
               if (chaseAbility.name === '毒突き') chaseMult = 0.5;
               if (chaseAbility.name === '雷撃斬') chaseMult = 0.5;
 
-              const chaseDamage = Math.floor(calculateDamage(attacker, target) * chaseMult);
+              const chaseDamage = Math.floor(calculateDamage(attacker, target) * (chaseAbility.damageMult || chaseMult));
               let actualChaseDamage = chaseDamage;
 
               // 追撃に対する防御スキルチェック
@@ -11213,6 +11275,36 @@ async function triggerOnBattleStartAbilities() {
                 logBattleMessage(`${unit.name}の燃焼の矢！${t.name}は炎に包まれた！`);
                 const tEl = document.getElementById(`unit-${t.battleId}`);
                 playEffect(tEl, 'shoot');
+            }
+        }
+        else if (ab.isCustom) {
+            // 開幕時のカスタムスキルの汎用ハンドラ
+            let skillTargets = [];
+            if (ab.target === 'all_enemies') skillTargets = targets.filter(t => t.currentHp > 0);
+            else if (ab.target === 'single_enemy') skillTargets = [targets.filter(t => t.currentHp > 0)[Math.floor(Math.random() * targets.filter(t => t.currentHp > 0).length)]];
+            else if (ab.target === 'all_allies') skillTargets = (unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits).filter(u => u.currentHp > 0);
+            else if (ab.target === 'self') skillTargets = [unit];
+            
+            for (const t of skillTargets) {
+                if (!t) continue;
+                if (ab.effect === 'attack' || ab.effect === 'attack_status') {
+                    const damage = Math.floor(calculateDamage(unit, t) * (ab.damageMult || 1.0));
+                    t.currentHp = Math.max(0, t.currentHp - damage);
+                    recordDamage(unit, damage);
+                    logBattleMessage(`${t.name}に<span class="damage">${damage}</span>のダメージ！`);
+                    updateUnitUI(t);
+                    showDamageNumber(document.getElementById(`unit-${t.battleId}`), damage);
+                }
+                if (ab.effect === 'heal') {
+                    const healAmt = Math.floor(t.stats.hp * (ab.effectValue / 100));
+                    t.currentHp = Math.min(t.stats.hp, t.currentHp + healAmt);
+                    logBattleMessage(`${t.name}のHPが<span class="heal">${healAmt}</span>回復した！`);
+                    updateUnitUI(t);
+                    showDamageNumber(document.getElementById(`unit-${t.battleId}`), healAmt, 'heal');
+                }
+                if (ab.effect === 'status' || ab.effect === 'attack_status') {
+                    await addStatusEffect(t, ab.statusEffect, ab.statusTurns);
+                }
             }
         }
         
