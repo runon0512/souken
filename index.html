@@ -5302,6 +5302,17 @@ async function runPreloader() {
       .map(u => u.img);
   images.push('Title.png');
   images.push('C0.svg');
+
+  // カスタムキャラ用パーツのプレロード
+  ['W', 'M'].forEach(g => {
+    for (let i = 1; i <= 8; i++) images.push(`front${g}-${i}.svg`);
+    for (let i = 1; i <= 3; i++) images.push(`back${g}-${i}.svg`);
+    for (let i = 1; i <= 6; i++) images.push(`eyes${g}-${i}.svg`);
+    for (let i = 1; i <= 5; i++) images.push(`face${g}-${i}.svg`);
+  });
+  images.push('cover.svg');
+  images.push('back-ground.svg');
+
   // Remove duplicates
   const uniqueImages = [...new Set(images)];
 
