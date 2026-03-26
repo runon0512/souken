@@ -9700,7 +9700,7 @@ async function runBattleSequence() {
                     actualDamage = Math.floor(calculateDamage(attacker, aoeTarget) * (activeAbility.damageMult || 0.8));
                 }
 
-                // Simplified defense check for AoE
+                // Simplified defense check for AoE (and heal effect handling)
                 if (aoeTarget.abilities && actualDamage > 0) {
                     // 呪い状態なら防御スキルも発動しない
                     const isTargetCursed = aoeTarget.statusEffects.some(e => e.type === 'curse');
@@ -9731,7 +9731,7 @@ async function runBattleSequence() {
                 if (activeAbility.effect?.type === 'status') {
                     await addStatusEffect(aoeTarget, activeAbility.effect.status, activeAbility.effect.turns);
                 }
-                if (isHealEffect) {
+                if (activeAbility.effect?.type === 'heal') {
                     const healPct = activeAbility.effect?.value || activeAbility.effectValue || 0;
                     const healAmt = Math.floor(aoeTarget.stats.hp * (healPct / 100));
                     aoeTarget.currentHp = Math.min(aoeTarget.stats.hp, aoeTarget.currentHp + healAmt);
