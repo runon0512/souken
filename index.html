@@ -8212,15 +8212,18 @@ async function drawCustomChar() {
             const yPos = (CUSTOM_Y_OFFSETS[part] || 0) + (partData.y || 0);
             
             if (['back', 'front', 'eyes'].includes(part) && partData.color) {
-                // パーツが赤色ベースなので、source-inで選択色に塗りつぶします
+                // 輝度（明るさ・影・ハイライト）を維持したまま、色成分だけを変更します
                 const tCanvas = document.createElement('canvas');
                 tCanvas.width = canvas.width; tCanvas.height = canvas.height;
                 const tCtx = tCanvas.getContext('2d');
-                tCtx.drawImage(img, xPos, yPos);
-                tCtx.drawImage(img, xPos, yPos);
-                tCtx.globalCompositeOperation = 'source-in';
+                
+                tCtx.drawImage(img, xPos, yPos); // 1. 元の絵（赤・白・黒のパーツ）を描画
+                tCtx.globalCompositeOperation = 'color'; // 2. 明るさを維持して色相・彩度を置き換える
                 tCtx.fillStyle = partData.color;
                 tCtx.fillRect(0, 0, canvas.width, canvas.height);
+                tCtx.globalCompositeOperation = 'destination-in'; // 3. 元の絵の形でマスクする
+                tCtx.drawImage(img, xPos, yPos);
+
                 ctx.drawImage(tCanvas, 0, 0);
             } else {
                 ctx.drawImage(img, xPos, yPos);
