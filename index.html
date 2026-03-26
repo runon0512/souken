@@ -9716,7 +9716,7 @@ async function runBattleSequence() {
                 if (activeAbility.effect?.type === 'status') {
                     await addStatusEffect(aoeTarget, activeAbility.effect.status, activeAbility.effect.turns);
                 }
-                if (isHealOnly) {
+                if (isHealEffect) {
                     const healPct = activeAbility.effect?.value || activeAbility.effectValue || 0;
                     const healAmt = Math.floor(aoeTarget.stats.hp * (healPct / 100));
                     aoeTarget.currentHp = Math.min(aoeTarget.stats.hp, aoeTarget.currentHp + healAmt);
@@ -9726,11 +9726,11 @@ async function runBattleSequence() {
                     showDamageNumber(document.getElementById(`unit-${aoeTarget.battleId}`), healAmt, 'heal');
                 }
 
-                if (actualDamage > 0 || isStatusOnly) {
+                if (actualDamage > 0 || hasStatusEffect) {
                 const adv = getElementalMultiplier(attacker.element, aoeTarget.element);
                 let advText = adv > 1.0 ? ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>' : adv < 1.0 ? ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>' : '';
 
-                if (isStatusOnly) {
+                if (actualDamage <= 0 && hasStatusEffect) {
                     logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に効果！`);
                 } else {
                     logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に<span class="damage">${actualDamage}</span>${advText}のダメージ！`);
@@ -9939,6 +9939,7 @@ async function runBattleSequence() {
         let advText = '';
         let damageType = 'damage';
         let isHeal = activeAbility?.effect?.type === 'heal';
+        let isEvaded = false;
         let isNonDamaging = activeAbility && activeAbility.damageMult === undefined && (activeAbility.effect?.type === 'status' || activeAbility.effect?.type === 'heal' || activeAbility.effect?.type === 'damage_cut');
 
         if (activeAbility && activeAbility.name === '次元斬・空断') {
@@ -10067,6 +10068,7 @@ async function runBattleSequence() {
         // Equipment: Evasion
       if (target.equipment && target.equipment.effect && target.equipment.effect.type === 'evasion' && Math.random() < target.equipment.effect.val) {
           actualDamage = 0;
+          isEvaded = true;
           logBattleMessage(`${target.name}は攻撃をひらりと回避した！`);
           showPassivePopup(document.getElementById(`unit-${target.battleId}`), "MISS");
       }
@@ -12119,6 +12121,8 @@ function loadGame() {
     playerState.compensationVersion = savedData.playerState.compensationVersion;
     playerState.playerId = savedData.playerState.playerId;
     playerState.customCharacters = savedData.playerState.customCharacters || [];
+    playerState.notifications = savedData.playerState.notifications || [];
+    playerState.stageTracking = savedData.playerState.stageTracking || {};
 
     if (!playerState.playerId) {
         playerState.playerId = generateUUID();
