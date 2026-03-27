@@ -4485,6 +4485,28 @@ const units = [
     ],
     useImg: true, img: 'C43.svg'
   },
+  {
+    id: 46, name: 'ラキュド・ベルハデス', element: 'water', elementJp: '水', type: 'B.D.',
+    baseStats: { hp: 1300, atk: 110, def: 70, spd: 80 },
+    abilityType: 'magic',
+    abilities: [
+      { name: 'ヘルエクスプロージョン', desc: '40%の確率で攻撃前に発動。属性を炎として攻撃力の140%で攻撃し、2ターンの燃焼を付与する。', triggerRate: 0.4, timing: 'before_attack', damageMult: 1.4, forcedElement: 'fire', effect: { type: 'status', status: 'burn', turns: 2 } },
+      { name: '確死砲', desc: '攻撃後、相手のHPが30%未満なら40%の確率で発動。相手の残りHP分のダメージを与える。', triggerRate: 0.4, timing: 'after_attack', execution: true },
+    ],
+    useImg: true,
+    img: 'C44.svg',
+  },
+  {
+    id: 47, name: 'ルイス・エピシン', element: 'thunder', elementJp: '雷', type: 'B.D.',
+    baseStats: { hp: 1240, atk: 95, def: 80, spd: 85 },
+    abilityType: 'magic',
+    abilities: [
+      { name: 'サンダーシュレッダー', desc: '25%の確率で攻撃前に発動。攻撃力の60%で敵全体を攻撃し、1ターンの怯みを付与する。', triggerRate: 0.25, timing: 'before_attack', isAoe: true, damageMult: 0.6, effect: { type: 'status', status: 'flinch', turns: 1 } },
+      { name: '正義の秘"儀"', desc: '自身のHPが50%以下の時に発動。通常攻撃に2ターンの麻痺を付与する。' },
+    ],
+    useImg: true,
+    img: 'C45.svg',
+  },
 ];
 
 // Equipment Data
@@ -6188,11 +6210,10 @@ function formatAbilityDetails(ability) {
     if (modalSubtitleEl) modalSubtitleEl.innerHTML += ` <span style="margin-left:10px; color:var(--accent); font-weight:bold;">PWR: ${powerVal}</span>`;
 
     // Favorite Button State
-    const modalFavBtnEl = document.getElementById('modalFavBtn');
     const favBtn = document.getElementById('modalFavBtn');
     if (isBattleContext || !isOwned) {
-      favBtn.style.display = 'none';
-    } else {
+      if (favBtn) favBtn.style.display = 'none';
+    } else if (favBtn) {
       favBtn.style.display = 'block';
       favBtn.textContent = charState.isFavorite ? '❤️' : '♡';
       favBtn.className = 'fav-btn' + (charState.isFavorite ? ' active' : '');
@@ -9677,7 +9698,6 @@ async function runBattleSequence() {
         const isUserStage = battleState.mission.isUserStage;
         const msg = isUserStage ? "30ターン経過。タイムオーバー（敗北）" : "30ターン経過。引き分け";
         const color = isUserStage ? "var(--accent2)" : "var(--text-mid)";
-        logBattleMessage(`<span class="info" style="color:${color}">${msg}</span>`);
 
         const battleActionBtnEl = document.getElementById('battleActionBtn');
         if (battleActionBtnEl) battleActionBtnEl.textContent = '閉じる';
@@ -9686,6 +9706,7 @@ async function runBattleSequence() {
         if (battleActionBtnEl) battleActionBtnEl.disabled = false;
         if (battleActionBtnEl) battleActionBtnEl.onclick = closeBattle;
         if (closeBattleBtnEl) closeBattleBtnEl.disabled = false;
+        logBattleMessage(`<span class="info" style="color:${color}">${msg}</span>`);
         
         break;
     }
@@ -9898,6 +9919,11 @@ async function runBattleSequence() {
               }
             }
           }
+          
+          // Special property handling for element override skills
+          if (activeAbility && activeAbility.forcedElement) {
+              attacker.currentForcedElement = activeAbility.forcedElement;
+          }
         }
 
         // Check for AoE
@@ -10085,6 +10111,19 @@ async function runBattleSequence() {
               await sleep(1200 / battleSpeedMultiplier);
             }
           } else if (!isAsterPassiveConditionMet && attacker.isPassiveActive) {
+            attacker.isPassiveActive = false;
+          }
+      }
+
+      const isLuisPassiveConditionMet = attacker.id === 47 && attacker.currentHp <= attacker.stats.hp * 0.5;
+      if (attacker.id === 47) {
+          if (isLuisPassiveConditionMet && !attacker.isPassiveActive) {
+            attacker.isPassiveActive = true;
+            if (attacker.abilities && attacker.abilities.length > 1) {
+              showPassivePopup(attackerEl, `◆ ${attacker.abilities[1].name}`);
+              await sleep(1200 / battleSpeedMultiplier);
+            }
+          } else if (!isLuisPassiveConditionMet && attacker.isPassiveActive) {
             attacker.isPassiveActive = false;
           }
       }
@@ -10408,6 +10447,9 @@ async function runBattleSequence() {
       // パッシブ効果: 炎支配 (通常攻撃時)
       if (!activeAbility && attacker.id === 1 && attacker.isPassiveActive) await addStatusEffect(target, 'burn', 2);
 
+      // パッシブ効果: 正義の秘"儀" (通常攻撃時)
+      if (!activeAbility && attacker.id === 47 && attacker.isPassiveActive) await addStatusEffect(target, 'paralysis', 2);
+
       // パッシブ効果: 破壊眼 (通常攻撃時)
       if (!activeAbility && attacker.id === 38 && attacker.isPassiveActive) {
           await addStatusEffect(target, 'flinch', 3);
@@ -10579,6 +10621,18 @@ async function runBattleSequence() {
           }
 
           if (chaseAbility) {
+            // Execution Logic (Lacyud Belhades etc.)
+            if (chaseAbility.execution) {
+                if (target.currentHp > 0 && target.currentHp < target.stats.hp * 0.3) {
+                    await showCutIn(attacker, chaseAbility.name);
+                    const executionDamage = target.currentHp;
+                    target.currentHp = 0;
+                    recordDamage(attacker, executionDamage);
+                    logBattleMessage(`<span class="ability">${chaseAbility.name}！</span> ${target.name} を仕留めた！`);
+                    updateUnitUI(target);
+                    showDamageNumber(targetEl, executionDamage);
+                }
+            } else 
             if (attacker.id === 5 && attacker.isPassiveActive) { // 八連雷撃斬
               await showCutIn(attacker, chaseAbility.name);
               const chaseProbs = [0.86, 0.74, 0.64, 0.56, 0.50, 0.46];
@@ -10809,6 +10863,9 @@ async function runBattleSequence() {
           }
           }
         }
+
+        // Clear temporary effects
+        attacker.currentForcedElement = null;
 
         // 4. Death Check & Cleanup
         if (target.currentHp <= 0) {
@@ -11245,7 +11302,8 @@ function calculateDamage(attacker, defender) {
   const atkStats = getBattleStats(attacker);
   const defStats = getBattleStats(defender);
 
-  const advantage = getElementalMultiplier(attacker.element, defender.element);
+  const atkElement = attacker.currentForcedElement || attacker.element;
+  const advantage = getElementalMultiplier(atkElement, defender.element);
   
   // 圧縮の札 (ID: 13)
   if (attacker.isAdvantageForced) { // Gira (13), Sham (23), or Landia (16)
@@ -11325,6 +11383,11 @@ function updateUnitUI(unit) {
       }
     } else if (unit.id === 5 && unit.currentHp <= unit.stats.hp * 0.5) {
       // ライ・アルバロ (ID:5): HP50%以下で雷支配
+      if (unit.abilities && unit.abilities.length > 1) {
+        activeText = `⚡ ${unit.abilities[1].name}`;
+      }
+    } else if (unit.id === 47 && unit.currentHp <= unit.stats.hp * 0.5) {
+      // ルイス (47)
       if (unit.abilities && unit.abilities.length > 1) {
         activeText = `⚡ ${unit.abilities[1].name}`;
       }
