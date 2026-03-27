@@ -7609,6 +7609,7 @@ function updateEditorUI() {
                 <div class="editor-slot-info">
                     <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${unit ? unit.name : '?'}</div>
                     <div style="color:var(--accent); font-size:0.65rem;">Lv.${enemy.level}</div>
+                    ${enemy.potential ? `<div style="color:var(--gold); font-size:0.6rem;">★${enemy.potential} 解放済</div>` : ''}
                     ${enemy.equippedId ? '<div style="color:var(--gold); font-size:0.6rem;">🛡️装備有</div>' : ''}
                 </div>
             `;
@@ -7714,6 +7715,7 @@ function copySquadToEditor() {
             id: id,
             level: char.level,
             aura: char.aura || 0,
+            potential: char.potential || 0,
             equippedId: char.equippedId,
             enhancement: char.equippedId ? playerState.equipmentEnhancements[char.equippedId] : null,
             aiType: AI_TYPES.RANDOM
@@ -9087,7 +9089,7 @@ async function startBattle(missionId, skipDialogue = false) {
       let unit, equip = null;
       if (enemyConfig.isCustom) {
           const level = enemyConfig.level || 50;
-          const stats = calcStats(enemyConfig.baseStats, level, enemyConfig.equipment, 0, enemyConfig.enhancement);
+          const stats = calcStats(enemyConfig.baseStats, level, enemyConfig.equipment, enemyConfig.potential || 0, enemyConfig.enhancement);
           
           // Map Custom Abilities to Battle Format
           const battleAbilities = (enemyConfig.abilities || []).map(ab => {
@@ -9130,7 +9132,7 @@ async function startBattle(missionId, skipDialogue = false) {
           equip = enemyConfig.equipment || null;
           const enhancement = enemyConfig.enhancement || null;
           // Enemies don't use potential yet (or default 0)
-          const stats = calcStats(enemy.baseStats, level, equip, 0, enhancement);
+          const stats = calcStats(enemy.baseStats, level, equip, enemyConfig.potential || 0, enhancement);
 
           unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip, enhancement: enhancement };
       }
@@ -12024,6 +12026,7 @@ function getSquadData() {
       details[id] = {
         level: playerState.characters[id].level,
         aura: playerState.characters[id].aura || 0,
+        potential: playerState.characters[id].potential || 0,
         equippedId: playerState.characters[id].equippedId || null,
         enhancement: (playerState.characters[id].equippedId ? playerState.equipmentEnhancements[playerState.characters[id].equippedId] : null)
       };
@@ -12104,6 +12107,7 @@ function viewSquadFromCode() {
         const detail = data.details[charId];
         level = detail.level || 1;
         aura = detail.aura || 0;
+        potential = detail.potential || 0;
         equipId = detail.equippedId || null;
         enhancement = detail.enhancement || null;
       } else if (data.equipment) { // Backward compatibility
