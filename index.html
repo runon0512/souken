@@ -1,27 +1,3 @@
-        checkAndApplyDrain(attacker, attackerEl, actualDamage);
-                checkAndApplyDrain(attacker, attackerEl, actualDamage);
-                checkAndApplyDrain(attacker, attackerEl, actualDamage);
-function checkAndApplyDrain(attacker, attackerEl, damage) {
-  if (damage > 0 && attacker.equipment && attacker.equipment.effect && attacker.equipment.effect.type === 'drain') {
-    const drainAmt = Math.floor(damage * attacker.equipment.effect.val);
-    attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drainAmt);
-    updateUnitUI(attacker);
-    showDamageNumber(attackerEl, drainAmt, 'heal');
-  }
-}
-function getTriggerRate(unit, ability) {
-  if (!ability) return 0;
-  let rate = ability.triggerRate;
-  if (rate === undefined) return 1.0;
-  if (unit.equipment && unit.equipment.effect && unit.equipment.effect.type === 'ability_rate') {
-    rate *= unit.equipment.effect.val;
-  }
-  const field = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
-  if (field === 'anti_magic') {
-    rate *= 0.5;
-  }
-  return rate;
-}
 
 <!DOCTYPE html>
 <html lang="ja">
