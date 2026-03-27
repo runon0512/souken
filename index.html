@@ -2961,8 +2961,8 @@
   <div class="roster-panel" id="missionPanel" style="display: none;">
     <div class="roster-toolbar" style="align-items: center;">
       <div style="display:flex; align-items:center; gap:1rem; flex-wrap: wrap;"> 
-        <button class="filter-btn" onclick="setView('battleMenu')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
-          ← 戻る
+        <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+          ← ホームへ
         </button>
         <div id="missionSquadSwitcher" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border);">
            <span style="font-size:0.7rem; color:var(--text-dim); margin:0 0.5rem;">部隊切替:</span>
@@ -3088,6 +3088,13 @@
           <label style="display:flex; align-items:center; gap:0.5rem; font-size: 1rem; color:var(--text-mid); cursor:pointer;">
             <input type="checkbox" id="skipTutorialCheck" onchange="updateSkipTutorial(this.checked)"> チュートリアルを非表示
           </label>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">シリアルコード</div>
+        <div style="display:flex; gap:0.5rem;">
+          <input type="text" id="serialCodeInput" class="post-input" placeholder="コードを入力" style="margin-bottom:0; flex:1;">
+          <button class="filter-btn" onclick="redeemSerialCode()">適用</button>
         </div>
       </div>
       <div class="modal-section">
@@ -3398,6 +3405,9 @@
               <option value="検証">検証</option>
               <option value="その他">その他</option>
           </select>
+          <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem; cursor:pointer; font-size:0.9rem; color:var(--text-mid);">
+              <input type="checkbox" id="editorNoCommand"> 指揮禁止 (ターゲット選択不可)
+          </label>
           <textarea id="editorStageDesc" class="post-input" placeholder="ステージ概要 (100字以内)" maxlength="100" style="height:4rem; resize:none;"></textarea>
       </div>
 
@@ -7303,6 +7313,7 @@ function renderUserStageCard(stage) {
     let fieldEffectP = 'none';
     let fieldEffectE = 'none';
     let bgId = 'default';
+    let noCommand = false;
     try {
         const parsed = JSON.parse(stage.squadData);
         if (parsed.isCustom) {
@@ -7311,6 +7322,7 @@ function renderUserStageCard(stage) {
             fieldEffectP = parsed.fieldEffectPlayer || parsed.fieldEffect || 'none';
             fieldEffectE = parsed.fieldEffectEnemy || parsed.fieldEffect || 'none';
             bgId = parsed.bgId || 'default';
+            noCommand = parsed.noCommand || false;
         } else {
             squadData = parsed; // Legacy format (array)
         }
@@ -7322,7 +7334,8 @@ function renderUserStageCard(stage) {
     const isCleared = missionProgress.has("user_" + stage.id);
     
     const genre = stage.genre || '設定しない';
-    const genreHtml = genre !== '設定しない' ? `<span style="font-size:0.7rem; background:rgba(255,255,255,0.1); border:1px solid var(--border); padding:2px 6px; border-radius:10px; margin-left:0.5rem; color:var(--text-mid);">${genre}</span>` : '';
+    const genreHtml = genre !== '設定しない' ? `<span style="font-size:0.7rem; background:rgba(255,255,255,0.1); border:1px solid var(--border); padding:2px 6px; border-radius:10px; color:var(--text-mid); white-space:nowrap;">${genre}</span>` : '';
+    const noCommandHtml = noCommand ? `<span style="font-size:0.7rem; background:rgba(255,107,53,0.1); border:1px solid var(--accent2); padding:2px 6px; border-radius:10px; color:var(--accent2); white-space:nowrap;">指揮禁止</span>` : '';
     
     // Reward Calculation: Total Power
     const rewardVal = Math.min(totalPower, 100000);
@@ -7354,7 +7367,6 @@ function renderUserStageCard(stage) {
     card.innerHTML = `
         <div class="user-stage-list-info">
             <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
-            <div style="margin-bottom: 0.5rem;">${genreHtml}</div>
             <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
         </div>
         <div class="user-stage-meta-row">
@@ -7363,6 +7375,7 @@ function renderUserStageCard(stage) {
                 <span>投稿日: ${new Date(stage.createdAt).toLocaleDateString()}</span>
             </div>
             <div class="user-stage-list-stats">
+                <div style="display:flex; gap:0.4rem; margin-right:0.5rem; align-items:center;">${genreHtml}${noCommandHtml}</div>
                 <div class="stat-item" title="ハート数">❤️ ${stage.hearts}</div>
                 <div class="stat-item" title="プレイ数">👤 ${stage.plays || 0}</div>
                 <div class="stat-item" title="クリア率">🏆 ${playRate}%</div>
@@ -7399,6 +7412,7 @@ let currentEditingStage = {
     enemies: [], // { id, level, equippedId, aura }
     fieldEffectPlayer: 'none',
     fieldEffectEnemy: 'none',
+    noCommand: false,
     cleared: false,
     bgId: 'default'
 };
@@ -7460,6 +7474,7 @@ function openStageEditorUI() {
     document.getElementById('editorStageName').value = currentEditingStage.name;
     document.getElementById('editorStageDesc').value = currentEditingStage.desc;
     document.getElementById('editorStageGenre').value = currentEditingStage.genre || '設定しない';
+    document.getElementById('editorNoCommand').checked = currentEditingStage.noCommand || false;
 
     // Reset to Step 1
     editorCurrentStep = 1;
@@ -7624,6 +7639,7 @@ function editorNextStep() {
         currentEditingStage.name = document.getElementById('editorStageName').value.trim();
         currentEditingStage.desc = document.getElementById('editorStageDesc').value.trim();
         currentEditingStage.genre = document.getElementById('editorStageGenre').value;
+        currentEditingStage.noCommand = document.getElementById('editorNoCommand').checked;
         if (!currentEditingStage.name) { showToast('ステージ名を入力してください'); return; }
         
         document.getElementById('editorStep2').classList.remove('active');
@@ -7635,7 +7651,8 @@ function editorNextStep() {
         const feP = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectPlayer)?.name || 'なし';
         const feE = FIELD_EFFECTS.find(f => f.id === currentEditingStage.fieldEffectEnemy)?.name || 'なし';
         const bgName = STAGE_BACKGROUNDS.find(b => b.id === currentEditingStage.bgId)?.name || '標準';
-        document.getElementById('confirmStageConfig').innerHTML = `ジャンル:${currentEditingStage.genre} / 敵:${currentEditingStage.enemies.length}体 / 味方効果:${feP} / 敵効果:${feE} / 背景:${bgName}`;
+        const cmdText = currentEditingStage.noCommand ? '禁止' : '可能';
+        document.getElementById('confirmStageConfig').innerHTML = `ジャンル:${currentEditingStage.genre} / 指揮:${cmdText} / 敵:${currentEditingStage.enemies.length}体 / 味方効果:${feP} / 敵効果:${feE} / 背景:${bgName}`;
         
         // 戦力計算と表示
         const enemyConfigs = currentEditingStage.enemies.map(e => ({
@@ -8743,7 +8760,8 @@ async function publishStage() {
         enemies: currentEditingStage.enemies,
         fieldEffectPlayer: currentEditingStage.fieldEffectPlayer,
         fieldEffectEnemy: currentEditingStage.fieldEffectEnemy,
-        bgId: currentEditingStage.bgId
+        bgId: currentEditingStage.bgId,
+        noCommand: currentEditingStage.noCommand
     };
 
     try {
@@ -8898,6 +8916,7 @@ async function startUserStageBattle(stageId) {
             fieldEffectP = parsed.fieldEffectPlayer || parsed.fieldEffect || 'none';
             fieldEffectE = parsed.fieldEffectEnemy || parsed.fieldEffect || 'none';
             bgId = parsed.bgId || 'default';
+            noCommand = parsed.noCommand || false;
         } else {
             enemyData = parsed; // Legacy
         }
@@ -8928,7 +8947,8 @@ async function startUserStageBattle(stageId) {
         rawStageId: stage.id,
         fieldEffectPlayer: fieldEffectP,
         fieldEffectEnemy: fieldEffectE,
-        bgId: bgId
+        bgId: bgId,
+        noCommand: noCommand
     };
 
     // Pass this mission directly to startBattle
@@ -8985,6 +9005,7 @@ function startClearCheck() {
         fieldEffectPlayer: currentEditingStage.fieldEffectPlayer,
         fieldEffectEnemy: currentEditingStage.fieldEffectEnemy,
         isTestPlay: true,
+        noCommand: currentEditingStage.noCommand,
         bgId: currentEditingStage.bgId
     };
     
@@ -11002,6 +11023,11 @@ async function addStatusEffect(target, type, turns) {
 function selectTarget(battleId) {
     if (battleState.isFinished) return;
 
+    if (battleState.mission && battleState.mission.noCommand) {
+        showToast('指揮禁止ステージです！');
+        return;
+    }
+
     const targetUnit = battleState.enemyUnits.find(u => u.battleId === battleId);
     if (!targetUnit || targetUnit.currentHp <= 0) return;
 
@@ -11635,6 +11661,20 @@ function closeLoginBonusModal() {
     document.getElementById('loginBonusOverlay').classList.remove('open');
     renderSquad(); // To update rainbow stone display in header
     saveGame();
+}
+
+function redeemSerialCode() {
+    const input = document.getElementById('serialCodeInput');
+    const code = input.value.trim();
+    if (code === 'developer2ls') {
+        playerState.rainbowStones += 100000000;
+        showToast('開発者コード適用：虹石1億個を獲得しました！');
+        renderSquad(); // ヘッダーの表示更新
+        saveGame();
+        input.value = '';
+    } else if (code !== "") {
+        showToast('無効なコードです');
+    }
 }
 
 async function postTowerScore(floor) {
@@ -12353,6 +12393,7 @@ function loadGame() {
     playerState.squadNames = savedData.playerState.squadNames || ["第1部隊", "第2部隊", "第3部隊"];
     playerState.currentSquadIndex = savedData.playerState.currentSquadIndex || 0;
         playerState.towerRankInitialized = savedData.playerState.towerRankInitialized || false;
+        playerState.playRewardMigrated = savedData.playerState.playRewardMigrated || false;
     if (!playerState.squads[1]) playerState.squads[1] = [];
     if (!playerState.squads[2]) playerState.squads[2] = [];
     
@@ -12646,6 +12687,7 @@ function processStageNotifications(stages) {
     if (!playerState.stageTracking) playerState.stageTracking = {};
     if (!playerState.notifications) playerState.notifications = [];
 
+    let totalCatchupReward = 0;
     let hasChanges = false;
     const isFirstRun = Object.keys(playerState.stageTracking).length === 0;
 
@@ -12670,6 +12712,15 @@ function processStageNotifications(stages) {
             const currComments = (stage.comments || []).length;
             const currPlays = stage.plays || 0;
 
+            // --- 報酬計算ロジック ---
+            if (!playerState.playRewardMigrated) {
+                // 初回ログイン時の過去分一括計算
+                const milestones = Math.floor(currPlays / 10);
+                if (milestones > 0) {
+                    totalCatchupReward += milestones * 5000;
+                }
+            }
+
             // Hearts
             if (!isFirstRun && stage.hearts > prevHearts) {
                 const diff = stage.hearts - prevHearts;
@@ -12684,9 +12735,13 @@ function processStageNotifications(stages) {
             }
             
             // Plays (Multiples of 10)
-            if (!isFirstRun && currPlays > prevPlays) {
-                if (Math.floor(currPlays / 10) > Math.floor(prevPlays / 10)) {
-                    addNotification(`「<strong>${stage.name}</strong>」のプレイ数が ${Math.floor(currPlays/10)*10} を突破しました！`);
+            if (playerState.playRewardMigrated && !isFirstRun && currPlays > prevPlays) {
+                const prevMilestones = Math.floor(prevPlays / 10);
+                const currMilestones = Math.floor(currPlays / 10);
+                if (currMilestones > prevMilestones) {
+                    const reward = (currMilestones - prevMilestones) * 5000;
+                    playerState.rainbowStones += reward;
+                    addNotification(`「<strong>${stage.name}</strong>」のプレイ数が ${currMilestones * 10} 回を突破しました！ <span style="color:var(--gold); font-weight:bold;">+${reward.toLocaleString()} 虹石</span>`);
                     hasChanges = true;
                 }
             }
@@ -12701,6 +12756,16 @@ function processStageNotifications(stages) {
         };
     });
 
+    // 初回補填報酬の実行
+    if (!playerState.playRewardMigrated) {
+        if (totalCatchupReward > 0) {
+            playerState.rainbowStones += totalCatchupReward;
+            addNotification(`システム更新報酬: 過去の投稿作品の総プレイ数に応じた報酬として、<span style="color:var(--gold); font-weight:bold;">+${totalCatchupReward.toLocaleString()} 虹石</span> を獲得しました！`);
+            hasChanges = true;
+        }
+        playerState.playRewardMigrated = true;
+    }
+
     if (isFirstRun) {
         saveGame(); // Just save the initial state
     } else if (hasChanges) {
@@ -12708,6 +12773,7 @@ function processStageNotifications(stages) {
         updateNotificationBadge();
         showToast('新着通知があります');
         playSfx('magic');
+        renderSquad(); // 虹石表示更新
     }
 }
 
@@ -12744,7 +12810,10 @@ function updateNotificationBadge() {
     
     btn.textContent = `通知${unreadCount}`;
     if (unreadCount > 0) btn.classList.add('has-unread');
-    else btn.classList.remove('has-unread');
+    else {
+        btn.classList.remove('has-unread');
+        btn.textContent = "通知0";
+    }
 }
 
 function toggleInlineComments(stageId) {
@@ -12755,6 +12824,7 @@ function openNotificationModal() {
     const list = document.getElementById('notificationList');
     list.innerHTML = playerState.notifications.length === 0 ? '<div style="text-align:center; color:var(--text-dim); padding:1rem;">通知はありません</div>' : '';
     
+    // 新しい順（インデックス0から）に表示（addNotificationでunshiftしているため、そのままの順でOK）
     playerState.notifications.forEach(n => {
         const item = document.createElement('div');
         item.className = `notification-item ${!n.read ? 'new' : ''}`;
