@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -2823,7 +2822,6 @@
   const USER_STAGE_API_URL = "https://script.google.com/macros/s/AKfycbxjHXNJgcujuBjsYNHHvcU3a2vv-Y-z_C0MF1JHwNIZ5P45AIgIqX2U9LPtKm2wVrwA/exec"; 
   const USAGE_API_URL = "https://script.google.com/macros/s/AKfycbyFmb4wo8d0XXqHZGXUifQK8_O6fZPBnPIdZ5dwOtbWg9hPAbpVKAbiJdwEnu-e22uu/exec"; // キャラ使用率取得用の新しいGAS URLをここに貼り付けてください
   const TOWER_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbyhjfVQr5yfnzEz1TIRRsktsNlBEdYBkIEObJXRyzWwVSr73QuVrIR4I1S4cNuTP5G9/exec"; // 無限の塔ランキング用のGAS URLをここに貼り付けてください
-  const ARENA_API_URL = "https://script.google.com/macros/s/AKfycbyH8ELeMfoKisovGU8_Ygr3_9sOv0_fEVO50Xtul-8Lkr5jpJAsP3UCODzBJp8aoU9m/exec"; // アリーナ用GASのURL
 </script>
 <body>
 
@@ -2844,9 +2842,6 @@
   <div class="resource-display">
     <div class="hstat-label" style="margin-right:8px">虹石</div>
     <div class="hstat-val" style="color:var(--gold)" id="resRainbow">0</div>
-    <button class="filter-btn" style="padding: 2px 10px; margin-left: 10px; border-color: var(--gold); color: var(--gold);" onclick="openStorageBoxModal()">
-      保管箱 <span id="storageBadge" style="display:none; color:var(--accent2);">●</span>
-    </button>
   </div>
   <button class="notification-btn" onclick="openNotificationModal()" title="通知" id="notificationBtn">
     通知0
@@ -2870,7 +2865,6 @@
       <div class="logo" style="font-size: 4rem; margin-bottom: 2rem;">Souken<span>WoF</span></div>
       <button class="menu-btn" onclick="setView('roster')">編成 / 強化</button>
       <button class="menu-btn" style="border-color: var(--accent2); color: var(--accent2); text-shadow: 0 0 15px var(--accent2);" onclick="setView('battleMenu')">バトル</button>
-      <button class="menu-btn" style="border-color: var(--accent); color: var(--accent); text-shadow: 0 0 15px var(--accent); font-size: 2rem;" onclick="setView('arena')">アリーナ</button>
       <button class="menu-btn" style="border-color: var(--gold); color: var(--gold); text-shadow: 0 0 15px var(--gold);" onclick="setView('gacha')">ガチャ</button>
 
       <div style="margin-top: 2rem; display: flex; gap: 1rem;">
@@ -2998,31 +2992,6 @@
     <div class="mission-grid" id="missionGrid"></div>
   </div>
 
-  <!-- ARENA PANEL -->
-  <div class="roster-panel" id="arenaPanel" style="display: none;">
-    <div class="roster-toolbar">
-      <button class="filter-btn" id="arenaBackBtn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">← ホーム</button>
-      <div class="roster-title">アリーナ</div>
-    </div>
-    <div id="arenaContent" style="display:flex; flex-direction:column; gap:2rem; align-items:center; padding-top:2rem;">
-        <!-- Champion Info -->
-        <div id="arenaChampDisplay" style="width:100%; max-width:40rem; background:var(--bg-card); border:2px solid var(--gold); border-radius:1rem; padding:2rem; text-align:center;">
-            <div style="color:var(--gold); font-family:'Orbitron'; font-size:1.5rem; margin-bottom:1rem;">CURRENT CHAMPION</div>
-            <div id="champName" style="font-size:2rem; font-weight:bold;">-</div>
-            <div id="champPower" style="color:var(--accent); font-family:'Orbitron';">PWR: 0</div>
-            <div id="champSquad" style="display:flex; justify-content:center; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;"></div>
-        </div>
-        
-        <!-- Queue Info -->
-        <div id="arenaQueueDisplay" style="width:100%; max-width:30rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:0.5rem; padding:1.5rem;">
-            <div id="queueStatus" style="text-align:center; font-weight:bold; margin-bottom:1rem;">情報を取得中...</div>
-            <div id="queueTop5" style="font-size:0.9rem; color:var(--text-mid);"></div>
-        </div>
-
-        <button id="arenaActionBtn" class="menu-btn" style="width:20rem; height:5rem; font-size:1.5rem;" onclick="handleArenaAction()">挑戦する</button>
-        <div style="font-size:0.8rem; color:var(--text-dim); text-align:center;">王者に勝利すれば新王者！<br>防衛1回につき虹石1,000個（保管箱へ送られます）</div>
-    </div>
-  </div>
 
   <!-- GACHA PANEL -->
   <div class="roster-panel" id="gachaPanel" style="display: none;">
@@ -3091,23 +3060,6 @@
     </div>
     <div class="modal-footer">
       <button class="modal-add-btn" id="modalActionBtn" onclick="modalToggleSquad()">編成に追加</button>
-    </div>
-  </div>
-</div>
-
-<!-- STORAGE BOX MODAL -->
-<div class="modal-overlay" id="storageBoxOverlay">
-  <div class="modal" style="width: 30rem;">
-    <div class="modal-header">
-      <div class="modal-title">保管箱</div>
-      <button class="modal-close" onclick="document.getElementById('storageBoxOverlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:0.9rem; color:var(--text-dim); margin-bottom:1rem;">アリーナや作品報酬がここに届きます。</p>
-      <div id="storageContent" style="display:flex; flex-direction:column; gap:0.5rem; max-height:20rem; overflow-y:auto; margin-bottom:1.5rem;">
-          <!-- Rewards injected here -->
-      </div>
-      <button class="modal-add-btn" id="storageClaimAllBtn" onclick="claimAllStorage()">一括獲得</button>
     </div>
   </div>
 </div>
@@ -5421,6 +5373,20 @@ let userStageAbortController = null;
 // ===== COMPUTED =====
 let viewingUserProfile = null; // { id, name }
 
+function getTriggerRate(unit, ability) {
+  if (!ability) return 0;
+  let rate = ability.triggerRate;
+  if (rate === undefined) return 1.0;
+  if (unit.equipment && unit.equipment.effect && unit.equipment.effect.type === 'ability_rate') {
+    rate *= unit.equipment.effect.val;
+  }
+  const field = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+  if (field === 'anti_magic') {
+    rate *= 0.5;
+  }
+  return rate;
+}
+
 function openUserProfile(id, name) {
     viewingUserProfile = { id, name };
     renderUserStagesPage();
@@ -5914,11 +5880,6 @@ function setView(view) {
       userStageAbortController.abort();
       userStageAbortController = null;
   }
-
-  if (isWaitingInQueue && view !== 'arena' && view !== 'battle') {
-      showToast("待機列に並んでいる間は画面を移動できません");
-      return;
-  }
   if (view !== 'battle') {
     playBgm('home');
   }
@@ -5945,8 +5906,6 @@ function setView(view) {
   if (equipPanelEl) equipPanelEl.style.display = view === 'equipment' ? 'block' : 'none';
   const gachaPanelEl = document.getElementById('gachaPanel');
   if (gachaPanelEl) gachaPanelEl.style.display = view === 'gacha' ? 'block' : 'none';
-  const arenaPanelEl = document.getElementById('arenaPanel');
-  if (arenaPanelEl) arenaPanelEl.style.display = view === 'arena' ? 'block' : 'none';
   const statusPanelEl = document.getElementById('statusPanel');
   if (statusPanelEl) statusPanelEl.style.display = view === 'status' ? 'block' : 'none';
   
@@ -5957,8 +5916,6 @@ function setView(view) {
     const fAll = document.getElementById('filter-all');
     if (fAll) fAll.classList.add('active');
     renderSquad();
-  } else if (view === 'arena') {
-    initArena();
   } else if (view === 'missions') {
     // Refresh squad display in battle switcher
     switchSquad(playerState.currentSquadIndex);
@@ -9102,6 +9059,15 @@ function startClearCheck() {
 
 let sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function startBattle(missionId, skipDialogue = false) {
+  let mission;
+  if (missionId === "TEMP_USER_STAGE") {
+    mission = tempUserStageMission;
+  } else {
+    mission = getMissionById(missionId);
+  }
+  
+  if (!mission) { console.error("Mission not found", missionId); return; }
+
   // Check and start dialogue first
   if (!skipDialogue && missionId !== "TEMP_USER_STAGE" && missionDialogues[missionId]) {
     startDialogue(missionId, () => startBattle(missionId, true));
@@ -9112,16 +9078,6 @@ async function startBattle(missionId, skipDialogue = false) {
     showToast('部隊が編成されていません');
     return;
   }
-  
-  let mission;
-  if (missionId === "TEMP_USER_STAGE") {
-    mission = tempUserStageMission;
-    if (!mission) { console.error("Temp mission not found"); return; }
-  } else {
-    mission = getMissionById(missionId);
-  }
-  
-  if (!mission) { console.error("Mission not found", missionId); return; }
 
   playBgm('battle');
 
@@ -9921,12 +9877,8 @@ async function runBattleSequence() {
         // 1. Check for 'before_attack' ability
         let activeAbility = null;
         if (attacker.abilities) {
-          // 呪い状態ならスキル発動不可
-          const isCursed = attacker.statusEffects.some(e => e.type === 'curse');          
-          
-          if (isCursed) {
-             // スキル発動なし
-          } else {
+          const isCursed = attacker.statusEffects.some(e => e.type === 'curse');
+          if (!isCursed) {
             if (attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5) {
                // エアラ (ID:37): 光支配発動中は「波状光一閃・改」(abilities[2]) を抽選
                const ab = attacker.abilities[2];
@@ -9934,17 +9886,17 @@ async function runBattleSequence() {
                if (ab && ab.timing === 'before_attack' && Math.random() < rate) {
                   activeAbility = ab;
                }
-            } else {
-          for (const ab of attacker.abilities) {
-            const rate = getTriggerRate(attacker, ab);
-            const isHpTrigger = ab.timing === 'hp_below' && (attacker.currentHp / attacker.stats.hp * 100) <= (ab.triggerValue || 0);
-
-            if ((ab.timing === 'before_attack' && Math.random() < rate) || isHpTrigger) {
-              activeAbility = ab;
-              break; // 1ターンに1つの攻撃スキルのみ発動と仮定
             }
-          }
-          }
+            if (!activeAbility) {
+              for (const ab of attacker.abilities) {
+                const rate = getTriggerRate(attacker, ab);
+                const isHpTrigger = ab.timing === 'hp_below' && (attacker.currentHp / attacker.stats.hp * 100) <= (ab.triggerValue || 0);
+                if ((ab.timing === 'before_attack' && Math.random() < rate) || isHpTrigger) {
+                  activeAbility = ab;
+                  break; 
+                }
+              }
+            }
           }
         }
 
@@ -9964,6 +9916,7 @@ async function runBattleSequence() {
 
             for (const aoeTarget of aoeTargets) {
                 if (aoeTarget.currentHp <= 0) continue;
+                const hasStatusEffect = !!(activeAbility.effect);
 
                 let actualDamage = 0;
                 if (activeAbility.effect?.type === 'heal') {
@@ -10013,11 +9966,11 @@ async function runBattleSequence() {
                     showDamageNumber(document.getElementById(`unit-${aoeTarget.battleId}`), healAmt, 'heal');
                 }
 
-                if (actualDamage > 0 || hasStatusEffect) {
+                if (actualDamage > 0 || (activeAbility.effect && activeAbility.effect.type === 'status')) {
                 const adv = getElementalMultiplier(attacker.element, aoeTarget.element);
                 let advText = adv > 1.0 ? ' <span style="color:var(--gold);font-weight:bold;">WEAK!</span>' : adv < 1.0 ? ' <span style="color:var(--text-dim);font-weight:bold;">RESIST</span>' : '';
 
-                if (actualDamage <= 0 && hasStatusEffect) {
+                if (actualDamage <= 0 && activeAbility.effect && activeAbility.effect.type === 'status') {
                     logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に効果！`);
                 } else {
                     logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${aoeTarget.name}に<span class="damage">${actualDamage}</span>${advText}のダメージ！`);
@@ -10897,10 +10850,6 @@ function checkWinLoss() {
         isGameOver = true;
         logBattleMessage(`<span class="info">勝利！</span>`);
 
-        if (mission.isArena) {
-            submitArenaResult(true);
-        }
-
         // MVP選出ロジック
         let mvpUnit = null;
         let maxDamage = -1;
@@ -11020,9 +10969,6 @@ function checkWinLoss() {
         battleState.isFinished = true;
         isGameOver = true;
         logBattleMessage(`<span class="info">敗北...</span>`);
-        if (mission.isArena) {
-            submitArenaResult(false);
-        }
         const battleActionBtnEl = document.getElementById('battleActionBtn');
         if (battleActionBtnEl) battleActionBtnEl.textContent = '閉じる';
         const retireBattleBtnEl = document.getElementById('retireBattleBtn');
@@ -11670,9 +11616,7 @@ function closeBattle() {
   const mission = battleState.mission;
   const chapterIndex = mission ? storyChapters.findIndex(c => c.missions.some(m => m.id === mission.id)) : -1;
   
-  if (mission && mission.isArena) {
-    setView('arena');
-  } else if (chapterIndex > -1 && currentStoryTab === 'main') {
+  if (chapterIndex > -1 && currentStoryTab === 'main') {
     renderMissionsForChapter(chapterIndex);
   } else if (battleState.mission.isTestPlay) {
       // Return to editor
@@ -12474,7 +12418,6 @@ function loadGame() {
     playerState.currentSquadIndex = savedData.playerState.currentSquadIndex || 0;
         playerState.towerRankInitialized = savedData.playerState.towerRankInitialized || false;
         playerState.playRewardMigrated = savedData.playerState.playRewardMigrated || false;
-        playerState.storageBox = savedData.playerState.storageBox || [];
     if (!playerState.squads[1]) playerState.squads[1] = [];
     if (!playerState.squads[2]) playerState.squads[2] = [];
     
@@ -12920,277 +12863,6 @@ async function checkNotifications() {
     }
 }
 
-// ===== ARENA LOGIC =====
-let arenaInterval = null;
-let isWaitingInQueue = false;
-
-async function initArena() {
-    if (!ARENA_API_URL.startsWith('http')) {
-        showToast("アリーナAPI URLが設定されていません");
-        return;
-    }
-    // 常時更新を廃止し、開始時のみ実行
-    if (arenaInterval) clearTimeout(arenaInterval);
-    refreshArenaStatus();
-}
-
-async function refreshArenaStatus() {
-    try {
-        const res = await fetch(`${ARENA_API_URL}?action=getStatus&playerId=${playerState.playerId}`);
-        const data = await res.json();
-        
-        // UI Update
-        const champ = data.champion;
-        if (!champ) {
-            const guardEnemies = Array.from({length: 5}, () => ({ id: 315, level: 1 }));
-            document.getElementById('champName').textContent = "衛兵部隊 (初期王者)";
-            document.getElementById('champPower').textContent = `PWR: ${calculateTotalPower(guardEnemies)}`;
-            renderChampSquad(guardEnemies);
-        } else {
-            document.getElementById('champName').textContent = champ.name;
-            document.getElementById('champPower').textContent = `PWR: ${calculateTotalPower(champ.enemies)}`;
-            renderChampSquad(champ.enemies);
-        }
-        
-        const qStatus = document.getElementById('queueStatus');
-        const backBtn = document.getElementById('arenaBackBtn');
-        const actionBtn = document.getElementById('arenaActionBtn');
-        
-        if (data.myPos > 0) {
-            isWaitingInQueue = true;
-            backBtn.style.display = 'none'; // 待機中は戻れない
-            actionBtn.disabled = true;
-            
-            if (data.myPos === 1 && !data.isFighting) {
-                // 自分の番（1位）かつ対戦枠が空いていれば、自動的に対戦を開始
-                if (arenaInterval) clearTimeout(arenaInterval);
-                handleArenaAction();
-                return;
-            } else {
-                qStatus.innerHTML = `待機中... あなたの順番: <span style="color:var(--accent); font-size:1.5rem;">${data.myPos}</span> 番目`;
-                actionBtn.textContent = "待機中";
-            }
-            
-            // 待機列にいる間だけ、10秒おきに順番を確認（読み込み）する
-            if (arenaInterval) clearTimeout(arenaInterval);
-            arenaInterval = setTimeout(refreshArenaStatus, 10000);
-        } else {
-            isWaitingInQueue = false;
-            if (arenaInterval) clearTimeout(arenaInterval);
-            backBtn.style.display = 'block';
-            actionBtn.disabled = false;
-            actionBtn.textContent = "王者に挑戦する";
-            actionBtn.style.borderColor = 'var(--accent)';
-            actionBtn.style.color = 'var(--accent)';
-            qStatus.textContent = `待機人数: ${data.queueCount}人`;
-        }
-        
-        const top5 = document.getElementById('queueTop5');
-        top5.innerHTML = data.top5.length > 0 ? "<b>上位待機者:</b><br>" + data.top5.join(', ') : "";
-        
-        battleState.arenaChamp = champ; // 戦闘用に保持
-    } catch (e) { 
-        console.error("Arena status failed", e);
-        document.getElementById('queueStatus').textContent = "通信エラー (APIを確認してください)";
-    }
-}
-
-function renderChampSquad(enemies) {
-    const container = document.getElementById('champSquad');
-    if (!container) return;
-    container.innerHTML = enemies.map((e, idx) => {
-        let u = units.find(x => x.id == e.id);
-        if (!u && e.isCustom) u = e;
-        if (!u) return '';
-        const imgSrc = u.useImg ? u.img : 'C0.svg';
-        
-        const aura = e.aura || 0;
-        const auraData = aura > 0 ? AURA_DATA.find(a => a.class === `aura-${aura}`) : null;
-        const auraClass = auraData ? auraData.class : '';
-        
-        const equip = e.equippedId ? equipmentItems.find(item => item.id === e.equippedId) : (e.equipment || null);
-        const equipEnhancement = e.enhancement || null;
-        const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
-
-        let starsHtml = '';
-        const pot = e.potential || 0;
-        if (pot > 0) {
-            starsHtml = '<div style="display:flex; justify-content:center; gap:1px; margin-top:2px; pointer-events:none;">';
-            for(let i=0; i<3; i++) starsHtml += `<span class="star ${i < pot ? 'lit' : ''}" style="font-size:0.5rem;">★</span>`;
-            starsHtml += '</div>';
-        }
-
-        return `
-            <div class="squad-slot filled ${auraClass}" style="width: 5.5rem; height: 7.5rem; flex-direction: column; padding: 0.25rem; gap: 2px; justify-content: center; cursor: default;">
-                ${auraData ? `<div class="aura-overlay"></div>` : ''}
-                <div class="slot-img-wrap" style="width: 4rem; height: 4rem; margin: 0 auto; border-radius: 4px; overflow: hidden; background: rgba(0,0,0,0.3);">
-                    <img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: contain;">
-                </div>
-                <div style="font-size: 0.65rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: center; color: var(--text-main);">${u.name}</div>
-                <div style="font-size: 0.6rem; color: var(--accent); font-family: 'Orbitron';">Lv.${e.level}</div>
-                ${equip ? `<div class="squad-equip-icon ${equipAuraClass}" style="width: 1.4rem; height: 1.2rem; font-size: 0.8rem; position: absolute; top: 2px; right: 2px; z-index: 10;" title="${equip.name}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
-                ${starsHtml}
-            </div>`;
-    }).join('');
-}
-
-async function handleArenaAction() {
-    const qStatus = document.getElementById('queueStatus');
-    const actionBtn = document.getElementById('arenaActionBtn');
-    actionBtn.disabled = true;
-    actionBtn.textContent = "接続中...";
-
-    if (isWaitingInQueue) {
-        if (qStatus) qStatus.innerHTML = `<span style="color:var(--accent3);">あなたの番です！開始します...</span>`;
-        const res = await fetch(ARENA_API_URL, {
-            method: 'POST',
-            body: new URLSearchParams({ action: 'startMatch', playerId: playerState.playerId })
-        });
-        const data = await res.json();
-        if (data.success) {
-            if (arenaInterval) clearTimeout(arenaInterval);
-            showToast("順番が回ってきました！対戦を開始します。");
-            startArenaBattle();
-        } else { 
-            showToast(data.error || "開始に失敗しました");
-            // 通信エラーなどで失敗した場合はポーリングを再開
-            if (arenaInterval) clearTimeout(arenaInterval);
-            arenaInterval = setTimeout(refreshArenaStatus, 5000);
-        }
-    } else {
-        if (squad.length === 0) { showToast("部隊を編成してください"); return; }
-        
-        const squadDataEnemies = squad.map(id => {
-            const char = playerState.characters[id];
-            let u = units.find(x => x.id == id) || (playerState.customCharacters && playerState.customCharacters.find(x => x.id == id));
-            if (!u) return null;
-            return { ...u, level: char.level, aura: char.aura || 0, potential: char.potential || 0, equippedId: char.equippedId, enhancement: char.equippedId ? playerState.equipmentEnhancements[char.equippedId] : null };
-        }).filter(Boolean);
-
-        const squadData = { name: playerState.playerName, enemies: squadDataEnemies, isCustom: true };
-
-        await fetch(ARENA_API_URL, {
-            method: 'POST',
-            body: new URLSearchParams({ 
-                action: 'joinQueue', 
-                playerId: playerState.playerId, 
-                playerName: playerState.playerName,
-                squadData: JSON.stringify(squadData)
-            })
-        });
-        refreshArenaStatus();
-    }
-}
-
-function startArenaBattle() {
-    const champ = battleState.arenaChamp;
-
-    let enemies;
-    if (!champ) {
-        // 最初の王者は衛兵5のレベル1
-        enemies = Array.from({length: 5}, () => ({
-            id: 315, level: 1, aiType: AI_TYPES.RANDOM
-        }));
-    } else {
-        enemies = champ.enemies;
-    }
-    
-    tempUserStageMission = {
-        id: "ARENA_MATCH",
-        name: "アリーナ決戦",
-        enemies: enemies,
-        isArena: true,
-        reward: 0, firstTimeReward: 0 // 報酬はGAS側で管理
-    };
-    startBattle("TEMP_USER_STAGE");
-}
-
-async function submitArenaResult(isWin) {
-    const squadDataEnemies = squad.map(id => {
-        const char = playerState.characters[id];
-        let u = units.find(x => x.id == id) || (playerState.customCharacters && playerState.customCharacters.find(x => x.id == id));
-        if (!u) return null;
-        return { ...u, level: char.level, aura: char.aura || 0, potential: char.potential || 0, equippedId: char.equippedId, enhancement: char.equippedId ? playerState.equipmentEnhancements[char.equippedId] : null };
-    }).filter(Boolean);
-
-    const squadData = { name: playerState.playerName, enemies: squadDataEnemies, isCustom: true };
-
-    await fetch(ARENA_API_URL, {
-        method: 'POST',
-        body: new URLSearchParams({ 
-            action: 'postResult', 
-            playerId: playerState.playerId, 
-            win: isWin,
-            squadData: JSON.stringify(squadData)
-        })
-    });
-    
-    if (isWin) showToast("あなたが新たな王者です！");
-    setView('arena');
-}
-
-// ===== STORAGE BOX LOGIC =====
-function openStorageBoxModal() {
-    updateStorageBoxUI();
-    document.getElementById('storageBoxOverlay').classList.add('open');
-}
-
-async function updateStorageBoxUI() {
-    const container = document.getElementById('storageContent');
-    // Get Arena rewards from GAS
-    try {
-        const res = await fetch(`${ARENA_API_URL}?action=getRewards&playerId=${playerState.playerId}`);
-        const data = await res.json();
-        if (data.amount > 0) {
-            // Add to local storage if not exists
-            const arenaRewardId = 'arena_def';
-            if (!playerState.storageBox.some(i => i.id === arenaRewardId)) {
-                playerState.storageBox.push({ id: arenaRewardId, text: "アリーナ防衛報酬", amount: data.amount });
-            } else {
-                playerState.storageBox.find(i => i.id === arenaRewardId).amount = data.amount;
-            }
-        }
-    } catch(e){}
-
-    container.innerHTML = playerState.storageBox.length === 0 ? '<div style="text-align:center; padding:2rem; color:var(--text-dim);">空っぽです</div>' : '';
-    
-    playerState.storageBox.forEach((item, idx) => {
-        if (item.amount <= 0) return;
-        const div = document.createElement('div');
-        div.className = 'notification-item';
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-weight:bold;">${item.text}</div>
-                    <div style="color:var(--gold); font-family:'Orbitron';">💎 ${item.amount.toLocaleString()}</div>
-                </div>
-                <button class="filter-btn" onclick="claimStorageItem(${idx})">獲得</button>
-            </div>`;
-        container.appendChild(div);
-    });
-    
-    document.getElementById('storageBadge').style.display = playerState.storageBox.length > 0 ? 'inline' : 'none';
-}
-
-async function claimStorageItem(idx) {
-    const item = playerState.storageBox[idx];
-    if (item.id === 'arena_def') {
-        await fetch(ARENA_API_URL, { method:'POST', body: new URLSearchParams({action:'claimRewards', playerId:playerState.playerId}) });
-    }
-    playerState.rainbowStones += item.amount;
-    playerState.storageBox.splice(idx, 1);
-    showToast("虹石を獲得しました！");
-    renderSquad();
-    updateStorageBoxUI();
-    saveGame();
-}
-
-async function claimAllStorage() {
-    for(let i = playerState.storageBox.length - 1; i >= 0; i--) {
-        await claimStorageItem(i);
-    }
-}
-
 function addNotification(text, reward = 0) {
     const notif = {
         id: Date.now() + Math.random(),
@@ -13200,15 +12872,10 @@ function addNotification(text, reward = 0) {
     };
     
     if (reward > 0) {
-        playerState.storageBox.push({
-            id: 'stage_' + notif.id,
-            text: `ステージ報酬: ${text.substring(0, 15)}...`,
-            amount: reward,
-            date: notif.date
-        });
+        playerState.rainbowStones += reward;
+        notif.text += ` <span style="color:var(--gold); font-weight:bold;">(+${reward.toLocaleString()} 虹石獲得)</span>`;
     }
     playerState.notifications.unshift(notif);
-    updateStorageBoxUI();
 }
 
 function updateNotificationBadge() {
@@ -13248,7 +12915,6 @@ function openNotificationModal() {
     if (playerState.notifications.length > MAX_NOTIFICATIONS) {
         playerState.notifications.splice(MAX_NOTIFICATIONS); // Keep the 50 newest
     }
-    
     updateNotificationBadge();
     saveGame();
     document.getElementById('notificationOverlay').classList.add('open');
