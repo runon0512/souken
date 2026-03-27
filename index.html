@@ -1,3 +1,28 @@
+        checkAndApplyDrain(attacker, attackerEl, actualDamage);
+                checkAndApplyDrain(attacker, attackerEl, actualDamage);
+                checkAndApplyDrain(attacker, attackerEl, actualDamage);
+function checkAndApplyDrain(attacker, attackerEl, damage) {
+  if (damage > 0 && attacker.equipment && attacker.equipment.effect && attacker.equipment.effect.type === 'drain') {
+    const drainAmt = Math.floor(damage * attacker.equipment.effect.val);
+    attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drainAmt);
+    updateUnitUI(attacker);
+    showDamageNumber(attackerEl, drainAmt, 'heal');
+  }
+}
+function getTriggerRate(unit, ability) {
+  if (!ability) return 0;
+  let rate = ability.triggerRate;
+  if (rate === undefined) return 1.0;
+  if (unit.equipment && unit.equipment.effect && unit.equipment.effect.type === 'ability_rate') {
+    rate *= unit.equipment.effect.val;
+  }
+  const field = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
+  if (field === 'anti_magic') {
+    rate *= 0.5;
+  }
+  return rate;
+}
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -2702,7 +2727,7 @@
     margin-top: 4px;
   }
 
-  .gacha-result-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; text-align: center; padding-bottom: 0.5rem; position: relative; }
+  .gacha-result-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; text-align: center; padding-bottom: 0.5rem; position: relative; aspect-ratio: 105 / 140; display: flex; flex-direction: column; }
   .gacha-result-item.is-new .gacha-result-new-tag { display: block; }
   .gacha-result-img { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #0d1a2a, #070e18); }
   .gacha-result-img img { width: 90%; height: auto; }
@@ -4522,6 +4547,16 @@ const units = [
     useImg: true,
     img: 'C42.svg',
   },
+  {
+    id: 45, name: 'アラン・ジャルエイ', element: 'light', elementJp: '光', type: 'ルディ王国',
+    baseStats: { hp: 1320, atk: 95, def: 105, spd: 78 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '視界内情報自動処理', desc: '被弾時、30%の確率で発動。受けるダメージを40%軽減する。', triggerRate: 0.3, timing: 'on_defense', effect: { type: 'damage_cut', value: 40 } },
+      { name: '光の情報屋', desc: '戦闘開始時、自身と光属性の味方に5ターンの強化を付与する。', timing: 'on_battle_start' }
+    ],
+    useImg: true, img: 'C43.svg'
+  },
 ];
 
 // Equipment Data
@@ -4534,7 +4569,7 @@ const equipmentItems = [
   { id: 6, name: '狂戦士の斧', icon: '🪓', desc: '攻撃力が1.4倍になるが、HPが0.8倍になる', effect: { type: 'stat_mult_multi', stats: { atk: 1.4, hp: 0.8 } } },
   { id: 7, name: '重騎士の盾', icon: '🛡️', desc: '防御力が1.4倍になるが、速度が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { def: 1.4, spd: 0.8 } } },
   { id: 8, name: '盗賊のマント', icon: '🧥', desc: '速度が1.3倍になるが、防御力が0.8倍になる', effect: { type: 'stat_mult_multi', stats: { spd: 1.3, def: 0.8 } } },
-  { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの10%を回復する', effect: { type: 'drain', val: 0.1 } },
+  { id: 9, name: '吸血の短剣', icon: '🗡️', desc: '与えたダメージの50%を回復する', effect: { type: 'drain', val: 0.5 } },
   { id: 10, name: '癒しのハーブ', icon: '🌿', desc: '毎ターンHPが5%回復する', effect: { type: 'regen', val: 0.05 } },
   { id: 11, name: '毒針', icon: '💉', desc: '攻撃時、20%の確率で毒を与える', effect: { type: 'add_status', status: 'poison', chance: 0.2 } },
   { id: 12, name: '幸運のコイン', icon: '🪙', desc: '10%の確率で攻撃を回避する', effect: { type: 'evasion', val: 0.1 } },
@@ -9911,8 +9946,7 @@ async function runBattleSequence() {
         let activeAbility = null;
         if (attacker.abilities) {
           // 呪い状態ならスキル発動不可
-          const isCursed = attacker.statusEffects.some(e => e.type === 'curse');
-          const fieldAntiMagic = (attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
+          const isCursed = attacker.statusEffects.some(e => e.type === 'curse');          
           
           if (isCursed) {
              // スキル発動なし
@@ -9920,14 +9954,13 @@ async function runBattleSequence() {
             if (attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5) {
                // エアラ (ID:37): 光支配発動中は「波状光一閃・改」(abilities[2]) を抽選
                const ab = attacker.abilities[2];
-               if (ab && ab.timing === 'before_attack' && Math.random() < (ab.triggerRate || 0)) {
+               const rate = getTriggerRate(attacker, ab);
+               if (ab && ab.timing === 'before_attack' && Math.random() < rate) {
                   activeAbility = ab;
                }
             } else {
           for (const ab of attacker.abilities) {
-            let rate = ab.triggerRate || 0;
-            if (fieldAntiMagic) rate *= 0.5;
-            
+            const rate = getTriggerRate(attacker, ab);
             const isHpTrigger = ab.timing === 'hp_below' && (attacker.currentHp / attacker.stats.hp * 100) <= (ab.triggerValue || 0);
 
             if ((ab.timing === 'before_attack' && Math.random() < rate) || isHpTrigger) {
@@ -10244,14 +10277,11 @@ async function runBattleSequence() {
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0 && (!activeAbility || !activeAbility.ignoresDefenseSkills)) {
             // 呪い状態なら防御スキル発動不可
-            const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');
-            const fieldAntiMagic = (target.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
-
+                    const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');                    
             if (!isTargetCursed && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
             for (const ab of target.abilities) {
                 if (ab.timing === 'on_defense') {
-                    let currentTriggerRate = ab.triggerRate || 0;
-                    if (fieldAntiMagic) currentTriggerRate *= 0.5;
+                    const currentTriggerRate = getTriggerRate(target, ab);
 
                     // Kitty's passive check
                     if (target.id === 20 && ab.name === '運操作' && target.isPassiveActive) {
@@ -10461,14 +10491,6 @@ async function runBattleSequence() {
               await addStatusEffect(target, attacker.equipment.effect.status, attacker.equipment.effect.turns || 3);
           }
       }
-        // Equipment: Drain
-      if (actualDamage > 0 && attacker.equipment && attacker.equipment.effect && attacker.equipment.effect.type === 'drain') {
-          const drainAmt = Math.floor(actualDamage * attacker.equipment.effect.val);
-          attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drainAmt);
-          updateUnitUI(attacker);
-          showDamageNumber(attackerEl, drainAmt, 'heal');
-      }
-
         playEffect(targetEl, activeAbility ? (attacker.abilityType || 'magic') : 'impact');
         recordDamage(attacker, actualDamage);
         logBattleMessage(`${attacker.name} の ${attackName}！ ${target.name} に <span class="damage">${actualDamage}</span>${advText} のダメージ！`);
@@ -10498,13 +10520,10 @@ async function runBattleSequence() {
 
         // Counter Attack (on_hit)
       if (target.currentHp > 0 && actualDamage > 0 && target.abilities) {
-        const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');
-        const fieldAntiMagic = (target.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
-        
+        const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');        
         if (!isTargetCursed) {
         for (const ab of target.abilities) {
-          let hitRate = ab.triggerRate || 0;
-          if (fieldAntiMagic) hitRate *= 0.5;
+          const hitRate = getTriggerRate(target, ab);
           
           if (ab.timing === 'on_hit' && Math.random() < hitRate) {
              if (target.id === 323 && ab.name === '神判の天秤') {
@@ -10575,9 +10594,7 @@ async function runBattleSequence() {
         // 3. Check for 'after_attack' ability (追撃)
         if (target.currentHp > 0 && attacker.currentHp > 0 && attacker.abilities) {
           // 呪いなら追撃不可
-          const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');
-          const fieldAntiMagic = (attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
-
+          const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');          
           if (!isAttackerCursed) {
           let chaseAbility = null;
           // ライ・アルバロ (ID:5) の特殊処理
@@ -10594,8 +10611,7 @@ async function runBattleSequence() {
           else if (attacker.id === 2) {
             const abIndex = attacker.isPassiveActive ? 2 : 0; // ハート・ブレイク or クリスタル・ブレイク
             const ab = attacker.abilities[abIndex];
-            let rate = ab ? (ab.triggerRate || 0) : 0;
-            if (fieldAntiMagic) rate *= 0.5;
+            const rate = getTriggerRate(attacker, ab);
             if (ab && ab.timing === 'after_attack' && Math.random() < rate) {
               chaseAbility = ab;
             }
@@ -10608,8 +10624,7 @@ async function runBattleSequence() {
           } else if (attacker.id === 319) { // Guldie
              if (attacker.currentHp <= attacker.stats.hp * 0.5 || attacker.missionSpecific?.alwaysLust) {
                 const ab = attacker.abilities.find(a => a.name === 'エターナルクリムゾン');
-                let rate = ab ? (ab.triggerRate || 0) : 0;
-                if (fieldAntiMagic) rate *= 0.5;
+                const rate = getTriggerRate(attacker, ab);
                 if (ab && Math.random() < rate) {
                    chaseAbility = ab;
                 }
@@ -10618,8 +10633,7 @@ async function runBattleSequence() {
               // 「視界内物質操作・爆散」が発動していなかった場合のみ
               if (!activeAbility || activeAbility.name !== '視界内物質操作・爆散') {
                   const ab = attacker.abilities.find(a => a.name === 'アブソリュート・ゼロ');
-                  let rate = ab ? (ab.triggerRate || 0) : 0;
-                  if (fieldAntiMagic) rate *= 0.5;
+                  const rate = getTriggerRate(attacker, ab);
                   if (ab && Math.random() < rate) {
                       chaseAbility = ab;
                   }
@@ -10627,8 +10641,7 @@ async function runBattleSequence() {
           } else {
             // 汎用処理
             for (const ab of attacker.abilities) {
-              let rate = ab.triggerRate || 0;
-              if (fieldAntiMagic) rate *= 0.5;
+              const rate = getTriggerRate(attacker, ab);
               if (ab.timing === 'after_attack' && Math.random() < rate) {
                 chaseAbility = ab;
                 break;
@@ -11428,13 +11441,10 @@ async function triggerOnBattleStartAbilities() {
     // 1. Build the action queue
     for (const unit of allUnits) {
       if (unit.currentHp > 0 && unit.abilities) {
-          const fieldAntiMagic = (unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
           const startAbility = unit.abilities.find(ab => ab.timing === 'on_battle_start');
           if (startAbility) {
-              let rate = startAbility.triggerRate;
-              if (rate !== undefined && fieldAntiMagic) rate *= 0.5;
-              // triggerRateが未定義(100%発動)か、確率チェックをパスした場合にキューに追加
-              if (rate === undefined || Math.random() < rate) {
+              const rate = getTriggerRate(unit, startAbility);
+              if (Math.random() < rate) {
                   actionQueue.push({ unit, ab: startAbility });
               }
           }
@@ -11496,9 +11506,9 @@ async function triggerOnBattleStartAbilities() {
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
-        else if (unit.id === 15 || unit.id === 306 || unit.id === 26) { // リディン(雷), シャール(闇), スルト(水) の属性攻撃強化
-            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : 'dark');
-            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : '闇攻撃強化');
+        else if (unit.id === 15 || unit.id === 306 || unit.id === 26 || unit.id === 45) { // リディン(雷), シャール(闇), スルト(水), アラン(光) の属性攻撃強化
+            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : (unit.id === 45 ? 'light' : 'dark'));
+            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : (unit.id === 45 ? '光の情報屋' : '闇攻撃強化'));
             
             // 味方全体（自分含む）で、指定属性のキャラを対象にする
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
@@ -12976,11 +12986,10 @@ async function refreshArenaStatus() {
             actionBtn.disabled = true;
             
             if (data.myPos === 1 && !data.isFighting) {
-                qStatus.innerHTML = `<span style="color:var(--accent3);">あなたの番です！</span>`;
-                actionBtn.textContent = "対戦開始";
-                actionBtn.disabled = false;
-                actionBtn.style.borderColor = 'var(--accent3)';
-                actionBtn.style.color = 'var(--accent3)';
+                // 自分の番（1位）かつ対戦枠が空いていれば、自動的に対戦を開始
+                if (arenaInterval) clearTimeout(arenaInterval);
+                handleArenaAction();
+                return;
             } else {
                 qStatus.innerHTML = `待機中... あなたの順番: <span style="color:var(--accent); font-size:1.5rem;">${data.myPos}</span> 番目`;
                 actionBtn.textContent = "待機中";
@@ -13050,11 +13059,13 @@ function renderChampSquad(enemies) {
 }
 
 async function handleArenaAction() {
+    const qStatus = document.getElementById('queueStatus');
     const actionBtn = document.getElementById('arenaActionBtn');
     actionBtn.disabled = true;
     actionBtn.textContent = "接続中...";
 
     if (isWaitingInQueue) {
+        if (qStatus) qStatus.innerHTML = `<span style="color:var(--accent3);">あなたの番です！開始します...</span>`;
         const res = await fetch(ARENA_API_URL, {
             method: 'POST',
             body: new URLSearchParams({ action: 'startMatch', playerId: playerState.playerId })
@@ -13062,8 +13073,14 @@ async function handleArenaAction() {
         const data = await res.json();
         if (data.success) {
             if (arenaInterval) clearTimeout(arenaInterval);
+            showToast("順番が回ってきました！対戦を開始します。");
             startArenaBattle();
-        } else { showToast(data.error || "まだ開始できません"); }
+        } else { 
+            showToast(data.error || "開始に失敗しました");
+            // 通信エラーなどで失敗した場合はポーリングを再開
+            if (arenaInterval) clearTimeout(arenaInterval);
+            arenaInterval = setTimeout(refreshArenaStatus, 5000);
+        }
     } else {
         if (squad.length === 0) { showToast("部隊を編成してください"); return; }
         
