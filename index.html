@@ -110,7 +110,7 @@
   .header-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
   }
 
   .logo {
@@ -135,10 +135,11 @@
 
   .header-subtitle {
     font-family: 'Orbitron', monospace;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     letter-spacing: 0.1875rem;
     color: var(--text-dim);
     text-transform: uppercase;
+    display: flex; flex-direction: column;
   }
 
   .header-stats {
@@ -2837,7 +2838,7 @@
   <div class="header-left">
     <div class="logo" onclick="setView('home')">Souken<span>WoF</span></div>
     <div class="header-divider"></div>
-    <div class="header-subtitle">部隊管理システム</div>
+    <div class="header-subtitle">部隊管理システム <span id="gameVersionDisplay" style="font-size: 0.65rem; opacity: 0.7;"></span></div>
   </div>
   <div class="resource-display">
     <div class="hstat-label" style="margin-right:8px">虹石</div>
@@ -3060,6 +3061,22 @@
     </div>
     <div class="modal-footer">
       <button class="modal-add-btn" id="modalActionBtn" onclick="modalToggleSquad()">編成に追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- PATCH NOTES MODAL -->
+<div class="modal-overlay" id="patchNotesOverlay">
+  <div class="modal" style="width: 32rem;">
+    <div class="modal-header">
+      <div class="modal-title">アップデート情報</div>
+    </div>
+    <div class="modal-body">
+      <div style="font-family: 'Orbitron'; color: var(--accent); font-size: 1.2rem; margin-bottom: 1rem;" id="patchNotesVersion"></div>
+      <div id="patchNotesContent" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 4px; max-height: 20rem; overflow-y: auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-add-btn" onclick="closePatchNotes()">確認</button>
     </div>
   </div>
 </div>
@@ -3914,6 +3931,15 @@ function closeSettingsModal() {
 </style>
 <script>
 
+// ===== VERSION & PATCH NOTES =====
+const GAME_VERSION = "V1.3.3α";
+const PATCH_NOTES_DATA = `・新キャラクター「キャル・エクレア」の実装
+・ガチャバナーの更新
+・装備強化（エンチャント）システムのUI改善
+・不具合の修正とパフォーマンスの最適化
+・指揮禁止ステージの実装
+・レベルアップ時のオーラ費用撤廃に伴う補填処理の追加
+・ログインシーケンスの改善（パッチノート表示機能追加）`;
 
 // ===== DATA =====
 const units = [
@@ -5328,6 +5354,7 @@ let playerState = {
   towerProgress: 0,
   squads: [[], [], []], // 3 slots
   squadNames: ["第1部隊", "第2部隊", "第3部隊"],
+  gameVersion: null,
   currentSquadIndex: 0,
   playerId: null, // Will be generated
   notifications: [], // { id, text, date, read }
@@ -10249,7 +10276,7 @@ async function runBattleSequence() {
             if (!isTargetCursed && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
             for (const ab of target.abilities) {
                 if (ab.timing === 'on_defense') {
-                    const currentTriggerRate = getTriggerRate(target, ab);
+                    let currentTriggerRate = getTriggerRate(target, ab);
 
                     // Kitty's passive check
                     if (target.id === 20 && ab.name === '運操作' && target.isPassiveActive) {
@@ -12789,7 +12816,7 @@ async function submitNameChange() {
   
   updatePlayerName(name);
   if (playerState.playerName === name) {
-    // 名前が確定したら即座にランキングに反映
+    // 名前が確定したら即座にランキングに反映し、ログインシーケンスを続行
     postTowerScore(playerState.towerProgress || 0).then(success => {
         if (success) {
             playerState.towerRankInitialized = true;
@@ -12797,12 +12824,7 @@ async function submitNameChange() {
         }
     });
     closeNameEntryModal();
-
-    // 名前決定後にログインボーナスを発生させる
-    const today = new Date().toDateString();
-    if (playerState.lastLoginDate !== today) {
-        setTimeout(triggerLoginBonus, 500);
-    }
+    checkLoginBonus(); // ログインシーケンスを再開
   }
   btn.disabled = false;
   btn.textContent = originalText;
@@ -13147,6 +13169,49 @@ function checkAndGrantTowerRewards(currentFloor, showToasts = false) {
     return grantedChars; // 付与されたキャラクターの配列を返す
 }
 
+function showPatchNotes() {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('patchNotesOverlay');
+        document.getElementById('patchNotesVersion').textContent = GAME_VERSION;
+        document.getElementById('patchNotesContent').textContent = PATCH_NOTES_DATA;
+        overlay.classList.add('open');
+        
+        window.closePatchNotes = () => {
+            overlay.classList.remove('open');
+            resolve();
+        };
+    });
+}
+
+function checkLoginBonus() {
+    const today = new Date().toDateString();
+    if (playerState.lastLoginDate !== today) {
+        setTimeout(triggerLoginBonus, 500);
+    }
+}
+
+async function handleLoginSequence() {
+    // 1. パッチノートの表示 (バージョンが異なる場合)
+    if (playerState.gameVersion !== GAME_VERSION) {
+        await showPatchNotes();
+        playerState.gameVersion = GAME_VERSION;
+        saveGame();
+    }
+
+    // 2. 名前チェック (無効な名前の場合)
+    const invalidNames = ["名無しの剣士", "undefined", "undefind", "null"];
+    const currentName = String(playerState.playerName).toLowerCase();
+    const isInvalid = invalidNames.includes(playerState.playerName) || invalidNames.includes(currentName);
+
+    if (isInvalid) {
+        openNameEntryModal(true);
+        // 以降の処理(ログインボーナス等)はsubmitNameChangeから呼ばれます
+    } else {
+        // 3. ログインボーナス
+        checkLoginBonus();
+    }
+}
+
 function warmUpAuraAnimations() {
     const warmer = document.createElement('div');
     warmer.style.position = 'absolute';
@@ -13184,14 +13249,10 @@ function warmUpAuraAnimations() {
 async function initializeGame() {
     loadSettings();
     loadGame();
-
-    // NEW: Login Bonus Check
-    const today = new Date().toDateString();
-    // 名前が決まっていない（初回ログイン）場合は、名前決定後に発生させるためここではスキップ
-    if (playerState.playerName !== "名無しの剣士" && playerState.lastLoginDate !== today) {
-        // Use a timeout to let the main UI render first
-        setTimeout(triggerLoginBonus, 500);
-    }
+    
+    // バージョン表示の更新
+    const verDisplay = document.getElementById('gameVersionDisplay');
+    if (verDisplay) verDisplay.textContent = GAME_VERSION;
     
     // Check notifications on startup
     setTimeout(() => {
@@ -13270,14 +13331,12 @@ async function initializeGame() {
 
     updateNotificationBadge();
 
-    // 初回名前入力案内
-    if (playerState.playerName === "名無しの剣士") {
-        openNameEntryModal(true);
-    } else {
-        // 設定画面の表示更新. Ensure settingPlayerNameDisplay exists.
-        const settingDisplay = document.getElementById('settingPlayerNameDisplay');
-        if(settingDisplay) settingDisplay.textContent = playerState.playerName;
-    }
+    // ログインシーケンスの実行 (パッチノート -> 名前チェック -> ログインボーナス)
+    handleLoginSequence();
+
+    // 設定画面の表示更新
+    const settingDisplay = document.getElementById('settingPlayerNameDisplay');
+    if(settingDisplay) settingDisplay.textContent = playerState.playerName;
     
     // 設定画面にIDを表示
     const idDisplay = document.getElementById('settingPlayerIdDisplay');
