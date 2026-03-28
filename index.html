@@ -2986,6 +2986,8 @@
               <button class="squad-tab-btn active" id="squad-tab-0" onclick="switchSquad(0)">1</button>
               <button class="squad-tab-btn" id="squad-tab-1" onclick="switchSquad(1)">2</button>
               <button class="squad-tab-btn" id="squad-tab-2" onclick="switchSquad(2)">3</button>
+              <button class="squad-tab-btn" id="squad-tab-3" onclick="switchSquad(3)">4</button>
+              <button class="squad-tab-btn" id="squad-tab-4" onclick="switchSquad(4)">5</button>
             </div>
           </div>
           <div id="squadSlots" style="display:flex; gap:0.5rem;"></div>
@@ -3100,6 +3102,8 @@
            <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-0" onclick="switchSquad(0)">1</button>
            <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-1" onclick="switchSquad(1)">2</button>
            <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-2" onclick="switchSquad(2)">3</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-3" onclick="switchSquad(3)">4</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-4" onclick="switchSquad(4)">5</button>
            <span id="battleSquadNameDisplay" style="font-size:0.8rem; color:var(--gold); margin-left:0.5rem; font-weight:bold;"></span>
         </div>
         <div class="header-divider"></div>
@@ -3731,7 +3735,7 @@
   <div class="modal" style="width: 35rem;">
     <div class="modal-header">
       <div class="modal-title">登録する編成を選択</div>
-      <button class="modal-close" onclick="document.getElementById('rmSquadSelectOverlay').classList.remove('open')">✕</button>
+      <button class="modal-close" onclick="closeRmSquadSelect()">✕</button>
     </div>
     <div class="modal-body">
       <div style="background:rgba(0,0,0,0.2); padding:1rem; border-radius:4px; margin-bottom:1rem;">
@@ -3904,6 +3908,8 @@
            <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-0" onclick="switchBattleSquad(0)">1</button>
            <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-1" onclick="switchBattleSquad(1)">2</button>
            <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-2" onclick="switchBattleSquad(2)">3</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-3" onclick="switchBattleSquad(3)">4</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-4" onclick="switchBattleSquad(4)">5</button>
       </div>
       <div class="battle-speed-controls">
         <span>SPEED</span>
@@ -5548,14 +5554,43 @@ let playerState = {
   lastLoginDate: null,
   ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   towerProgress: 0,
-  squads: [[], [], []], // 3 slots
-  squadNames: ["第1部隊", "第2部隊", "第3部隊"],
+  squads: [[], [], [], [], []], // 5 slots
+  squadNames: ["第1部隊", "第2部隊", "第3部隊", "第4部隊", "第5部隊"],
   gameVersion: null,
   currentSquadIndex: 0,
   playerId: null, // Will be generated
   notifications: [], // { id, text, date, read }
   stageTracking: {}, // { stageId: { hearts: 0, comments: 0, plays: 0, seen: true } }
 };
+
+function updateSquadSwitcherUI() {
+    const types = ['squad-tab', 'battle-squad', 'b-squad'];
+    playerState.squads.forEach((sq, i) => {
+        const iconsHtml = sq.map(id => {
+            const u = units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
+            const imgSrc = u ? (u.useImg ? u.img : 'C0.svg') : 'C0.svg';
+            return `<img src="${imgSrc}" style="width:0.6rem; height:0.8rem; object-fit:cover; border:1px solid rgba(255,255,255,0.1); border-radius:1px;">`;
+        }).join('');
+        
+        const content = `
+            <div style="font-size:0.65rem; margin-bottom:2px; font-family:'Orbitron'; line-height:1;">${i+1}</div>
+            <div style="display:flex; gap:1px; height:0.8rem; justify-content:center; align-items:center; min-width:3rem;">
+                ${iconsHtml || '<span style="font-size:0.5rem; color:var(--text-dim);">EMPTY</span>'}
+            </div>
+        `;
+        
+        types.forEach(prefix => {
+            const btn = document.getElementById(`${prefix}-${i}`);
+            if (btn) {
+                btn.innerHTML = content;
+                btn.style.display = 'flex';
+                btn.style.flexDirection = 'column';
+                btn.style.alignItems = 'center';
+                btn.style.padding = '4px 2px';
+            }
+        });
+    });
+}
 
 function getEnhancedEquipName(item, enhancement) {
     if (!item) return '';
@@ -5833,7 +5868,7 @@ let draggedSquadIndex = null;
 let draggedRosterCharId = null;
 
 function switchSquad(index) {
-  if (index < 0 || index > 2) return;
+  if (index < 0 || index > 4) return;
   // If already on the current squad, just re-render to update UI
   // if (index === playerState.currentSquadIndex) return;
 
@@ -5854,6 +5889,7 @@ function switchSquad(index) {
   // Re-render UI. Character states are now global, so no loading/saving is needed.
   renderSquad();
   renderCards();
+  updateSquadSwitcherUI();
   saveGame();
 }
 
@@ -5954,6 +5990,7 @@ function handleSquadDrop(e, targetIndex) {
   
   draggedSquadIndex = null;
   renderSquad();
+  updateSquadSwitcherUI();
   saveGame();
 }
 
@@ -6026,6 +6063,7 @@ function renderSquad() {
   if (hSquadPowerEl) hSquadPowerEl.textContent = total;
 
   // Update name input if needed
+  updateSquadSwitcherUI();
   if (document.getElementById('squadNameInput')) document.getElementById('squadNameInput').value = playerState.squadNames[playerState.currentSquadIndex];
 }
 
@@ -6416,6 +6454,7 @@ function toggleSquad(e, id) {
   renderSquad();
   renderCards();
   if (modalCharId !== null) updateModal();
+  updateSquadSwitcherUI();
   saveGame();
 }
 
@@ -12841,7 +12880,7 @@ function handleFileSelect(input) {
       // Migration for squad-specific states
       if (!playerState.squadCharacterStates) {
           console.log("Migrating to squad-specific character states...");
-          playerState.squadCharacterStates = [{}, {}, {}];
+          playerState.squadCharacterStates = [{}, {}, {}, {}, {}];
           const baseState = {};
           for (const charId in playerState.characters) {
               baseState[charId] = {
@@ -12854,7 +12893,23 @@ function handleFileSelect(input) {
           playerState.squadCharacterStates[0] = JSON.parse(JSON.stringify(baseState));
           playerState.squadCharacterStates[1] = JSON.parse(JSON.stringify(baseState));
           playerState.squadCharacterStates[2] = JSON.parse(JSON.stringify(baseState));
+          playerState.squadCharacterStates[3] = JSON.parse(JSON.stringify(baseState));
+          playerState.squadCharacterStates[4] = JSON.parse(JSON.stringify(baseState));
       }
+      // 装備の個別化マイグレーション (ファイル読込時)
+      if (!playerState.squadEquipments) {
+          playerState.squadEquipments = [{}, {}, {}, {}, {}];
+          for (const [cid, char] of Object.entries(playerState.characters)) {
+              if (char.equippedId) {
+                  playerState.squadEquipments[0][cid] = char.equippedId;
+                  playerState.squadEquipments[1][cid] = char.equippedId;
+                  playerState.squadEquipments[2][cid] = char.equippedId;
+                  playerState.squadEquipments[3][cid] = char.equippedId;
+                  playerState.squadEquipments[4][cid] = char.equippedId;
+              }
+          }
+      }
+
       playerState.towerProgress = data.playerState.towerProgress || 0;
       playerState.playerName = data.playerState.playerName || "名無しの剣士";
 
@@ -12869,6 +12924,7 @@ function handleFileSelect(input) {
       // UI Update
       renderSquad();
       renderCards();
+      updateSquadSwitcherUI();
       
       // Save to local storage as well
       saveGame();
@@ -12974,32 +13030,43 @@ function loadGame() {
         delete playerState.squadCharacterStates;
     }
 
+    playerState.squadEquipments = savedData.playerState.squadEquipments || null;
     // 装備の個別化マイグレーション
     if (!playerState.squadEquipments) {
-        playerState.squadEquipments = [{}, {}, {}];
+        playerState.squadEquipments = [{}, {}, {}, {}, {}];
         // 既存のグローバル装備を全スロットにコピー
         for (const [cid, char] of Object.entries(playerState.characters)) {
             if (char.equippedId) {
                 playerState.squadEquipments[0][cid] = char.equippedId;
                 playerState.squadEquipments[1][cid] = char.equippedId;
                 playerState.squadEquipments[2][cid] = char.equippedId;
+                playerState.squadEquipments[3][cid] = char.equippedId;
+                playerState.squadEquipments[4][cid] = char.equippedId;
             }
         }
+    }
+    if (playerState.squadEquipments.length < 5) {
+        while(playerState.squadEquipments.length < 5) playerState.squadEquipments.push({});
     }
 
     playerState.towerProgress = savedData.playerState.towerProgress || 0;
     playerState.playerName = savedData.playerState.playerName || defaultPlayerState.playerName;
     
     // Squad Slots Migration
-    playerState.squads = savedData.playerState.squads || [savedData.squad || [], [], []];
-    playerState.squadNames = savedData.playerState.squadNames || ["第1部隊", "第2部隊", "第3部隊"];
+    playerState.squads = savedData.playerState.squads || [savedData.squad || [], [], [], [], []];
+    if (playerState.squads.length < 5) {
+        while(playerState.squads.length < 5) playerState.squads.push([]);
+    }
+    playerState.squadNames = savedData.playerState.squadNames || ["第1部隊", "第2部隊", "第3部隊", "第4部隊", "第5部隊"];
+    if (playerState.squadNames.length < 5) {
+        for(let i=playerState.squadNames.length; i<5; i++) playerState.squadNames.push(`第${i+1}部隊`);
+    }
     playerState.currentSquadIndex = savedData.playerState.currentSquadIndex || 0;
         playerState.towerRankInitialized = savedData.playerState.towerRankInitialized || false;
         playerState.playRewardMigrated = savedData.playerState.playRewardMigrated || false;
         playerState.raidPackPurchased = savedData.playerState.raidPackPurchased || false;
-    if (!playerState.squads[1]) playerState.squads[1] = [];
-    if (!playerState.squads[2]) playerState.squads[2] = [];
-    
+
+
     playerState.compensationVersion = savedData.playerState.compensationVersion;
     playerState.playerId = savedData.playerState.playerId;
     playerState.customCharacters = savedData.playerState.customCharacters || [];
@@ -13035,6 +13102,15 @@ function loadGame() {
   }
   if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
   if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
+}
+
+function switchBattleSquad(index) {
+    switchSquad(index);
+    // バトル開始前の待機状態であれば、プレイヤーユニットを再読み込みして描画
+    if (battleState && !battleState.isStarted && battleState.mission) {
+        battleState.playerUnits = initBattlePlayerUnits();
+        renderBattleUnits();
+    }
 }
 
 function closeVictoryModal() {
@@ -13743,13 +13819,15 @@ let rmDataLoaded = false;
 let isRmSimulating = false;
 
 async function initRankMatch() {
-    if (playerState.playerName === "るのん（製作者）") document.getElementById('rmAdminBtn').style.display = 'inline-block';
+    const adminBtn = document.getElementById('rmAdminBtn');
+    if (adminBtn) adminBtn.style.display = playerState.playerName === "るのん（製作者）" ? 'inline-block' : 'none';
     setRmTab('register');
     renderRmMySquads();
     if (cachedRmRankings.length === 0) fetchRmRankings();
 }
 
 async function setRmTab(tab) {
+    if (isRmSimulating) return;
     currentRmTab = tab;
     document.querySelectorAll('.rm-tab').forEach(el => el.classList.remove('active'));
     const tabEl = document.getElementById(`rm-tab-${tab}`);
@@ -13780,6 +13858,9 @@ function renderRmMySquads() {
     if (!grid) return;
     grid.innerHTML = '';
     
+    const refreshBtn = document.getElementById('rmRefreshBtn');
+    if (refreshBtn) refreshBtn.disabled = !rmDataLoaded || isRmSimulating;
+
     for (let i = 0; i < 5; i++) {
         const registered = cachedRmMySquads.find(s => parseInt(s.rmSlotIndex) === i);
         const card = document.createElement('div');
@@ -13844,12 +13925,20 @@ function openRmSquadSelect(rmIndex) {
         `;
         list.appendChild(item);
     });
+    isRmSimulating = true;
+    renderRmMySquads();
     document.getElementById('rmSquadSelectOverlay').classList.add('open');
 }
 
+function closeRmSquadSelect() {
+    document.getElementById('rmSquadSelectOverlay').classList.remove('open');
+    isRmSimulating = false;
+    renderRmMySquads();
+}
+
 async function submitToRankMatch(localIdx, rmIndex) {
-    if (isRmSimulating) return;
-    
+    // isRmSimulating is already true from openRmSquadSelect
+
     const squadIds = playerState.squads[localIdx];
     const currentSquadEquips = playerState.squadEquipments[localIdx] || {};
     if (squadIds.length === 0) { showToast("空の編成は登録できません"); return; }
@@ -13872,9 +13961,7 @@ async function submitToRankMatch(localIdx, rmIndex) {
     }
 
     document.getElementById('rmSquadSelectOverlay').classList.remove('open');
-    isRmSimulating = true;
     renderRmMySquads();
-    showToast("シミュレーション中... (1000倍速)");
 
     // 現レート取得
     const existing = cachedRmMySquads.find(s => parseInt(s.rmSlotIndex) === rmIndex);
@@ -13890,8 +13977,12 @@ async function submitToRankMatch(localIdx, rmIndex) {
     const opponents = pool.sort(() => Math.random() - 0.5).slice(0, 10);
     
     const updates = [];
+    let matchCount = 0;
 
     for (const opp of opponents) {
+        matchCount++;
+        showToast(`シミュレーション中... (${matchCount}/${opponents.length})`);
+        await sleep(50); // UI更新のための待機
         const win = runHeadlessBattle(squadDataObj, JSON.parse(opp.squadData)).win;
         const oppRate = parseFloat(opp.rate) || 1500;
         const expectedMy = 1 / (1 + Math.pow(10, (oppRate - myRate) / 400));
@@ -14066,9 +14157,17 @@ async function runAdminRoundRobin() {
     
     const squads = [...cachedRmRankings];
     const K = 32;
+    const totalMatches = (squads.length * (squads.length - 1)) / 2;
+    let currentMatch = 0;
 
     for (let i = 0; i < squads.length; i++) {
         for (let j = i + 1; j < squads.length; j++) {
+            currentMatch++;
+            if (currentMatch % 5 === 0 || currentMatch === totalMatches) {
+                showToast(`再計算中... (${currentMatch}/${totalMatches})`);
+                await sleep(10);
+            }
+
             const win = runHeadlessBattle(JSON.parse(squads[i].squadData), JSON.parse(squads[j].squadData)).win;
             const rI = parseFloat(squads[i].rate);
             const rJ = parseFloat(squads[j].rate);
@@ -14164,8 +14263,8 @@ function renderRmRankings() {
             <td style="text-align:center; min-width:10rem;">${unitIcons}</td>
             <td>${historyHtml}</td>
             <td style="text-align:center;">
-                <button class="filter-btn" style="width:auto; padding:2px 8px;" onclick="previewSquadFromRanking(${i})">表示</button>
-                <button class="filter-btn" style="width:auto; padding:2px 8px; border-color:var(--accent2); color:var(--accent2);" onclick="challengeRankingOpponent(${i})">対戦</button>
+                <button class="filter-btn" style="width:auto; padding:2px 8px;" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="previewSquadFromRanking(${i})">表示</button>
+                <button class="filter-btn" style="width:auto; padding:2px 8px; border-color:var(--accent2); color:var(--accent2);" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="challengeRankingOpponent(${i})">対戦</button>
             </td>
             <td class="rate-val">${row.rate}</td>
         `;
@@ -14175,6 +14274,7 @@ function renderRmRankings() {
     if (cachedRmRankings.length > rmRankingDisplayLimit) {
         const more = document.createElement('button');
         more.className = 'mission-btn';
+        more.disabled = !rmDataLoaded || isRmSimulating;
         more.style.cssText = 'margin-top:1rem; background:transparent; border-color:var(--text-dim); color:var(--text-mid);';
         more.textContent = 'さらに表示';
         more.onclick = () => { rmRankingDisplayLimit += 20; renderRmRankings(); };
@@ -14302,6 +14402,7 @@ async function initializeGame() {
     setView('home');
     renderSquad();
     renderCards();    
+    updateSquadSwitcherUI();
     // Update UI sliders from loaded settings
     document.getElementById('bgmVolume').value = settings.bgmVolume;
     document.getElementById('sfxVolume').value = settings.sfxVolume;
