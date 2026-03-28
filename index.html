@@ -944,13 +944,21 @@
     inset: 0;
     background: rgba(0,0,0,0.85);
     backdrop-filter: blur(4px);
-    z-index: 260;
+    z-index: 2000;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
+  }
+  
+  #modalOverlay {
+    z-index: 3000; /* キャラ詳細を編成プレビューより前面にする */
+  }
+
+  #equipOverlay {
+    z-index: 4000; /* 装備選択をキャラ詳細より前面にする */
   }
 
   .modal-overlay.open {
@@ -1349,13 +1357,13 @@
     width: 95%;
     height: 95%;
     max-width: 75rem;
-    border: 1px solid var(--border-bright);
+    border: 1px solid var(--accent2);
     border-radius: 0.5rem;
     background: var(--bg-mid);
     display: flex;
     flex-direction: column;
   }
-  .battle-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
+  .battle-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-shrink: 0; }
   .battle-header h2 { font-size: 1rem; color: var(--accent2); }
   .battle-header-btn {
     background: none;
@@ -1382,7 +1390,6 @@
   .battle-header-controls {
     display: flex;
     gap: 0.5rem;
-    justify-self: flex-end;
   }
   .battle-speed-controls {
     display: flex;
@@ -1391,7 +1398,6 @@
     background: rgba(0,0,0,0.3);
     padding: 0.25rem;
     border-radius: 0.25rem;
-    justify-self: center;
   }
   .battle-speed-controls span {
     font-size: 0.9rem;
@@ -2483,6 +2489,84 @@
     animation: blink 1s infinite alternate;
   }
 
+  /* RANK MATCH STYLES */
+  .rm-squad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .rm-slot-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    position: relative;
+  }
+  .rm-slot-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;
+  }
+  .rm-slot-title { font-family: 'Orbitron'; font-size: 0.9rem; color: var(--accent); }
+  .rm-slot-rate { font-family: 'Orbitron'; font-size: 1.2rem; font-weight: 700; color: var(--gold); }
+  .rm-squad-preview {
+    display: flex; gap: 4px; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.75rem;
+    min-height: 3.5rem; align-items: center; justify-content: center;
+  }
+  .rm-mini-img { width: 2.5rem; height: 3.5rem; object-fit: cover; border: 1px solid var(--border); border-radius: 2px; }
+  .rm-empty-text { font-size: 0.8rem; color: var(--text-dim); }
+
+  .local-squad-selector {
+    border-top: 1px solid var(--border);
+    margin-top: 1rem; padding-top: 1rem;
+  }
+  .local-squad-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px;
+    margin-bottom: 0.5rem; transition: all 0.2s; cursor: pointer;
+  }
+  .local-squad-item:hover { border-color: var(--accent); background: rgba(0,200,255,0.05); }
+  .local-squad-info { flex: 1; margin-left: 0.5rem; }
+  .local-squad-name { font-weight: bold; font-size: 0.9rem; color: var(--gold); }
+  .local-squad-pwr { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--text-dim); }
+
+  .ranking-table {
+    width: 100%; border-collapse: collapse; margin-top: 1rem;
+  }
+  .ranking-table th {
+    text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-bright);
+    font-family: 'Orbitron'; font-size: 0.8rem; color: var(--text-dim);
+  }
+  .ranking-table td {
+    padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.95rem;
+  }
+  .rank-row-self { background: rgba(0,200,255,0.1); }
+  .rank-val { font-family: 'Orbitron'; font-weight: 700; width: 3rem; }
+  .rank-val.top-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); font-size: 1.2rem; }
+  .rank-val.top-2 { color: #c0c0c0; }
+  .rank-val.top-3 { color: #b87333; }
+  .rate-val { font-family: 'Orbitron'; color: var(--accent); font-weight: bold; text-align: right; }
+  
+  .rm-loading-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center; z-index: 10;
+    border-radius: 0.5rem; flex-direction: column; gap: 0.5rem;
+  }
+
+  .rm-tab-bar {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border);
+  }
+  .rm-tab {
+    padding: 0.75rem 1.5rem; cursor: pointer; color: var(--text-dim); font-family: 'Orbitron';
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .rm-tab:hover { color: var(--text-main); }
+  .rm-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .rank-badge-my {
+    background: var(--accent); color: #000; font-family: 'Orbitron'; font-weight: 900;
+    padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-size: 0.8rem;
+  }
+
   input[type="range"] {
     touch-action: none;
   }
@@ -2823,6 +2907,7 @@
   const USER_STAGE_API_URL = "https://script.google.com/macros/s/AKfycbxjHXNJgcujuBjsYNHHvcU3a2vv-Y-z_C0MF1JHwNIZ5P45AIgIqX2U9LPtKm2wVrwA/exec"; 
   const USAGE_API_URL = "https://script.google.com/macros/s/AKfycbyFmb4wo8d0XXqHZGXUifQK8_O6fZPBnPIdZ5dwOtbWg9hPAbpVKAbiJdwEnu-e22uu/exec"; // キャラ使用率取得用の新しいGAS URLをここに貼り付けてください
   const TOWER_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbyhjfVQr5yfnzEz1TIRRsktsNlBEdYBkIEObJXRyzWwVSr73QuVrIR4I1S4cNuTP5G9/exec"; // 無限の塔ランキング用のGAS URLをここに貼り付けてください
+  const RANK_MATCH_API_URL = "https://script.google.com/macros/s/AKfycbxkXz9PaYuez2p5gsrxmAWaIEb1AVm980oGQklAp5L9jYS4q-aGLxTEjxqpoaBPV_87/exec"; // 新しいGAS URLをここに貼り付けてください
 </script>
 <body>
 
@@ -2866,7 +2951,9 @@
       <div class="logo" style="font-size: 4rem; margin-bottom: 2rem;">Souken<span>WoF</span></div>
       <button class="menu-btn" onclick="setView('roster')">編成 / 強化</button>
       <button class="menu-btn" style="border-color: var(--accent2); color: var(--accent2); text-shadow: 0 0 15px var(--accent2);" onclick="setView('battleMenu')">バトル</button>
+      <button class="menu-btn" style="border-color: var(--accent); color: var(--accent); text-shadow: 0 0 15px var(--accent);" onclick="setView('rankMatch')">ランクマッチ</button>
       <button class="menu-btn" style="border-color: var(--gold); color: var(--gold); text-shadow: 0 0 15px var(--gold);" onclick="setView('gacha')">ガチャ</button>
+      <button class="menu-btn" style="border-color: #ff00e6; color: #ff00e6; text-shadow: 0 0 15px #ff00e6;" onclick="setView('shop')">ショップ</button>
 
       <div style="margin-top: 2rem; display: flex; gap: 1rem;">
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="setView('status')">状態異常図鑑</button>
@@ -2948,6 +3035,42 @@
       </div>
     </div>
     <div class="card-grid" id="cardGrid"></div>
+  </div>
+
+  <!-- RANK MATCH PANEL -->
+  <div class="roster-panel" id="rankMatchPanel" style="display: none;">
+    <div class="roster-toolbar" style="margin-bottom: 2rem;">
+      <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+        ← ホーム
+      </button>
+      <div class="roster-title">ランクマッチ</div>
+      <button class="filter-btn" id="rmRefreshBtn" style="width:auto; margin:0;" onclick="fetchRmRankings(true)">↻ データ更新</button>
+    </div>
+    
+    <div id="rm-main-content" style="display: flex; gap: 2rem; align-items: flex-start;">
+      <!-- LEFT: RANKING -->
+      <div style="flex: 2; min-width: 0;">
+        <div class="section-title">グローバルランキング <button id="rmAdminBtn" style="display:none; color:var(--accent2); margin-left:1rem; background:transparent; border:1px solid var(--accent2); border-radius:4px; cursor:pointer;" onclick="runAdminRoundRobin()">管理者:総当たり</button></div>
+        <div id="rmRankingListContainer"></div>
+      </div>
+
+      <!-- RIGHT: MY SQUADS -->
+      <div style="flex: 1; min-width: 20rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);">
+        <div class="section-title" style="border:none; margin-bottom:1rem;">自分の登録編成</div>
+        <div class="rm-squad-grid" id="rmSquadGrid" style="grid-template-columns: 1fr; gap: 1rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOP PANEL -->
+  <div class="roster-panel" id="shopPanel" style="display: none;">
+    <div class="roster-toolbar">
+      <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+        ← ホーム
+      </button>
+      <div class="roster-title">ショップ</div>
+    </div>
+    <div id="shopContainer" style="display: flex; justify-content: center; padding: 2rem;"></div>
   </div>
 
   <!-- EQUIPMENT PANEL -->
@@ -3599,6 +3722,24 @@
   </div>
 </div>
 
+<!-- RM SQUAD SELECT MODAL -->
+<div class="modal-overlay" id="rmSquadSelectOverlay">
+  <div class="modal" style="width: 35rem;">
+    <div class="modal-header">
+      <div class="modal-title">登録する編成を選択</div>
+      <button class="modal-close" onclick="document.getElementById('rmSquadSelectOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(0,0,0,0.2); padding:1rem; border-radius:4px; margin-bottom:1rem;">
+        <label style="font-size:0.8rem; color:var(--text-mid);">公開時の部隊名:</label>
+        <input type="text" id="rmSubmitNameInput" class="post-input" style="margin-bottom:0;" placeholder="ランクマ用の部隊名を入力...">
+      </div>
+      <div id="rmLocalSquadList"></div>
+    </div>
+  </div>
+</div>
+
+
 <!-- NOTIFICATION MODAL -->
 <div class="modal-overlay" id="notificationOverlay" onclick="closeNotificationModal(event)">
   <div class="modal" id="notificationBox" style="width: 30rem;">
@@ -3643,7 +3784,7 @@
 
 <!-- CODE VIEWER MODAL -->
 <div class="modal-overlay" id="codeViewerOverlay" onclick="closeCodeViewer(event)">
-  <div class="modal" id="codeViewerBox" style="width: 31.25rem;">
+  <div class="modal" id="codeViewerBox" style="width: 60rem; max-width: 95%;">
     <div class="modal-header">
       <div class="modal-title">編成コード閲覧</div>
       <button class="modal-close" onclick="closeCodeViewerDirect()">✕</button>
@@ -3754,6 +3895,12 @@
   <div class="battle-container">
     <div class="battle-header">
       <h2 id="battleTitle">Mission Title</h2>
+      <div id="battleSquadSwitcherOverlay" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border); margin-left: 1rem;">
+           <span style="font-size:0.7rem; color:var(--text-dim); margin:0 0.5rem;">部隊切替:</span>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-0" onclick="switchBattleSquad(0)">1</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-1" onclick="switchBattleSquad(1)">2</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-2" onclick="switchBattleSquad(2)">3</button>
+      </div>
       <div class="battle-speed-controls">
         <span>SPEED</span>
         <button onclick="setBattleSpeed(1)" id="speed-btn-1">1x</button>
@@ -3932,14 +4079,14 @@ function closeSettingsModal() {
 <script>
 
 // ===== VERSION & PATCH NOTES =====
-const GAME_VERSION = "V1.3.3α";
-const PATCH_NOTES_DATA = `・新キャラクター「キャル・エクレア」の実装
-・ガチャバナーの更新
-・装備強化（エンチャント）システムのUI改善
-・不具合の修正とパフォーマンスの最適化
-・指揮禁止ステージの実装
-・レベルアップ時のオーラ費用撤廃に伴う補填処理の追加
-・ログインシーケンスの改善（パッチノート表示機能追加）`;
+const GAME_VERSION = "V1.3.6α";
+const PATCH_NOTES_DATA = `・ランクマッチ機能の正式実装
+・新キャラクター「ペルル・フォンテーヌ」「シルル・スティリス」など4体を実装
+・ショップ機能追加：スロート村襲撃キャラパック（4体セット）を販売開始
+・新状態異常「闘志（スキル率UP）」を追加
+・シミュレーションロジックの精度向上
+・バグ修正およびパフォーマンスの最適化
+・レベルアップ時のオーラ費用撤廃に伴う補填処理の完了`;
 
 // ===== DATA =====
 const units = [
@@ -4532,6 +4679,50 @@ const units = [
     ],
     useImg: true,
     img: 'C45.svg',
+  },
+  {
+    id: 48, name: 'グレガ・シュトルム', element: 'fire', elementJp: '炎', type: 'ルディ王国',
+    baseStats: { hp: 1100, atk: 115, def: 60, spd: 70 },
+    abilityType: 'magic',
+    abilities: [
+      { name: 'パージ・インフェルノ', desc: '35%の確率で発動。敵全体に攻撃力の75%のダメージを与える。対象に状態異常が付与されている場合、威力が30%上昇する。', triggerRate: 0.35, timing: 'before_attack', isAoe: true, damageMult: 0.75 },
+      { name: '最後の炎', desc: '自分が倒れた時に発動。味方全員に「強化」と「障壁」を3ターン付与し、体力を1回復させる。' },
+    ],
+    useImg: true,
+    img: 'C46.svg',
+  },
+  {
+    id: 49, name: 'バチチ・ヴォルカノ', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
+    baseStats: { hp: 1150, atk: 112, def: 65, spd: 82 },
+    abilityType: 'shoot',
+    abilities: [
+      { name: '迅速な賭け', desc: '40%の確率で発動。50%で威力200%の攻撃＋燃焼・麻痺(3T)を付与。50%で威力20%の攻撃＋麻痺(1T)を付与する。', triggerRate: 0.4, timing: 'before_attack' },
+      { name: '切れ者', desc: '味方が倒れた時に発動。自分以外の味方全員に「強化」を2ターン付与する。' },
+    ],
+    useImg: true,
+    img: 'C47.svg',
+  },
+  {
+    id: 50, name: 'ペルル・フォンテーヌ', element: 'dark', elementJp: '闇', type: 'ルディ王国',
+    baseStats: { hp: 1200, atk: 105, def: 75, spd: 80 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '蒼穹への導標', desc: '60%の確率で発動。攻撃力が60%になるが、敵に3ターンの怯みを付与する。', triggerRate: 0.6, timing: 'before_attack', damageMult: 0.6, effect: { type: 'status', status: 'flinch', turns: 3 } },
+      { name: '遠距離戦', desc: '被弾時に30%の確率で発動。受けるダメージを60%軽減する。', triggerRate: 0.3, timing: 'on_defense' },
+    ],
+    useImg: true,
+    img: 'C48.svg',
+  },
+  {
+    id: 51, name: 'シルル・スティリス', element: 'water', elementJp: '水', type: 'ルディ王国',
+    baseStats: { hp: 1300, atk: 90, def: 100, spd: 60 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '障壁', desc: '被弾時に75%の確率で発動。受けるダメージを25%軽減する。', triggerRate: 0.75, timing: 'on_defense' },
+      { name: '絆の残火', desc: '自分が倒れた時に発動。味方全員に「闘志（スキル発動率50%UP）」を4ターン付与し、体力を1回復させる。' },
+    ],
+    useImg: true,
+    img: 'C49.svg',
   },
 ];
 
@@ -5307,6 +5498,7 @@ const STATUS_EFFECTS = {
   heavy: { icon: '🏋️', name: '重量化', desc: '速度が1/3になる。' },
   zero_gravity: { icon: '🌑', name: '無重力', desc: '攻撃力が1.2倍、防御力が0.8倍になる。' },
   ember: { icon: '🧨', name: '火種', desc: '炎神の刻印。特定のスキルの発動条件となる。' },
+  fighting_spirit: { icon: '✊', name: '闘志', desc: 'アビリティ（スキル）の発生率が1.5倍になる。' },
 };
 
 const AURA_DATA = [
@@ -5428,6 +5620,10 @@ function getTriggerRate(unit, ability) {
   if (rate === undefined) return 1.0;
   if (unit.equipment && unit.equipment.effect && unit.equipment.effect.type === 'ability_rate') {
     rate *= unit.equipment.effect.val;
+  }
+  // 闘志効果
+  if (unit.statusEffects.some(e => e.type === 'fighting_spirit')) {
+    rate *= 1.5;
   }
   const field = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
   if (field === 'anti_magic') {
@@ -5642,15 +5838,62 @@ function switchSquad(index) {
   squad = playerState.squads[index];
 
   // Update Tab UI
-  document.querySelectorAll('.squad-tab-btn').forEach((btn, i) => {
-    if (i === index) btn.classList.add('active');
+  document.querySelectorAll('.squad-tab-btn').forEach(btn => {
+    const btnIdx = parseInt(btn.id.split('-').pop());
+    if (btnIdx === index) btn.classList.add('active');
     else btn.classList.remove('active');
   });
+
+  const bNameDisp = document.getElementById('battleSquadNameDisplay');
+  if (bNameDisp) bNameDisp.textContent = playerState.squadNames[index];
   
   // Re-render UI. Character states are now global, so no loading/saving is needed.
   renderSquad();
   renderCards();
   saveGame();
+}
+
+// ===== SHOP PANEL =====
+function renderShopPanel() {
+    const container = document.getElementById('shopContainer');
+    if (!container) return;
+    
+    const packOwned = [48, 49, 50, 51].every(id => playerState.characters[id]);
+    
+    container.innerHTML = `
+      <div class="gacha-banner-card" style="max-width: 35rem;">
+        <div class="gacha-banner-title" style="color:var(--accent2)">期間限定パック</div>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem;">
+           <div style="font-size: 1.2rem; font-weight: bold; color: var(--gold); margin-bottom: 1rem;">スロート村襲撃キャラパック</div>
+           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 1rem;">
+              <img src="C46.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+              <img src="C47.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+              <img src="C48.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+              <img src="C49.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+           </div>
+           <div class="gacha-banner-desc">スロート村襲撃に関わった精鋭4体（グレガ、バチチ、ペルル、シルル）をまとめて仲間に加えます。<br>※既に所持している場合は各キャラの欠片50個に変換されます。</div>
+           <button class="gacha-btn" onclick="buyRaidPack()" style="width: 100%; max-width: none;" ${playerState.rainbowStones < 50000 ? 'disabled' : ''}>
+              購入する <span>💎 50,000</span>
+           </button>
+        </div>
+      </div>
+    `;
+}
+
+function buyRaidPack() {
+    if (playerState.rainbowStones < 50000) { showToast("虹石が足りません"); return; }
+    if (confirm("「スロート村襲撃キャラパック」を購入しますか？ (50,000虹石)\n【獲得キャラ】グレガ、バチチ、ペルル、シルル")) {
+        playerState.rainbowStones -= 50000;
+        const ids = [48, 49, 50, 51];
+        ids.forEach(id => {
+            if (!playerState.characters[id]) playerState.characters[id] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+            else playerState.characters[id].fragments += 50;
+        });
+        saveGame();
+        showToast("パックを購入しました！");
+        renderSquad();
+        renderShopPanel();
+    }
 }
 
 function handleSquadDragStart(e, index) {
@@ -5716,12 +5959,13 @@ function renderSquad() {
   const container = document.getElementById('squadSlots');
   container.innerHTML = '';
   const fragment = document.createDocumentFragment(); // Use DocumentFragment for efficient DOM updates
+  const currentSquadEquips = playerState.squadEquipments ? playerState.squadEquipments[playerState.currentSquadIndex] : {};
 
   for (let i = 0; i < MAX_SQUAD; i++) {
     const id = squad[i];
     const c = id ? units.find(u => u.id === id) : null;
     const slot = document.createElement('div');
-    const equipId = id ? playerState.characters[id].equippedId : null;
+    const equipId = id ? currentSquadEquips[id] : null;
     const aura = id ? (playerState.characters[id].aura || 0) : 0;
     const potential = id ? (playerState.characters[id].potential || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
@@ -5955,8 +6199,12 @@ function setView(view) {
   if (equipPanelEl) equipPanelEl.style.display = view === 'equipment' ? 'block' : 'none';
   const gachaPanelEl = document.getElementById('gachaPanel');
   if (gachaPanelEl) gachaPanelEl.style.display = view === 'gacha' ? 'block' : 'none';
+  const rmPanelEl = document.getElementById('rankMatchPanel');
+  if (rmPanelEl) rmPanelEl.style.display = view === 'rankMatch' ? 'block' : 'none';
   const statusPanelEl = document.getElementById('statusPanel');
   if (statusPanelEl) statusPanelEl.style.display = view === 'status' ? 'block' : 'none';
+  const shopPanelEl = document.getElementById('shopPanel');
+  if (shopPanelEl) shopPanelEl.style.display = view === 'shop' ? 'block' : 'none';
   
   document.querySelectorAll('.filter-section button').forEach(b => b.classList.remove('active'));
   const viewBtn = document.getElementById('view-' + view);
@@ -5968,12 +6216,17 @@ function setView(view) {
   } else if (view === 'missions') {
     // Refresh squad display in battle switcher
     switchSquad(playerState.currentSquadIndex);
-  } else if (view === 'missions') {
     renderStoryChapters();
   } else if (view === 'gacha') {
     renderGachaPanel();
   } else if (view === 'equipment') {
     renderEquipmentPanel();
+  } else if (view === 'status') {
+    renderStatusPanel();
+  } else if (view === 'shop') {
+    renderShopPanel();
+  } else if (view === 'rankMatch') {
+    initRankMatch();
   }
 }
 
@@ -6072,6 +6325,52 @@ function renderStatusPanel() {
     `;
     grid.appendChild(card);
   }
+}
+
+// ===== SHOP PANEL =====
+function renderShopPanel() {
+    const container = document.getElementById('shopContainer');
+    if (!container) return;
+    
+    const isSoldOut = playerState.raidPackPurchased || false;
+    
+    container.innerHTML = `
+      <div class="gacha-banner-card" style="max-width: 35rem;">
+        <div class="gacha-banner-title" style="color:var(--accent2)">期間限定パック</div>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem;">
+           <div style="font-size: 1.2rem; font-weight: bold; color: var(--gold); margin-bottom: 1rem;">スロート村襲撃キャラパック</div>
+           <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 1rem;">
+              <img src="C46.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+              <img src="C47.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+              <img src="C48.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+              <img src="C49.svg" style="width: 3rem; height: 4rem; border: 1px solid var(--border);">
+           </div>
+           <div class="gacha-banner-desc">スロート村襲撃に関わった精鋭4体をまとめて仲間に加えます。<br>※既に所持しているキャラは1体につき欠片30個に変換されます。<br>※お一人様1回限り購入可能です。</div>
+           <button class="gacha-btn" onclick="buyRaidPack()" style="width: 100%; max-width: none;" ${(playerState.rainbowStones < 50000 || isSoldOut) ? 'disabled' : ''}>
+              ${isSoldOut ? '売り切れ' : '購入する <span>💎 50,000</span>'}
+           </button>
+        </div>
+      </div>
+    `;
+}
+
+function buyRaidPack() {
+    if (playerState.raidPackPurchased) return;
+    if (playerState.rainbowStones < 50000) { showToast("虹石が足りません"); return; }
+    if (confirm("「スロート村襲撃キャラパック」を購入しますか？ (50,000虹石)\n【獲得キャラ】グレガ、バチチ、ペルル、シルル")) {
+        playerState.rainbowStones -= 50000;
+        const ids = [48, 49, 50, 51];
+        let duplicateCount = 0;
+        ids.forEach(id => {
+            if (!playerState.characters[id]) playerState.characters[id] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+            else { playerState.characters[id].fragments += 30; duplicateCount++; }
+        });
+        playerState.raidPackPurchased = true;
+        saveGame();
+        showToast(duplicateCount > 0 ? `パックを購入しました！(重複キャラの欠片各+30)` : "パックを購入しました！");
+        renderSquad();
+        renderShopPanel();
+    }
 }
 
 // ===== SEARCH =====
@@ -6180,19 +6479,13 @@ function formatAbilityDetails(ability) {
 
   if (!c) return;
 
-  const typeHtml = c.type ? `&nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.type}</span>` : '';
-  const modalNameEl = document.getElementById('modalName');
-  if (modalNameEl) modalNameEl.textContent = c.name;
-  document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span>${typeHtml}`;
-
-  const imgSrc = c.useImg ? c.img : 'C0.svg';
-  const imgWrap = document.getElementById('modalImgWrap');
-  imgWrap.innerHTML = `<img src="${imgSrc}" alt="${c.name}" style="filter:drop-shadow(0 0 20px rgba(0,200,255,0.4))">`;
-
     let level, equipId, aura, potential, s, equip;
 
     const charState = playerState.characters[c.id];
     const isOwned = !!charState;
+
+    // スロットごとの装備を取得
+    const currentSquadEquips = playerState.squadEquipments ? playerState.squadEquipments[playerState.currentSquadIndex] : {};
 
     if (isBattleContext && battleUnit) {
       level = battleUnit.level;
@@ -6204,7 +6497,7 @@ function formatAbilityDetails(ability) {
       equip = battleUnit.equipment;
     } else if (isOwned) {
       level = charState.level;
-      equipId = charState.equippedId;
+      equipId = currentSquadEquips[c.id] || null;
       aura = charState.aura || 0;
       potential = charState.potential || 0;
       equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
@@ -6226,6 +6519,20 @@ function formatAbilityDetails(ability) {
       aura = 0;
       equip = null;
     }
+
+  const auraData = aura > 0 ? AURA_DATA[aura - 1] : null;
+  const typeHtml = c.type ? `&nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.type}</span>` : '';
+  const modalNameEl = document.getElementById('modalName');
+  if (modalNameEl) {
+      modalNameEl.innerHTML = (auraData ? `<span style="color:${auraData.color}; font-family:'Orbitron'; font-size:0.8em; margin-right:5px;">[${auraData.label}]</span>` : '') + c.name;
+  }
+  
+  document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span>${typeHtml}`;
+
+  const imgSrc = c.useImg ? c.img : 'C0.svg';
+  const imgWrap = document.getElementById('modalImgWrap');
+  imgWrap.innerHTML = `<img src="${imgSrc}" alt="${c.name}" style="filter:drop-shadow(0 0 20px rgba(0,200,255,0.4))">`;
+
     const currentMaxLevel = isOwned ? getMaxLevel(aura) : 0;
     const absoluteMaxLevel = getMaxLevel(12); // Max possible player level
     const affordableMaxLevel = isOwned ? getMaxAffordableLevel(level, aura, playerState.rainbowStones) : 0;
@@ -6356,23 +6663,51 @@ function formatAbilityDetails(ability) {
 
   // Equipment Section
     const equipSection = document.getElementById('modalEquipDisplay').parentNode;
-    equipSection.style.display = (isOwned && !isBattleContext) ? 'block' : 'none';
+    equipSection.style.display = (isOwned || isBattleContext) ? 'block' : 'none';
   const equipDisplay = document.getElementById('modalEquipDisplay');
   
   // Get enhancement for display
-  const equipEnhancement = isBattleContext && battleUnit ? battleUnit.enhancement : (equipId ? playerState.equipmentEnhancements?.[equipId] : null);
+  const equipEnhancement = (isBattleContext && battleUnit) ? battleUnit.enhancement : (equipId ? playerState.equipmentEnhancements?.[equipId] : null);
   const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
   const enchantBtn = equip ? `<button class="level-btn" style="font-size:10px;padding:0.5rem 1rem; background:var(--accent2); border-color:var(--accent2);" onclick="event.stopPropagation(); openEnchantModal(${equip.id})">強化</button>` : '';
 
   // Ensure equipDisplay exists before setting innerHTML
-  if (equipDisplay) equipDisplay.innerHTML = `
-    <div class="current-equip-display" onclick="openEquipModal(${c.id})" style="cursor:pointer;">
-      <div>${equip ? `<div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;"><div class="${equipAuraClass}" style="width:1.5em; height:1.5em; display:flex; align-items:center; justify-content:center; border-radius:4px; position:relative;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div> <span>${getEnhancedEquipName(equip, equipEnhancement)}</span> <span style="font-size:0.7em; color:var(--accent)">${equipEnhancement ? `(+${equipEnhancement.value}%)` : ''}</span></div><div style="font-size:10px;color:var(--text-mid); margin-top:4px;">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>'}</div>
+  if (equipDisplay) {
+    let rankBadge = '';
+    if (equipEnhancement) {
+        const rankColor = {
+            'X':'#ff0000', 'SS':'#ff00ff', 'S':'#b388ff', 'A':'#4d90ff',
+            'B':'#50C878', 'C':'#ffd700', 'D':'#c0c0c0'
+        }[equipEnhancement.rank] || '#fff';
+        rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}; font-size:0.7rem; margin-left:5px;">${equipEnhancement.rank}</span>`;
+    }
+
+    const enhancementText = equipEnhancement ? `<span style="font-size:0.7em; color:var(--accent); font-family:'Orbitron';"> (+${equipEnhancement.value}% ${equipEnhancement.stat.toUpperCase()})</span>` : '';
+    
+    const equipContent = equip ? `
+      <div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;">
+        <div class="${equipAuraClass}" style="width:1.5em; height:1.5em; display:flex; align-items:center; justify-content:center; border-radius:4px; position:relative;">
+          ${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}
+          ${equip.icon}
+        </div> 
+        <span>${getEnhancedEquipName(equip, equipEnhancement)}</span>
+        ${rankBadge}
+        ${enhancementText}
+      </div>
+      <div style="font-size:10px;color:var(--text-mid); margin-top:4px;">${equip.desc}</div>` : '<span style="color:var(--text-dim)">装備なし</span>';
+
+    const buttons = isBattleContext ? '' : `
       <div style="display:flex; gap:5px;">
         <button class="level-btn" style="font-size:10px;padding:0.5rem 1rem">変更</button>
         ${enchantBtn}
-      </div>
-    </div>`;
+      </div>`;
+
+    equipDisplay.innerHTML = `
+      <div class="current-equip-display" ${isBattleContext ? '' : `onclick="openEquipModal(${c.id})"`} style="${isBattleContext ? 'cursor:default' : 'cursor:pointer'};">
+        <div>${equipContent}</div>
+        ${buttons}
+      </div>`;
+  }
 
   const modalAbilitiesEl = document.getElementById('modalAbilities');
   if (modalAbilitiesEl) modalAbilitiesEl.innerHTML = c.abilities.map(a =>
@@ -6592,12 +6927,14 @@ function doLevelDown() {
 function openEquipModal(charId) {
   const list = document.getElementById('equipList');
   list.innerHTML = '';
-  const currentEquipId = playerState.characters[charId].equippedId;
+  
+  const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex];
+  const currentEquipId = currentSquadEquips[charId] || null;
 
   // Find who has what equipped
   const equippedBy = {};
-  for (const [cid, state] of Object.entries(playerState.characters)) {
-    if (state.equippedId) equippedBy[state.equippedId] = cid;
+  for (const [cid, eid] of Object.entries(currentSquadEquips)) {
+    if (eid) equippedBy[eid] = cid;
   }
 
   // Unequip option
@@ -6618,6 +6955,15 @@ function openEquipModal(charId) {
     const enhancement = playerState.equipmentEnhancements?.[item.id];
     const enhancementHtml = enhancement ? `<div style="font-size:10px; color:var(--gold); margin-top:4px;">付与効果: ${enhancement.stat.toUpperCase()} +${enhancement.value}% (${enhancement.rank})</div>` : '<div style="font-size:10px; color:var(--text-dim); margin-top:4px;">付与効果なし</div>';
     const auraClass = enhancement ? (RANK_AURA_MAP[enhancement.rank] || '') : '';
+    
+    let rankBadge = '';
+    if (enhancement) {
+        const rankColor = {
+            'X':'#ff0000', 'SS':'#ff00ff', 'S':'#b388ff', 'A':'#4d90ff',
+            'B':'#50C878', 'C':'#ffd700', 'D':'#c0c0c0'
+        }[enhancement.rank] || '#fff';
+        rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}; font-size:0.7rem; margin-left:5px; padding: 1px 3px;">${enhancement.rank}</span>`;
+    }
 
     const enhancedName = getEnhancedEquipName(item, enhancement);
     const div = document.createElement('div');
@@ -6626,7 +6972,7 @@ function openEquipModal(charId) {
       <div class="equip-icon-box ${auraClass}">${auraClass ? `<div class="aura-overlay"></div>` : ''}${item.icon}</div>
       <div class="equip-info">
         <div style="display:flex; justify-content: space-between; align-items: center; gap: 8px;">
-          <div class="equip-name">${enhancedName}</div>
+          <div class="equip-name">${enhancedName}${rankBadge}</div>
         </div>
         <div class="equip-desc">${item.desc}</div>
         ${enhancementHtml}
@@ -6643,17 +6989,18 @@ function openEquipModal(charId) {
 }
 
 function equipItem(charId, itemId) {
+  const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex];
   if (itemId !== null) {
-    // 他のキャラが装備している場合は外す
-    for (const cid in playerState.characters) {
-      if (parseInt(cid) !== charId && playerState.characters[cid].equippedId === itemId) {
-        playerState.characters[cid].equippedId = null;
+    // 現在のスロット内で他のキャラが装備している場合は外す
+    for (const cid in currentSquadEquips) {
+      if (cid != charId && currentSquadEquips[cid] === itemId) {
+        currentSquadEquips[cid] = null;
         const prevOwner = units.find(u => u.id == cid);
         if (prevOwner) showToast(`${prevOwner.name}から装備を付け替えました`);
       }
     }
   }
-  playerState.characters[charId].equippedId = itemId;
+  currentSquadEquips[charId] = itemId;
   closeEquipModalDirect();
   updateModal(); // Refresh char modal
   renderCards(); // Refresh list stats
@@ -9135,46 +9482,7 @@ async function startBattle(missionId, skipDialogue = false) {
 
   battleState = {
     mission: mission,
-    playerUnits: squad.map(id => {
-      let char = units.find(u => u.id === id);
-      if (!char && playerState.customCharacters) {
-          char = playerState.customCharacters.find(u => u.id == id);
-      }
-      if (!char) return null;
-
-      const state = playerState.characters[id];
-      const level = state ? state.level : 1;
-      const equipId = state ? state.equippedId : null;
-      const aura = state ? (state.aura || 0) : 0;
-      const potential = state ? (state.potential || 0) : 0;
-      const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-      const enhancement = equipId ? playerState.equipmentEnhancements[equipId] : null;
-      const stats = calcStats(char.baseStats, level, equip, potential, undefined); // Use playerState enhancement
-      
-      // カスタムキャラと通常キャラのスキルを戦闘用フォーマットにマッピング
-      const battleAbilities = (char.abilities || []).map(ab => {
-         if (!ab.isCustom) return ab;
-         return {
-             ...ab,
-             timing: ab.trigger,
-             triggerRate: (ab.triggerValue || 0) / 100,
-             damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
-             isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
-             effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { 
-                 type: 'status', 
-                 status: ab.statusEffect, 
-                 turns: ab.statusTurns 
-             } : (ab.effect === 'damage_cut' ? { type: 'damage_cut', value: ab.effectValue } : (ab.effect === 'heal' ? { type: 'heal', value: ab.effectValue } : undefined))
-         };
-      });
-
-      // Init battle props
-      let unit = { ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip, enhancement: enhancement, abilities: battleAbilities };
-      if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
-      if (equip && equip.effect.type === 'guts') unit.guts = true;
-      
-      return unit;
-    }),
+    playerUnits: initBattlePlayerUnits(),
     enemyUnits: mission.enemies.map((enemyConfig, i) => {
       let unit, equip = null;
       if (enemyConfig.isCustom) {
@@ -9248,6 +9556,7 @@ async function startBattle(missionId, skipDialogue = false) {
   battleState.isStarted = false;
 
   if (battleTitleEl) battleTitleEl.textContent = mission.name;
+  document.getElementById('battleSquadSwitcherOverlay').style.display = 'flex';
   renderBattleUnits();
   logBattleMessage(`<span class="info">戦闘準備完了...</span>`);
   
@@ -9286,6 +9595,48 @@ async function startBattle(missionId, skipDialogue = false) {
   }
 
   document.getElementById('battleOverlay').classList.add('open');
+}
+
+function initBattlePlayerUnits() {
+    const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex];
+    return squad.map(id => {
+      let char = units.find(u => u.id === id);
+      if (!char && playerState.customCharacters) {
+          char = playerState.customCharacters.find(u => u.id == id);
+      }
+      if (!char) return null;
+
+      const state = playerState.characters[id];
+      const level = state ? state.level : 1;
+      const equipId = currentSquadEquips[id] || null;
+      const aura = state ? (state.aura || 0) : 0;
+      const potential = state ? (state.potential || 0) : 0;
+      const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+      const enhancement = equipId ? playerState.equipmentEnhancements[equipId] : null;
+      const stats = calcStats(char.baseStats, level, equip, potential, undefined);
+      
+      const battleAbilities = (char.abilities || []).map(ab => {
+         if (!ab.isCustom) return ab;
+         return {
+             ...ab,
+             timing: ab.trigger,
+             triggerRate: (ab.triggerValue || 0) / 100,
+             damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
+             isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
+             effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { 
+                 type: 'status', 
+                 status: ab.statusEffect, 
+                 turns: ab.statusTurns 
+             } : (ab.effect === 'damage_cut' ? { type: 'damage_cut', value: ab.effectValue } : (ab.effect === 'heal' ? { type: 'heal', value: ab.effectValue } : undefined))
+         };
+      });
+
+      let unit = { ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip, enhancement: enhancement, abilities: battleAbilities };
+      if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
+      if (equip && equip.effect.type === 'guts') unit.guts = true;
+      
+      return unit;
+    }).filter(Boolean);
 }
 
 function skipMission(missionId) {
@@ -9357,16 +9708,7 @@ function renderUnit(unit) {
   unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
   
   const equipEnhancement = unit.isPlayer ? (unit.equipment ? playerState.equipmentEnhancements?.[unit.equipment.id] : null) : unit.enhancement;
-  let equipAuraClass = '';
-  if (equipEnhancement) {
-      const rankAura = RANK_AURA_MAP[equipEnhancement.rank];
-      if (rankAura) {
-          const auraIndex = parseInt(rankAura.split('-')[1]) - 1;
-          if (AURA_DATA[auraIndex]) {
-              equipAuraClass = AURA_DATA[auraIndex].class;
-          }
-      }
-  }
+  const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
 
   const equipHtml = unit.equipment ? `<div class="b-unit-equip ${equipAuraClass}" title="${unit.equipment.name}\n${unit.equipment.desc}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${unit.equipment.icon}</div>` : '';
   
@@ -9513,6 +9855,20 @@ async function processUnitDeath(unit) {
         battleState.selectedTargetId = null;
         // ターゲットが死んだら、ターゲット表示を消す
         if (unitEl) unitEl.classList.remove('is-targeted');
+    }
+
+    // Bachichi Volkano (ID: 49) Passive: 切れ者
+    const alliesOfDead = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+    const bachichi = alliesOfDead.find(u => u.id === 49 && u.currentHp > 0);
+    if (bachichi && !bachichi.statusEffects.some(e => e.type === 'curse')) {
+        logBattleMessage(`${bachichi.name}の「切れ者」が発動！残った味方を鼓舞する！`);
+        for (const a of alliesOfDead) {
+            if (a.currentHp > 0 && a.battleId !== unit.battleId) {
+                const aEl = document.getElementById(`unit-${a.battleId}`);
+                if (aEl) playEffect(aEl, 'heal');
+                await addStatusEffect(a, 'strengthen', 2);
+            }
+        }
     }
 }
 
@@ -9662,11 +10018,54 @@ async function checkDeathAbilities(unit) {
       }
   }
 
+  // Grega Sturm (ID: 48) Passive: 最後の炎
+  if (unit.id === 48 && !unit.passiveUsed) {
+      unit.passiveUsed = true;
+      await showCutIn(unit, '最後の炎');
+      logBattleMessage(`${unit.name}の最後の炎が味方に灯る！`);
+      const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+      for (const a of allies) {
+          if (a.currentHp > 0) {
+              const aEl = document.getElementById(`unit-${a.battleId}`);
+              if (aEl) playEffect(aEl, 'heal');
+              await addStatusEffect(a, 'strengthen', 3);
+              await addStatusEffect(a, 'barrier', 3);
+              updateUnitUI(a);
+          }
+      }
+      // 自分だけ体力を1回復して耐える
+      unit.currentHp = 1;
+      updateUnitUI(unit);
+  }
+
+  // Silulu Styris (ID: 51) Passive: 絆の残火
+  if (unit.id === 51 && !unit.passiveUsed) {
+      unit.passiveUsed = true;
+      if (unit.statusEffects.some(e => e.type === 'curse')) {
+          logBattleMessage(`${unit.name}は呪いでスキルを発動できない！`);
+          return false;
+      }
+      await showCutIn(unit, '絆の残火');
+      logBattleMessage(`${unit.name}の絆が味方の力となる！`);
+      const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+      for (const a of allies) {
+          if (a.currentHp > 0) {
+              const aEl = document.getElementById(`unit-${a.battleId}`);
+              if (aEl) playEffect(aEl, 'heal');
+              await addStatusEffect(a, 'fighting_spirit', 4);
+          }
+      }
+      unit.currentHp = 1;
+      updateUnitUI(unit);
+      return true;
+  }
+
   return false;
 }
 
 async function runBattleSequence() {
   battleState.isStarted = true;
+  document.getElementById('battleSquadSwitcherOverlay').style.display = 'none';
   renderBattleUnits();
 
   const battleActionBtnEl = document.getElementById('battleActionBtn');
@@ -9976,6 +10375,29 @@ async function runBattleSequence() {
                     actualDamage = 0;
                 } else {
                     actualDamage = Math.floor(calculateDamage(attacker, aoeTarget) * (activeAbility.damageMult || 0.8));
+
+                    // バチチ・ヴォルカノ固有: 迅速な賭けの判定
+                    if (attacker.id === 49 && activeAbility.name === '迅速な賭け') {
+                        const isSuccess = Math.random() < 0.5;
+                        if (isSuccess) {
+                            damageMultiplier = 2.0;
+                            showPassivePopup(attackerEl, "SUCCESS!!");
+                            logBattleMessage(`<span style="color:var(--gold)">大成功！</span> 威力が200%に上昇！`);
+                            await addStatusEffect(target, 'paralysis', 3);
+                            await addStatusEffect(target, 'burn', 3);
+                        } else {
+                            damageMultiplier = 0.2;
+                            showPassivePopup(attackerEl, "FAILURE...");
+                            logBattleMessage(`<span style="color:var(--text-dim)">失敗...</span> 威力が大幅に低下。`);
+                            await addStatusEffect(target, 'paralysis', 1);
+                        }
+                        actualDamage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
+                    }
+
+                    // グレガ・シュトルム固有: パージ・インフェルノの火力アップ
+                    if (attacker.id === 48 && activeAbility.name === 'パージ・インフェルノ' && aoeTarget.statusEffects.length > 0) {
+                        actualDamage = Math.floor(actualDamage * 1.3);
+                    }
                 }
 
                 // Simplified defense check for AoE (and heal effect handling)
@@ -10295,6 +10717,16 @@ async function runBattleSequence() {
                             actualDamage = Math.floor(actualDamage * 0.25); // 75% cut
                             logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
                             showPassivePopup(targetEl, "GUARD");
+                        break;
+                    } else if (target.id === 50 && ab.name === '遠距離戦') {
+                        actualDamage = Math.floor(actualDamage * 0.4); // 60% cut
+                        logBattleMessage(`${target.name}は${ab.name}でダメージを60%カットした！`);
+                        playEffect(targetEl, 'guard-vertical');
+                        break;
+                    } else if (target.id === 51 && ab.name === '障壁') {
+                        actualDamage = Math.floor(actualDamage * 0.75); // 25% cut
+                        logBattleMessage(`${target.name}は${ab.name}でダメージを25%カットした！`);
+                        playEffect(targetEl, 'guard-vertical');
                             break;
                         } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos
                             actualDamage = Math.floor(actualDamage * 0.8); // 20% cut
@@ -11788,7 +12220,7 @@ function redeemSerialCode() {
 async function postTowerScore(floor) {
     if (!TOWER_RANKING_API_URL || !TOWER_RANKING_API_URL.startsWith('http')) return false;
     // 無効な名前やデフォルト名のときはランキングに載せない
-    const reserved = ["名無しの剣士", "undefined", "undefind", "null"];
+    const reserved = ["名無しの剣士", "null"];
     if (!playerState.playerName || reserved.includes(playerState.playerName) || reserved.includes(playerState.playerName.toLowerCase())) return false;
 
     const formData = new URLSearchParams();
@@ -12132,14 +12564,15 @@ function closeCodeViewerDirect() {
 
 function getSquadData() {
   const details = {};
+  const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex];
   squad.forEach(id => {
     if (playerState.characters[id]) {
       details[id] = {
         level: playerState.characters[id].level,
         aura: playerState.characters[id].aura || 0,
         potential: playerState.characters[id].potential || 0,
-        equippedId: playerState.characters[id].equippedId || null,
-        enhancement: (playerState.characters[id].equippedId ? playerState.equipmentEnhancements[playerState.characters[id].equippedId] : null)
+        equippedId: currentSquadEquips[id] || null,
+        enhancement: (currentSquadEquips[id] ? playerState.equipmentEnhancements[currentSquadEquips[id]] : null)
       };
     }
   });
@@ -12187,9 +12620,6 @@ function copySquadCode() {
 
 function viewSquadFromCode() {
   const code = document.getElementById('squadCodeTextarea').value.trim();
-  const resultContainer = document.getElementById('squadViewerResult');
-  if (!resultContainer) return; // Ensure resultContainer exists
-  resultContainer.innerHTML = '';
   if (!code) {
     showToast('コードを入力してください。');
     return;
@@ -12197,23 +12627,31 @@ function viewSquadFromCode() {
   try {
     const jsonString = atob(code);
     const data = JSON.parse(jsonString);
-
     if (!data || !Array.isArray(data.squad)) {
       throw new Error('Invalid data format');
     }
+    renderSquadPreview(data);
+  } catch (err) {
+    console.error(err);
+    const resultContainer = document.getElementById('squadViewerResult');
+    if (resultContainer) resultContainer.innerHTML = '<p style="color:var(--accent2)">無効な編成コードです。</p>';
+  }
+}
 
-    let html = '<h4 style="margin-bottom: 12px;">編成プレビュー</h4>';
+let currentPreviewData = null;
+function renderSquadPreview(data) {
+    currentPreviewData = data;
+    const resultContainer = document.getElementById('squadViewerResult');
+    if (!resultContainer) return;
+    
+    let html = '<h4 style="margin-bottom: 2rem; color:var(--gold); text-align:center; font-family:\'Orbitron\';">SQUAD VISUAL PREVIEW</h4>';
+    html += '<div class="battle-team" style="justify-content: center; gap: 1rem; margin-bottom: 2rem;">';
+    
     data.squad.forEach((charId, i) => {
       const char = units.find(u => u.id === charId);
       if (!char) return;
 
-      // New: Get level, aura, and equip from 'details' if it exists.
-      // Fallback to old 'equipment' for backward compatibility.
-      let level = 1;
-      let aura = 0;
-      let equipId = null;
-      let enhancement = null;
-
+      let level = 1, aura = 0, potential = 0, equipId = null, enhancement = null;
       if (data.details && data.details[charId]) {
         const detail = data.details[charId];
         level = detail.level || 1;
@@ -12221,37 +12659,66 @@ function viewSquadFromCode() {
         potential = detail.potential || 0;
         equipId = detail.equippedId || null;
         enhancement = detail.enhancement || null;
-      } else if (data.equipment) { // Backward compatibility
-        equipId = data.equipment[charId] || null;
       }
 
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-      const auraData = aura > 0 ? AURA_DATA[aura - 1] : null;
+      const auraData = aura > 0 ? AURA_DATA[aura - 1] : null; // AURA_DATA is 0-indexed
       const auraClass = auraData ? auraData.class : '';
-      
-      const enhancedName = getEnhancedEquipName(equip, enhancement);
       const equipAuraClass = enhancement ? (RANK_AURA_MAP[enhancement.rank] || '') : '';
-      // const rankBadge = enhancement ? `<span style="font-size:0.6rem; color:var(--gold); border:1px solid currentColor; border-radius:3px; padding:0 2px; margin-left:2px;">${enhancement.rank}</span>` : '';
+      const imgSrc = char.useImg ? char.img : 'C0.svg';
+
+      let starsHtml = '';
+      if (potential > 0) {
+          starsHtml = '<div class="potential-stars-display" style="bottom: -0.2rem;">';
+          for(let j=0; j<3; j++) starsHtml += `<span class="star ${j < potential ? 'lit' : ''}">★</span>`;
+          starsHtml += '</div>';
+      }
       
       html += `
-        <div class="squad-slot filled ${auraClass}" style="margin-bottom: 6px; cursor: default;">
+        <div class="battle-unit player-unit ${auraClass}" style="cursor: pointer; width: 10rem;" onclick="openModalFromPreview(${charId})">
           ${auraData ? `<div class="aura-overlay"></div>` : ''}
-          <div class="slot-num">${i+1}</div>
-          <div class="slot-img-wrap"><img src="${char.useImg ? char.img : 'C0.svg'}" alt="${char.name}"></div>
-          <div class="slot-info">
-            <div class="slot-name">${char.name} <span style="font-size:10px;color:var(--accent)">(Lv.${level})</span></div>
-            <div class="slot-role">${char.roleJp}</div>
+          <div class="b-unit-img"><img src="${imgSrc}" alt="${char.name}"></div>
+          <div class="b-unit-level">Lv.${level}</div>
+          ${equip ? `<div class="b-unit-equip ${equipAuraClass}" style="width:1.5rem; height:1.5rem; font-size:1rem;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
+          <div class="b-unit-info" style="height: auto; padding: 0.4rem;">
+            <div class="b-unit-name" style="font-size: 0.75rem; height: 1rem;">${char.name}</div>
           </div>
-          ${equip ? `<div class="squad-equip-icon ${equipAuraClass}" title="${enhancedName}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
-          ${auraData ? `<div class="aura-badge" style="background:${auraData.color};color:#000;">${auraData.label}</div>` : ''}
+          ${starsHtml}
         </div>
       `;
     });
+    html += '</div>';
     resultContainer.innerHTML = html;
-  } catch (err) {
-    console.error(err);
-    resultContainer.innerHTML = '<p style="color:var(--accent2)">無効な編成コードです。</p>';
-  }
+}
+
+function openModalFromPreview(charId) {
+    if (!currentPreviewData) return;
+    const detail = currentPreviewData.details[charId];
+    const char = units.find(u => u.id === charId);
+    if (!char || !detail) return;
+    
+    const level = detail.level || 1;
+    const equipId = detail.equippedId || null;
+    const aura = detail.aura || 0;
+    const potential = detail.potential || 0;
+    const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+    const enhancement = detail.enhancement || null;
+    
+    const stats = calcStats(char.baseStats, level, equip, potential, enhancement);
+
+    const unit = {
+        ...char,
+        stats,
+        currentHp: stats.hp,
+        level, aura, potential,
+        isPlayer: true,
+        battleId: 'preview-' + charId,
+        statusEffects: [],
+        equipment: equip,
+        enhancement: enhancement,
+        abilities: char.abilities || []
+    };
+    openModal(charId, true, unit);
 }
 
 const COMPENSATION_VERSION = '20260325_aura_free';
@@ -12499,6 +12966,19 @@ function loadGame() {
         delete playerState.squadCharacterStates;
     }
 
+    // 装備の個別化マイグレーション
+    if (!playerState.squadEquipments) {
+        playerState.squadEquipments = [{}, {}, {}];
+        // 既存のグローバル装備を全スロットにコピー
+        for (const [cid, char] of Object.entries(playerState.characters)) {
+            if (char.equippedId) {
+                playerState.squadEquipments[0][cid] = char.equippedId;
+                playerState.squadEquipments[1][cid] = char.equippedId;
+                playerState.squadEquipments[2][cid] = char.equippedId;
+            }
+        }
+    }
+
     playerState.towerProgress = savedData.playerState.towerProgress || 0;
     playerState.playerName = savedData.playerState.playerName || defaultPlayerState.playerName;
     
@@ -12508,6 +12988,7 @@ function loadGame() {
     playerState.currentSquadIndex = savedData.playerState.currentSquadIndex || 0;
         playerState.towerRankInitialized = savedData.playerState.towerRankInitialized || false;
         playerState.playRewardMigrated = savedData.playerState.playRewardMigrated || false;
+        playerState.raidPackPurchased = savedData.playerState.raidPackPurchased || false;
     if (!playerState.squads[1]) playerState.squads[1] = [];
     if (!playerState.squads[2]) playerState.squads[2] = [];
     
@@ -12785,7 +13266,7 @@ async function submitNameChange() {
   const name = input.value.trim();
   if(!name) return;
 
-  const reserved = ["名無しの剣士", "undefined", "undefind", "null"];
+  const reserved = ["名無しの剣士", "null"];
   if (reserved.includes(name) || reserved.includes(name.toLowerCase())) {
       showToast("その名前は使用できません");
       return;
@@ -13199,7 +13680,7 @@ async function handleLoginSequence() {
     }
 
     // 2. 名前チェック (無効な名前の場合)
-    const invalidNames = ["名無しの剣士", "undefined", "undefind", "null"];
+    const invalidNames = ["名無しの剣士", "null"];
     const currentName = String(playerState.playerName).toLowerCase();
     const isInvalid = invalidNames.includes(playerState.playerName) || invalidNames.includes(currentName);
 
@@ -13243,6 +13724,515 @@ function warmUpAuraAnimations() {
         }
     };
     setTimeout(cycle, 200); // Start after a short delay
+}
+
+// ===== RANK MATCH LOGIC =====
+let cachedRmMySquads = [];
+let cachedRmRankings = [];
+let rmRankingDisplayLimit = 20;
+let currentRmTab = 'register';
+let rmDataLoaded = false;
+let isRmSimulating = false;
+
+async function initRankMatch() {
+    if (playerState.playerName === "るのん（製作者）") document.getElementById('rmAdminBtn').style.display = 'inline-block';
+    setRmTab('register');
+    renderRmMySquads();
+    if (cachedRmRankings.length === 0) fetchRmRankings();
+}
+
+async function setRmTab(tab) {
+    currentRmTab = tab;
+    document.querySelectorAll('.rm-tab').forEach(el => el.classList.remove('active'));
+    const tabEl = document.getElementById(`rm-tab-${tab}`);
+    if (tabEl) tabEl.classList.add('active');
+    
+    const regContent = document.getElementById('rm-content-register');
+    const rankContent = document.getElementById('rm-content-ranking');
+    if (regContent) regContent.style.display = tab === 'register' ? 'block' : 'none';
+    if (rankContent) rankContent.style.display = tab === 'ranking' ? 'block' : 'none';
+    
+    if (tab === 'ranking') {
+        rmRankingDisplayLimit = 20;
+        fetchRmRankings();
+    }
+}
+
+async function fetchRmMySquads() {
+    if (!RANK_MATCH_API_URL) return;
+    try {
+        const res = await fetch(`${RANK_MATCH_API_URL}?action=getMyRankings&playerId=${playerState.playerId}`);
+        cachedRmMySquads = await res.json();
+        renderRmMySquads();
+    } catch(e) { console.error("RM fetch error", e); }
+}
+
+function renderRmMySquads() {
+    const grid = document.getElementById('rmSquadGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    for (let i = 0; i < 5; i++) {
+        const registered = cachedRmMySquads.find(s => parseInt(s.rmSlotIndex) === i);
+        const card = document.createElement('div');
+        card.className = 'rm-slot-card';
+        
+        let previewHtml = '<div class="rm-squad-preview"><span class="rm-empty-text">未登録</span></div>';
+        if (registered) {
+            try {
+                const data = JSON.parse(registered.squadData);
+                previewHtml = `<div class="rm-squad-preview">` + 
+                    data.squad.map(id => {
+                        const u = units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
+                        return `<img src="${u && u.useImg ? u.img : 'C0.svg'}" class="rm-mini-img">`;
+                    }).join('') + `</div>`;
+            } catch(e) {}
+        }
+
+        card.innerHTML = `
+            <div class="rm-slot-header">
+                <div class="rm-slot-title">SLOT ${i+1}</div>
+                <div class="rm-slot-rate">${registered ? Math.round(parseFloat(registered.rate) || 1500) : '---'}</div>
+            </div>
+            ${previewHtml}
+            <div style="font-size:0.8rem; margin-bottom:0.5rem; font-weight:bold; color:var(--text-mid); height:1.2rem; overflow:hidden;">
+                ${registered ? registered.squadName : ''}
+            </div>
+            <button class="mission-btn" style="font-size:0.8rem; padding:0.5rem;" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="openRmSquadSelect(${i})">
+                ${!rmDataLoaded ? '読み込み中...' : (registered ? '編成を更新・再戦' : 'このスロットに登録')}
+            </button>
+        `;
+        grid.appendChild(card);
+    }
+}
+
+function openRmSquadSelect(rmIndex) {
+    const list = document.getElementById('rmLocalSquadList');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    playerState.squads.forEach((squadIds, localIdx) => {
+        const pwr = calculateTotalPower(squadIds.map(id => {
+            const c = units.find(u => u.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
+            return c ? { ...c, level: playerState.characters[id]?.level || 1 } : null;
+        }).filter(Boolean));
+
+        const item = document.createElement('div');
+        item.className = 'local-squad-item';
+        
+        let imgs = squadIds.map(id => {
+            const u = units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
+            return `<img src="${u && u.useImg ? u.img : 'C0.svg'}" style="width:1.5rem; height:2rem; object-fit:cover; border-radius:2px;">`;
+        }).join('');
+
+        item.innerHTML = `
+            <div style="display:flex; gap:2px;">${imgs || '<span style="color:var(--text-dim)">空</span>'}</div>
+            <div class="local-squad-info">
+                <div class="local-squad-name">${playerState.squadNames[localIdx]}</div>
+                <div class="local-squad-pwr">Total Power: ${pwr}</div>
+            </div>
+            <button class="filter-btn" style="width:auto; padding:0.4rem 0.8rem;" onclick="submitToRankMatch(${localIdx}, ${rmIndex})">選択</button>
+        `;
+        list.appendChild(item);
+    });
+    document.getElementById('rmSquadSelectOverlay').classList.add('open');
+}
+
+async function submitToRankMatch(localIdx, rmIndex) {
+    if (isRmSimulating) return;
+    
+    const squadIds = playerState.squads[localIdx];
+    if (squadIds.length === 0) { showToast("空の編成は登録できません"); return; }
+
+    const submitName = document.getElementById('rmSubmitNameInput').value.trim() || playerState.squadNames[localIdx];
+    const squadDataObj = {
+        squad: squadIds,
+        details: squadIds.reduce((acc, id) => {
+            const s = playerState.characters[id];
+            acc[id] = { level: s.level, aura: s.aura||0, potential: s.potential||0, equippedId: s.equippedId||null, enhancement: s.equippedId ? playerState.equipmentEnhancements[s.equippedId] : null };
+            return acc;
+        }, {})
+    };
+    const squadDataStr = JSON.stringify(squadDataObj);
+
+    // 重複チェック
+    if (cachedRmRankings.some(r => r.squadData === squadDataStr && r.playerId !== playerState.playerId)) {
+        showToast("同じ編成が既に登録されています"); return;
+    }
+
+    document.getElementById('rmSquadSelectOverlay').classList.remove('open');
+    isRmSimulating = true;
+    renderRmMySquads();
+    showToast("シミュレーション中... (1000倍速)");
+
+    // 現レート取得
+    const existing = cachedRmMySquads.find(s => parseInt(s.rmSlotIndex) === rmIndex);
+    let myRate = existing ? parseFloat(existing.rate) : 1500;
+    let wins = existing ? parseInt(existing.wins)||0 : 0;
+    let losses = existing ? parseInt(existing.losses)||0 : 0;
+    let history = existing ? (existing.history || "") : "";
+
+    // ランダムな10名（10名いない場合は全員）と対戦
+    const K = 32;
+    let pool = [...cachedRmRankings].filter(r => r.id !== (playerState.playerId + "_" + rmIndex));
+    // シャッフルして10件抽出
+    const opponents = pool.sort(() => Math.random() - 0.5).slice(0, 10);
+    
+    const updates = [];
+
+    for (const opp of opponents) {
+        const win = runHeadlessBattle(squadDataObj, JSON.parse(opp.squadData)).win;
+        const oppRate = parseFloat(opp.rate) || 1500;
+        const expectedMy = 1 / (1 + Math.pow(10, (oppRate - myRate) / 400));
+        const diff = Math.round(K * ((win ? 1 : 0) - expectedMy));
+        
+        myRate += diff;
+        opp.rate = Math.round((parseFloat(opp.rate) || 1500) - diff);
+        
+        if (win) { wins++; opp.losses = (parseInt(opp.losses)||0) + 1; history += "W"; opp.history = (opp.history || "") + "L"; } 
+        else { losses++; opp.wins = (parseInt(opp.wins)||0) + 1; history += "L"; opp.history = (opp.history || "") + "W"; }
+        
+        history = history.slice(-10);
+        opp.history = (opp.history || "").slice(-10);
+        
+        updates.push({ id: opp.id, rate: opp.rate, wins: opp.wins, losses: opp.losses, history: opp.history });
+    }
+
+    const pwr = calculateTotalPower(squadIds.map(id => ({ ...units.find(u=>u.id===id), ...playerState.characters[id] })));
+    
+    try {
+        await fetch(RANK_MATCH_API_URL, { method: 'GET' }).catch(() => {});
+        
+        const formData = new URLSearchParams();
+        formData.append('action', 'submitSquad');
+        formData.append('playerId', playerState.playerId);
+        formData.append('playerName', playerState.playerName);
+        formData.append('rmSlotIndex', rmIndex);
+        formData.append('squadName', submitName);
+        formData.append('squadData', squadDataStr);
+        formData.append('totalPower', pwr);
+        formData.append('rate', Math.round(myRate));
+        formData.append('wins', wins);
+        formData.append('losses', losses);
+        formData.append('history', history);
+
+        const res = await fetch(RANK_MATCH_API_URL, { method: 'POST', body: formData });
+        
+        // 他者のレートも一括更新
+        const bulkData = new URLSearchParams();
+        bulkData.append('action', 'bulkUpdate');
+        bulkData.append('updates', JSON.stringify(updates));
+        await fetch(RANK_MATCH_API_URL, { method: 'POST', body: bulkData });
+
+        showToast(`登録完了！ 新レート: ${Math.round(myRate)}`);
+        await fetchRmRankings(true);
+    } catch(e) { showToast("同期エラーが発生しました"); }
+    isRmSimulating = false;
+    renderRmMySquads();
+}
+
+/**
+ * 高速フルロジック・バトルシミュレータ
+ * スキル・パッシブ・装備効果をすべて考慮しますが、UI更新を一切行いません。
+ */
+function runHeadlessBattle(squadA, squadB) {
+    const createUnit = (id, detail, isPlayer, index) => {
+        let char = units.find(u => u.id === id) || playerState.customCharacters?.find(u => u.id == id);
+        if (!char) return null;
+        const equip = detail.equippedId ? equipmentItems.find(e => e.id === detail.equippedId) : null;
+        const stats = calcStats(char.baseStats, detail.level, equip, detail.potential || 0, detail.enhancement);
+        
+        // スキルのマッピング
+        const battleAbilities = (char.abilities || []).map(ab => {
+            if (!ab.isCustom) return ab;
+            return {
+                ...ab, timing: ab.trigger, triggerRate: (ab.triggerValue || 0) / 100,
+                damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
+                isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
+                effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { type: 'status', status: ab.statusEffect, turns: ab.statusTurns } 
+                      : (ab.effect === 'damage_cut' ? { type: 'damage_cut', value: ab.effectValue } : (ab.effect === 'heal' ? { type: 'heal', value: ab.effectValue } : undefined))
+            };
+        });
+
+        let u = { ...char, stats, currentHp: stats.hp, isPlayer, statusEffects: [], equipment: equip, enhancement: detail.enhancement, abilities: battleAbilities, battleId: (isPlayer ? 'p-' : 'e-') + index, passiveUsed: false, guts: !!(equip && equip.effect.type === 'guts') };
+        if (equip && equip.effect.type === 'shield_hit') u.shieldHits = equip.effect.val;
+        return u;
+    };
+
+    const pUnits = squadA.squad.map((id, i) => createUnit(id, squadA.details[id], true, i)).filter(Boolean);
+    const eUnits = squadB.squad.map((id, i) => createUnit(id, squadB.details[id], false, i)).filter(Boolean);
+
+    // 簡易的な状態異常付与関数（シミュ用）
+    const applyStatus = (target, type, turns) => {
+        if (target.id === 8 || target.id === 320 || target.id === 27) return; // 耐性持ち
+        const existing = target.statusEffects.find(e => e.type === type);
+        if (existing) existing.turns += turns;
+        else target.statusEffects.push({ type, turns });
+    };
+
+    let turn = 0;
+    while (turn < 30) {
+        const turnQueue = [...pUnits, ...eUnits].filter(u => u.currentHp > 0).sort((a,b) => b.stats.spd - a.stats.spd);
+        if (pUnits.every(u => u.currentHp <= 0)) return { win: false };
+        if (eUnits.every(u => u.currentHp <= 0)) return { win: true };
+
+        for (const attacker of turnQueue) {
+            if (attacker.currentHp <= 0) continue;
+            
+            // 状態異常スリップダメージ
+            attacker.statusEffects.forEach(eff => {
+                if (['burn', 'poison', 'drown'].includes(eff.type)) attacker.currentHp -= Math.floor(attacker.stats.hp / 8);
+            });
+            if (attacker.currentHp <= 0) continue;
+
+            // 行動不能チェック
+            if (attacker.statusEffects.some(eff => ['sleep', 'freeze', 'flinch'].includes(eff.type))) continue;
+            if (attacker.statusEffects.some(eff => ['paralysis', 'blind'].includes(eff.type)) && Math.random() < 0.3) continue;
+
+            const targets = (attacker.isPlayer ? eUnits : pUnits).filter(u => u.currentHp > 0);
+            if (targets.length === 0) break;
+            
+            // ターゲット選定（シミュではランダム）
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            
+            // スキル判定
+            let damageMult = 1.0;
+            const skill = attacker.abilities.find(a => a.timing === 'before_attack' && Math.random() < (a.triggerRate || 1));
+            let rate = skill ? (skill.triggerRate || 1) : 0;
+            if (attacker.statusEffects.some(e => e.type === 'fighting_spirit')) rate *= 1.5;
+            if (skill && Math.random() < rate && !attacker.statusEffects.some(e => e.type === 'curse')) {
+                damageMult = skill.damageMult || 1.0;
+                if (skill.effect?.type === 'status') applyStatus(target, skill.effect.status, skill.effect.turns);
+            }
+
+            // ダメージ計算（パッシブ簡易反映版）
+            let atk = attacker.stats.atk;
+            if (attacker.id === 1 && attacker.currentHp <= attacker.stats.hp * 0.5) atk *= 1.3;
+            
+            const advantage = getElementalMultiplier(attacker.element, target.element);
+            let damage = Math.floor((atk * atk) / Math.max(1, target.stats.def) * advantage * damageMult);
+
+            // 防御側スキル
+            const defSkill = target.abilities.find(a => a.timing === 'on_defense' && Math.random() < (a.triggerRate || 0.3));
+            if (defSkill && !target.statusEffects.some(e => e.type === 'curse')) {
+                if (target.id === 20) damage = 0; // 回避
+                else if (target.id === 319 || target.id === 30) damage *= 0.25; // 75%カット
+                else if (target.id === 50) damage *= 0.4; // 60%カット
+                else if (target.id === 51) damage *= 0.75; // 25%カット
+            }
+            
+            // 装備効果
+            if (target.shieldHits > 0) { damage = 0; target.shieldHits--; }
+
+            target.currentHp = Math.max(0, target.currentHp - damage);
+
+            // 復活処理
+            if (target.currentHp <= 0) {
+                if (target.guts) { target.currentHp = 1; target.guts = false; }
+                else if (target.id === 18 && !target.passiveUsed) { target.currentHp = Math.floor(target.stats.hp * 0.1); target.passiveUsed = true; }
+                else if ((target.id === 48 || target.id === 51) && !target.passiveUsed) {
+                    target.currentHp = 1; target.passiveUsed = true;
+                    if (target.id === 51) {
+                        (target.isPlayer ? pUnits : eUnits).forEach(a => { if(a.currentHp > 0) a.statusEffects.push({type: 'fighting_spirit', turns: 4}); });
+                    }
+                }
+            }
+        }
+        // 状態異常ターン経過
+        [...pUnits, ...eUnits].forEach(u => {
+            u.statusEffects.forEach(e => e.turns--);
+            u.statusEffects = u.statusEffects.filter(e => e.turns > 0);
+        });
+        turn++;
+    }
+    return { win: pUnits.reduce((s,u)=>s+u.currentHp,0) > eUnits.reduce((s,u)=>s+u.currentHp,0) };
+}
+
+async function runAdminRoundRobin() {
+    if (!confirm("全データの総当たり再計算を行います。よろしいですか？")) return;
+    isRmSimulating = true;
+    showToast("管理者: 総当たり開始...");
+    
+    const squads = [...cachedRmRankings];
+    const K = 32;
+
+    for (let i = 0; i < squads.length; i++) {
+        for (let j = i + 1; j < squads.length; j++) {
+            const win = runHeadlessBattle(JSON.parse(squads[i].squadData), JSON.parse(squads[j].squadData)).win;
+            const rI = parseFloat(squads[i].rate);
+            const rJ = parseFloat(squads[j].rate);
+            const expI = 1 / (1 + Math.pow(10, (rJ - rI) / 400));
+            const diff = Math.round(K * ((win ? 1 : 0) - expI));
+            squads[i].rate += diff; squads[j].rate -= diff;
+            if (win) { squads[i].wins++; squads[j].losses++; squads[i].history = (squads[i].history||"")+"W"; squads[j].history = (squads[j].history||"")+"L"; } 
+            else { squads[i].losses++; squads[j].wins++; squads[i].history = (squads[i].history||"")+"L"; squads[j].history = (squads[j].history||"")+"W"; }
+            
+            squads[i].history = (squads[i].history||"").slice(-10);
+            squads[j].history = (squads[j].history||"").slice(-10);
+        }
+    }
+
+    const bulkData = new URLSearchParams();
+    bulkData.append('action', 'bulkUpdate');
+    bulkData.append('updates', JSON.stringify(squads.map(s => ({ id: s.id, rate: Math.round(s.rate), wins: s.wins, losses: s.losses, history: s.history }))));
+    await fetch(RANK_MATCH_API_URL, { method: 'POST', body: bulkData });
+    showToast("再計算完了");
+    fetchRmRankings(true);
+    isRmSimulating = false;
+}
+
+async function fetchRmRankings(force = false) {
+    const container = document.getElementById('rmRankingListContainer');
+    if (force) {
+        rmDataLoaded = false;
+        renderRmMySquads();
+        container.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--accent); font-family:\'Orbitron\'; letter-spacing:2px;">LOADING RANKINGS...</div>';
+    }
+    
+    try {
+        const res = await fetch(`${RANK_MATCH_API_URL}?action=getRankings`);
+        cachedRmRankings = (await res.json()).map(r => ({ ...r, rate: parseFloat(r.rate)||1500 }));
+        rmDataLoaded = true;
+        // レートが高い順（降順）にソートしてランキングを再構築
+        cachedRmRankings.sort((a, b) => b.rate - a.rate);
+        // グローバルランキング取得時に自分の編成データも同期する
+        cachedRmMySquads = cachedRmRankings.filter(r => r.playerId === playerState.playerId);
+        renderRmRankings();
+        renderRmMySquads();
+    } catch(e) { container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--accent2);">エラーが発生しました</div>'; }
+}
+
+function renderRmRankings() {
+    const getHistoryHtml = (historyStr, wins, losses) => {
+        const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
+        const badges = (historyStr || "").split('').map(char => {
+            const color = char === 'W' ? '#00c8ff' : '#ff4d4d';
+            return `<span style="display:inline-block; width:12px; height:12px; line-height:12px; font-size:8px; background:${color}; color:#000; border-radius:2px; margin-right:2px; text-align:center; font-weight:bold;">${char}</span>`;
+        }).join('');
+        return `<div style="display:flex; flex-direction:column; gap:4px;">
+                  <div style="display:flex; align-items:center;">${badges || '<span style="color:var(--text-dim)">-</span>'}</div>
+                  <div style="font-size:0.7rem; color:var(--text-mid);">${wins}勝 ${losses}負 (勝率 ${winRate}%)</div>
+                </div>`;
+    };
+
+    const container = document.getElementById('rmRankingListContainer');
+    container.innerHTML = '';
+    
+    const table = document.createElement('table');
+    table.className = 'ranking-table';
+    table.innerHTML = `<thead><tr><th>順位</th><th>プレイヤー / 部隊</th><th style="text-align:center">編成</th><th>戦績</th><th style="text-align:center">操作</th><th style="text-align:right">レート</th></tr></thead><tbody id="rmRankingBody"></tbody>`;
+    container.appendChild(table);
+
+    const tbody = document.getElementById('rmRankingBody');
+    const visible = cachedRmRankings.slice(0, rmRankingDisplayLimit);
+    
+    visible.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        if (row.playerId === playerState.playerId) tr.className = 'rank-row-self';
+        const rank = i + 1;
+        const rankClass = rank <= 3 ? `top-${rank}` : '';
+        // 勝率計算に必要な引数(wins, losses)を渡すように修正
+        const historyHtml = getHistoryHtml(row.history, parseInt(row.wins)||0, parseInt(row.losses)||0);
+
+        let unitIcons = '';
+        try {
+            const data = JSON.parse(row.squadData);
+            unitIcons = data.squad.map(id => {
+                // 数値と文字列のID両方に対応するため == を使用
+                const u = units.find(unit => unit.id == id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
+                return `<img src="${u && u.useImg ? u.img : 'C0.svg'}" style="width:1.8rem; height:2.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px; margin:0 1px;" title="${u?u.name:''}">`;
+            }).join('');
+        } catch(e) {}
+
+        tr.innerHTML = `
+            <td class="rank-val ${rankClass}">${rank}</td>
+            <td>
+                <div style="font-weight:bold; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:8rem;">${row.playerName}${row.playerId === playerState.playerId ? '<span class="rank-badge-my">YOU</span>' : ''}</div>
+                <div style="color:var(--text-dim); font-size:0.75rem;">${row.squadName}</div>
+            </td>
+            <td style="text-align:center; min-width:10rem;">${unitIcons}</td>
+            <td>${historyHtml}</td>
+            <td style="text-align:center;">
+                <button class="filter-btn" style="width:auto; padding:2px 8px;" onclick="previewSquadFromRanking(${i})">表示</button>
+                <button class="filter-btn" style="width:auto; padding:2px 8px; border-color:var(--accent2); color:var(--accent2);" onclick="challengeRankingOpponent(${i})">対戦</button>
+            </td>
+            <td class="rate-val">${row.rate}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    if (cachedRmRankings.length > rmRankingDisplayLimit) {
+        const more = document.createElement('button');
+        more.className = 'mission-btn';
+        more.style.cssText = 'margin-top:1rem; background:transparent; border-color:var(--text-dim); color:var(--text-mid);';
+        more.textContent = 'さらに表示';
+        more.onclick = () => { rmRankingDisplayLimit += 20; renderRmRankings(); };
+        container.appendChild(more);
+    }
+}
+
+function previewSquadFromRanking(visibleIndex) {
+    const row = cachedRmRankings[visibleIndex];
+    if (!row || !row.squadData) return;
+    try {
+        const data = JSON.parse(row.squadData);
+        openCodeViewer();
+        document.getElementById('squadCodeTextarea').value = ""; // Clear textarea
+        renderSquadPreview(data);
+    } catch(e) { showToast("編成データの読み込みに失敗しました"); }
+}
+
+function challengeRankingOpponent(visibleIndex) {
+    const row = cachedRmRankings[visibleIndex];
+    if (!row || !row.squadData) return;
+    try {
+        const data = JSON.parse(row.squadData);
+        const enemies = data.squad.map(charId => {
+            const detail = data.details[charId];
+            const unit = units.find(u => u.id === charId);
+            return {
+                id: charId,
+                level: detail.level || 1,
+                aura: detail.aura || 0,
+                potential: detail.potential || 0,
+                equippedId: detail.equippedId || null,
+                enhancement: detail.enhancement || null,
+                aiType: AI_TYPES.RANDOM
+            };
+        });
+
+        tempUserStageMission = {
+            id: "RM_CHALLENGE_" + row.playerId,
+            name: `${row.playerName}への挑戦`,
+            description: "ランキング掲載編成との練習試合です（報酬なし）。",
+            enemies: enemies,
+            reward: 0,
+            firstTimeReward: 0,
+            noCommand: true // 指揮は無し
+        };
+        startBattle("TEMP_USER_STAGE");
+    } catch(e) { showToast("対戦データの生成に失敗しました"); }
+}
+
+function renderStatusPanel() {
+  const grid = document.getElementById('statusGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (const key in STATUS_EFFECTS) {
+    const effect = STATUS_EFFECTS[key];
+    const card = document.createElement('div');
+    card.className = 'equip-item'; // Re-use style
+    card.style.cursor = 'default';
+    card.style.alignItems = 'flex-start';
+    card.innerHTML = `
+      <div class="equip-icon-box" style="font-size: 1.5rem;">${effect.icon}</div>
+      <div class="equip-info">
+        <div class="equip-name">${effect.name}</div>
+        <div class="equip-desc" style="white-space: normal; line-height: 1.5;">${effect.desc}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
 }
 
 // ===== INIT =====
