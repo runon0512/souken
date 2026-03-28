@@ -3057,6 +3057,10 @@
       <!-- RIGHT: MY SQUADS -->
       <div style="flex: 1; min-width: 20rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);">
         <div class="section-title" style="border:none; margin-bottom:1rem;">自分の登録編成</div>
+        <div style="font-size:0.85rem; color:var(--text-mid); margin-bottom:1.5rem; line-height:1.5; padding:0.75rem; background:rgba(0,200,255,0.05); border:1px solid var(--border); border-radius:0.5rem;">
+          <div style="color:var(--accent); font-weight:bold; margin-bottom:0.25rem;">⚔️ ランクマッチ参加方法</div>
+          空のスロットに自慢の部隊を登録しましょう！登録するとランキングに掲載され、あなたが遊んでいない間も自動で対戦が行われます。
+        </div>
         <div class="rm-squad-grid" id="rmSquadGrid" style="grid-template-columns: 1fr; gap: 1rem;"></div>
       </div>
     </div>
@@ -6087,8 +6091,9 @@ function renderCards() {
 
     const ab = c.abilities[0];
     const charState = isOwned ? playerState.characters[c.id] : null;
+    const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex] || {};
     const level = isOwned ? charState.level : 1;
-    const equipId = isOwned ? charState.equippedId : null;
+    const equipId = isOwned ? (currentSquadEquips[c.id] || null) : null;
     const potential = isOwned ? (charState.potential || 0) : 0;
     const aura = isOwned ? (charState.aura || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
@@ -6253,8 +6258,9 @@ function renderEquipmentPanel() {
   grid.innerHTML = '';
   
   const equippedBy = {};
-  for (const [cid, state] of Object.entries(playerState.characters)) {
-    if (state.equippedId) equippedBy[state.equippedId] = cid;
+  const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex] || {};
+  for (const cid in currentSquadEquips) {
+    if (currentSquadEquips[cid]) equippedBy[currentSquadEquips[cid]] = cid;
   }
 
   equipmentItems.forEach(item => {
@@ -8137,15 +8143,17 @@ function editorPrevStep() {
 
 function copySquadToEditor() {
     if (squad.length === 0) { showToast('部隊が編成されていません'); return; }
+    const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex] || {};
     currentEditingStage.enemies = squad.map(id => {
         const char = playerState.characters[id];
+        const eid = currentSquadEquips[id] || null;
         return {
             id: id,
             level: char.level,
             aura: char.aura || 0,
             potential: char.potential || 0,
-            equippedId: char.equippedId,
-            enhancement: char.equippedId ? playerState.equipmentEnhancements[char.equippedId] : null,
+            equippedId: eid,
+            enhancement: eid ? playerState.equipmentEnhancements[eid] : null,
             aiType: AI_TYPES.RANDOM
         };
     });
@@ -13798,6 +13806,7 @@ function renderRmMySquads() {
             <div style="font-size:0.8rem; margin-bottom:0.5rem; font-weight:bold; color:var(--text-mid); height:1.2rem; overflow:hidden;">
                 ${registered ? registered.squadName : ''}
             </div>
+            ${registered ? '<div style="font-size:0.7rem; color:var(--accent3); margin-bottom:0.5rem; text-align:center; font-weight:bold;">● ランキング参戦中（マッチング待機）</div>' : ''}
             <button class="mission-btn" style="font-size:0.8rem; padding:0.5rem;" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="openRmSquadSelect(${i})">
                 ${!rmDataLoaded ? '読み込み中...' : (registered ? '編成を更新・再戦' : 'このスロットに登録')}
             </button>
@@ -13842,6 +13851,7 @@ async function submitToRankMatch(localIdx, rmIndex) {
     if (isRmSimulating) return;
     
     const squadIds = playerState.squads[localIdx];
+    const currentSquadEquips = playerState.squadEquipments[localIdx] || {};
     if (squadIds.length === 0) { showToast("空の編成は登録できません"); return; }
 
     const submitName = document.getElementById('rmSubmitNameInput').value.trim() || playerState.squadNames[localIdx];
@@ -13849,7 +13859,8 @@ async function submitToRankMatch(localIdx, rmIndex) {
         squad: squadIds,
         details: squadIds.reduce((acc, id) => {
             const s = playerState.characters[id];
-            acc[id] = { level: s.level, aura: s.aura||0, potential: s.potential||0, equippedId: s.equippedId||null, enhancement: s.equippedId ? playerState.equipmentEnhancements[s.equippedId] : null };
+            const eid = currentSquadEquips[id] || null;
+            acc[id] = { level: s.level, aura: s.aura||0, potential: s.potential||0, equippedId: eid, enhancement: eid ? playerState.equipmentEnhancements[eid] : null };
             return acc;
         }, {})
     };
@@ -13924,7 +13935,7 @@ async function submitToRankMatch(localIdx, rmIndex) {
         bulkData.append('updates', JSON.stringify(updates));
         await fetch(RANK_MATCH_API_URL, { method: 'POST', body: bulkData });
 
-        showToast(`登録完了！ 新レート: ${Math.round(myRate)}`);
+        showToast(`登録完了！（今後の対戦を待ちましょう！）\n現在のレート: ${Math.round(myRate)}`);
         await fetchRmRankings(true);
     } catch(e) { showToast("同期エラーが発生しました"); }
     isRmSimulating = false;
