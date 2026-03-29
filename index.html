@@ -4222,7 +4222,7 @@ const units = [
     baseStats: { hp: 1200, atk: 105, def: 60, spd: 65 },
     abilityType: 'magic',
     abilities: [
-      { name: 'アストラルファイア', desc: '攻撃前、40%の確率で発動。攻撃力が1.3倍になり、5ターンの燃焼を付与する。', triggerRate: 0.4, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 5 } },
+      { name: 'アストラルファイア', desc: '攻撃前、40%の確率で発動。攻撃力が1.3倍になり、5ターンの燃焼を付与する。', triggerRate: 0.4, timing: 'before_attack', damageMult: 1.3, effect: { type: 'status', status: 'burn', turns: 5 } },
       { name: '厭世開花', desc: 'HPが減るほどステータスが上昇する（最大1.5倍）。' }
     ],
     useImg: true, img: 'C9.svg'
@@ -10839,8 +10839,7 @@ async function runBattleSequence() {
         if (attacker.id === 1) damageMultiplier = 2.0;
         if (attacker.id === 103) damageMultiplier = 1.5;
       if (attacker.id === 106) damageMultiplier = 1.1;
-        
-        if (attacker.id === 10) damageMultiplier = 1.3;
+
         if (attacker.id === 13 && activeAbility.name === '圧縮の札') {
             attacker.isAdvantageForced = true;
         }
@@ -10879,6 +10878,22 @@ async function runBattleSequence() {
             const randomAdd = Math.floor(Math.random() * 201) - 100;
             damage = Math.max(1, getBattleStats(attacker).atk + randomAdd);
             // 無属性攻撃なのでadvTextは空のまま
+        } else if (attacker.id === 49 && activeAbility?.name === '迅速な賭け') {
+            // バチチ・ヴォルカノ(単体時)の特殊判定
+            const isSuccess = Math.random() < 0.5;
+            if (isSuccess) {
+                damageMultiplier = 2.0;
+                showPassivePopup(attackerEl, "SUCCESS!!");
+                logBattleMessage(`<span style="color:var(--gold)">大成功！</span> 威力が200%に上昇！`);
+                await addStatusEffect(target, 'paralysis', 3);
+                await addStatusEffect(target, 'burn', 3);
+            } else {
+                damageMultiplier = 0.2;
+                showPassivePopup(attackerEl, "FAILURE...");
+                logBattleMessage(`<span style="color:var(--text-dim)">失敗...</span> 威力が大幅に低下。`);
+                await addStatusEffect(target, 'paralysis', 1);
+            }
+            damage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
         } else if (!isNonDamaging) {
             damage = Math.floor(calculateDamage(attacker, target) * damageMultiplier);
             // 属性相性エフェクト
@@ -11747,7 +11762,7 @@ async function addStatusEffect(target, type, turns) {
         if (target.id === 320) abilityName = '精神統一';
         if (target.id === 27) abilityName = '不屈の闘志';
 
-        await showCutIn(target, abilityName);
+        showPassivePopup(document.getElementById(`unit-${target.battleId}`), "IMMUNE");
         logBattleMessage(`${target.name}は${abilityName}で状態異常を無効化した！`);
         playEffect(document.getElementById(`unit-${target.battleId}`), 'heal');
         return;
@@ -14066,10 +14081,24 @@ function renderRmMySquads() {
         const registered = cachedRmMySquads.find(s => parseInt(s.rmSlotIndex) === i);
         const card = document.createElement('div');
         card.className = 'rm-slot-card';
+        if (registered) card.style.borderColor = 'var(--gold)';
         
         let previewHtml = '<div class="rm-squad-preview"><span class="rm-empty-text">未登録</span></div>';
+        let statsHtml = '';
         if (registered) {
             try {
+                const w = parseInt(registered.wins)||0;
+                const l = parseInt(registered.losses)||0;
+                const wr = (w + l) > 0 ? ((w / (w + l)) * 100).toFixed(1) : "0.0";
+                
+                statsHtml = `
+                    <div style="display:flex; justify-content:space-around; background:rgba(0,0,0,0.4); padding:0.4rem; border-radius:4px; margin-bottom:0.5rem; font-family:'Orbitron'; font-size:0.7rem;">
+                        <div title="勝利数"><span style="color:var(--text-dim);">W:</span> <span style="color:var(--accent3); font-weight:bold;">${w}</span></div>
+                        <div title="敗北数"><span style="color:var(--text-dim);">L:</span> <span style="color:var(--accent2); font-weight:bold;">${l}</span></div>
+                        <div title="勝率"><span style="color:var(--text-dim);">WR:</span> <span style="color:var(--gold); font-weight:bold;">${wr}%</span></div>
+                    </div>
+                `;
+
                 const data = JSON.parse(registered.squadData);
                 previewHtml = `<div class="rm-squad-preview">` + 
                     data.squad.map(id => {
@@ -14080,15 +14109,16 @@ function renderRmMySquads() {
         }
 
         card.innerHTML = `
+            ${registered ? `<div style="position:absolute; top:-8px; left:-8px; background:var(--gold); color:#000; font-family:'Orbitron'; font-weight:900; font-size:0.65rem; padding:2px 6px; border-radius:4px; box-shadow:0 0 10px rgba(255,215,0,0.5); z-index:5; border:1px solid #fff;">RANKED</div>` : ''}
             <div class="rm-slot-header">
                 <div class="rm-slot-title">SLOT ${i+1}</div>
                 <div class="rm-slot-rate">${registered ? Math.round(parseFloat(registered.rate) || 1500) : '---'}</div>
             </div>
             ${previewHtml}
+            ${statsHtml}
             <div style="font-size:0.8rem; margin-bottom:0.5rem; font-weight:bold; color:var(--text-mid); height:1.2rem; overflow:hidden;">
                 ${registered ? registered.squadName : ''}
             </div>
-            ${registered ? '<div style="font-size:0.7rem; color:var(--accent3); margin-bottom:0.5rem; text-align:center; font-weight:bold;">● ランキング参戦中（マッチング待機）</div>' : ''}
             <button class="mission-btn" style="font-size:0.8rem; padding:0.5rem;" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="openRmSquadSelect(${i})">
                 ${!rmDataLoaded ? '読み込み中...' : (registered ? '編成を更新・再戦' : 'このスロットに登録')}
             </button>
@@ -14166,10 +14196,17 @@ async function submitToRankMatch(localIdx, rmIndex) {
 
     // 現レート取得
     const existing = cachedRmMySquads.find(s => parseInt(s.rmSlotIndex) === rmIndex);
+
+    // 編成（キャラ・レベル・装備・素質）が前回登録時から変更されたか確認
+    const isCompositionChanged = existing && existing.squadData !== squadDataStr;
+
     let myRate = existing ? parseFloat(existing.rate) : 1500;
-    let wins = existing ? parseInt(existing.wins)||0 : 0;
-    let losses = existing ? parseInt(existing.losses)||0 : 0;
-    let history = existing ? (existing.history || "") : "";
+    // 編成が変更されている場合は、以前の勝敗数と履歴をリセットして新しく計測を開始する
+    let wins = (existing && !isCompositionChanged) ? parseInt(existing.wins)||0 : 0;
+    let losses = (existing && !isCompositionChanged) ? parseInt(existing.losses)||0 : 0;
+    let history = (existing && !isCompositionChanged) ? (existing.history || "") : "";
+
+    if (isCompositionChanged) showToast("編成の変更を検知：戦績をリセットして再計測します");
 
     // ランダムな10名（10名いない場合は全員）と対戦
     const K = 32;
