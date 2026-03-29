@@ -480,7 +480,7 @@
     border-radius: 0.25rem;
     background: transparent;
     color: var(--text-mid);
-    font-size: 0.8rem;
+    font-size: 1.25rem;
     cursor: pointer;
     text-align: left;
     transition: all 0.2s;
@@ -904,7 +904,7 @@
     background: rgba(0,0,0,0.5); /* 画像の上なので背景つける */
     color: var(--text-dim);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     font-weight: 700;
     min-height: var(--card-btn-height, 2.5rem);
     height: var(--card-btn-height, 2.5rem);
@@ -1683,7 +1683,7 @@
     width: 7.5rem;
     align-self: stretch;
     font-family: 'Orbitron', monospace;
-    font-size: 0.875rem;
+    font-size: 1.25rem;
     background: var(--accent2);
     color: #000;
     border: none;
@@ -2656,7 +2656,7 @@
     border-radius: 4px;
     cursor: pointer;
     font-family: 'Orbitron';
-    font-size: 0.8rem;
+    font-size: 1.25rem;
     pointer-events: auto;
   }
   .dialogue-skip-btn:hover {
@@ -3000,8 +3000,8 @@
           <div class="squad-power-label">TOTAL POWER</div>
           <div class="squad-power-val" id="totalPower">0</div>
           <div style="display:flex; gap: 5px; margin-top: 0.5rem;">
-             <button class="filter-btn" onclick="copySquadCode()" style="padding: 2px 5px; font-size: 0.6rem;">Copy</button>
-             <button class="filter-btn" onclick="openCodeViewer()" style="padding: 2px 5px; font-size: 0.6rem;">View</button>
+             <button class="filter-btn" onclick="copySquadCode()" style="padding: 2px 5px; font-size: 1.25rem;">Copy</button>
+             <button class="filter-btn" onclick="openCodeViewer()" style="padding: 2px 5px; font-size: 1.25rem;">View</button>
           </div>
         </div>
       </div>
@@ -3017,6 +3017,13 @@
       <button class="filter-btn" onclick="setFilter('dark')" id="filter-dark"><span style="color:var(--elem-dark)">●</span> 闇 <span class="count" id="cnt-dark">-</span></button>
       <button class="filter-btn" onclick="setFilter('light')" id="filter-light"><span style="color:var(--elem-light)">●</span> 光 <span class="count" id="cnt-light">-</span></button>
       <button class="filter-btn" onclick="setFilter('none')" id="filter-none"><span style="color:var(--elem-none)">●</span> 無 <span class="count" id="cnt-none">-</span></button>
+    </div>
+    <div style="padding: 0.5rem 1rem; background: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;">
+      <div><span style="color:var(--gold); font-weight:bold;">【属性相性】</span> 有利への攻撃は <span style="color:var(--accent3); font-weight:bold;">+50% (1.5倍)</span> / 不利へは <span style="color:var(--accent2); font-weight:bold;">-50% (0.5倍)</span></div>
+      <div style="display:flex; gap:0.8rem; font-family:'Orbitron';">
+        <span style="letter-spacing:1px;">🔥→⚡→💧→🔥</span>
+        <span style="letter-spacing:1px;">✨ ↔ 🌑 <span style="font-size:0.6rem; vertical-align:middle;">(互いに有利)</span></span>
+      </div>
     </div>
   </div>
 
@@ -3051,12 +3058,16 @@
       </button>
       <div class="roster-title">ランクマッチ</div>
       <button class="filter-btn" id="rmRefreshBtn" style="width:auto; margin:0;" onclick="fetchRmRankings(true)">↻ データ更新</button>
+      <button class="filter-btn" style="width:auto; margin:0; border-color:var(--gold); color:var(--gold);" onclick="openRmUsageStatsModal()">📊 採用率</button>
     </div>
     
     <div id="rm-main-content" style="display: flex; gap: 2rem; align-items: flex-start;">
       <!-- LEFT: RANKING -->
       <div style="flex: 2; min-width: 0;">
-        <div class="section-title">グローバルランキング <button id="rmAdminBtn" style="display:none; color:var(--accent2); margin-left:1rem; background:transparent; border:1px solid var(--accent2); border-radius:4px; cursor:pointer;" onclick="runAdminRoundRobin()">管理者:総当たり</button></div>
+        <div class="section-title">グローバルランキング 
+          <button id="rmAdminBtn" style="display:none; color:var(--accent2); margin-left:1rem; background:transparent; border:1px solid var(--accent2); border-radius:4px; cursor:pointer;" onclick="runAdminRoundRobin()">管理者:総当たり</button>
+          <button id="rmAdminResetBtn" style="display:none; color:#ff4d4d; margin-left:0.5rem; background:transparent; border:1px solid #ff4d4d; border-radius:4px; cursor:pointer;" onclick="runAdminReset()">管理者:リセット</button>
+        </div>
         <div id="rmRankingListContainer"></div>
       </div>
 
@@ -3103,11 +3114,11 @@
         </button>
         <div id="missionSquadSwitcher" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border);">
            <span style="font-size:0.7rem; color:var(--text-dim); margin:0 0.5rem;">部隊切替:</span>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-0" onclick="switchSquad(0)">1</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-1" onclick="switchSquad(1)">2</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-2" onclick="switchSquad(2)">3</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-3" onclick="switchSquad(3)">4</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="battle-squad-4" onclick="switchSquad(4)">5</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-0" onclick="switchSquad(0)">1</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-1" onclick="switchSquad(1)">2</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-2" onclick="switchSquad(2)">3</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-3" onclick="switchSquad(3)">4</button>
+           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-4" onclick="switchSquad(4)">5</button>
            <span id="battleSquadNameDisplay" style="font-size:0.8rem; color:var(--gold); margin-left:0.5rem; font-weight:bold;"></span>
         </div>
         <div class="header-divider"></div>
@@ -3389,6 +3400,7 @@
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.2s;
+    font-size: 1.25rem;
   }
   .squad-tab-btn:hover { background: rgba(0,200,255,0.1); color: var(--text-main); }
   .squad-tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
@@ -3496,7 +3508,7 @@
   
   .editor-action-btn {
     background: rgba(0,200,255,0.1); border: 1px solid var(--accent); color: var(--accent);
-    padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer;
+    padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 1.25rem; cursor: pointer;
   }
   
   .editor-equip-btn {
@@ -3923,11 +3935,11 @@
       <h2 id="battleTitle">Mission Title</h2>
       <div id="battleSquadSwitcherOverlay" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border); margin-left: 1rem;">
            <span style="font-size:0.7rem; color:var(--text-dim); margin:0 0.5rem;">部隊切替:</span>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-0" onclick="switchBattleSquad(0)">1</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-1" onclick="switchBattleSquad(1)">2</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-2" onclick="switchBattleSquad(2)">3</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-3" onclick="switchBattleSquad(3)">4</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:0.8rem;" id="b-squad-4" onclick="switchBattleSquad(4)">5</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="b-squad-0" onclick="switchBattleSquad(0)">1</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="b-squad-1" onclick="switchBattleSquad(1)">2</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="b-squad-2" onclick="switchBattleSquad(2)">3</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="b-squad-3" onclick="switchBattleSquad(3)">4</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="b-squad-4" onclick="switchBattleSquad(4)">5</button>
       </div>
       <div class="battle-speed-controls">
         <span>SPEED</span>
@@ -4070,7 +4082,7 @@ function closeSettingsModal() {
     --card-name-size: 1rem;
     --card-meta-size: 0.9rem;
     --card-btn-height: 2rem;
-    --card-btn-font: 0.9rem;
+    --card-btn-font: 1.25rem;
     --card-padding: 0.5rem;
   }
   .card-grid.size-small { 
@@ -4078,7 +4090,7 @@ function closeSettingsModal() {
     --card-name-size: 0.9rem;
     --card-meta-size: 0.9rem;
     --card-btn-height: 1.5rem;
-    --card-btn-font: 0.8rem;
+    --card-btn-font: 1.25rem;
     --card-padding: 0.35rem;
   }
 
@@ -5615,9 +5627,9 @@ function updateSquadSwitcherUI() {
 const ACHIEVEMENT_DEFS = [
     { id: 'clear_ch1', name: '冒険の始まり', desc: '第一章をクリアする', stones: 5000, check: () => missionProgress.has(109) },
     // ユーザーステージ
-    { id: 'plays_10', name: '注目のステージ', desc: 'プレイ数10以上のステージを作成', stones: 5000, check: () => cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 10) },
-    { id: 'plays_50', name: '人気のステージ', desc: 'プレイ数50以上のステージを作成', stones: 10000, check: () => cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 50) },
-    { id: 'plays_100', name: '伝説のステージ', desc: 'プレイ数100以上のステージを作成', stones: 30000, charId: 46, check: () => cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 100) },
+    { id: 'plays_10', name: '注目のステージ', desc: 'プレイ数10以上のステージを作成', stones: 5000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 10) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 10) },
+    { id: 'plays_50', name: '人気のステージ', desc: 'プレイ数50以上のステージを作成', stones: 10000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 50) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 50) },
+    { id: 'plays_100', name: '伝説のステージ', desc: 'プレイ数100以上のステージを作成', stones: 30000, charId: 46, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 100) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 100) },
     // ランクマッチ
     { id: 'rm_5_squads', name: '五翼の将軍', desc: 'ランクマッチに5編成を登録する', stones: 40000, check: () => (cachedRmMySquads.length >= 5 || playerState.squads.every(s => s.length > 0)) },
     // ストーリー進行
@@ -5864,9 +5876,10 @@ function calcStats(baseStats, level, equipment = null, potential = 0, explicitEn
   return s;
 }
 
-function getPower(unit, level, potential = 0, equip = null) {
-  const enhancement = equip ? playerState.equipmentEnhancements?.[equip.id] : null;
-  const s = calcStats(unit.baseStats, level, equip, potential, enhancement);
+function getPower(unit, level, potential = 0) {
+  const equipId = playerState.characters[unit.id] ? playerState.characters[unit.id].equippedId : null;
+  const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
+  const s = calcStats(unit.baseStats, level, equip, potential);
   return Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
 }
 
@@ -6161,7 +6174,7 @@ function renderSquad() {
           <div class="slot-name">${c.name}</div>
           <div style="display:flex; align-items:center; gap:0.5rem;">
             ${equip ? `<div class="squad-equip-icon ${equipAuraClass}" title="${equip.name}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
-            <div class="slot-power">${getPower(c, playerState.characters[id].level, potential, equip)}</div>
+            <div class="slot-power">${getPower(c, playerState.characters[id].level, potential)}</div>
           </div>
         </div>
       `;
@@ -6192,10 +6205,7 @@ function renderSquad() {
   const total = squad.reduce((s, id) => {
     const c = units.find(u => u.id === id);
     const pot = playerState.characters[id] ? (playerState.characters[id].potential || 0) : 0;
-    const currentSquadEquips = playerState.squadEquipments ? playerState.squadEquipments[playerState.currentSquadIndex] : {};
-    const eid = id ? currentSquadEquips[id] : null;
-    const equip = eid ? equipmentItems.find(e => e.id === eid) : null;
-    return s + (c ? getPower(c, playerState.characters[id].level, pot, equip) : 0);
+    return s + (c ? getPower(c, playerState.characters[id].level, pot) : 0);
   }, 0);
   const totalPowerEl = document.getElementById('totalPower');
   if (totalPowerEl) totalPowerEl.textContent = total;
@@ -6249,10 +6259,10 @@ function renderCards() {
 
       // 3. Selected Sort
       if (currentSort === 'power') {
-        return getPower(b, charB.level, charB.potential || 0) - getPower(a, charA.level, charA.potential || 0);
+        return getPower(b, charB.level) - getPower(a, charA.level);
       } else if (currentSort === 'level') {
         if (charB.level !== charA.level) return charB.level - charA.level;
-        return getPower(b, charB.level, charB.potential || 0) - getPower(a, charA.level, charA.potential || 0); // Tie-break
+        return getPower(b, charB.level) - getPower(a, charA.level); // Tie-break
       }
     }
 
@@ -6275,8 +6285,7 @@ function renderCards() {
     const potential = isOwned ? (charState.potential || 0) : 0;
     const aura = isOwned ? (charState.aura || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
-    const enhancement = equipId ? playerState.equipmentEnhancements?.[equipId] : null;
-    const s = calcStats(c.baseStats, level, equip, potential, enhancement);
+    const s = calcStats(c.baseStats, level, equip, potential);
     const isFav = isOwned && charState.isFavorite;
     
     let starsHtml = '';
@@ -6316,9 +6325,11 @@ function renderCards() {
           </div>
           <div class="card-meta-row">
               <div class="card-elem-badge elem-${c.element}">${getElemIcon(c.element)}</div>
-              ${c.type ? `<span class="card-type-tag">${c.type}</span>` : ''}
               <span class="card-level">Lv.${level}</span>
           </div>
+          ${c.type ? `<div class="card-type-container" style="margin-bottom: 0.25rem;">
+              <span class="card-type-tag" style="display:block; text-align:center; width:100%;">${c.type}</span>
+          </div>` : ''}
           <button class="card-action-btn ${inSquad ? 'remove' : ''}"
             onclick="toggleSquad(event,${c.id})"
             ${!isOwned || (!inSquad && squad.length >= MAX_SQUAD) ? 'disabled' : ''}>
@@ -7948,8 +7959,7 @@ function renderUserStageCard(stage) {
     } catch(e) { squadData = []; }
 
     const totalPower = calculateTotalPower(squadData);
-    const rawClearRate = stage.plays > 0 ? (stage.clears / stage.plays) * 100 : 0;
-    const playRate = (rawClearRate > 0 && rawClearRate < 1) ? rawClearRate.toFixed(2) : Math.round(rawClearRate);
+    const playRate = stage.plays > 0 ? Math.round((stage.clears / stage.plays) * 100) : 0;
     const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
     const isCleared = missionProgress.has("user_" + stage.id);
     
@@ -13808,6 +13818,8 @@ async function recordCharacterUsage(ids) {
 async function openUsageStatsModal() {
     const overlay = document.getElementById('usageStatsOverlay');
     const body = document.getElementById('usageStatsBody');
+    const title = overlay.querySelector('.modal-title');
+    if (title) title.textContent = 'キャラクター使用率 (高難易度/ユーザー)';
     overlay.classList.add('open');
     body.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">読み込み中...</div>';
 
@@ -13820,37 +13832,77 @@ async function openUsageStatsModal() {
     }
 }
 
+function getRmUsageStats() {
+    const statsMap = {};
+    let totalSquads = 0;
+    cachedRmRankings.forEach(row => {
+        try {
+            const data = JSON.parse(row.squadData);
+            if (data && data.squad) {
+                totalSquads++;
+                data.squad.forEach(id => {
+                    statsMap[id] = (statsMap[id] || 0) + 1;
+                });
+            }
+        } catch (e) {}
+    });
+    const stats = Object.entries(statsMap).map(([id, count]) => ({
+        id: id,
+        count: count
+    }));
+    return { total: totalSquads, stats: stats, isRm: true };
+}
+
+function openRmUsageStatsModal() {
+    const overlay = document.getElementById('usageStatsOverlay');
+    const body = document.getElementById('usageStatsBody');
+    const title = overlay.querySelector('.modal-title');
+    if (title) title.textContent = 'ランクマッチ キャラクター採用率';
+    overlay.classList.add('open');
+    if (cachedRmRankings.length === 0) {
+        body.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">ランキングデータがありません。一度「データ更新」をしてください。</div>';
+        return;
+    }
+    const data = getRmUsageStats();
+    renderUsageStats(data);
+}
+
 function renderUsageStats(data) {
     const body = document.getElementById('usageStatsBody');
     
-    // Merge with all units to show 0%
-    const allCharIds = [...units.filter(u => u.id < 300).map(u => u.id)];
-    // Removed: if (playerState.customCharacters) { allCharIds.push(...playerState.customCharacters.map(u => u.id)); }
-
     const statsMap = {};
+    const usedIds = [];
     if (data && data.stats) {
-        data.stats.forEach(s => { statsMap[s.id] = s.count; });
+        data.stats.forEach(s => { 
+            statsMap[String(s.id)] = s.count; 
+            usedIds.push(String(s.id));
+        });
     }
+
+    // 標準キャラ + 実際に使用されているカスタムキャラを含める
+    const allCharIds = [...new Set([...units.filter(u => u.id < 300).map(u => String(u.id)), ...usedIds])];
 
     const fullStats = allCharIds.map(id => ({
         id: id,
-        count: statsMap[id] || 0
+        count: statsMap[String(id)] || 0
     }));
 
     // Note: 1-week old data cleanup is handled on server-side (GAS) per logic.
+    const isRm = data.isRm;
+    const unitLabel = isRm ? '編成' : '戦';
+    const sourceLabel = isRm ? '登録編成数' : '総計測数';
+    const periodLabel = isRm ? '現在の全登録データ' : '過去1週間の戦闘';
 
     if (!data || data.total === 0) {
         body.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem;">まだデータがありません。</div>';
         return;
     }
 
-    const labelPrefix = data.isRm ? '集計対象: ランキング登録済みの全編成' : '集計対象: 過去1週間の実戦';
-    const labelUnit = data.isRm ? '編成' : '戦';
     const sorted = fullStats.sort((a, b) => b.count - a.count);
-    let html = `<div style="margin-bottom:1.5rem; text-align:center; font-size:0.9rem; color:var(--text-mid); background:rgba(0,0,0,0.2); padding:0.5rem; border-radius:4px;">${labelPrefix}<br>総サンプル数: <span style="color:var(--accent); font-weight:bold;">${data.total}</span> ${labelUnit}</div>`;
+    let html = `<div style="margin-bottom:1.5rem; text-align:center; font-size:0.9rem; color:var(--text-mid); background:rgba(0,0,0,0.2); padding:0.5rem; border-radius:4px;">計測対象: ${periodLabel}<br>${sourceLabel}: <span style="color:var(--accent); font-weight:bold;">${data.total}</span> ${unitLabel}</div>`;
     
     sorted.forEach(s => {
-        const char = units.find(u => u.id == s.id) || (playerState.customCharacters && playerState.customCharacters.find(u => u.id == s.id));
+        const char = units.find(u => String(u.id) === String(s.id)) || (playerState.customCharacters && playerState.customCharacters.find(u => String(u.id) === String(s.id)));
         if (!char) return;
         const rate = ((s.count / data.total) * 100).toFixed(1);
         html += `
@@ -13862,7 +13914,7 @@ function renderUsageStats(data) {
                 </div>
                 <div style="text-align:right;">
                     <div style="font-family:'Orbitron'; font-size:1.1rem; color:var(--gold);">${rate}%</div>
-                    <div style="font-size:0.6rem; color:var(--text-dim);">${s.count}回使用</div>
+                    <div style="font-size:0.6rem; color:var(--text-dim);">${s.count}個の編成で${isRm ? '採用' : '使用'}</div>
                 </div>
             </div>`;
     });
@@ -13964,8 +14016,12 @@ let rmDataLoaded = false;
 let isRmSimulating = false;
 
 async function initRankMatch() {
+    const isAdmin = playerState.playerName === "るのん（製作者）";
     const adminBtn = document.getElementById('rmAdminBtn');
-    if (adminBtn) adminBtn.style.display = playerState.playerName === "るのん（製作者）" ? 'inline-block' : 'none';
+    const adminResetBtn = document.getElementById('rmAdminResetBtn');
+    if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (adminResetBtn) adminResetBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    
     setRmTab('register');
     renderRmMySquads();
     if (cachedRmRankings.length === 0) fetchRmRankings();
@@ -14128,16 +14184,18 @@ async function submitToRankMatch(localIdx, rmIndex) {
         matchCount++;
         showToast(`シミュレーション中... (${matchCount}/${opponents.length})`);
         await sleep(50); // UI更新のための待機
-        const win = runHeadlessBattle(squadDataObj, JSON.parse(opp.squadData)).win;
+        const battleResult = runHeadlessBattle(squadDataObj, JSON.parse(opp.squadData));
+        const resultScore = battleResult.result; // 1: Win, 0: Loss, 0.5: Draw
         const oppRate = parseFloat(opp.rate) || 1500;
         const expectedMy = 1 / (1 + Math.pow(10, (oppRate - myRate) / 400));
-        const diff = Math.round(K * ((win ? 1 : 0) - expectedMy));
+        const diff = Math.round(K * (resultScore - expectedMy));
         
         myRate += diff;
         opp.rate = Math.round((parseFloat(opp.rate) || 1500) - diff);
         
-        if (win) { wins++; opp.losses = (parseInt(opp.losses)||0) + 1; history += "W"; opp.history = (opp.history || "") + "L"; } 
-        else { losses++; opp.wins = (parseInt(opp.wins)||0) + 1; history += "L"; opp.history = (opp.history || "") + "W"; }
+        if (resultScore === 1) { wins++; opp.losses = (parseInt(opp.losses)||0) + 1; history += "W"; opp.history = (opp.history || "") + "L"; } 
+        else if (resultScore === 0) { losses++; opp.wins = (parseInt(opp.wins)||0) + 1; history += "L"; opp.history = (opp.history || "") + "W"; }
+        else { history += "D"; opp.history = (opp.history || "") + "D"; }
         
         history = history.slice(-10);
         opp.history = (opp.history || "").slice(-10);
@@ -14178,6 +14236,36 @@ async function submitToRankMatch(localIdx, rmIndex) {
     renderRmMySquads();
 }
 
+async function runAdminReset() {
+    if (playerState.playerName !== "るのん（製作者）") return;
+    if (!confirm("【警告】全プレイヤーのレート(1500)と戦績を初期化します。本当によろしいですか？")) return;
+    if (!confirm("この操作は取り消せません。本当に実行しますか？")) return;
+
+    isRmSimulating = true;
+    showToast("管理者: 全データリセット中...");
+
+    const updates = cachedRmRankings.map(s => ({
+        id: s.id,
+        rate: 1500,
+        wins: 0,
+        losses: 0,
+        history: ""
+    }));
+
+    try {
+        const bulkData = new URLSearchParams();
+        bulkData.append('action', 'bulkUpdate');
+        bulkData.append('updates', JSON.stringify(updates));
+        await fetch(RANK_MATCH_API_URL, { method: 'POST', body: bulkData });
+        showToast("全データの初期化が完了しました");
+        fetchRmRankings(true);
+    } catch(e) {
+        showToast("通信エラーが発生しました");
+    } finally {
+        isRmSimulating = false;
+    }
+}
+
 /**
  * 高速フルロジック・バトルシミュレータ
  * スキル・パッシブ・装備効果をすべて考慮しますが、UI更新を一切行いません。
@@ -14209,11 +14297,10 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
     const pUnits = squadA.squad.map((id, i) => createUnit(id, squadA.details[id], true, i)).filter(Boolean);
     const eUnits = squadB.squad.map((id, i) => createUnit(id, squadB.details[id], false, i)).filter(Boolean);
 
-    // 簡易的な状態異常付与関数（シミュ用）
     const applyStatus = (target, type, turns) => {
         if (target.id === 8 || target.id === 320 || target.id === 27) return; // 耐性持ち
         const existing = target.statusEffects.find(e => e.type === type);
-        if (existing) existing.turns += turns;
+        if (existing) existing.turns = Math.max(existing.turns, turns);
         else target.statusEffects.push({ type, turns });
     };
 
@@ -14310,21 +14397,20 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
 
     let turn = 0;
     while (turn < 30) {
-        const turnQueue = [...pUnits, ...eUnits].filter(u => u.currentHp > 0).sort((a,b) => b.stats.spd - a.stats.spd);
-        if (pUnits.every(u => u.currentHp <= 0)) return { win: false };
-        if (eUnits.every(u => u.currentHp <= 0)) return { win: true };
+        if (pUnits.every(u => u.currentHp <= 0) && eUnits.every(u => u.currentHp <= 0)) return { result: 0.5 };
+        if (pUnits.every(u => u.currentHp <= 0)) return { result: 0 };
+        if (eUnits.every(u => u.currentHp <= 0)) return { result: 1 };
+
+        const turnQueue = [...pUnits, ...eUnits].filter(u => u.currentHp > 0).sort((a,b) => getSimStats(b).spd - getSimStats(a).spd);
 
         for (let attacker of turnQueue) {
             if (attacker.currentHp <= 0) continue;
             const myField = attacker.isPlayer ? fieldP : fieldE;
             attacker.isAdvantageForced = false;
-            const isCursed = attacker.statusEffects.some(e => e.type === 'curse');
             
-            // 状態異常スリップダメージ
-            attacker.statusEffects.forEach(eff => {
-                if (['burn', 'poison', 'drown'].includes(eff.type)) { attacker.currentHp -= Math.floor(attacker.stats.hp / 8); checkDeath(attacker); }
-            });
-            if (myField === 'miasma') { attacker.currentHp -= Math.floor(attacker.stats.hp / 8); checkDeath(attacker); }
+            if (myField === 'miasma') { attacker.currentHp -= Math.floor(attacker.stats.hp / 8); }
+            attacker.statusEffects.forEach(eff => { if (['burn', 'poison', 'drown'].includes(eff.type)) attacker.currentHp -= Math.floor(attacker.stats.hp / 8); });
+            checkDeath(attacker);
             
             // 装備: リジェネ
             if (attacker.equipment?.effect.type === 'regen' && attacker.currentHp > 0) {
@@ -14334,11 +14420,16 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
 
             if (attacker.currentHp <= 0) continue;
+            
+            // 状態異常更新 & 制限チェック
+            let skipAction = false;
+            if (attacker.statusEffects.some(eff => ['sleep', 'freeze', 'flinch'].includes(eff.type))) skipAction = true;
+            if (attacker.statusEffects.some(eff => ['paralysis', 'blind'].includes(eff.type)) && Math.random() < 0.3) skipAction = true;
+            if (myField === 'lightning_storm' && Math.random() < 0.2) skipAction = true;
 
-            // 行動不能チェック
-            if (attacker.statusEffects.some(eff => ['sleep', 'freeze', 'flinch'].includes(eff.type))) continue;
-            if (attacker.statusEffects.some(eff => ['paralysis', 'blind'].includes(eff.type)) && Math.random() < 0.3) continue;
-            if (myField === 'lightning_storm' && Math.random() < 0.2) continue;
+            attacker.statusEffects.forEach(e => e.turns--);
+            attacker.statusEffects = attacker.statusEffects.filter(e => e.turns > 0);
+            if (skipAction) continue;
 
             const targets = (attacker.isPlayer ? eUnits : pUnits).filter(u => u.currentHp > 0);
             if (targets.length === 0) break;
@@ -14350,45 +14441,45 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                 if (lowest) lowest.currentHp = Math.min(lowest.stats.hp, lowest.currentHp + Math.floor(lowest.stats.hp * 0.1));
             }
 
-            // ターゲット選定（シミュではランダム）
             const target = targets[Math.floor(Math.random() * targets.length)];
             
-            // スキル判定
             let damageMult = 1.0;
-            let skill = attacker.abilities.find(a => (a.timing === 'before_attack' || (a.timing === 'hp_below' && (attacker.currentHp/attacker.stats.hp*100) <= a.triggerValue)) && Math.random() < (a.triggerRate || 1));
+            const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');
+            let skill = isAttackerCursed ? null : attacker.abilities.find(a => 
+                (a.timing === 'before_attack' || (a.timing === 'hp_below' && (attacker.currentHp/attacker.stats.hp*100) <= a.triggerValue)) 
+                && Math.random() < (a.triggerRate || 1));
             
             if (skill && (skill.isAoe || skill.target === 'all_enemies')) {
                 targets.forEach(t => {
                     let dmg = Math.floor(calculateDamage(attacker, t) * (skill.damageMult || 0.8));
-                    // 防御スキル
-                    const ds = t.abilities.find(a => a.timing === 'on_defense' && Math.random() < (a.triggerRate || 0.3));
+                    const ds = t.statusEffects.some(e=>e.type==='curse') ? null : t.abilities.find(a => a.timing === 'on_defense' && Math.random() < (a.triggerRate || 0.3));
                     if (ds) dmg *= (t.id === 319 ? 0.25 : 0.7);
                     t.currentHp -= dmg;
                     if (skill.effect?.type === 'status') applyStatus(t, skill.effect.status, skill.effect.turns);
+                    checkDeath(t);
                 });
-                continue; // AoE後は通常攻撃なし
+                continue;
             }
 
             // 単体攻撃
             let rate = skill ? (skill.triggerRate || 1) : 0;
             if (attacker.statusEffects.some(e => e.type === 'fighting_spirit')) rate *= 1.5;
-            if (skill && Math.random() < rate && !attacker.statusEffects.some(e => e.type === 'curse')) {
+            if (skill && Math.random() < rate) {
                 damageMult = skill.damageMult || 1.0;
                 if (skill.effect?.type === 'status') applyStatus(target, skill.effect.status, skill.effect.turns);
             }
 
             // ステータス補正 (Headless)
-            let atk = attacker.stats.atk, def = target.stats.def, spd = attacker.stats.spd;
-            if (attacker.id === 1 && attacker.currentHp <= attacker.stats.hp * 0.5) atk *= 1.3;
-            if (myField === 'berserk') { atk *= 1.5; def *= 0.5; }
-            if (myField === 'heavy_gravity') spd *= 0.5;
-            if (attacker.statusEffects.some(e => e.type === 'strengthen')) atk *= 1.2;
+            const aS = getSimStats(attacker), dS = getSimStats(target);
+            let atk = aS.atk;
+            if (attacker.id === 13 || attacker.id === 23 || attacker.id === 16) attacker.isAdvantageForced = true;
+            if (attacker.id === 18 && skill?.name === '五色の魔法') attacker.isAdvantageForced = true;
 
             const advantage = getElementalMultiplier(attacker.element, target.element);
-            let damage = Math.floor((atk * atk) / Math.max(1, target.stats.def) * advantage * damageMult);
+            let damage = Math.floor((atk * atk) / Math.max(1, dS.def) * (attacker.isAdvantageForced ? 1.5 : advantage) * damageMult);
 
             // 防御側スキル
-            const defSkill = target.abilities.find(a => a.timing === 'on_defense' && Math.random() < (a.triggerRate || 0.3));
+            const defSkill = target.statusEffects.some(e=>e.type==='curse') ? null : target.abilities.find(a => a.timing === 'on_defense' && Math.random() < (a.triggerRate || 0.3));
             if (defSkill && !target.statusEffects.some(e => e.type === 'curse')) {
                 if (target.id === 20) damage = 0; // 回避
                 else if (target.id === 319 || target.id === 30) damage *= 0.25; // 75%カット
@@ -14401,7 +14492,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
 
             target.currentHp = Math.max(0, target.currentHp - damage);
 
-            // 反撃判定 (Headless)
+            // 反撃
             if (target.currentHp > 0 && damage > 0 && target.abilities && !target.statusEffects.some(e => e.type === 'curse')) {
                 for (const ab of target.abilities) {
                     if (ab.timing === 'on_hit' && Math.random() < (ab.triggerRate || 1)) {
@@ -14422,12 +14513,12 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                 }
             }
 
-            // 追撃 (Headless)
-            if (attacker.currentHp > 0 && !isCursed) {
+            // 追撃
+            if (attacker.currentHp > 0 && !isAttackerCursed) {
                 if (attacker.id === 46 && target.currentHp > 0 && target.currentHp < target.stats.hp * 0.3 && Math.random() < 0.4) { // ラキュド確死
                     target.currentHp = 0; checkDeath(target);
                 } else {
-                    const chase = attacker.abilities.find(a => a.timing === 'after_attack' && Math.random() < (a.triggerRate || 0.3));
+                    const chase = attacker.abilities.find(a => a.timing === 'after_attack' && Math.random() < (getTriggerRate(attacker, a)));
                     if (chase && target.currentHp > 0) {
                         const aS = getSimStats(attacker), dS = getSimStats(target);
                         const cDmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(attacker.element, target.element) * (chase.damageMult || 0.5));
@@ -14437,15 +14528,10 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
         }
 
-        // ターン終了時処理 (Headless)
         const living = [...pUnits, ...eUnits].filter(u => u.currentHp > 0);
         living.forEach(u => {
-            // 状態異常更新
-            u.statusEffects.forEach(e => e.turns--);
-            u.statusEffects = u.statusEffects.filter(e => e.turns > 0);
-            
             // ターン終了時スキル (リナ・タナトスの支援の光など)
-            if (!u.statusEffects.some(e => e.type === 'curse')) {
+            if (!u.statusEffects.some(e => String(e.type) === 'curse')) {
                 const endAb = u.abilities.find(a => a.timing === 'on_turn_end');
                 if (endAb && u.id === 29) { // 支援の光
                     const allies = u.isPlayer ? pUnits : eUnits;
@@ -14461,14 +14547,18 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
         });
         turn++;
-        if (pUnits.every(u => u.currentHp <= 0)) return { win: false };
-        if (eUnits.every(u => u.currentHp <= 0)) return { win: true };
+        if (pUnits.every(u => u.currentHp <= 0) && eUnits.every(u => u.currentHp <= 0)) return { result: 0.5 };
+        if (pUnits.every(u => u.currentHp <= 0)) return { result: 0 };
+        if (eUnits.every(u => u.currentHp <= 0)) return { result: 1 };
     }
-    // 30ターン終了時は残りHP合計で判定
-    return { win: pUnits.reduce((s,u)=>s+u.currentHp,0) > eUnits.reduce((s,u)=>s+u.currentHp,0) };
+    const pTotal = pUnits.reduce((s,u)=>s+Math.max(0,u.currentHp),0);
+    const eTotal = eUnits.reduce((s,u)=>s+Math.max(0,u.currentHp),0);
+    if (pTotal === eTotal) return { result: 0.5 };
+    return { result: pTotal > eTotal ? 1 : 0 };
 }
 
 async function runAdminRoundRobin() {
+    if (playerState.playerName !== "るのん（製作者）") return;
     const squads = [...cachedRmRankings];
     const K = 32;
     const allMatches = (squads.length * (squads.length - 1)) / 2;
@@ -14497,15 +14587,17 @@ async function runAdminRoundRobin() {
                 await sleep(5);
             }
 
-            const win = runHeadlessBattle(JSON.parse(squads[i].squadData), JSON.parse(squads[j].squadData)).win;
+            const res = runHeadlessBattle(JSON.parse(squads[i].squadData), JSON.parse(squads[j].squadData));
+            const resultScore = res.result;
             const rI = parseFloat(squads[i].rate);
             const rJ = parseFloat(squads[j].rate);
             const expI = 1 / (1 + Math.pow(10, (rJ - rI) / 400));
-            const diff = Math.round(K * ((win ? 1 : 0) - expI));
+            const diff = Math.round(K * (resultScore - expI));
 
             squads[i].rate += diff; squads[j].rate -= diff;
-            if (win) { squads[i].wins++; squads[j].losses++; squads[i].history = (squads[i].history||"")+"W"; squads[j].history = (squads[j].history||"")+"L"; } 
-            else { squads[i].losses++; squads[j].wins++; squads[i].history = (squads[i].history||"")+"L"; squads[j].history = (squads[j].history||"")+"W"; }
+            if (resultScore === 1) { squads[i].wins++; squads[j].losses++; squads[i].history = (squads[i].history||"")+"W"; squads[j].history = (squads[j].history||"")+"L"; } 
+            else if (resultScore === 0) { squads[i].losses++; squads[j].wins++; squads[i].history = (squads[i].history||"")+"L"; squads[j].history = (squads[j].history||"")+"W"; }
+            else { squads[i].history = (squads[i].history||"")+"D"; squads[j].history = (squads[j].history||"")+"D"; }
             
             squads[i].history = (squads[i].history||"").slice(-10);
             squads[j].history = (squads[j].history||"").slice(-10);
@@ -14544,7 +14636,7 @@ async function fetchRmRankings(force = false) {
 
 function renderRmRankings() {
     const getHistoryHtml = (historyStr, wins, losses) => {
-        const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
+        const winRate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100).toFixed(2) : "0.00";
         return `<div style="font-size:0.9rem; color:var(--gold); font-weight:bold; font-family:'Orbitron';">
                   ${winRate}%</div>`;
     };
