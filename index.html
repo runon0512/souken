@@ -3107,34 +3107,37 @@
 
   <!-- MISSION PANEL -->
   <div class="roster-panel" id="missionPanel" style="display: none;">
-    <div class="roster-toolbar" style="align-items: center;">
-      <div style="display:flex; align-items:center; gap:1rem; flex-wrap: wrap;"> 
-        <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
-          ← ホームへ
-        </button>
-        <div id="missionSquadSwitcher" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border);">
-           <span style="font-size:0.7rem; color:var(--text-dim); margin:0 0.5rem;">部隊切替:</span>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-0" onclick="switchSquad(0)">1</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-1" onclick="switchSquad(1)">2</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-2" onclick="switchSquad(2)">3</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-3" onclick="switchSquad(3)">4</button>
-           <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-4" onclick="switchSquad(4)">5</button>
-           <span id="battleSquadNameDisplay" style="font-size:0.8rem; color:var(--gold); margin-left:0.5rem; font-weight:bold;"></span>
+    <div class="roster-toolbar" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
+      <div style="display:flex; align-items:center; gap:1rem; justify-content: space-between;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <button class="filter-btn" onclick="setView('home')" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+            🏠 ホームへ
+          </button>
+          <div id="missionSquadSwitcher" style="display:flex; align-items:center; gap:0.5rem; background:rgba(0,0,0,0.3); padding:0.25rem; border-radius:4px; border:1px solid var(--border);">
+             <span style="font-size:0.7rem; color:var(--text-dim); margin:0 0.5rem;">部隊切替:</span>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-0" onclick="switchSquad(0)">1</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-1" onclick="switchSquad(1)">2</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-2" onclick="switchSquad(2)">3</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-3" onclick="switchSquad(3)">4</button>
+             <button class="squad-tab-btn" style="padding:0.2rem 0.6rem; font-size:1.25rem;" id="battle-squad-4" onclick="switchSquad(4)">5</button>
+             <span id="battleSquadNameDisplay" style="font-size:0.8rem; color:var(--gold); margin-left:0.5rem; font-weight:bold;"></span>
+          </div>
         </div>
-        <div class="header-divider"></div>
-        <div class="roster-title" id="missionViewTitle">任務選択</div>
-        <div id="storyCategoryTabs" style="display:none; gap:0.5rem; flex:1;">
-            <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="padding: 0.5rem 1rem; margin:0;">メイン</button>
-            <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="padding: 0.5rem 1rem; margin:0;">イベント</button>
-            <button class="filter-btn" id="tab-story-challenge" onclick="setStoryTab('challenge')" style="padding: 0.5rem 1rem; margin:0;">チャレンジ</button>
-            <button class="filter-btn" id="tab-story-collab" onclick="setStoryTab('collab')" style="padding: 0.5rem 1rem; margin:0;">コラボイベント</button>
-            <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="padding: 0.5rem 1rem; margin:0;">みんなのステージ</button>
-            <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="padding: 0.5rem 1rem; margin:0;">無限の塔 <span class="new-badge">New!</span></button>
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div class="roster-title" id="missionViewTitle">任務選択</div>
+          <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.5rem 1rem; margin: 0;" onclick="renderStoryChapters()">
+            ← 戻る
+          </button>
+        </div>
       </div>
+      <div id="storyCategoryTabs" style="display:none; gap:0.5rem; flex-wrap: wrap;">
+          <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">メイン</button>
+          <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">イベント</button>
+          <button class="filter-btn" id="tab-story-challenge" onclick="setStoryTab('challenge')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">チャレンジ</button>
+          <button class="filter-btn" id="tab-story-collab" onclick="setStoryTab('collab')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">コラボ</button>
+          <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">ユーザー</button>
+          <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">無限の塔 <span class="new-badge">New!</span></button>
       </div>
-      <button id="backToStoriesBtn" class="filter-btn" style="display:none; width: auto; padding: 0.5rem 1rem; margin: 0;" onclick="renderStoryChapters()">
-        ← 戻る
-      </button>
     </div>
     <div class="mission-grid" id="missionGrid"></div>
   </div>
