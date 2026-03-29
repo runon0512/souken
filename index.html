@@ -7371,6 +7371,17 @@ function getElemIcon(elem) {
   return { fire:'🔥', water:'💧', thunder:'⚡', dark:'🌑', light:'✨' }[elem] || '●';
 }
 
+function linkifySafe(text) {
+  if (!text) return '';
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, (url) => {
+    if (url.startsWith('https://scratch.mit.edu/') || url.startsWith('https://github.com/')) {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; pointer-events:auto;">${url}</a>`;
+    }
+    return url;
+  });
+}
+
 // ===== TUTORIAL =====
 let tutorialStep = 0;
 const tutorialSteps = [
@@ -7686,7 +7697,7 @@ function renderTowerMissions() {
         // Removed grid-column: 1 / -1 to allow tiling
         card.innerHTML = `
             <div class="mission-title">${mission.name} ${floor > nextFloor ? '<span style="font-size:0.7em;color:var(--accent2)">(飛び級)</span>' : ''}</div>
-            <div class="mission-desc">${mission.description}</div>
+            <div class="mission-desc">${linkifySafe(mission.description)}</div>
             <div class="mission-info">
                 <span>推奨戦力: ${mission.recommendedPower}</span>
                 <div class="mission-reward-info">
@@ -7885,7 +7896,7 @@ function renderInlineComments(stageId, comments) {
         return `
         <div class="inline-comment-item">
             <div class="inline-comment-header">${nameHtml}<span>${new Date(c.date).toLocaleDateString()}</span></div>
-            <div style="line-height:1.4;">${c.text}</div>
+            <div style="line-height:1.4;">${linkifySafe(c.text)}</div>
         </div>`;
     };
 
@@ -7971,7 +7982,7 @@ function renderUserStageCard(stage) {
     card.innerHTML = `
         <div class="user-stage-list-info">
             <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${stage.name}${fieldBadge}</div>
-            <div class="mission-desc" style="margin-bottom: 0.5rem;">${stage.description || '概要がありません'}</div>
+            <div class="mission-desc" style="margin-bottom: 0.5rem;">${linkifySafe(stage.description) || '概要がありません'}</div>
         </div>
         <div class="user-stage-meta-row">
             <div class="user-stage-meta-info">
@@ -9445,7 +9456,7 @@ function renderMissionsForChapter(chapterIndex) {
     card.className = `mission-card ${isLocked ? 'locked' : ''}`;
     card.innerHTML = `
       <div class="mission-title">${isCleared ? '<span class="cleared-check">✓</span>' : ''}${m.name}</div>
-      <div class="mission-desc">${isLocked ? '🔒 前のステージをクリアして解放' : m.description}</div>
+      <div class="mission-desc">${isLocked ? '🔒 前のステージをクリアして解放' : linkifySafe(m.description)}</div>
       <div class="mission-info">
         <span>推奨戦力: ${m.recommendedPower}</span>
         <div class="mission-reward-info">
@@ -14199,6 +14210,49 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         else target.statusEffects.push({ type, turns });
     };
 
+    // 死亡・復活処理 (Headless)
+    const checkDeath = (u) => {
+        if (u.currentHp > 0) return;
+        const isCursed = u.statusEffects.some(e => e.type === 'curse');
+        const allies = u.isPlayer ? pUnits : eUnits;
+        const opps = u.isPlayer ? eUnits : pUnits;
+
+        if (!isCursed) {
+            if (u.id === 8 && !u.gutsUsed) { // リカルド: 土残流
+                u.currentHp = 1; u.gutsUsed = true;
+                const ts = opps.filter(x => x.currentHp > 0);
+                if (ts.length) ts[Math.floor(Math.random() * ts.length)].currentHp -= Math.floor(u.stats.atk * 3.0);
+            } else if (u.id === 13 && !u.passiveUsed) { // ギラ: 祟り神
+                u.currentHp = 1; u.passiveUsed = true;
+                opps.forEach(e => { if(e.currentHp > 0) applyStatus(e, 'weakness', 3); });
+            } else if (u.id === 9 && !u.passiveUsed) { // ベラ: 核分裂
+                u.currentHp = 1; u.passiveUsed = true;
+                opps.forEach(e => { if(e.currentHp > 0) e.currentHp -= Math.floor(u.stats.atk * 1.5); });
+            } else if (u.id === 18 && !u.passiveUsed) { // シオン: 運命支配
+                u.currentHp = Math.floor(u.stats.hp * 0.1); u.passiveUsed = true; u.statusEffects = [];
+            } else if (u.id === 23 && !u.passiveUsed) { // シャム: 監魂葬災
+                u.currentHp = 1; u.passiveUsed = true;
+                opps.forEach(e => { if(e.currentHp > 0) { applyStatus(e, 'weakness', 2); applyStatus(e, 'burn', 2); applyStatus(e, 'poison', 2); applyStatus(e, 'curse', 2); }});
+            } else if (u.id === 40 && (u.reviveCount || 0) < 2) { // ゼーク: 復活
+                u.reviveCount = (u.reviveCount || 0) + 1;
+                u.currentHp = Math.floor(u.stats.hp * (u.reviveCount === 1 ? 0.3 : 0.15));
+            } else if (u.id === 48 && !u.passiveUsed) { // グレガ: 最後の炎
+                u.currentHp = 1; u.passiveUsed = true;
+                allies.forEach(a => { if(a.currentHp > 0) { applyStatus(a, 'strengthen', 3); applyStatus(a, 'barrier', 3); } });
+            } else if (u.id === 51 && !u.passiveUsed) { // シルル: 絆の残火
+                u.currentHp = 1; u.passiveUsed = true;
+                allies.forEach(a => { if(a.currentHp > 0) applyStatus(a, 'fighting_spirit', 4); });
+            } else if (u.guts) { u.currentHp = 1; u.guts = false; }
+            else {
+                const callum = allies.find(x => x.id === 7 && x.currentHp > 0 && !x.passiveUsed && !x.statusEffects.some(s=>s.type==='curse'));
+                if (callum && callum.battleId !== u.battleId) { u.currentHp = Math.floor(u.stats.hp * 0.5); callum.passiveUsed = true; }
+            }
+        }
+        // 切れ者 (呪いに関係なくチェック)
+        const bachichi = allies.find(x => x.id === 49 && x.currentHp > 0 && !x.statusEffects.some(s=>s.type==='curse'));
+        if (bachichi) allies.forEach(a => { if(a.currentHp > 0 && a.battleId !== u.battleId) applyStatus(a, 'strengthen', 2); });
+    };
+
     // シミュレーション用ステータス計算
     const getSimStats = (u) => {
         let s = { ...u.stats };
@@ -14465,14 +14519,8 @@ async function fetchRmRankings(force = false) {
 function renderRmRankings() {
     const getHistoryHtml = (historyStr, wins, losses) => {
         const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
-        const badges = (historyStr || "").split('').map(char => {
-            const color = char === 'W' ? '#00c8ff' : '#ff4d4d';
-            return `<span style="display:inline-block; width:12px; height:12px; line-height:12px; font-size:8px; background:${color}; color:#000; border-radius:2px; margin-right:2px; text-align:center; font-weight:bold;">${char}</span>`;
-        }).join('');
-        return `<div style="display:flex; flex-direction:column; gap:4px;">
-                  <div style="display:flex; align-items:center;">${badges || '<span style="color:var(--text-dim)">-</span>'}</div>
-                  <div style="font-size:0.7rem; color:var(--text-mid);">${wins}勝 ${losses}負 (勝率 ${winRate}%)</div>
-                </div>`;
+        return `<div style="font-size:0.9rem; color:var(--gold); font-weight:bold; font-family:'Orbitron';">
+                  ${winRate}%</div>`;
     };
 
     const container = document.getElementById('rmRankingListContainer');
@@ -14549,14 +14597,14 @@ function challengeRankingOpponent(visibleIndex) {
     try {
         const data = JSON.parse(row.squadData);
         const enemies = data.squad.map(charId => {
-            const detail = data.details[charId];
-            const unit = units.find(u => u.id === charId);
+            const detail = data.details[String(charId)];
+            const unit = units.find(u => u.id == charId) || (playerState.customCharacters && playerState.customCharacters.find(u => u.id == charId));
             return {
                 id: charId,
                 level: detail.level || 1,
                 aura: detail.aura || 0,
                 potential: detail.potential || 0,
-                equippedId: detail.equippedId || null,
+                equipment: detail.equippedId ? equipmentItems.find(e => e.id == detail.equippedId) : null,
                 enhancement: detail.enhancement || null,
                 aiType: AI_TYPES.RANDOM
             };
