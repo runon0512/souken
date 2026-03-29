@@ -14199,6 +14199,32 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         else target.statusEffects.push({ type, turns });
     };
 
+    // シミュレーション用ステータス計算
+    const getSimStats = (u) => {
+        let s = { ...u.stats };
+        const myField = u.isPlayer ? fieldP : fieldE;
+        if (myField === 'berserk') { s.atk *= 1.5; s.def *= 0.5; }
+        if (myField === 'heavy_gravity') s.spd *= 0.5;
+        // パッシブ
+        if (u.id === 1 && u.currentHp <= u.stats.hp * 0.5) s.atk *= 1.3;
+        if (u.id === 2 && u.currentHp <= u.stats.hp * 0.3) s.def *= 1.1;
+        if (u.id === 4 && u.currentHp <= u.stats.hp * 0.5) s.def *= 1.4;
+        if (u.id === 37 && u.currentHp <= u.stats.hp * 0.5) s.def *= 1.2;
+        if (u.id === 10) { const m = 1 + (1 - u.currentHp/u.stats.hp)*0.5; s.atk*=m; s.def*=m; s.spd*=m; }
+        if (u.id === 41) s.atk *= (1 + (u.currentHp/u.stats.hp)*0.5);
+        if (u.id === 42 && u.statusEffects.some(e=>e.type==='burn')) s.atk *= 1.5;
+        if (u.id === 12 && u.currentHp <= u.stats.hp * 0.5) s.atk *= 1.3;
+        if (u.id === 17 && u.currentHp <= u.stats.hp * 0.3) s.atk *= 1.3;
+        if (u.id === 38 && u.currentHp <= u.stats.hp * 0.3) s.atk *= 2.5;
+        // 状態異常
+        if (u.statusEffects.some(e=>e.type==='weakness')) { s.atk*=0.8; s.def*=0.8; s.spd*=0.8; }
+        if (u.statusEffects.some(e=>e.type==='strengthen')) { s.atk*=1.2; s.def*=1.2; s.spd*=1.2; }
+        if (u.statusEffects.some(e=>e.type==='heavy')) s.spd /= 3;
+        if (u.statusEffects.some(e=>e.type==='barrier')) s.def *= 1.5;
+        if (u.statusEffects.some(e=>e.type==='zero_gravity')) { s.atk*=1.2; s.def*=0.8; }
+        return s;
+    };
+
     // バトル開始時スキル (Headless)
     const allForStart = [...pUnits, ...eUnits].sort((a,b) => b.stats.spd - a.stats.spd);
     for (const u of allForStart) {
@@ -14209,12 +14235,13 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             if (startAb.isAoe || startAb.target === 'all_enemies') {
                 opponents.forEach(t => {
                     if (t.currentHp > 0) {
-                        const dmg = Math.floor(calculateDamage(u, t) * (startAb.damageMult || 0.6));
+                        const aS = getSimStats(u), dS = getSimStats(t);
+                        const dmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(u.element, t.element) * (startAb.damageMult || 0.6));
                         t.currentHp -= dmg;
                         if (startAb.effect?.type === 'status') applyStatus(t, startAb.effect.status, startAb.effect.turns);
                     }
                 });
-            } else if (startAb.target === 'all_allies' || u.id === 15 || u.id === 22) {
+            } else if (startAb.target === 'all_allies' || u.id === 15 || u.id === 22 || u.id === 26 || u.id === 27 || u.id === 45) {
                 allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'strengthen', 5); });
             }
         }
@@ -14229,12 +14256,22 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         for (let attacker of turnQueue) {
             if (attacker.currentHp <= 0) continue;
             const myField = attacker.isPlayer ? fieldP : fieldE;
+            attacker.isAdvantageForced = false;
+            const isCursed = attacker.statusEffects.some(e => e.type === 'curse');
             
             // 状態異常スリップダメージ
             attacker.statusEffects.forEach(eff => {
-                if (['burn', 'poison', 'drown'].includes(eff.type)) attacker.currentHp -= Math.floor(attacker.stats.hp / 8);
+                if (['burn', 'poison', 'drown'].includes(eff.type)) { attacker.currentHp -= Math.floor(attacker.stats.hp / 8); checkDeath(attacker); }
             });
-            if (myField === 'miasma') attacker.currentHp -= Math.floor(attacker.stats.hp / 8);
+            if (myField === 'miasma') { attacker.currentHp -= Math.floor(attacker.stats.hp / 8); checkDeath(attacker); }
+            
+            // 装備: リジェネ
+            if (attacker.equipment?.effect.type === 'regen' && attacker.currentHp > 0) {
+                const regen = Math.floor(attacker.stats.hp * attacker.equipment.effect.val);
+                if (myField === 'heal_reverse') { attacker.currentHp -= regen; checkDeath(attacker); }
+                else attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + regen);
+            }
+
             if (attacker.currentHp <= 0) continue;
 
             // 行動不能チェック
@@ -14318,28 +14355,22 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                             if (target.id === 21) ref = 0.4;
                             cDmg = Math.floor(damage * ref);
                         }
-                        attacker.currentHp = Math.max(0, attacker.currentHp - cDmg);
-                        if (ab.isCustom && (ab.effect === 'status' || ab.effect === 'attack_status')) {
-                            applyStatus(attacker, ab.statusEffect, ab.statusTurns || 3);
-                        }
+                        attacker.currentHp -= cDmg; checkDeath(attacker);
+                        if (ab.isCustom && (ab.effect === 'status' || ab.effect === 'attack_status')) applyStatus(attacker, ab.statusEffect, ab.statusTurns || 3);
                     }
                 }
             }
 
             // 追撃 (Headless)
-            const chase = attacker.abilities.find(a => a.timing === 'after_attack' && Math.random() < (a.triggerRate || 0.3));
-            if (chase && target.currentHp > 0) {
-                target.currentHp -= Math.floor(calculateDamage(attacker, target) * (chase.damageMult || 0.5));
-            }
-
-            // 復活処理
-            if (target.currentHp <= 0) {
-                if (target.guts) { target.currentHp = 1; target.guts = false; }
-                else if (target.id === 18 && !target.passiveUsed) { target.currentHp = Math.floor(target.stats.hp * 0.1); target.passiveUsed = true; }
-                else if ((target.id === 48 || target.id === 51) && !target.passiveUsed) {
-                    target.currentHp = 1; target.passiveUsed = true;
-                    if (target.id === 51) {
-                        (target.isPlayer ? pUnits : eUnits).forEach(a => { if(a.currentHp > 0) a.statusEffects.push({type: 'fighting_spirit', turns: 4}); });
+            if (attacker.currentHp > 0 && !isCursed) {
+                if (attacker.id === 46 && target.currentHp > 0 && target.currentHp < target.stats.hp * 0.3 && Math.random() < 0.4) { // ラキュド確死
+                    target.currentHp = 0; checkDeath(target);
+                } else {
+                    const chase = attacker.abilities.find(a => a.timing === 'after_attack' && Math.random() < (a.triggerRate || 0.3));
+                    if (chase && target.currentHp > 0) {
+                        const aS = getSimStats(attacker), dS = getSimStats(target);
+                        const cDmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(attacker.element, target.element) * (chase.damageMult || 0.5));
+                        target.currentHp -= cDmg; checkDeath(target);
                     }
                 }
             }
