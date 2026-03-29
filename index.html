@@ -5601,17 +5601,21 @@ let playerState = {
 function updateSquadSwitcherUI() {
     const types = ['squad-tab', 'battle-squad', 'b-squad'];
     playerState.squads.forEach((sq, i) => {
-        const iconsHtml = sq.map(id => {
-            const u = units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
-            const imgSrc = u ? (u.useImg ? u.img : 'C0.svg') : 'C0.svg';
-            return `<img src="${imgSrc}" style="width:0.6rem; height:0.8rem; object-fit:cover; border:1px solid rgba(255,255,255,0.1); border-radius:1px;">`;
-        }).join('');
+        let iconsHtml = '';
+        for (let j = 0; j < 5; j++) {
+            const id = sq[j];
+            const u = id ? (units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id))) : null;
+            const imgSrc = u ? (u.useImg ? u.img : 'C0.svg') : null;
+            if (imgSrc) {
+                iconsHtml += `<img src="${imgSrc}" style="width:0.8rem; height:1.1rem; object-fit:cover; border:1px solid rgba(255,255,255,0.2); border-radius:1px;">`;
+            } else {
+                iconsHtml += `<div style="width:0.8rem; height:1.1rem; border:1px solid rgba(255,255,255,0.05); background:rgba(0,0,0,0.2); border-radius:1px;"></div>`;
+            }
+        }
         
         const content = `
-            <div style="font-size:0.65rem; margin-bottom:2px; font-family:'Orbitron'; line-height:1;">${i+1}</div>
-            <div style="display:flex; gap:1px; height:0.8rem; justify-content:center; align-items:center; min-width:3rem;">
-                ${iconsHtml || '<span style="font-size:0.5rem; color:var(--text-dim);">EMPTY</span>'}
-            </div>
+            <span style="font-size:1.1rem; margin-right:6px; font-family:'Orbitron'; font-weight:bold; line-height:1;">${i+1}</span>
+            <div style="display:flex; gap:1.5px; align-items:center;">${iconsHtml}</div>
         `;
         
         types.forEach(prefix => {
@@ -5619,9 +5623,11 @@ function updateSquadSwitcherUI() {
             if (btn) {
                 btn.innerHTML = content;
                 btn.style.display = 'flex';
-                btn.style.flexDirection = 'column';
+                btn.style.flexDirection = 'row';
                 btn.style.alignItems = 'center';
-                btn.style.padding = '4px 2px';
+                btn.style.padding = '4px 8px';
+                btn.style.width = 'auto';
+                btn.style.flex = 'none';
             }
         });
     });
