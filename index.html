@@ -13214,6 +13214,9 @@ function loadGame() {
     playerState.customCharacters = savedData.playerState.customCharacters || [];
     playerState.notifications = savedData.playerState.notifications || [];
     playerState.stageTracking = savedData.playerState.stageTracking || {};
+    playerState.achievements = savedData.playerState.achievements || {};
+    playerState.claimedRewards = savedData.playerState.claimedRewards || {};
+    playerState.gameVersion = savedData.playerState.gameVersion || null;
 
     if (!playerState.playerId) {
         playerState.playerId = generateUUID();
