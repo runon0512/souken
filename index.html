@@ -5615,9 +5615,9 @@ function updateSquadSwitcherUI() {
 const ACHIEVEMENT_DEFS = [
     { id: 'clear_ch1', name: '冒険の始まり', desc: '第一章をクリアする', stones: 5000, check: () => missionProgress.has(109) },
     // ユーザーステージ
-    { id: 'plays_10', name: '注目のステージ', desc: 'プレイ数10以上のステージを作成', stones: 5000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 10) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 10) },
-    { id: 'plays_50', name: '人気のステージ', desc: 'プレイ数50以上のステージを作成', stones: 10000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 50) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 50) },
-    { id: 'plays_100', name: '伝説のステージ', desc: 'プレイ数100以上のステージを作成', stones: 30000, charId: 46, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 100) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 100) },
+    { id: 'plays_10', name: '注目のステージ', desc: 'プレイ数10以上のステージを作成', stones: 5000, check: () => cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 10) },
+    { id: 'plays_50', name: '人気のステージ', desc: 'プレイ数50以上のステージを作成', stones: 10000, check: () => cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 50) },
+    { id: 'plays_100', name: '伝説のステージ', desc: 'プレイ数100以上のステージを作成', stones: 30000, charId: 46, check: () => cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 100) },
     // ランクマッチ
     { id: 'rm_5_squads', name: '五翼の将軍', desc: 'ランクマッチに5編成を登録する', stones: 40000, check: () => (cachedRmMySquads.length >= 5 || playerState.squads.every(s => s.length > 0)) },
     // ストーリー進行
@@ -5864,10 +5864,9 @@ function calcStats(baseStats, level, equipment = null, potential = 0, explicitEn
   return s;
 }
 
-function getPower(unit, level, potential = 0) {
-  const equipId = playerState.characters[unit.id] ? playerState.characters[unit.id].equippedId : null;
-  const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
-  const s = calcStats(unit.baseStats, level, equip, potential);
+function getPower(unit, level, potential = 0, equip = null) {
+  const enhancement = equip ? playerState.equipmentEnhancements?.[equip.id] : null;
+  const s = calcStats(unit.baseStats, level, equip, potential, enhancement);
   return Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
 }
 
@@ -6162,7 +6161,7 @@ function renderSquad() {
           <div class="slot-name">${c.name}</div>
           <div style="display:flex; align-items:center; gap:0.5rem;">
             ${equip ? `<div class="squad-equip-icon ${equipAuraClass}" title="${equip.name}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
-            <div class="slot-power">${getPower(c, playerState.characters[id].level, potential)}</div>
+            <div class="slot-power">${getPower(c, playerState.characters[id].level, potential, equip)}</div>
           </div>
         </div>
       `;
@@ -6193,7 +6192,10 @@ function renderSquad() {
   const total = squad.reduce((s, id) => {
     const c = units.find(u => u.id === id);
     const pot = playerState.characters[id] ? (playerState.characters[id].potential || 0) : 0;
-    return s + (c ? getPower(c, playerState.characters[id].level, pot) : 0);
+    const currentSquadEquips = playerState.squadEquipments ? playerState.squadEquipments[playerState.currentSquadIndex] : {};
+    const eid = id ? currentSquadEquips[id] : null;
+    const equip = eid ? equipmentItems.find(e => e.id === eid) : null;
+    return s + (c ? getPower(c, playerState.characters[id].level, pot, equip) : 0);
   }, 0);
   const totalPowerEl = document.getElementById('totalPower');
   if (totalPowerEl) totalPowerEl.textContent = total;
@@ -6247,10 +6249,10 @@ function renderCards() {
 
       // 3. Selected Sort
       if (currentSort === 'power') {
-        return getPower(b, charB.level) - getPower(a, charA.level);
+        return getPower(b, charB.level, charB.potential || 0) - getPower(a, charA.level, charA.potential || 0);
       } else if (currentSort === 'level') {
         if (charB.level !== charA.level) return charB.level - charA.level;
-        return getPower(b, charB.level) - getPower(a, charA.level); // Tie-break
+        return getPower(b, charB.level, charB.potential || 0) - getPower(a, charA.level, charA.potential || 0); // Tie-break
       }
     }
 
@@ -6273,7 +6275,8 @@ function renderCards() {
     const potential = isOwned ? (charState.potential || 0) : 0;
     const aura = isOwned ? (charState.aura || 0) : 0;
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
-    const s = calcStats(c.baseStats, level, equip, potential);
+    const enhancement = equipId ? playerState.equipmentEnhancements?.[equipId] : null;
+    const s = calcStats(c.baseStats, level, equip, potential, enhancement);
     const isFav = isOwned && charState.isFavorite;
     
     let starsHtml = '';
@@ -7398,6 +7401,7 @@ const tutorialSteps = [
 ];
 
 function startTutorial() {
+    closeSettingsModal();
     // Ensure we are on the main roster view
     setView('roster');
     setFilter('all'); // Reset filter to ensure cards are visible
@@ -7944,7 +7948,8 @@ function renderUserStageCard(stage) {
     } catch(e) { squadData = []; }
 
     const totalPower = calculateTotalPower(squadData);
-    const playRate = stage.plays > 0 ? Math.round((stage.clears / stage.plays) * 100) : 0;
+    const rawClearRate = stage.plays > 0 ? (stage.clears / stage.plays) * 100 : 0;
+    const playRate = (rawClearRate > 0 && rawClearRate < 1) ? rawClearRate.toFixed(2) : Math.round(rawClearRate);
     const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
     const isCleared = missionProgress.has("user_" + stage.id);
     
@@ -13839,8 +13844,10 @@ function renderUsageStats(data) {
         return;
     }
 
+    const labelPrefix = data.isRm ? '集計対象: ランキング登録済みの全編成' : '集計対象: 過去1週間の実戦';
+    const labelUnit = data.isRm ? '編成' : '戦';
     const sorted = fullStats.sort((a, b) => b.count - a.count);
-    let html = `<div style="margin-bottom:1.5rem; text-align:center; font-size:0.9rem; color:var(--text-mid); background:rgba(0,0,0,0.2); padding:0.5rem; border-radius:4px;">計測対象: 過去1週間の戦闘<br>総計測数: <span style="color:var(--accent); font-weight:bold;">${data.total}</span> 戦</div>`;
+    let html = `<div style="margin-bottom:1.5rem; text-align:center; font-size:0.9rem; color:var(--text-mid); background:rgba(0,0,0,0.2); padding:0.5rem; border-radius:4px;">${labelPrefix}<br>総サンプル数: <span style="color:var(--accent); font-weight:bold;">${data.total}</span> ${labelUnit}</div>`;
     
     sorted.forEach(s => {
         const char = units.find(u => u.id == s.id) || (playerState.customCharacters && playerState.customCharacters.find(u => u.id == s.id));
@@ -14429,10 +14436,29 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                 }
             }
         }
-        // 状態異常ターン経過
-        [...pUnits, ...eUnits].forEach(u => {
+
+        // ターン終了時処理 (Headless)
+        const living = [...pUnits, ...eUnits].filter(u => u.currentHp > 0);
+        living.forEach(u => {
+            // 状態異常更新
             u.statusEffects.forEach(e => e.turns--);
             u.statusEffects = u.statusEffects.filter(e => e.turns > 0);
+            
+            // ターン終了時スキル (リナ・タナトスの支援の光など)
+            if (!u.statusEffects.some(e => e.type === 'curse')) {
+                const endAb = u.abilities.find(a => a.timing === 'on_turn_end');
+                if (endAb && u.id === 29) { // 支援の光
+                    const allies = u.isPlayer ? pUnits : eUnits;
+                    const f = u.isPlayer ? fieldP : fieldE;
+                    allies.forEach(a => {
+                        if (a.currentHp > 0) {
+                            const h = Math.floor(a.stats.hp * 0.02);
+                            if (f === 'heal_reverse') { a.currentHp -= h; checkDeath(a); }
+                            else a.currentHp = Math.min(a.stats.hp, a.currentHp + h);
+                        }
+                    });
+                }
+            }
         });
         turn++;
         if (pUnits.every(u => u.currentHp <= 0)) return { win: false };
