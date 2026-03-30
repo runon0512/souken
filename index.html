@@ -1369,15 +1369,17 @@
     background: none;
     border: 1px solid var(--border);
     color: var(--text-dim);
-    font-size: 1.2rem;
-    width: 3rem;
-    height: 2.5rem;
+    font-size: 1.6rem;
+    width: 4.5rem;
+    height: 3.5rem;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
   }
   .battle-header-btn:hover:not(:disabled) {
     border-color: var(--accent2);
@@ -4771,6 +4773,16 @@ const units = [
     useImg: true,
     img: 'C49.svg',
   },
+  {
+    id: 52, name: 'シムリス・ムーベル', element: 'thunder', elementJp: '雷', type: 'ロベリア',
+    baseStats: { hp: 1280, atk: 115, def: 75, spd: 82 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '不可能支配', desc: '被弾時、30%の確率でダメージを50%カットする。', triggerRate: 0.3, timing: 'on_defense', damageCut: 0.5 },
+      { name: '絶念のマジック', desc: '攻撃後、60%の確率で追撃を行う。威力は対象がこのスキルを受けた回数に応じて減衰する(200%→150%→125%→112.5%...)。', triggerRate: 0.6, timing: 'after_attack' },
+    ],
+    useImg: true, img: 'C50.svg'
+  },
 ];
 
 // Equipment Data
@@ -5640,11 +5652,13 @@ function updateSquadSwitcherUI() {
 const ACHIEVEMENT_DEFS = [
     { id: 'clear_ch1', name: '冒険の始まり', desc: '第一章をクリアする', stones: 5000, check: () => missionProgress.has(109) },
     // ユーザーステージ
-    { id: 'plays_10', name: '注目のステージ', desc: 'プレイ数10以上のステージを作成', stones: 5000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 10) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 10) },
-    { id: 'plays_50', name: '人気のステージ', desc: 'プレイ数50以上のステージを作成', stones: 10000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 50) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 50) },
-    { id: 'plays_100', name: '伝説のステージ', desc: 'プレイ数100以上のステージを作成', stones: 30000, charId: 46, check: () => Object.values(playerState.stageTracking || {}).some(s => s.plays >= 100) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 100) },
+    { id: 'plays_10', name: '注目のステージ', desc: 'プレイ数10以上のステージを作成', stones: 5000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.creatorId === playerState.playerId && s.plays >= 10) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 10) },
+    { id: 'plays_50', name: '人気のステージ', desc: 'プレイ数50以上のステージを作成', stones: 10000, check: () => Object.values(playerState.stageTracking || {}).some(s => s.creatorId === playerState.playerId && s.plays >= 50) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 50) },
+    { id: 'plays_100', name: '伝説のステージ', desc: 'プレイ数100以上のステージを作成', stones: 30000, charId: 46, check: () => Object.values(playerState.stageTracking || {}).some(s => s.creatorId === playerState.playerId && s.plays >= 100) || cachedUserStages.some(s => s.creatorId === playerState.playerId && (s.plays || 0) >= 100) },
     // ランクマッチ
     { id: 'rm_5_squads', name: '五翼の将軍', desc: 'ランクマッチに5編成を登録する', stones: 40000, check: () => (cachedRmMySquads.length >= 5 || playerState.squads.every(s => s.length > 0)) },
+    // ガチャ累計
+    { id: 'gacha_50', name: '大得意様', desc: 'ガチャを累計50回引く', charId: 52, check: () => (playerState.totalGachaCount || 0) >= 50 },
     // ストーリー進行
     { id: 'clear_ch8', name: '雷の始祖を越えて', desc: 'ストーリー第8章をクリア', stones: 30000, check: () => missionProgress.has(804) },
     { id: 'clear_ch12', name: '世界の真実を知る者', desc: 'ストーリー第12章をクリア', stones: 50000, check: () => missionProgress.has(1405) },
@@ -9704,6 +9718,11 @@ async function startBattle(missionId, skipDialogue = false) {
   if (battleTitleEl) battleTitleEl.textContent = mission.name;
   setBattleSpeed(settings.battleSpeed || 2);
 
+  // Initialize special hit counters for skills
+  const initHitCounters = (u) => { if (u) u.despairMagicHits = 0; };
+  (battleState.playerUnits || []).forEach(initHitCounters);
+  (battleState.enemyUnits || []).forEach(initHitCounters);
+
   battleState = {
     mission: mission,
     playerUnits: initBattlePlayerUnits(),
@@ -9781,6 +9800,14 @@ async function startBattle(missionId, skipDialogue = false) {
 
   if (battleTitleEl) battleTitleEl.textContent = mission.name;
   document.getElementById('battleSquadSwitcherOverlay').style.display = 'flex';
+  updateSquadSwitcherUI();
+  // Set initial active state for battle squad tabs
+  document.querySelectorAll('.squad-tab-btn').forEach(btn => {
+      const idx = parseInt(btn.id.split('-').pop());
+      if (idx === playerState.currentSquadIndex) btn.classList.add('active');
+      else btn.classList.remove('active');
+  });
+
   renderBattleUnits();
   logBattleMessage(`<span class="info">戦闘準備完了...</span>`);
   
@@ -11407,6 +11434,23 @@ async function runBattleSequence() {
                   setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
                   await sleep(400 / battleSpeedMultiplier);
               }
+            } else if (chaseAbility.name === '絶念のマジック') {
+              await showCutIn(attacker, chaseAbility.name);
+              const hitCount = target.despairMagicHits || 0;
+              const mult = 1 + Math.pow(0.5, hitCount);
+              const chaseDamage = Math.floor(calculateDamage(attacker, target) * mult);
+              target.despairMagicHits = hitCount + 1;
+
+              recordDamage(attacker, chaseDamage);
+              target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+
+              playEffect(targetEl, 'magic');
+              logBattleMessage(`<span class="ability">${chaseAbility.name}！</span> ${target.name} に <span class="damage">${chaseDamage}</span>${advText} のダメージ！`);
+              updateUnitUI(target);
+              showDamageNumber(targetEl, chaseDamage, advText.includes('WEAK') ? 'weak' : 'damage');
+              targetEl.classList.add('is-taking-damage');
+              setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
+              await sleep(600 / battleSpeedMultiplier);
             } else if (attacker.id === 19 && chaseAbility.name === '情報操作') { // Soln
               await showCutIn(attacker, chaseAbility.name);
               await addStatusEffect(target, 'weakness', 4);
@@ -12696,6 +12740,11 @@ function renderGachaPanel() {
 
   container.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 2rem; padding-bottom: 2rem; align-items: center;">
+      <!-- PULL COUNT DISPLAY -->
+      <div style="background:rgba(0,0,0,0.4); padding:0.5rem 1.5rem; border-radius:2rem; border:1px solid var(--gold); color:var(--gold); font-family:'Orbitron'; font-size:1.1rem; box-shadow:0 0 10px rgba(255,215,0,0.2);">
+        TOTAL PULLS: <span style="font-weight:bold; font-size:1.4rem;">${playerState.totalGachaCount || 0}</span>
+      </div>
+
       <!-- REGULAR BANNER WITH NEW HERO FEATURE -->
       <div class="gacha-banner-card" style="max-width: 35rem;">
         <div class="gacha-banner-title">ルディ王国ガチャ</div>
@@ -12737,6 +12786,7 @@ function performGacha(type, count) {
   }
 
   playerState.rainbowStones -= cost;
+  playerState.totalGachaCount = (playerState.totalGachaCount || 0) + count;
   
   let gachaPool = [];
   
@@ -13262,6 +13312,23 @@ function loadGame() {
         playerState.playRewardMigrated = savedData.playerState.playRewardMigrated || false;
         playerState.raidPackPurchased = savedData.playerState.raidPackPurchased || false;
 
+    playerState.totalGachaCount = savedData.playerState.totalGachaCount;
+    // Migration: Estimate total gacha count from owned units and fragments if missing
+    if (playerState.totalGachaCount === undefined) {
+        let count = 0;
+        const freeIds = [1, 2, 4, 5, 6, 15, 23, 40, 42]; // ストーリーや報酬で手に入るキャラ
+        for (const id in playerState.characters) {
+            if (parseInt(id) >= 300 || freeIds.includes(parseInt(id))) continue;
+            const s = playerState.characters[id];
+            count += 1; // 初回獲得分
+            let totalFrags = (s.fragments || 0);
+            if (s.potential >= 1) totalFrags += 20;
+            if (s.potential >= 2) totalFrags += 50;
+            if (s.potential >= 3) totalFrags += 100;
+            count += Math.floor(totalFrags / 10); // 重複分(1回10欠片)
+        }
+        playerState.totalGachaCount = count;
+    }
 
     playerState.compensationVersion = savedData.playerState.compensationVersion;
     playerState.playerId = savedData.playerState.playerId;
@@ -13666,6 +13733,7 @@ function processStageNotifications(stages) {
 
         // Update Tracking Data
         playerState.stageTracking[stage.id] = {
+            creatorId: stage.creatorId,
             hearts: stage.hearts,
             comments: (stage.comments || []).length,
             plays: stage.plays || 0,
