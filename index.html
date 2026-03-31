@@ -2966,6 +2966,10 @@
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="setView('equipment')">装備一覧</button>
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="openRankingModal()">塔ランキング</button>
       </div>
+      <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+         <a href="https://wiki3.jp/Soukenjiten" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; color: var(--accent); border-color: var(--accent); padding: 0.5rem 1.5rem; font-size: 1rem;">📖 原作Wiki</a>
+         <a href="https://discord.gg/aT8wAAVAF6" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; color: #5865F2; border-color: #5865F2; padding: 0.5rem 1.5rem; font-size: 1rem;">💬 公式Discord</a>
+      </div>
       <button class="settings-btn-home" onclick="openSettingsModal()">⚙️ SETTINGS</button>
     </div>
   </div>
@@ -3273,6 +3277,13 @@
         <button class="filter-btn" style="width:100%; margin-bottom:0.5rem;" onclick="startTutorial()">チュートリアル再生</button>
         <button class="filter-btn" style="width:100%; margin-bottom:0.5rem;" onclick="exportSaveFile()">セーブデータを保存 (.WoF)</button>
         <button class="filter-btn" style="width:100%;" onclick="importSaveFile()">セーブデータを読込 (.WoF)</button>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">コミュニティ & リンク</div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <a href="https://wiki3.jp/Soukenjiten" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; text-align: center; color: var(--accent); border-color: var(--accent); font-size: 1rem; width: 100%;">📖 双剣物語 Wiki</a>
+          <a href="https://discord.gg/aT8wAAVAF6" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; text-align: center; color: #5865F2; border-color: #5865F2; font-size: 1rem; width: 100%;">💬 公式Discordサーバー</a>
+        </div>
       </div>
     </div>
   </div>
@@ -4129,13 +4140,15 @@ function closeSettingsModal() {
 
 // ===== VERSION & PATCH NOTES =====
 const GAME_VERSION = "V1.3.6α";
-const PATCH_NOTES_DATA = `・ランクマッチ機能の正式実装
-・新キャラクター「ペルル・フォンテーヌ」「シルル・スティリス」など4体を実装
-・ショップ機能追加：スロート村襲撃キャラパック（4体セット）を販売開始
-・新状態異常「闘志（スキル率UP）」を追加
-・シミュレーションロジックの精度向上
-・バグ修正およびパフォーマンスの最適化
-・レベルアップ時のオーラ費用撤廃に伴う補填処理の完了`;
+const PATCH_NOTES_DATA = `バランス調整！
+
+アスター、キティー、シャムのスキルを変更
+
+「強化」の状態異常を強化
+
+「燃焼」などの状態異常を弱体化
+
+その他UI改善等`;
 
 // ===== DATA =====
 const units = [
@@ -14064,12 +14077,10 @@ function checkLoginBonus() {
 }
 
 async function handleLoginSequence() {
-    // 1. パッチノートの表示 (バージョンが異なる場合)
-    if (playerState.gameVersion !== GAME_VERSION) {
-        await showPatchNotes();
-        playerState.gameVersion = GAME_VERSION;
-        saveGame();
-    }
+    // 1. パッチノートの表示 (毎回表示するように変更)
+    await showPatchNotes();
+    playerState.gameVersion = GAME_VERSION;
+    saveGame();
 
     // 2. 名前チェック (無効な名前の場合)
     const invalidNames = ["名無しの剣士", "null"];
