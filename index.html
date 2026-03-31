@@ -5060,7 +5060,7 @@ const chapter8Missions = [
     ], reward: 22000, firstTimeReward: 44000
   },
   {
-    id: 803, name: '雷と剣士と魔女', description: 'セーレとライとライメルを守る', recommendedPower: 60000,
+    id: 803, name: '”雷”', description: 'セーレとライとライメルを守る', recommendedPower: 60000,
     enemies: [
       { id: 30, level: 55, aiType: AI_TYPES.HIGHEST_ATK },  // セーレ
       { id: 5, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライ
@@ -9765,7 +9765,7 @@ async function startBattle(missionId, skipDialogue = false) {
                  ...ab,
                  timing: ab.trigger,
                  triggerRate: (ab.triggerValue || 0) / 100,
-                 damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
+                 damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : 0,
                  isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
                  effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { 
                      type: 'status', 
@@ -9898,7 +9898,7 @@ function initBattlePlayerUnits() {
              ...ab,
              timing: ab.trigger,
              triggerRate: (ab.triggerValue || 0) / 100,
-             damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
+             damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : 0,
              isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
              effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { 
                  type: 'status', 
@@ -10927,7 +10927,7 @@ async function runBattleSequence() {
             logBattleMessage(`味方数${livingAlliesCount}人。威力${damageMultiplier.toFixed(1)}倍！`);
         }
         
-        if (activeAbility.damageMult) {
+        if (activeAbility.damageMult !== undefined) {
             damageMultiplier = activeAbility.damageMult;
         }
       }
@@ -10937,7 +10937,7 @@ async function runBattleSequence() {
         let damageType = 'damage';
         let isHeal = activeAbility?.effect?.type === 'heal';
         let isEvaded = false;
-        let isNonDamaging = activeAbility && activeAbility.damageMult === undefined && (activeAbility.effect?.type === 'status' || activeAbility.effect?.type === 'heal' || activeAbility.effect?.type === 'damage_cut');
+        let isNonDamaging = activeAbility && (activeAbility.damageMult === 0 || (activeAbility.damageMult === undefined && (activeAbility.effect?.type === 'heal' || activeAbility.effect?.type === 'damage_cut')));
 
         if (activeAbility && activeAbility.name === '次元斬・空断') {
             const randomAdd = Math.floor(Math.random() * 201) - 100;
@@ -11569,7 +11569,7 @@ async function runBattleSequence() {
               if (chaseAbility.name === '雷撃斬') chaseMult = 0.5;
 
               let chaseDamage = 0;
-              if (chaseAbility.damageMult !== undefined) {
+              if (chaseAbility.damageMult !== undefined && chaseAbility.damageMult !== null) {
                   chaseDamage = Math.floor(calculateDamage(attacker, target) * chaseAbility.damageMult);
               } else {
                   chaseDamage = Math.floor(calculateDamage(attacker, target) * chaseMult);
@@ -12327,7 +12327,7 @@ async function triggerOnBattleStartAbilities() {
                 targetUnit = livingTargets[Math.floor(Math.random() * livingTargets.length)];
             }
 
-            const damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult || 1.2));
+            const damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult !== undefined ? ab.damageMult : 1.2));
             targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
             recordDamage(unit, damage);
             logBattleMessage(`${targetUnit.name}に<span class="damage">${damage}</span>のダメージ！`);
@@ -12371,7 +12371,7 @@ async function triggerOnBattleStartAbilities() {
                 if (!t) continue;
 
                 const effType = ab.effect?.type || ab.effect;
-                const damageMult = ab.damageMult || (effType === 'attack' || effType === 'attack_status' ? 1.0 : undefined);
+                const damageMult = ab.damageMult !== undefined ? ab.damageMult : (effType === 'attack' || effType === 'attack_status' ? 1.0 : 0);
 
                 if (damageMult !== undefined) {
                     const damage = Math.floor(calculateDamage(unit, t) * damageMult);
