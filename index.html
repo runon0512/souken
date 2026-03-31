@@ -12653,12 +12653,6 @@ function openEnchantModal(itemId) {
 }
 
 async function performEnchant(itemId) {
-    const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
-    // Aランク以上の場合に確認を出す
-    if (currentEnhancement && ['A', 'S', 'SS', 'X'].includes(currentEnhancement.rank)) {
-        if (!confirm(`現在のランクは ${currentEnhancement.rank} です。再抽選して効果を変更してもよろしいですか？`)) return;
-    }
-
     if (playerState.rainbowStones < 3000) { showToast('虹石が足りません'); return; }
     playerState.rainbowStones -= 3000;
     renderSquad();
@@ -12700,13 +12694,24 @@ async function performEnchant(itemId) {
         </div>
       </div>`;
       
-    footerEl.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="openEnchantModal(${itemId})">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
+    footerEl.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="cancelEnchant(${itemId})">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
     saveGame();
 }
 
 function confirmEnchant(itemId) {
+    const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
+    if (currentEnhancement && ['A', 'S', 'SS', 'X'].includes(currentEnhancement.rank)) {
+        if (!confirm(`現在の効果はランク ${currentEnhancement.rank} です。新しい効果で上書きしてもよろしいですか？`)) return;
+    }
     if (tempEnchantResult) { playerState.equipmentEnhancements[itemId] = tempEnchantResult; showToast('装備を強化しました！'); saveGame(); }
     openEnchantModal(itemId); // 閉じずに再度強化できる状態にする
+}
+
+function cancelEnchant(itemId) {
+    if (tempEnchantResult && ['A', 'S', 'SS', 'X'].includes(tempEnchantResult.rank)) {
+        if (!confirm(`抽選結果のランクは ${tempEnchantResult.rank} です。適用せずに元に戻してもよろしいですか？`)) return;
+    }
+    openEnchantModal(itemId);
 }
 
 function closeEnchantModal(e) { if (e.target.id === 'enchantOverlay') closeEnchantModalDirect(); }
@@ -14449,11 +14454,30 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
     const pUnits = squadA.squad.map((id, i) => createUnit(id, squadA.details[id], true, i)).filter(Boolean);
     const eUnits = squadB.squad.map((id, i) => createUnit(id, squadB.details[id], false, i)).filter(Boolean);
 
+    const getTarget = (attacker, potentialTargets) => {
+        const advantageTargets = potentialTargets.filter(t => getElementalMultiplier(attacker.element, t.element) > 1.0);
+        const candidates = advantageTargets.length > 0 ? advantageTargets : potentialTargets;
+        if (attacker.isPlayer) return candidates[Math.floor(Math.random() * candidates.length)];
+        if (attacker.aiType === AI_TYPES.LOWEST_HP_DEF) return candidates.reduce((p, c) => (p.currentHp * p.stats.def < c.currentHp * c.stats.def ? p : c));
+        if (attacker.aiType === AI_TYPES.HIGHEST_ATK) return candidates.reduce((p, c) => (p.stats.atk > c.stats.atk ? p : c));
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    };
+
     const applyStatus = (target, type, turns) => {
         if (target.id === 8 || target.id === 320 || target.id === 27) return; // 耐性持ち
         const existing = target.statusEffects.find(e => e.type === type);
         if (existing) existing.turns = Math.max(existing.turns, turns);
         else target.statusEffects.push({ type, turns });
+    };
+
+    const getTriggerRate = (unit, ability) => {
+        if (!ability) return 0;
+        let rate = ability.triggerRate !== undefined ? ability.triggerRate : 1.0;
+        if (unit.equipment?.effect?.type === 'ability_rate') rate *= unit.equipment.effect.val;
+        if (unit.statusEffects.some(e => e.type === 'fighting_spirit')) rate *= 1.5;
+        const allies = unit.isPlayer ? pUnits : eUnits;
+        if (allies.find(u => u.id === 20 && u.currentHp > 0 && !u.statusEffects.some(e => e.type === 'curse'))) rate *= 2;
+        return rate;
     };
 
     // 死亡・復活処理 (Headless)
@@ -14478,13 +14502,13 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                 u.currentHp = Math.floor(u.stats.hp * 0.1); u.passiveUsed = true; u.statusEffects = [];
             } else if (u.id === 23 && !u.passiveUsed) { // シャム: 監魂葬災
                 u.currentHp = 1; u.passiveUsed = true;
-                opps.forEach(e => { if(e.currentHp > 0) { applyStatus(e, 'weakness', 2); applyStatus(e, 'burn', 2); applyStatus(e, 'poison', 2); applyStatus(e, 'curse', 2); }});
+                opps.forEach(e => { if(e.currentHp > 0) { applyStatus(e, 'burn', 2); applyStatus(e, 'poison', 2); applyStatus(e, 'curse', 2); }});
             } else if (u.id === 40 && (u.reviveCount || 0) < 2) { // ゼーク: 復活
                 u.reviveCount = (u.reviveCount || 0) + 1;
                 u.currentHp = Math.floor(u.stats.hp * (u.reviveCount === 1 ? 0.3 : 0.15));
             } else if (u.id === 48 && !u.passiveUsed) { // グレガ: 最後の炎
                 u.currentHp = 1; u.passiveUsed = true;
-                allies.forEach(a => { if(a.currentHp > 0) { applyStatus(a, 'strengthen', 3); applyStatus(a, 'barrier', 3); } });
+                allies.forEach(a => { if(a.currentHp > 0) { applyStatus(a, 'strengthen', 3); applyStatus(a, 'barrier', 3); a.currentHp = Math.max(a.currentHp, 1); } });
             } else if (u.id === 51 && !u.passiveUsed) { // シルル: 絆の残火
                 u.currentHp = 1; u.passiveUsed = true;
                 allies.forEach(a => { if(a.currentHp > 0) applyStatus(a, 'fighting_spirit', 4); });
@@ -14503,24 +14527,24 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
     const getSimStats = (u) => {
         let s = { ...u.stats };
         const myField = u.isPlayer ? fieldP : fieldE;
-        if (myField === 'berserk') { s.atk *= 1.5; s.def *= 0.5; }
-        if (myField === 'heavy_gravity') s.spd *= 0.5;
+        if (myField === 'berserk') { s.atk = Math.floor(s.atk * 1.5); s.def = Math.floor(s.def * 0.5); }
+        if (myField === 'heavy_gravity') s.spd = Math.floor(s.spd * 0.5);
         // パッシブ
-        if (u.id === 1 && u.currentHp <= u.stats.hp * 0.5) s.atk *= 1.3;
-        if (u.id === 2 && u.currentHp <= u.stats.hp * 0.3) s.def *= 1.1;
-        if (u.id === 4 && u.currentHp <= u.stats.hp * 0.5) s.def *= 1.4;
-        if (u.id === 37 && u.currentHp <= u.stats.hp * 0.5) s.def *= 1.2;
-        if (u.id === 10) { const m = 1 + (1 - u.currentHp/u.stats.hp)*0.5; s.atk*=m; s.def*=m; s.spd*=m; }
+        if (u.id === 1 && u.currentHp <= u.stats.hp * 0.5) s.atk = Math.floor(s.atk * 1.3);
+        if (u.id === 2 && u.currentHp <= u.stats.hp * 0.3) s.def = Math.floor(s.def * 1.1);
+        if (u.id === 4 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.4);
+        if (u.id === 37 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.2);
+        if (u.id === 10) { const m = 1 + (1 - u.currentHp/u.stats.hp)*0.5; s.atk=Math.floor(s.atk*m); s.def=Math.floor(s.def*m); s.spd=Math.floor(s.spd*m); }
         if (u.id === 41) s.atk *= (1 + (u.currentHp/u.stats.hp)*0.5);
-        if (u.id === 42 && u.statusEffects.some(e=>e.type==='burn')) s.atk *= 1.5;
-        if (u.id === 12 && u.currentHp <= u.stats.hp * 0.5) s.atk *= 1.3;
-        if (u.id === 17 && u.currentHp <= u.stats.hp * 0.3) s.atk *= 1.3;
-        if (u.id === 38 && u.currentHp <= u.stats.hp * 0.3) s.atk *= 2.5;
+        if (u.id === 42 && u.statusEffects.some(e=>e.type==='burn')) s.atk = Math.floor(s.atk * 1.5);
+        if (u.id === 12 && u.currentHp <= u.stats.hp * 0.5) s.atk = Math.floor(s.atk * 1.3);
+        if (u.id === 17 && u.currentHp <= u.stats.hp * 0.3) s.atk = Math.floor(s.atk * 1.3);
+        if (u.id === 38 && u.currentHp <= u.stats.hp * 0.3) s.atk = Math.floor(s.atk * 2.5);
         // 状態異常
-        if (u.statusEffects.some(e=>e.type==='weakness')) { s.atk*=0.8; s.def*=0.8; s.spd*=0.8; }
-        if (u.statusEffects.some(e=>e.type==='strengthen')) { s.atk*=1.2; s.def*=1.2; s.spd*=1.2; }
+        if (u.statusEffects.some(e=>e.type==='weakness')) { s.atk=Math.floor(s.atk*0.8); s.def=Math.floor(s.def*0.8); s.spd=Math.floor(s.spd*0.8); }
+        if (u.statusEffects.some(e=>e.type==='strengthen')) { s.atk=Math.floor(s.atk*1.5); s.def=Math.floor(s.def*1.5); s.spd=Math.floor(s.spd*1.5); }
         if (u.statusEffects.some(e=>e.type==='heavy')) s.spd /= 3;
-        if (u.statusEffects.some(e=>e.type==='barrier')) s.def *= 1.5;
+        if (u.statusEffects.some(e=>e.type==='barrier')) s.def = Math.floor(s.def * 2.5);
         if (u.statusEffects.some(e=>e.type==='zero_gravity')) { s.atk*=1.2; s.def*=0.8; }
         return s;
     };
@@ -14532,17 +14556,32 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         if (startAb && Math.random() < (startAb.triggerRate || 1)) {
             const opponents = u.isPlayer ? eUnits : pUnits;
             const allies = u.isPlayer ? pUnits : eUnits;
-            if (startAb.isAoe || startAb.target === 'all_enemies') {
+            if (u.id === 312 || startAb.isAoe || startAb.target === 'all_enemies') { // ルイ先手 or AOE
                 opponents.forEach(t => {
                     if (t.currentHp > 0) {
                         const aS = getSimStats(u), dS = getSimStats(t);
-                        const dmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(u.element, t.element) * (startAb.damageMult || 0.6));
+                        const dmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(u.element, t.element) * (u.id === 312 ? 0.6 : (startAb.damageMult || 0.6)));
                         t.currentHp -= dmg;
                         if (startAb.effect?.type === 'status') applyStatus(t, startAb.effect.status, startAb.effect.turns);
+                        checkDeath(t);
                     }
                 });
-            } else if (startAb.target === 'all_allies' || u.id === 15 || u.id === 22 || u.id === 26 || u.id === 27 || u.id === 45) {
+            } else if (u.id === 17 || u.id === 38) { // アスター開闢 or ギンドー斧投げ
+                const t = getTarget(u, opponents);
+                if (t) {
+                    const aS = getSimStats(u), dS = getSimStats(t);
+                    let dmg;
+                    if (u.id === 17) dmg = Math.floor(aS.spd * 1.2 * getElementalMultiplier(u.element, t.element));
+                    else dmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(u.element, t.element) * 1.2);
+                    t.currentHp -= dmg;
+                    if (startAb.effect?.type === 'status') applyStatus(t, startAb.effect.status, startAb.effect.turns);
+                    checkDeath(t);
+                }
+            } else if (startAb.target === 'all_allies' || [15, 22, 26, 27, 45, 306].includes(u.id)) {
                 allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'strengthen', 5); });
+                if (u.id === 22) allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'barrier', 2); });
+            } else if (u.id === 25) { // アッキー
+                opponents.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'blind', 2); });
             }
         }
     }
@@ -14583,29 +14622,60 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             attacker.statusEffects = attacker.statusEffects.filter(e => e.turns > 0);
             if (skipAction) continue;
 
-            const targets = (attacker.isPlayer ? eUnits : pUnits).filter(u => u.currentHp > 0);
-            if (targets.length === 0) break;
+            const opponents = (attacker.isPlayer ? eUnits : pUnits).filter(u => u.currentHp > 0);
+            if (opponents.length === 0) break;
             
             // ターン開始時リジェネ・支援
             if (attacker.id === 6 || attacker.id === 43) {
                 const allies = attacker.isPlayer ? pUnits : eUnits;
                 const lowest = allies.filter(a => a.currentHp > 0).sort((a,b) => (a.currentHp/a.stats.hp) - (b.currentHp/b.stats.hp))[0];
-                if (lowest) lowest.currentHp = Math.min(lowest.stats.hp, lowest.currentHp + Math.floor(lowest.stats.hp * 0.1));
+                if (lowest) {
+                    const heal = Math.floor(lowest.stats.hp * 0.1);
+                    if (myField === 'heal_reverse') { lowest.currentHp -= heal; checkDeath(lowest); }
+                    else lowest.currentHp = Math.min(lowest.stats.hp, lowest.currentHp + heal);
+                }
             }
 
-            const target = targets[Math.floor(Math.random() * targets.length)];
+            // セーレ悪魔の契約
+            if (attacker.id === 30 && attacker.statusEffects.length > 0 && !attacker.statusEffects.some(e=>e.type==='curse')) {
+                const t = getTarget(attacker, opponents);
+                attacker.statusEffects.forEach(eff => applyStatus(t, eff.type, eff.turns));
+            }
+
+            const target = getTarget(attacker, opponents);
             
             let damageMult = 1.0;
             const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');
-            let skill = isAttackerCursed ? null : attacker.abilities.find(a => 
-                (a.timing === 'before_attack' || (a.timing === 'hp_below' && (attacker.currentHp/attacker.stats.hp*100) <= a.triggerValue)) 
-                && Math.random() < (a.triggerRate || 1));
+            
+            // パッシブ条件更新
+            attacker.isPassiveActive = (attacker.id === 1 && attacker.currentHp <= attacker.stats.hp * 0.5) || 
+                                       (attacker.id === 2 && attacker.currentHp <= attacker.stats.hp * 0.3) ||
+                                       (attacker.id === 5 && attacker.currentHp <= attacker.stats.hp * 0.5) ||
+                                       (attacker.id === 17 && attacker.currentHp <= attacker.stats.hp * 0.3) ||
+                                       (attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5) ||
+                                       (attacker.id === 38 && attacker.currentHp <= attacker.stats.hp * 0.3) ||
+                                       (attacker.id === 319 && attacker.currentHp <= attacker.stats.hp * 0.5);
+
+            let skill = null;
+            if (!isAttackerCursed) {
+                const available = attacker.abilities.filter(a => {
+                    if (a.timing === 'before_attack') return Math.random() < getTriggerRate(attacker, a);
+                    if (a.timing === 'hp_below') return (attacker.currentHp/attacker.stats.hp*100) <= (a.triggerValue || 0);
+                    return false;
+                });
+                if (attacker.id === 37 && attacker.isPassiveActive) skill = available.find(a => a.name === '波状光一閃・改') || available[0];
+                else skill = available[0];
+            }
             
             if (skill && (skill.isAoe || skill.target === 'all_enemies')) {
-                targets.forEach(t => {
+                opponents.forEach(t => {
                     let dmg = Math.floor(calculateDamage(attacker, t) * (skill.damageMult || 0.8));
-                    const ds = t.statusEffects.some(e=>e.type==='curse') ? null : t.abilities.find(a => a.timing === 'on_defense' && Math.random() < (a.triggerRate || 0.3));
-                    if (ds) dmg *= (t.id === 319 ? 0.25 : 0.7);
+                    if (attacker.id === 48 && t.statusEffects.length > 0) dmg = Math.floor(dmg * 1.3); // グレガ特効
+                    const ds = t.statusEffects.some(e=>e.type==='curse') ? null : t.abilities.find(a => a.timing === 'on_defense' && Math.random() < getTriggerRate(t, a));
+                    if (ds) {
+                        if (t.id === 20) dmg = 0; else if (t.id === 319 || t.id === 30) dmg *= 0.25; 
+                        else if (t.id === 50) dmg *= 0.4; else if (t.id === 51) dmg *= 0.75; else dmg *= 0.7;
+                    }
                     t.currentHp -= dmg;
                     if (skill.effect?.type === 'status') applyStatus(t, skill.effect.status, skill.effect.turns);
                     checkDeath(t);
@@ -14614,40 +14684,45 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
 
             // 単体攻撃
-            let rate = skill ? (skill.triggerRate || 1) : 0;
-            if (attacker.statusEffects.some(e => e.type === 'fighting_spirit')) rate *= 1.5;
-            if (skill && Math.random() < rate) {
+            if (skill) {
                 damageMult = skill.damageMult || 1.0;
+                if (attacker.id === 49) damageMult = Math.random() < 0.5 ? 2.0 : 0.2; // バチチ
                 if (skill.effect?.type === 'status') applyStatus(target, skill.effect.status, skill.effect.turns);
+                if (skill.forcedElement) attacker.currentForcedElement = skill.forcedElement;
+                if (skill.name === '五色の魔法' || skill.name === '虹斬' || attacker.id === 13 || attacker.id === 23) attacker.isAdvantageForced = true;
             }
 
             // ステータス補正 (Headless)
             const aS = getSimStats(attacker), dS = getSimStats(target);
-            let atk = aS.atk;
-            if (attacker.id === 13 || attacker.id === 23 || attacker.id === 16) attacker.isAdvantageForced = true;
-            if (attacker.id === 18 && skill?.name === '五色の魔法') attacker.isAdvantageForced = true;
-
             const advantage = getElementalMultiplier(attacker.element, target.element);
-            let damage = Math.floor((atk * atk) / Math.max(1, dS.def) * (attacker.isAdvantageForced ? 1.5 : advantage) * damageMult);
+            let damage = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * (attacker.isAdvantageForced ? 1.5 : advantage) * damageMult);
+            if (target.statusEffects.some(e=>e.type==='burn' || e.type==='poison')) damage = Math.floor(damage * 1.1);
 
             // 防御側スキル
-            const defSkill = target.statusEffects.some(e=>e.type==='curse') ? null : target.abilities.find(a => a.timing === 'on_defense' && Math.random() < (a.triggerRate || 0.3));
-            if (defSkill && !target.statusEffects.some(e => e.type === 'curse')) {
+            const defSkill = target.statusEffects.some(e=>e.type==='curse') ? null : target.abilities.find(a => a.timing === 'on_defense' && Math.random() < getTriggerRate(target, a));
+            if (defSkill) {
                 if (target.id === 20) damage = 0; // 回避
-                else if (target.id === 319 || target.id === 30) damage *= 0.25; // 75%カット
+                else if ((target.id === 319 && (target.currentHp <= target.stats.hp * 0.5 || target.missionSpecific?.alwaysLust)) || target.id === 30) damage *= 0.25; // 75%カット
                 else if (target.id === 50) damage *= 0.4; // 60%カット
                 else if (target.id === 51) damage *= 0.75; // 25%カット
+                if (defSkill.effect?.type === 'status') applyStatus(attacker, defSkill.effect.status, defSkill.effect.turns);
             }
             
             // 装備効果
             if (target.shieldHits > 0) { damage = 0; target.shieldHits--; }
+            if (target.id === 14 && damage >= target.currentHp && (target.endureCount||0) < 5 && Math.random() < (1.0 - (target.endureCount||0)*0.2)) {
+                damage = 0; target.endureCount = (target.endureCount||0) + 1;
+            }
 
             target.currentHp = Math.max(0, target.currentHp - damage);
+            if (attacker.id === 1 && attacker.isPassiveActive) applyStatus(target, 'burn', 2);
+            if (attacker.id === 47 && attacker.isPassiveActive) applyStatus(target, 'paralysis', 2);
+            if (attacker.id === 38 && attacker.isPassiveActive) applyStatus(target, 'flinch', 3);
 
             // 反撃
             if (target.currentHp > 0 && damage > 0 && target.abilities && !target.statusEffects.some(e => e.type === 'curse')) {
                 for (const ab of target.abilities) {
-                    if (ab.timing === 'on_hit' && Math.random() < (ab.triggerRate || 1)) {
+                    if (ab.timing === 'on_hit' && Math.random() < getTriggerRate(target, ab)) {
                         let cDmg = 0;
                         if (ab.isCustom && (ab.effect === 'attack' || ab.effect === 'attack_status')) {
                             cDmg = Math.floor(target.stats.atk * (ab.damageMult || 1.0));
@@ -14667,14 +14742,38 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
 
             // 追撃
             if (attacker.currentHp > 0 && !isAttackerCursed) {
-                if (attacker.id === 46 && target.currentHp > 0 && target.currentHp < target.stats.hp * 0.3 && Math.random() < 0.4) { // ラキュド確死
+                if (attacker.id === 46 && target.currentHp > 0 && target.currentHp < target.stats.hp * 0.3 && Math.random() < getTriggerRate(attacker, attacker.abilities[1])) { // ラキュド確死
                     target.currentHp = 0; checkDeath(target);
                 } else {
-                    const chase = attacker.abilities.find(a => a.timing === 'after_attack' && Math.random() < (getTriggerRate(attacker, a)));
-                    if (chase && target.currentHp > 0) {
+                    let chase = null;
+                    if (attacker.id === 5) chase = attacker.isPassiveActive ? attacker.abilities[2] : (Math.random() < getTriggerRate(attacker, attacker.abilities[0]) ? attacker.abilities[0] : null);
+                    else if (attacker.id === 2) chase = Math.random() < getTriggerRate(attacker, attacker.abilities[attacker.isPassiveActive?2:0]) ? attacker.abilities[attacker.isPassiveActive?2:0] : null;
+                    else if (attacker.id === 17 && attacker.isPassiveActive) chase = Math.random() < 0.6 ? attacker.abilities[1] : null;
+                    else if (attacker.id === 24) chase = (!skill || skill.name !== '視界内物質操作・爆散') ? (Math.random() < getTriggerRate(attacker, attacker.abilities[1]) ? attacker.abilities[1] : null) : null;
+                    else chase = attacker.abilities.find(a => a.timing === 'after_attack' && Math.random() < getTriggerRate(attacker, a));
+                    
+                    if (chase && target.currentHp > 0) { // 連続攻撃処理
+                        let count = 1;
+                        if (chase.name === '八連雷撃斬') count = 8;
+                        else if (chase.name === '多重詠唱') count = 3;
+                        else if (chase.name === '月輪無双') count = 4;
+                        else if (chase.name === '嵐呼ぶ剣戟') count = 3;
+                        else if (chase.name === '跳弾の矢') count = 2;
+                        else if (chase.name === '神威【天秤】') count = 5;
+
                         const aS = getSimStats(attacker), dS = getSimStats(target);
-                        const cDmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(attacker.element, target.element) * (chase.damageMult || 0.5));
-                        target.currentHp -= cDmg; checkDeath(target);
+                        for (let c = 0; c < count; c++) {
+                            if (target.currentHp <= 0) break;
+                            let cMult = chase.damageMult || 0.5;
+                            if (chase.name === '多重詠唱') { if (c === 1 && Math.random() > 0.4) break; if (c === 2 && Math.random() > 0.2) break; }
+                            if ((chase.name === '月輪無双' || chase.name === '神威【天秤】' || chase.name === '嵐呼ぶ剣戟') && c > 0 && Math.random() > 0.5) break;
+                            if (chase.name === '八連雷撃斬' && c > 0) { const p = [0.86, 0.74, 0.64, 0.56, 0.50, 0.46, 0.40]; if (Math.random() > p[c-1]) break; }
+                            
+                            let cDmg = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * getElementalMultiplier(attacker.element, target.element) * cMult);
+                            if (chase.name === '絶念のマジック') cDmg = Math.floor(cDmg * (1 + Math.pow(0.5, target.despairMagicHits||0)));
+                            target.currentHp -= cDmg; checkDeath(target);
+                            if (chase.name === '絶念のマジック') target.despairMagicHits = (target.despairMagicHits||0) + 1;
+                        }
                     }
                 }
             }
