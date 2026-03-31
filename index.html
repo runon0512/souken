@@ -2969,7 +2969,9 @@
       <div style="margin-top: 1rem; display: flex; gap: 1rem;">
          <a href="https://wiki3.jp/Soukenjiten" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; color: var(--accent); border-color: var(--accent); padding: 0.5rem 1.5rem; font-size: 1rem;">📖 原作Wiki</a>
          <a href="https://discord.gg/aT8wAAVAF6" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; color: #5865F2; border-color: #5865F2; padding: 0.5rem 1.5rem; font-size: 1rem;">💬 公式Discord</a>
-      </div>
+            <button class="filter-btn" style="width: auto; padding: 0.4rem 1.5rem; font-size: 0.8rem; border-color: var(--accent2); color: var(--accent2); margin-top: 0.5rem;" onclick="window.open('https://discord.gg/aT8wAAVAF6', '_blank')">データを紛失した場合・不具合報告はこちら</button>
+
+        </div>
       <button class="settings-btn-home" onclick="openSettingsModal()">⚙️ SETTINGS</button>
     </div>
   </div>
@@ -12263,9 +12265,9 @@ async function triggerOnBattleStartAbilities() {
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
-        else if (unit.id === 15 || unit.id === 306 || unit.id === 26 || unit.id === 45) { // リディン(雷), シャール(闇), スルト(水), アラン(光) の属性攻撃強化
-            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : (unit.id === 45 ? 'light' : 'dark'));
-            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : (unit.id === 45 ? '光の情報屋' : '闇攻撃強化'));
+        else if (unit.id === 15 || unit.id === 306 || unit.id === 26 || unit.id === 45 || unit.id === 27) { // リディン(雷), シャール(闇), スルト(水), アラン(光), ナック(炎) の属性攻撃強化
+            const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : (unit.id === 45 ? 'light' : (unit.id === 27 ? 'fire' : 'dark')));
+            const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : (unit.id === 45 ? '光の情報屋' : (unit.id === 27 ? '気炎万丈' : '闇攻撃強化')));
             
             // 味方全体（自分含む）で、指定属性のキャラを対象にする
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
@@ -12651,6 +12653,12 @@ function openEnchantModal(itemId) {
 }
 
 async function performEnchant(itemId) {
+    const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
+    // Aランク以上の場合に確認を出す
+    if (currentEnhancement && ['A', 'S', 'SS', 'X'].includes(currentEnhancement.rank)) {
+        if (!confirm(`現在のランクは ${currentEnhancement.rank} です。再抽選して効果を変更してもよろしいですか？`)) return;
+    }
+
     if (playerState.rainbowStones < 3000) { showToast('虹石が足りません'); return; }
     playerState.rainbowStones -= 3000;
     renderSquad();
@@ -12692,13 +12700,13 @@ async function performEnchant(itemId) {
         </div>
       </div>`;
       
-    footerEl.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="closeEnchantModalDirect()">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
+    footerEl.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="openEnchantModal(${itemId})">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
     saveGame();
 }
 
 function confirmEnchant(itemId) {
     if (tempEnchantResult) { playerState.equipmentEnhancements[itemId] = tempEnchantResult; showToast('装備を強化しました！'); saveGame(); }
-    closeEnchantModalDirect();
+    openEnchantModal(itemId); // 閉じずに再度強化できる状態にする
 }
 
 function closeEnchantModal(e) { if (e.target.id === 'enchantOverlay') closeEnchantModalDirect(); }
