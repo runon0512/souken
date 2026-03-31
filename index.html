@@ -4141,7 +4141,7 @@ const PATCH_NOTES_DATA = `・ランクマッチ機能の正式実装
 const units = [
   {
     id: 1, name: 'ドラ・クラヴェール', element: 'fire', elementJp: '炎', type: 'ルディ王国',
-    baseStats: { hp: 1250, atk: 108, def: 72, spd: 85 },
+    baseStats: { hp: 1253, atk: 108, def: 72, spd: 85 },
     abilityType: 'slash',
     abilities: [ // type: slash, magic, shoot, heal, impact
       { name: 'レーヴァティン', desc: '30%の確率で発動。敵に攻撃力の200%のダメージを与え、3ターンの燃焼を付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'burn', turns: 3 } },
@@ -4152,7 +4152,7 @@ const units = [
   },
   {
     id: 2, name: 'ノア・ルナリス', element: 'light', elementJp: '光', type: 'ルディ王国',
-    baseStats: { hp: 1350, atk: 90, def: 80, spd: 75 },
+    baseStats: { hp: 1347, atk: 92, def: 81, spd: 74 },
     abilityType: 'magic',
     abilities: [
       { name: 'クリスタル・ブレイク', desc: '40%の確率で発動。攻撃後、追加で攻撃力の60%のダメージを与える。この攻撃は敵の防御系スキルを無効化する。', triggerRate: 0.4, timing: 'after_attack', ignoresDefenseSkills: true, damageMult: 0.6 },
@@ -4164,7 +4164,7 @@ const units = [
   },
   {
     id: 4, name: 'いえみけ', element: 'water', elementJp: '水', type: 'ルディ王国',
-    baseStats: { hp: 1400, atk: 75, def: 120, spd: 50 },
+    baseStats: { hp: 1402, atk: 76, def: 122, spd: 48 },
     abilityType: 'slash',
     abilities: [
       { name: '激流一閃', desc: '30%の確率で発動。被弾時、受けたダメージの100%を相手に返す。', triggerRate: 0.3, timing: 'on_hit' },
@@ -4175,7 +4175,7 @@ const units = [
   },
   {
     id: 5, name: 'ライ・アルバロ', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 1180, atk: 82, def: 65, spd: 95 },
+    baseStats: { hp: 1184, atk: 83, def: 84, spd: 96 },
     abilityType: 'slash',
     abilities: [
       { name: '雷撃斬', desc: '攻撃後、20%の確率で発動。攻撃力の50%のダメージで追撃する。', triggerRate: 0.2, timing: 'after_attack' },
@@ -4187,7 +4187,7 @@ const units = [
   },
   {
     id: 6, name: 'デン・アルバロ', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 1300, atk: 75, def: 95, spd: 55 },
+    baseStats: { hp: 1298, atk: 74, def: 97, spd: 56 },
     abilityType: 'impact',
     abilities: [
       { name: '雷業壁', desc: '被弾時、40%の確率で発動。ダメージを30%軽減し、相手に麻痺を2ターン付与する。', triggerRate: 0.4, timing: 'on_defense', effect: { type: 'status', status: 'paralysis', turns: 2 } },
@@ -4198,7 +4198,7 @@ const units = [
   },
   {
     id: 7, name: 'カーラム・アブルート', element: 'fire', elementJp: '炎', type: 'ルディ王国',
-    baseStats: { hp: 1100, atk: 100, def: 60, spd: 70 },
+    baseStats: { hp: 1105, atk: 102, def: 58, spd: 71 },
     abilityType: 'magic',
     abilities: [
       { name: '血液爆発', desc: '被弾時、20%の確率で自身の攻撃力の150%のダメージを相手に与える。', triggerRate: 0.2, timing: 'on_hit' },
@@ -4208,7 +4208,7 @@ const units = [
   },
   {
     id: 8, name: 'リカルド・テラエル', element: 'none', elementJp: '無', type: 'ルディ王国',
-    baseStats: { hp: 1200, atk: 100, def: 80, spd: 50 },
+    baseStats: { hp: 1200, atk: 101, def: 82, spd: 49 },
     abilityType: 'impact',
     abilities: [
       { name: '土残流', desc: '死亡時、1度だけ攻撃力の300%で反撃し、体力1で耐える。' },
@@ -4218,7 +4218,7 @@ const units = [
   },
   {
     id: 9, name: 'ベラ・ミルヘン', element: 'fire', elementJp: '炎', type: 'ルディ王国',
-    baseStats: { hp: 1150, atk: 90, def: 50, spd: 90 },
+    baseStats: { hp: 1154, atk: 91, def: 48, spd: 92 },
     abilityType: 'magic',
     abilities: [
       { name: '不可視の炎', desc: '攻撃後、50%の確率で再攻撃を行う。最大5回まで。', triggerRate: 1.0, timing: 'after_attack' },
@@ -4228,7 +4228,7 @@ const units = [
   },
   {
     id: 10, name: 'エマ・シルエイティ', element: 'fire', elementJp: '炎', type: 'ルディ王国',
-    baseStats: { hp: 1200, atk: 105, def: 60, spd: 65 },
+    baseStats: { hp: 1202, atk: 106, def: 59, spd: 66 },
     abilityType: 'magic',
     abilities: [
       { name: 'アストラルファイア', desc: '攻撃前、40%の確率で発動。攻撃力が1.3倍になり、5ターンの燃焼を付与する。', triggerRate: 0.4, timing: 'before_attack', damageMult: 1.3, effect: { type: 'status', status: 'burn', turns: 5 } },
@@ -4238,7 +4238,7 @@ const units = [
   },
   {
     id: 11, name: 'ロイド・ハイネス', element: 'none', elementJp: '無', type: 'ルディ王国',
-    baseStats: { hp: 1350, atk: 95, def: 75, spd: 60 },
+    baseStats: { hp: 1355, atk: 94, def: 76, spd: 58 },
     abilityType: 'impact',
     abilities: [
       { name: '大地震', desc: '30%の確率で発動。攻撃が敵全体への80%のダメージ攻撃になる。', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.8 },
@@ -4248,7 +4248,7 @@ const units = [
   },
   {
     id: 12, name: 'オリバー・ジャック', element: 'water', elementJp: '水', type: 'ルディ王国',
-    baseStats: { hp: 1150, atk: 100, def: 65, spd: 85 },
+    baseStats: { hp: 1148, atk: 102, def: 64, spd: 87 },
     abilityType: 'magic',
     abilities: [
       { name: '睡眠誘いしララバイ', desc: '30%の確率で発動。攻撃前に発動し、攻撃に睡眠(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'sleep', turns: 2 } },
@@ -4258,11 +4258,11 @@ const units = [
   },
   {
     id: 13, name: 'ギラ・グレゴリオ', element: 'dark', elementJp: '闇', type: 'ルディ王国',
-    baseStats: { hp: 1400, atk: 110, def: 70, spd: 65 },
+    baseStats: { hp: 1403, atk: 112, def: 68, spd: 64 },
     abilityType: 'magic',
     abilities: [
       { name: '圧縮の札', desc: '30%の確率で発動。攻撃時の属性相性を有利として計算する。', triggerRate: 0.3, timing: 'before_attack' },
-      { name: '祟り神の降臨', desc: '死亡時、敵全体に衰弱を3ターン付与し、HP1で復活する。' }
+      { name: '祟り神の降臨', desc: '死亡時、敵全体に全ステータス低下を3ターン付与し、HP1で復活する。' }
     ],
     useImg: true, img: 'C12.svg'
   },
@@ -4278,7 +4278,7 @@ const units = [
   },
   {
     id: 41, name: 'エマ・ソフィーティア', element: 'fire', elementJp: '炎', type: 'ルディ王国',
-    baseStats: { hp: 1250, atk: 110, def: 65, spd: 68 },
+    baseStats: { hp: 1254, atk: 112, def: 64, spd: 69 },
     abilityType: 'magic',
     abilities: [
       { name: '愛世絢爛', desc: 'HPが多いほど攻撃力が上昇する（最大1.5倍）。' },
@@ -4367,7 +4367,7 @@ const units = [
     baseStats: { hp: 1200, atk: 110, def: 70, spd: 80 },
     abilityType: 'slash',
     abilities: [
-      { name: '雷の始祖', desc: '麻痺状態のとき、攻撃と防御が1.4倍になる(パッシブ)', timing: 'while_paralyzed' },
+      { name: '雷の始祖', desc: '麻痺状態のとき、攻撃と防御が1.5倍になる(パッシブ)', timing: 'while_paralyzed' },
       { name: '充電', desc: '被弾時50%で発動。自身に麻痺を2ターン付与する', triggerRate: 0.5, timing: 'on_hit', effect: { type: 'status', status: 'paralysis', turns: 2 } },
     ],
     useImg: true,
@@ -4387,7 +4387,7 @@ const units = [
   },
   {
     id: 38, name: 'ギンドー・ペレクス', element: 'none', elementJp: '無', type: 'ルディ王国',
-    baseStats: { hp: 1280, atk: 110, def: 70, spd: 82 },
+    baseStats: { hp: 1284, atk: 113, def: 68, spd: 81 },
     abilityType: 'impact',
     abilities: [
       { name: '斧投げ', desc: '戦闘開始時、攻撃力の120%で敵1体を攻撃し、麻痺(2ターン)を付与する。', timing: 'on_battle_start', damageMult: 1.2, effect: { type: 'status', status: 'paralysis', turns: 2 } },
@@ -4397,7 +4397,7 @@ const units = [
   },
   {
     id: 16, name: 'ランディア・スクラ', element: 'none', elementJp: '無', type: 'ルディ王国',
-    baseStats: { hp: 1342, atk: 107, def: 78, spd: 66 },
+    baseStats: { hp: 1346, atk: 108, def: 77, spd: 65 },
     abilityType: 'slash',
     abilities: [
       { name: '虹斬', desc: '攻撃前に発動し、相性有利で攻撃し、衰弱を2ターン付与。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 2 } },
@@ -4407,10 +4407,10 @@ const units = [
   },
   {
     id: 17, name: 'アスター・エクレア', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 1259, atk: 132, def: 82, spd: 96 },
+    baseStats: { hp: 1262, atk: 103, def: 81, spd: 138 },
     abilityType: 'slash',
     abilities: [
-      { name: '開闢', desc: '戦闘開始時、対象1人に対して120%で攻撃し、麻痺を3ターン付与する。', triggerRate: 1.0, timing: 'on_battle_start', damageMult: 1.2, effect: { type: 'status', status: 'paralysis', turns: 3 } },
+      { name: '開闢', desc: '戦闘開始時、対象1人に対して速度の120%で攻撃し、麻痺を3ターン付与する。', triggerRate: 1.0, timing: 'on_battle_start', damageMult: 1.2, effect: { type: 'status', status: 'paralysis', turns: 3 } },
       { name: '嵐呼ぶ剣戟', desc: 'HP30%以下で発動。攻撃力が30%上昇し、攻撃後、60%の確率で最大3回まで追撃を行う。' },
     ],
     useImg: true, img: 'C6.svg'
@@ -4441,7 +4441,7 @@ const units = [
   },
   {
     id: 18, name: 'シオン・アンドラス', element: 'none', elementJp: '無', type: 'ロベリア',
-    baseStats: { hp: 1383, atk: 96, def: 59, spd: 66 },
+    baseStats: { hp: 1387, atk: 97, def: 68, spd: 85 },
     abilityType: 'magic',
     abilities: [
       { name: '五色の魔法', desc: '攻撃前に40%の確率で発動。攻撃を相性有利なものとして計算する。', triggerRate: 0.4, timing: 'before_attack' },
@@ -4451,7 +4451,7 @@ const units = [
   },
   {
     id: 19, name: 'ソルン・アンドラス', element: 'fire', elementJp: '炎', type: 'ロベリア',
-    baseStats: { hp: 1341, atk: 117, def: 53, spd: 72 },
+    baseStats: { hp: 1345, atk: 98, def: 72, spd: 73 },
     abilityType: 'slash',
     abilities: [
       { name: '情報操作', desc: '攻撃後、20%の確率で発動。敵に衰弱(4ターン)と睡眠(2ターン)を付与する。', triggerRate: 0.2, timing: 'after_attack' },
@@ -4461,11 +4461,11 @@ const units = [
   },
   {
     id: 20, name: 'キティー・スカイレット', element: 'water', elementJp: '水', type: 'ロベリア',
-    baseStats: { hp: 1378, atk: 92, def: 60, spd: 77 },
+    baseStats: { hp: 1382, atk: 93, def: 79, spd: 78 },
     abilityType: 'slash',
     abilities: [
-      { name: '運操作', desc: '被弾時、20%の確率で攻撃を無効化する。', triggerRate: 0.2, timing: 'on_defense' },
-      { name: '透明化', desc: 'HPが40%以下になると発動。運操作の発動率が2倍になる。' }
+      { name: '運操作', desc: '自身が生存している間、味方全体のスキル発動率が2倍になる。', triggerRate: 1.0, timing: 'passive' },
+      { name: '透明化', desc: 'HPが40%以下になると発動。被弾時、40%の確率で攻撃を無効化する。' }
     ],
     useImg: true, img: 'C17.svg'
   },
@@ -4535,27 +4535,27 @@ const units = [
   },
   {
     id: 22, name: 'キャル・エクレア', element: 'thunder', elementJp: '雷', type: 'ルディ王国',
-    baseStats: { hp: 1350, atk: 125, def: 60, spd: 88 },
+    baseStats: { hp: 1354, atk: 127, def: 58, spd: 89 },
     abilityType: 'magic',
     abilities: [
-      { name: '多重障壁', desc: '戦闘開始時、味方全員に2ターンの「障壁(防御+50%)」を付与する。', triggerRate: 1.0, timing: 'on_battle_start' },
+      { name: '多重障壁', desc: '戦闘開始時、味方全員に2ターンの「障壁(防御2.5倍)」を付与する。', triggerRate: 1.0, timing: 'on_battle_start' },
       { name: '多重詠唱', desc: '攻撃後、確率(60%→40%→20%)で威力70%の追撃を行う。', timing: 'after_attack' }
     ],
     useImg: true, img: 'C26.svg'
   },
   {
     id: 23, name: 'シャム・グレゴリオ', element: 'dark', elementJp: '闇', type: 'ルディ王国',
-    baseStats: { hp: 1300, atk: 100, def: 65, spd: 60 },
+    baseStats: { hp: 1302, atk: 101, def: 64, spd: 61 },
     abilityType: 'magic',
     abilities: [
       { name: '圧縮の札', desc: '30%の確率で発動。攻撃時の属性相性を有利として計算する。', triggerRate: 0.3, timing: 'before_attack' },
-      { name: '監魂葬災', desc: '死亡時、敵全体に衰弱・燃焼・毒・呪いを2ターン付与し、HP1で復活する。' }
+      { name: '監魂葬災', desc: '死亡時、敵全体に燃焼・毒・呪いを2ターン付与し、HP1で復活する。' }
     ],
     useImg: true, img: 'C27.svg'
   },
   {
     id: 24, name: 'シー・オーシャ', element: 'water', elementJp: '水', type: 'ルディ王国',
-    baseStats: { hp: 1327, atk: 113, def: 71, spd: 84 },
+    baseStats: { hp: 1327, atk: 103, def: 71, spd: 84 },
     abilityType: 'magic',
     abilities: [
       { name: '視界内物質操作・爆散', desc: '40%の確率で発動。敵全体に攻撃力の70%のダメージを与える。', triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.7 },
@@ -4605,7 +4605,7 @@ const units = [
   },
   {
     id: 29, name: 'リナ・タナトス', element: 'light', elementJp: '光', type: 'ルディ王国',
-    baseStats: { hp: 1250, atk: 90, def: 105, spd: 65 }, // Defense
+    baseStats: { hp: 1254, atk: 91, def: 106, spd: 64 }, // Defense
     abilityType: 'magic',
     abilities: [
       { name: 'セレスティアルレイ', desc: '30%の確率で発動。攻撃威力が150%になり、盲目(2ターン)を付与する。', triggerRate: 0.3, timing: 'before_attack', damageMult: 1.5, effect: { type: 'status', status: 'blind', turns: 2 } },
@@ -5542,22 +5542,22 @@ function calculateTotalPower(enemies) {
 }
 
 const STATUS_EFFECTS = {
-  burn: { icon: '🔥', name: '燃焼', desc: 'ターン開始時、最大HPの1/8のダメージを受ける。また、被ダメージが10%増加する。' },
-  poison: { icon: '☠️', name: '毒', desc: 'ターン開始時、最大HPの1/8のダメージを受ける。' },
-  drown: {icon: '🌊', name: '溺没', desc: 'ターン開始時、最大HPの1/8のダメージを受ける。'},
+  burn: { icon: '🔥', name: '燃焼', desc: 'ターン開始時、最大HPの1/10のダメージを受ける。また、被ダメージが10%増加する。' },
+  poison: { icon: '☠️', name: '毒', desc: 'ターン開始時、最大HPの1/10のダメージを受ける。' },
+  drown: {icon: '🌊', name: '溺没', desc: 'ターン開始時、最大HPの1/10のダメージを受ける。'},
   paralysis: { icon: '⚡', name: '麻痺', desc: 'ターン開始時、30%の確率で行動不能になる。' },
   sleep: { icon: '💤', name: '睡眠', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
   freeze: { icon: '🧊', name: '凍結', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
   flinch: { icon: '🥶', name: '怯み', desc: 'ターン開始時、行動不能になる。ターン経過で解除される。' },
   blind: { icon: '👁️‍🗨️', name: '盲目', desc: 'ターン開始時、30%の確率で行動不能になる。' },
   weakness: { icon: '📉', name: '衰弱', desc: '攻撃力、防御力、速度が20%低下する。' },
-  strengthen: { icon: '💪', name: '強化', desc: '攻撃力、防御力、速度が20%上昇する。' },
-  barrier: { icon: '🛡️', name: '障壁', desc: '防御力が50%上昇する。' },
+  strengthen: { icon: '💪', name: '強化', desc: '攻撃力、防御力、速度が50%上昇する。' },
+  barrier: { icon: '🛡️', name: '障壁', desc: '防御力が2.5倍に上昇する。' },
   curse: { icon: '🤐', name: '呪い', desc: 'アビリティ（スキル）が発動しなくなる。' },
   heavy: { icon: '🏋️', name: '重量化', desc: '速度が1/3になる。' },
   zero_gravity: { icon: '🌑', name: '無重力', desc: '攻撃力が1.2倍、防御力が0.8倍になる。' },
   ember: { icon: '🧨', name: '火種', desc: '炎神の刻印。特定のスキルの発動条件となる。' },
-  fighting_spirit: { icon: '✊', name: '闘志', desc: 'アビリティ（スキル）の発生率が1.5倍になる。' },
+  fighting_spirit: { icon: '✊', name: '闘志', desc: 'アビリティ（スキル）の発生率が1.5倍になる。' }
 };
 
 const AURA_DATA = [
@@ -5840,6 +5840,13 @@ function getTriggerRate(unit, ability) {
   if (unit.statusEffects.some(e => e.type === 'fighting_spirit')) {
     rate *= 1.5;
   }
+  // キティーの運操作効果
+  const allies = unit.isPlayer ? (battleState.playerUnits || []) : (battleState.enemyUnits || []);
+  const kitty = allies.find(u => u.id === 20 && u.currentHp > 0);
+  if (kitty && !kitty.statusEffects.some(e => e.type === 'curse')) {
+      rate *= 2;
+  }
+
   const field = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
   if (field === 'anti_magic') {
     rate *= 0.5;
@@ -6781,11 +6788,15 @@ function formatAbilityDetails(ability) {
   if (modalCurrentStatsTitleEl) modalCurrentStatsTitleEl.textContent = isBattleContext ? '戦闘中ステータス' : (isOwned ? '現在のステータス' : '基礎ステータス (Lv.1)');
 
   const modalStatsEl = document.getElementById('modalStats');
+  const getCompareHtml = (current, base) => {
+      const diff = current - base;
+      return `<div style="font-size:0.6rem; color:${diff >= 0 ? 'var(--accent3)' : 'var(--accent2)'}; margin-top:2px;">${diff >= 0 ? '+' : ''}${diff} (Lv.1比)</div>`;
+  };
   if (modalStatsEl) modalStatsEl.innerHTML = `
-    <div class="mstat"><span class="mstat-label">HP</span><span class="mstat-val" style="color:#ff8080">${s.hp}</span></div>
-    <div class="mstat"><span class="mstat-label">ATK</span><span class="mstat-val" style="color:var(--accent2)">${s.atk}</span></div>
-    <div class="mstat"><span class="mstat-label">DEF</span><span class="mstat-val" style="color:var(--accent)">${s.def}</span></div>
-    <div class="mstat"><span class="mstat-label">SPD</span><span class="mstat-val" style="color:var(--accent3)">${s.spd}</span></div>
+    <div class="mstat"><span class="mstat-label">HP</span><span class="mstat-val" style="color:#ff8080">${s.hp}</span>${isOwned ? getCompareHtml(s.hp, c.baseStats.hp) : ''}</div>
+    <div class="mstat"><span class="mstat-label">ATK</span><span class="mstat-val" style="color:var(--accent2)">${s.atk}</span>${isOwned ? getCompareHtml(s.atk, c.baseStats.atk) : ''}</div>
+    <div class="mstat"><span class="mstat-label">DEF</span><span class="mstat-val" style="color:var(--accent)">${s.def}</span>${isOwned ? getCompareHtml(s.def, c.baseStats.def) : ''}</div>
+    <div class="mstat"><span class="mstat-label">SPD</span><span class="mstat-val" style="color:var(--accent3)">${s.spd}</span>${isOwned ? getCompareHtml(s.spd, c.baseStats.spd) : ''}</div>
   `;
 
   // Base Stats
@@ -7416,7 +7427,7 @@ function linkifySafe(text) {
   if (!text) return '';
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return text.replace(urlRegex, (url) => {
-    if (url.startsWith('https://scratch.mit.edu/') || url.startsWith('https://github.com/')) {
+    if (url.startsWith('https://scratch.mit.edu/') || url.startsWith('https://github.com/') || url.startsWith('https://discord.com/')) {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline; pointer-events:auto;">${url}</a>`;
     }
     return url;
@@ -10233,7 +10244,6 @@ async function checkDeathAbilities(unit) {
           if (e.currentHp > 0) {
               const eEl = document.getElementById(`unit-${e.battleId}`);
               if (eEl) playEffect(eEl, 'dark');
-              await addStatusEffect(e, 'weakness', 2);
               await addStatusEffect(e, 'burn', 2);
               await addStatusEffect(e, 'poison', 2);
               await addStatusEffect(e, 'curse', 2);
@@ -10428,7 +10438,7 @@ async function runBattleSequence() {
         const myField = attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
         if (myField && myField !== 'none') {
             if (myField === 'miasma' && attacker.currentHp > 0) {
-                const dotDamage = Math.floor(attacker.stats.hp / 8);
+                const dotDamage = Math.floor(attacker.stats.hp / 10);
                 attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
                 logBattleMessage(`${attacker.name}は<span class="damage">瘴気</span>で ${dotDamage} のダメージを受けた！`);
                 updateUnitUI(attacker);
@@ -10462,7 +10472,7 @@ async function runBattleSequence() {
                 if (!effect) continue;
                 if (['burn', 'poison', 'drown'].includes(effect.type)) {
                     const effectInfo = STATUS_EFFECTS[effect.type];
-                    const dotDamage = Math.floor(attacker.stats.hp / 8);
+                    const dotDamage = Math.floor(attacker.stats.hp / 10);
                     attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
                     logBattleMessage(`${attacker.name}は<span class="damage">${effectInfo.name}</span>で ${dotDamage} のダメージを受けた！`);
                     updateUnitUI(attacker);
@@ -10973,7 +10983,7 @@ async function runBattleSequence() {
                             logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
                             showPassivePopup(targetEl, "VOID");
                             break; // Break from defense abilities loop
-                        } else if (ab.name === '威力操作' && (target.id === 30 || (target.id === 319 && target.currentHp > target.stats.hp * 0.5))) {
+                        } else if (ab.name === '威力操作' && (target.id === 30 || (target.id === 319 && (target.currentHp > target.stats.hp * 0.5 || target.missionSpecific?.alwaysLust)))) {
                             actualDamage = Math.floor(actualDamage * 0.25); // 75% cut
                             logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
                             showPassivePopup(targetEl, "GUARD");
@@ -11567,7 +11577,7 @@ async function runBattleSequence() {
                           logBattleMessage(`${target.name}は${ab.name}で攻撃を無効化した！`);
                           showPassivePopup(targetEl, "VOID");
                           break; // Break from defense abilities loop
-                      } else if (ab.name === '威力操作' && (target.id === 30 || (target.id === 319 && target.currentHp > target.stats.hp * 0.5))) {
+                      } else if (ab.name === '威力操作' && (target.id === 30 || (target.id === 319 && (target.currentHp > target.stats.hp * 0.5 || target.missionSpecific?.alwaysLust)))) {
                           actualChaseDamage = Math.floor(actualChaseDamage * 0.25); // 75% cut
                           logBattleMessage(`${target.name}は${ab.name}でダメージを75%カットした！`);
                           showPassivePopup(targetEl, "GUARD");
@@ -12004,19 +12014,19 @@ function getBattleStats(unit) {
     s.def = Math.floor(s.def * 0.8);
     s.spd = Math.floor(s.spd * 0.8);
   }
-  // ステータス効果: 強化 (HP以外20%アップ)
+  // ステータス効果: 強化 (HP以外50%アップ)
   if (unit.statusEffects.some(e => e.type === 'strengthen')) {
-    s.atk = Math.floor(s.atk * 1.2);
-    s.def = Math.floor(s.def * 1.2);
-    s.spd = Math.floor(s.spd * 1.2);
+    s.atk = Math.floor(s.atk * 1.5);
+    s.def = Math.floor(s.def * 1.5);
+    s.spd = Math.floor(s.spd * 1.5);
   }
   // ステータス効果: 重量化 (速度1/3)
   if (unit.statusEffects.some(e => e.type === 'heavy')) {
     s.spd = Math.floor(s.spd / 3);
   }
-  // ステータス効果: 障壁 (防御50%アップ)
+  // ステータス効果: 障壁 (防御2.5倍)
   if (unit.statusEffects.some(e => e.type === 'barrier')) {
-    s.def = Math.floor(s.def * 1.5);
+    s.def = Math.floor(s.def * 2.5);
   }
   // ステータス効果: 無重力 (攻撃1.2, 防御0.8)
   if (unit.statusEffects.some(e => e.type === 'zero_gravity')) {
@@ -12220,7 +12230,12 @@ async function triggerOnBattleStartAbilities() {
                 targetUnit = livingTargets[Math.floor(Math.random() * livingTargets.length)];
             }
 
-            const damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult || 1.2));
+            let damage;
+            if (unit.id === 17) {
+                damage = Math.floor(getBattleStats(unit).spd * 1.2 * getElementalMultiplier(unit.element, targetUnit.element));
+            } else {
+                damage = Math.floor(calculateDamage(unit, targetUnit) * (ab.damageMult || 1.2));
+            }
             targetUnit.currentHp = Math.max(0, targetUnit.currentHp - damage);
             recordDamage(unit, damage);
             logBattleMessage(`${targetUnit.name}に<span class="damage">${damage}</span>のダメージ！`);
@@ -14526,8 +14541,8 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             const myField = attacker.isPlayer ? fieldP : fieldE;
             attacker.isAdvantageForced = false;
             
-            if (myField === 'miasma') { attacker.currentHp -= Math.floor(attacker.stats.hp / 8); }
-            attacker.statusEffects.forEach(eff => { if (['burn', 'poison', 'drown'].includes(eff.type)) attacker.currentHp -= Math.floor(attacker.stats.hp / 8); });
+            if (myField === 'miasma') { attacker.currentHp -= Math.floor(attacker.stats.hp / 10); }
+            attacker.statusEffects.forEach(eff => { if (['burn', 'poison', 'drown'].includes(eff.type)) attacker.currentHp -= Math.floor(attacker.stats.hp / 10); });
             checkDeath(attacker);
             
             // 装備: リジェネ
