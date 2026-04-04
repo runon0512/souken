@@ -1389,6 +1389,12 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  .battle-container.hide-status-ui .b-unit-status-effects,
+  .battle-container.hide-status-ui .status-visuals {
+    display: none !important;
+  }
+
   .battle-header-controls {
     display: flex;
     gap: 0.5rem;
@@ -3953,6 +3959,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h2 id="battleTitle" style="font-family: 'Orbitron'; font-weight: 700; color: var(--gold);">Mission Title</h2>
         <div class="battle-header-controls" style="display: flex; gap: 0.5rem;">
+          <button class="battle-header-btn" id="toggleStatusUIBtn" onclick="toggleStatusUIVisibility()" title="状態異常表示切替">👁️</button>
           <button class="battle-header-btn" id="retireBattleBtn" onclick="retireBattle()" disabled title="リタイア">🏳️</button>
           <button class="battle-header-btn" id="closeBattleBtn" onclick="closeBattle()" disabled>✕</button>
         </div>
@@ -4037,6 +4044,7 @@ let settings = {
   battleSpeed: 2,
   skipTutorial: false,
   cardSize: 'large',
+  hideStatusUI: false,
 };
 
 /* CSS for Tutorial injected via JS or here */
@@ -9546,6 +9554,30 @@ function setBattleSpeed(speed) {
   document.getElementById(`speed-btn-${speed}`).classList.add('active');
 }
 
+function toggleStatusUIVisibility() {
+    settings.hideStatusUI = !settings.hideStatusUI;
+    applyStatusUIVisibility();
+    saveSettings();
+}
+
+function applyStatusUIVisibility() {
+    const container = document.querySelector('.battle-container');
+    const btn = document.getElementById('toggleStatusUIBtn');
+    if (!container || !btn) return;
+
+    if (settings.hideStatusUI) {
+        container.classList.add('hide-status-ui');
+        btn.textContent = '🙈';
+        btn.style.color = 'var(--accent2)';
+        btn.style.borderColor = 'var(--accent2)';
+    } else {
+        container.classList.remove('hide-status-ui');
+        btn.textContent = '👁️';
+        btn.style.color = 'var(--text-dim)';
+        btn.style.borderColor = 'var(--border)';
+    }
+}
+
 // ===== DIALOGUE SYSTEM =====
 let dialogueQueue = [];
 let dialogueCallback = null;
@@ -9872,6 +9904,7 @@ async function startBattle(missionId, skipDialogue = false) {
   }
 
   document.getElementById('battleOverlay').classList.add('open');
+  applyStatusUIVisibility();
 }
 
 function initBattlePlayerUnits() {
