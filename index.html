@@ -696,7 +696,7 @@
 
   .card-img-placeholder {
     width: 100%;
-    height: 10rem;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -6004,7 +6004,24 @@ async function runPreloader() {
       .filter(u => u.useImg && u.img)
       .map(u => u.img);
   images.push('Title.png');
+  images.push('Title.png');
   images.push('C0.svg');
+  
+  // Mission-specific portraits
+  [...storyChapters, ...eventChapters, ...challengeChapters, ...collabChapters].forEach(ch => {
+    ch.missions.forEach(m => {
+      m.enemies.forEach(e => {
+        if (e.img) images.push(e.img);
+      });
+    });
+  });
+
+  // Custom characters portraits
+  if (playerState.customCharacters) {
+    playerState.customCharacters.forEach(u => {
+      if (u.useImg && u.img) images.push(u.img);
+    });
+  }
 
   // カスタムキャラ用パーツのプレロード
   ['W', 'M'].forEach(g => {
@@ -6224,9 +6241,15 @@ function renderSquad() {
     const auraData = aura > 0 ? AURA_DATA.find(a => a.class === `aura-${aura}`) : null;
     slot.className = 'squad-slot' + (c ? ' filled' : '') + (auraData ? ` ${auraData.class}` : '');
     if (c) {
+      let portraitHtml;
+      if (c.useImg && c.img) {
+          portraitHtml = `<img src="${c.img}" alt="${c.name}">`;
+      } else {
+          portraitHtml = `<div style="font-size: 2rem;">${c.icon || '👤'}</div>`;
+      }
       slot.innerHTML = `
         ${auraData ? `<div class="aura-overlay"></div>` : ''}        
-        <div class="slot-img-wrap"><img src="${c.useImg ? c.img : 'C0.svg'}" alt="${c.name}"></div>
+        <div class="slot-img-wrap">${portraitHtml}</div>
         <div class="slot-info">
           <div class="slot-name">${c.name}</div>
           <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -6356,7 +6379,13 @@ function renderCards() {
 
     const auraData = aura > 0 ? AURA_DATA.find(a => a.class === `aura-${aura}`) : null;
     const auraClass = auraData ? auraData.class : '';
-    const imgSrc = c.useImg ? c.img : 'C0.svg';
+    
+    let portraitHtml = '';
+    if (c.useImg && c.img) {
+        portraitHtml = `<img src="${c.img}" alt="${c.name}">`;
+    } else {
+        portraitHtml = `<div class="card-img-placeholder"><div class="char-silhouette">${c.icon || '👤'}</div></div>`;
+    }
     
     // Adjust font size class based on name length
     let nameClass = '';
@@ -6372,7 +6401,7 @@ function renderCards() {
         ${isFav ? '<div class="card-fav-badge">❤️</div>' : ''}
         ${!isOwned ? '<div class="char-card-status-label" style="background:var(--text-dim)">未所有</div>' : (inSquad ? '<div class="char-card-status-label">✓ 編成中</div>' : '')}
         <div class="card-img">
-          <img src="${imgSrc}" alt="${c.name}">
+          ${portraitHtml}
         </div>
         ${auraData ? `<div class="aura-overlay"></div>` : ''}
         ${auraData ? `<div class="aura-badge" style="background:${auraData.color};color:#000">${auraData.label}</div>` : ''}
@@ -6783,9 +6812,12 @@ function formatAbilityDetails(ability) {
   
   document.getElementById('modalSubtitle').innerHTML = `<span class="elem-${c.element}" style="padding:2px 6px;border-radius:4px;border:1px solid currentColor;font-size:10px">${getElemIcon(c.element)} ${c.elementJp}属性</span>${typeHtml}`;
 
-  const imgSrc = c.useImg ? c.img : 'C0.svg';
   const imgWrap = document.getElementById('modalImgWrap');
-  imgWrap.innerHTML = `<img src="${imgSrc}" alt="${c.name}" style="filter:drop-shadow(0 0 20px rgba(0,200,255,0.4))">`;
+  if (c.useImg && c.img) {
+    imgWrap.innerHTML = `<img src="${c.img}" alt="${c.name}" style="filter:drop-shadow(0 0 20px rgba(0,200,255,0.4))">`;
+  } else {
+    imgWrap.innerHTML = `<div class="card-img-placeholder" style="height:12rem;"><div class="char-silhouette" style="font-size: 8rem;">${c.icon || '👤'}</div></div>`;
+  }
 
     const currentMaxLevel = isOwned ? getMaxLevel(aura) : 0;
     const absoluteMaxLevel = getMaxLevel(12); // Max possible player level
@@ -8439,8 +8471,8 @@ function renderUnitSelector() {
     const grid = document.getElementById('unitSelectorGrid');
     grid.innerHTML = '';
     
-    // All units including enemies (Only with images)
-    const filtered = units.filter(u => (!q || u.name.toLowerCase().includes(q)) && u.useImg);
+    // All units including enemies
+    const filtered = units.filter(u => (!q || u.name.toLowerCase().includes(q)));
     
     filtered.forEach(u => {
         const isCollab = u.type === 'デストロイワールド'; // Check for Collab type
@@ -8449,7 +8481,13 @@ function renderUnitSelector() {
 
         const div = document.createElement('div');
         div.className = 'unit-selector-item' + (isLocked ? ' locked' : '');
-        div.innerHTML = `<img src="${u.useImg ? u.img : 'C0.svg'}"><div class="unit-selector-id">${u.id}</div><div class="unit-selector-name">${u.name}</div>`;
+        let portraitHtml;
+        if (u.useImg && u.img) {
+            portraitHtml = `<img src="${u.img}">`;
+        } else {
+            portraitHtml = `<div style="width:100%; height:4rem; display:flex; align-items:center; justify-content:center; font-size:2rem; background:#000;">${u.icon || '👤'}</div>`;
+        }
+        div.innerHTML = `${portraitHtml}<div class="unit-selector-id">${u.id}</div><div class="unit-selector-name">${u.name}</div>`;
         div.onclick = () => {
             if (isLocked) {
                 showToast('未所持のコラボキャラは使用できません');
@@ -10014,8 +10052,12 @@ function renderUnit(unit) {
   const bgClass = unit.isPlayer ? '' : 'enemy-icon-bg';
   const auraData = unit.aura && unit.aura > 0 ? AURA_DATA[unit.aura - 1] : null;
   const auraClass = auraData ? auraData.class : '';
-  const imgSrc = unit.useImg ? unit.img : 'C0.svg';
-  unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${imgSrc}" alt="${unit.name}"></div>`;
+  
+  if (unit.useImg && unit.img) {
+    unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${unit.img}" alt="${unit.name}"></div>`;
+  } else {
+    unitImageHtml = `<div class="b-unit-img ${bgClass}"><div class="char-silhouette">${unit.icon || '👤'}</div></div>`;
+  }
   
   const equipEnhancement = unit.isPlayer ? (unit.equipment ? playerState.equipmentEnhancements?.[unit.equipment.id] : null) : unit.enhancement;
   const equipAuraClass = equipEnhancement ? (RANK_AURA_MAP[equipEnhancement.rank] || '') : '';
@@ -10683,7 +10725,7 @@ async function runBattleSequence() {
                 if (activeAbility.effect?.type === 'heal') {
                     actualDamage = 0;
                 } else {
-                    actualDamage = Math.floor(calculateDamage(attacker, aoeTarget) * (activeAbility.damageMult || 0.8));
+                    actualDamage = Math.floor(calculateDamage(attacker, aoeTarget) * (activeAbility.damageMult !== undefined ? activeAbility.damageMult : 0.8));
 
                     // バチチ・ヴォルカノ固有: 迅速な賭けの判定
                     if (attacker.id === 49 && activeAbility.name === '迅速な賭け') {
@@ -13014,7 +13056,7 @@ function renderSquadPreview(data) {
     html += '<div class="battle-team" style="justify-content: center; gap: 1rem; margin-bottom: 2rem;">';
     
     data.squad.forEach((charId, i) => {
-      const char = units.find(u => u.id === charId);
+      const char = units.find(u => u.id === charId) || (playerState.customCharacters && playerState.customCharacters.find(u => u.id == charId));
       if (!char) return;
 
       let level = 1, aura = 0, potential = 0, equipId = null, enhancement = null;
@@ -13031,7 +13073,13 @@ function renderSquadPreview(data) {
       const auraData = aura > 0 ? AURA_DATA[aura - 1] : null; // AURA_DATA is 0-indexed
       const auraClass = auraData ? auraData.class : '';
       const equipAuraClass = enhancement ? (RANK_AURA_MAP[enhancement.rank] || '') : '';
-      const imgSrc = char.useImg ? char.img : 'C0.svg';
+      
+      let portraitHtml;
+      if (char.useImg && char.img) {
+          portraitHtml = `<img src="${char.img}" alt="${char.name}">`;
+      } else {
+          portraitHtml = `<div class="char-silhouette">${char.icon || '👤'}</div>`;
+      }
 
       let starsHtml = '';
       if (potential > 0) {
@@ -13043,7 +13091,7 @@ function renderSquadPreview(data) {
       html += `
         <div class="battle-unit player-unit ${auraClass}" style="cursor: pointer; width: 10rem;" onclick="openModalFromPreview(${charId})">
           ${auraData ? `<div class="aura-overlay"></div>` : ''}
-          <div class="b-unit-img"><img src="${imgSrc}" alt="${char.name}"></div>
+          <div class="b-unit-img">${portraitHtml}</div>
           <div class="b-unit-level">Lv.${level}</div>
           ${equip ? `<div class="b-unit-equip ${equipAuraClass}" style="width:1.5rem; height:1.5rem; font-size:1rem;">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
           <div class="b-unit-info" style="height: auto; padding: 0.4rem;">
@@ -14472,7 +14520,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             if (!ab.isCustom) return ab;
             return {
                 ...ab, timing: ab.trigger, triggerRate: (ab.triggerValue || 0) / 100,
-                damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : undefined,
+                damageMult: (ab.effect === 'attack' || ab.effect === 'attack_status') ? ((ab.effectValue || 100) / 100) : 0,
                 isAoe: ab.target === 'all_enemies' || ab.target === 'all_allies',
                 effect: (ab.effect === 'status' || ab.effect === 'attack_status') ? { type: 'status', status: ab.statusEffect, turns: ab.statusTurns } 
                       : (ab.effect === 'damage_cut' ? { type: 'damage_cut', value: ab.effectValue } : (ab.effect === 'heal' ? { type: 'heal', value: ab.effectValue } : undefined))
@@ -14718,7 +14766,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
 
             // 単体攻撃
             if (skill) {
-                damageMult = skill.damageMult || 1.0;
+                damageMult = skill.damageMult !== undefined ? skill.damageMult : 1.0;
                 if (attacker.id === 49) damageMult = Math.random() < 0.5 ? 2.0 : 0.2; // バチチ
                 if (skill.effect?.type === 'status') applyStatus(target, skill.effect.status, skill.effect.turns);
                 if (skill.forcedElement) attacker.currentForcedElement = skill.forcedElement;
@@ -14950,7 +14998,11 @@ function renderRmRankings() {
             unitIcons = data.squad.map(id => {
                 // 数値と文字列のID両方に対応するため == を使用
                 const u = units.find(unit => unit.id == id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
-                return `<img src="${u && u.useImg ? u.img : 'C0.svg'}" style="width:1.8rem; height:2.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px; margin:0 1px;" title="${u?u.name:''}">`;
+                if (u && u.useImg && u.img) {
+                    return `<img src="${u.img}" style="width:1.8rem; height:2.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px; margin:0 1px;" title="${u?u.name:''}">`;
+                } else {
+                    return `<div style="display:inline-flex; align-items:center; justify-content:center; width:1.8rem; height:2.5rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:2px; margin:0 1px; font-size:1.2rem;" title="${u?u.name:''}"> ${u ? (u.icon || '👤') : '?'} </div>`;
+                }
             }).join('');
         } catch(e) {}
 
