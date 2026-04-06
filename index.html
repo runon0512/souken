@@ -4311,29 +4311,6 @@ const units = [
   },
   // Enemies are now part of the same definition
   {
-    id: 301, name: 'スライム', element: 'water', elementJp: '水',
-    baseStats: { hp: 750, atk: 70, def: 20, spd: 50 }, icon: '💧', abilities: [], abilityType: 'impact', useImg: false,
-  },
-  {
-    id: 302, name: 'ゴブリン', element: 'dark', elementJp: '闇',
-    baseStats: { hp: 1250, atk: 90, def: 30, spd: 70 }, icon: '👺', abilityType: 'slash',
-    abilities: [{ name: '毒突き', desc: '15%の確率で強力な攻撃を行い、3ターンの毒を付与する。', triggerRate: 0.15, timing: 'after_attack', effect: { type: 'status', status: 'poison', turns: 3 } }],
-  },
-  {
-    id: 303, name: 'オーク', element: 'fire', elementJp: '炎',
-    baseStats: { hp: 2500, atk: 110, def: 50, spd: 60 }, icon: '👹', abilityType: 'impact',
-    abilities: [{ name: '渾身の一撃', desc: '強力な一撃を与える。(発動率: 25%)', triggerRate: 0.25, timing: 'before_attack' }],
-  },
-  {
-    id: 304, name: 'サンダーウルフ', element: 'thunder', elementJp: '雷',
-    baseStats: { hp: 2000, atk: 120, def: 40, spd: 100 }, icon: '🐺', abilities: [], abilityType: 'slash', useImg: false,
-  },
-  {
-    id: 305, name: '光の番人', element: 'light', elementJp: '光',
-    baseStats: { hp: 4000, atk: 150, def: 80, spd: 60 }, icon: '✨', abilityType: 'magic',
-    abilities: [{ name: '聖なる審判', desc: '敵全体にダメージを与える。(発動率: 30%)', triggerRate: 0.3, timing: 'before_attack', isAoe: true, damageMult: 0.7 }],
-  },
-  {
     id: 306, name: 'シャール・ラフレシア', element: 'dark', elementJp: '闇',
     baseStats: { hp: 700, atk: 85, def: 40, spd: 60 }, abilityType: 'magic',
     abilities: [{ name: '闇攻撃強化', desc: '戦闘開始時、闇属性の味方と自分に5ターンの強化を付与する。', timing: 'on_battle_start' }],
