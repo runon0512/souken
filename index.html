@@ -2916,14 +2916,7 @@
   const USAGE_API_URL = "https://script.google.com/macros/s/AKfycbyFmb4wo8d0XXqHZGXUifQK8_O6fZPBnPIdZ5dwOtbWg9hPAbpVKAbiJdwEnu-e22uu/exec"; // キャラ使用率取得用の新しいGAS URLをここに貼り付けてください
   const TOWER_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbyhjfVQr5yfnzEz1TIRRsktsNlBEdYBkIEObJXRyzWwVSr73QuVrIR4I1S4cNuTP5G9/exec"; // 無限の塔ランキング用のGAS URLをここに貼り付けてください
   const RANK_MATCH_API_URL = "https://script.google.com/macros/s/AKfycbxkXz9PaYuez2p5gsrxmAWaIEb1AVm980oGQklAp5L9jYS4q-aGLxTEjxqpoaBPV_87/exec"; // 新しいGAS URLをここに貼り付けてください
-  const IMAGE_BACKUP_API_URL = "https://script.google.com/macros/s/AKfycbzn-LpDrP5lQvXF-u5sS_LIN7zE46yDM7QmmjcrFaX6ZqIX_rlyXoTNSemUKT4rB5nLTg/exec"; // 画像バックアップ用GASのURLをここに貼り付けてください
-
-  // --- 内蔵代替画像データ (ここに追加したい画像のBase64やSVGデータを入れてください) ---
-  const BACKUP_IMAGES = {
-    "C0.svg": "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwNCIgaGVpZ2h0PSIxMTgiIHZpZXdCb3g9IjAgMCAxMDQgMTE4Ij48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTg3Ljk4IC0xMjEuMDgpIj48cGF0aCBkPSJNMTkyIDIyNy43di05Ni40YzAtNC41IDUtOC43IDEwLTguN2g3NC44YzcuMiAwIDExLjggNS4zIDExLjggMTAuNnY5NS4xYzAgNS44LTMuNCA5LjMtOC45IDkuM2gtNzUuOGMtNS44IDAtMTIuMS0zLjgtMTIuMS05Ljl6IiBmaWxsPSIjNDA0MDQwIi8+PHBhdGggZD0iTTI3OS42IDIzOC4ybC0zMS0xMTYuNWgxNC44bDIwIDExNS43eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMiIvPjxwYXRoIGQ9Ik0xOTAuMiAyMjQuOGMtMjMuOSAwLTc3LjEtMjMuOS05MC4yIDAgLTUuNiA0LjktMTEuMyA5LjgtMTEuMyAxMS4zIDAgNTcuOCAwIDc5IDAgNi42IDAgMTAuNyA0LjIgMTAuNyA4LjggMCAxMi4xIDAgNjggMCA5Mi43IDAgNy4yLTQuMyAxMS44LTguOCAxMS44IC0xMC45IDAtNTcuOCAwLTc5LjUgMCAtNi44IDAtMTEuMi00LjYtMTEuMi0xMS44eiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZiODAwIiBzdHJva2Utd2lkdGg9IjQuNSIvPjwvZz48L3N2Zz4=",
-    // 例: "C1.svg": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...", 
-    // 下記の loadFallbackImage 関数がここからデータを抽出します。
-  };
+  const IMAGE_BACKUP_API_URL = ""; // 画像バックアップ用GASのURLをここに貼り付けてください
 </script>
 <body>
 
@@ -5875,6 +5868,20 @@ function closeUserProfile() {
     renderUserStagesPage();
 }
 
+function getFallbackHtml(src, alt = '', style = '') {
+  if (!src) return '';
+  const isExternal = src.startsWith('http') || src.startsWith('data:');
+  const backupUrl = (!isExternal && typeof IMAGE_BACKUP_API_URL !== 'undefined' && IMAGE_BACKUP_API_URL.startsWith('http'))
+    ? `${IMAGE_BACKUP_API_URL}?action=getImage&filename=${src}`
+    : null;
+
+  const onerror = backupUrl 
+    ? `this.onerror=null; this.src='${backupUrl}';` 
+    : `this.onerror=null; this.src='C0.svg';`;
+
+  return `<img src="${src}" alt="${alt}" style="${style}" onerror="${onerror}">`;
+}
+
 function calcStats(baseStats, level, equipment = null, potential = 0, explicitEnhancement = undefined) {
   // レベル1ごとに10%上昇する計算
   const multiplier = 1 + (level - 1) * 0.1;
@@ -6045,14 +6052,8 @@ async function runPreloader() {
       img.onload = () => { updateLoader(); resolve(); };
       img.onerror = () => {
           // プリローダーでもクラウドフォールバックを試みる
-          if (!src.startsWith('http') && !src.includes('data:image')) {
-              // HTML内データを優先、次いでGAS
-              let fallbackUrl = null;
-              if (BACKUP_IMAGES[src]) fallbackUrl = BACKUP_IMAGES[src];
-              else if (IMAGE_BACKUP_API_URL) fallbackUrl = `${IMAGE_BACKUP_API_URL}?action=getImage&filename=${src}`;
-
-              if (!fallbackUrl) { updateLoader(); resolve(); return; }
-
+          if (IMAGE_BACKUP_API_URL && !src.startsWith('http') && !src.includes('data:image')) {
+              const fallbackUrl = `${IMAGE_BACKUP_API_URL}?action=getImage&filename=${src}`;
               const fallbackImg = new Image();
               fallbackImg.onload = () => { updateLoader(); resolve(); };
               fallbackImg.onerror = () => { updateLoader(); resolve(); };
@@ -7826,6 +7827,7 @@ function renderTowerMissions() {
 }
 
 function sortUserStages(stages) {
+  if (!Array.isArray(stages)) return [];
   if (currentUserStageSort === 'newest') {
     return stages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   } else if (currentUserStageSort === 'plays') {
@@ -7854,11 +7856,11 @@ function sortUserStages(stages) {
 async function renderUserStagesPage(forceReload = false) {
     const container = document.getElementById('missionGrid');
     
-    // Loading indication only if fetching
+    // キャッシュが配列であることを保証
+    if (!Array.isArray(cachedUserStages)) cachedUserStages = [];
+
     if (forceReload || cachedUserStages.length === 0) {
         container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-dim);">Loading stages...</div>';
-    } else {
-        container.innerHTML = '';
     }
     
     if (forceReload) userStageLimit = 10; // Reset pagination
@@ -7926,7 +7928,8 @@ async function renderUserStagesPage(forceReload = false) {
             const response = await fetch(USER_STAGE_API_URL + '?action=getStages&playerId=' + playerState.playerId, {
                 signal: userStageAbortController.signal
             });
-            data = await response.json();
+            const json = await response.json();
+            data = Array.isArray(json) ? json : [];
             cachedUserStages = data;
             processStageNotifications(data); // 通知チェックも行う
             lastNotificationCheck = Date.now();
@@ -7935,8 +7938,11 @@ async function renderUserStagesPage(forceReload = false) {
         container.innerHTML = '';
         container.appendChild(postBtnContainer);
 
-        if (!data || data.length === 0) {
-            container.innerHTML += '<div style="grid-column:1/-1; text-align:center; color:var(--text-mid);">投稿されたステージはありません。</div>';
+        if (data.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.style.cssText = 'grid-column:1/-1; text-align:center; color:var(--text-mid); padding: 2rem;';
+            emptyMsg.textContent = '投稿されたステージはありません。';
+            container.appendChild(emptyMsg);
             return;
         }
 
@@ -13798,6 +13804,7 @@ let lastNotificationCheck = 0;
 
 function processStageNotifications(stages) {
     if (!playerState.playerId) return;
+    if (!Array.isArray(stages)) return;
     
     // Initialize stage stats if new
     if (!playerState.stageTracking) playerState.stageTracking = {};
