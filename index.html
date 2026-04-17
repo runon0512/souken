@@ -5870,14 +5870,18 @@ function closeUserProfile() {
 
 function getFallbackHtml(src, alt = '', style = '') {
   if (!src) return '';
+  // GitHubのリポジトリをベースURLとして定義
+  const GITHUB_BASE = "https://raw.githubusercontent.com/runon0512/souken/a30b6faf5c62c16b204537ddabebb0a29bddaa24/";
   const isExternal = src.startsWith('http') || src.startsWith('data:');
+  
+  // ローカル画像が失敗した場合、まずGitHubの同じファイル名、次にGitHubのC0.svgを試す
   const backupUrl = (!isExternal && typeof IMAGE_BACKUP_API_URL !== 'undefined' && IMAGE_BACKUP_API_URL.startsWith('http'))
     ? `${IMAGE_BACKUP_API_URL}?action=getImage&filename=${src}`
-    : null;
+    : (!isExternal ? GITHUB_BASE + src : null);
 
   const onerror = backupUrl 
-    ? `this.onerror=null; this.src='${backupUrl}';` 
-    : `this.onerror=null; this.src='C0.svg';`;
+    ? `this.onerror=function(){ this.src='${GITHUB_BASE}C0.svg'; this.onerror=null; }; this.src='${backupUrl}';` 
+    : `this.onerror=null; this.src='${GITHUB_BASE}C0.svg';`;
 
   return `<img src="${src}" alt="${alt}" style="${style}" onerror="${onerror}">`;
 }
@@ -6052,12 +6056,20 @@ async function runPreloader() {
       img.onload = () => { updateLoader(); resolve(); };
       img.onerror = () => {
           // プリローダーでもクラウドフォールバックを試みる
+          const GITHUB_BASE = "https://raw.githubusercontent.com/runon0512/souken/a30b6faf5c62c16b204537ddabebb0a29bddaa24/";
           if (IMAGE_BACKUP_API_URL && !src.startsWith('http') && !src.includes('data:image')) {
               const fallbackUrl = `${IMAGE_BACKUP_API_URL}?action=getImage&filename=${src}`;
               const fallbackImg = new Image();
               fallbackImg.onload = () => { updateLoader(); resolve(); };
               fallbackImg.onerror = () => { updateLoader(); resolve(); };
               fallbackImg.src = fallbackUrl;
+          } else if (!src.startsWith('http') && !src.includes('data:image')) {
+              // ローカルが失敗したらGitHubを試す
+              const githubUrl = GITHUB_BASE + src;
+              const githubImg = new Image();
+              githubImg.onload = () => { updateLoader(); resolve(); };
+              githubImg.onerror = () => { updateLoader(); resolve(); };
+              githubImg.src = githubUrl;
           } else {
               updateLoader(); resolve();
           }
@@ -10065,7 +10077,7 @@ function renderUnit(unit) {
   const auraClass = auraData ? auraData.class : '';
   
   if (unit.useImg && unit.img) {
-    unitImageHtml = `<div class="b-unit-img ${bgClass}"><img src="${unit.img}" alt="${unit.name}"></div>`;
+    unitImageHtml = `<div class="b-unit-img ${bgClass}">${getFallbackHtml(unit.img, unit.name)}</div>`;
   } else {
     unitImageHtml = `<div class="b-unit-img ${bgClass}"><div class="char-silhouette">${unit.icon || '👤'}</div></div>`;
   }
@@ -13526,7 +13538,7 @@ function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUni
       <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
         <div style="font-family: 'Orbitron'; font-size: 1.5rem; color: var(--accent3); text-shadow: 0 0 10px var(--accent3);">MVP</div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(0,200,255,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-bright);">
-          <img src="${mvpUnit.useImg ? mvpUnit.img : 'C0.svg'}" style="width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent3); object-fit: cover;">
+          ${getFallbackHtml(mvpUnit.useImg ? mvpUnit.img : 'C0.svg', mvpUnit.name, 'width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent3); object-fit: cover;')}
           <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${mvpUnit.name}</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">与ダメージ: ${totalDamage}</div></div>
         </div>
       </div>
@@ -13546,7 +13558,7 @@ function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUni
         <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
           <div style="font-family: 'Orbitron'; font-size: 1.5rem; color: var(--accent);">NEW CHARACTER</div>
           ${allUnlockedChars.map(char => `<div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(0,200,255,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-bright);">
-              <img src="${char.useImg ? char.img : 'C0.svg'}" style="width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;">
+              ${getFallbackHtml(char.useImg ? char.img : 'C0.svg', char.name, 'width: 4.5rem; height: 4.5rem; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;')}
               <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${char.name}</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">が仲間に加わりました！</div></div>
             </div>`).join('')}
         </div>`;
@@ -15016,7 +15028,7 @@ function renderRmRankings() {
                 // 数値と文字列のID両方に対応するため == を使用
                 const u = units.find(unit => unit.id == id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
                 if (u && u.useImg && u.img) {
-                    return `<img src="${u.img}" style="width:1.8rem; height:2.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px; margin:0 1px;" title="${u?u.name:''}">`;
+                    return getFallbackHtml(u.img, u.name, "width:1.8rem; height:2.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px; margin:0 1px;");
                 } else {
                     return `<div style="display:inline-flex; align-items:center; justify-content:center; width:1.8rem; height:2.5rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:2px; margin:0 1px; font-size:1.2rem;" title="${u?u.name:''}"> ${u ? (u.icon || '👤') : '?'} </div>`;
                 }
