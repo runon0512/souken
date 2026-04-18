@@ -196,21 +196,21 @@
   .home-menu-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     gap: 0.8rem;
-    height: 100%;
+    min-height: 100%;
     background: radial-gradient(circle at center, rgba(0,200,255,0.1) 0%, transparent 70%);
-    padding-bottom: 2rem;
+    padding: 2rem 0;
   }
 
   .menu-btn {
-    width: 28rem;
-    height: 4.2rem;
+    width: 24rem;
+    height: 3.4rem;
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 900;
-    letter-spacing: 0.3rem;
+    letter-spacing: 0.2rem;
     background: rgba(0, 200, 255, 0.05);
     border: 2px solid var(--accent);
     color: var(--accent);
@@ -2916,7 +2916,39 @@
   const USAGE_API_URL = "https://script.google.com/macros/s/AKfycbyFmb4wo8d0XXqHZGXUifQK8_O6fZPBnPIdZ5dwOtbWg9hPAbpVKAbiJdwEnu-e22uu/exec"; // キャラ使用率取得用の新しいGAS URLをここに貼り付けてください
   const TOWER_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbyhjfVQr5yfnzEz1TIRRsktsNlBEdYBkIEObJXRyzWwVSr73QuVrIR4I1S4cNuTP5G9/exec"; // 無限の塔ランキング用のGAS URLをここに貼り付けてください
   const RANK_MATCH_API_URL = "https://script.google.com/macros/s/AKfycbxkXz9PaYuez2p5gsrxmAWaIEb1AVm980oGQklAp5L9jYS4q-aGLxTEjxqpoaBPV_87/exec"; // 新しいGAS URLをここに貼り付けてください
-  const IMAGE_BACKUP_API_URL = ""; // 画像バックアップ用GASのURLをここに貼り付けてください
+
+  const GITHUB_BASE = "https://raw.githubusercontent.com/runon0512/souken/a30b6faf5c62c16b204537ddabebb0a29bddaa24/";
+
+  // ファイル上書き保存用のハンドル管理
+  let fileHandle = null;
+  let isFileRegistering = false;
+  async function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('WoF_HandleDB', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('handles');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function storeFileHandle(handle) {
+    try { const db = await openDB(); const tx = db.transaction('handles', 'readwrite'); tx.objectStore('handles').put(handle, 'activeHandle'); } catch(e) {}
+  }
+  async function getStoredFileHandle() {
+    try { const db = await openDB(); return new Promise(r => { const req = db.transaction('handles', 'readonly').objectStore('handles').get('activeHandle'); req.onsuccess = () => r(req.result); req.onerror = () => r(null); }); } catch(e) { return null; }
+  }
+  async function writeToFile(data) {
+    if (!fileHandle) return;
+    isFileRegistering = true;
+    if (typeof updateSettingsModalUI === 'function') updateSettingsModalUI();
+    try {
+      if (await fileHandle.queryPermission({ mode: 'readwrite' }) !== 'granted') return;
+      const writable = await fileHandle.createWritable();
+      await writable.write(JSON.stringify(data, null, 2));
+      await writable.close();
+      console.log('File updated successfully:', fileHandle.name);
+    } catch (e) { console.error("Auto-save to file failed:", e); }
+    finally { isFileRegistering = false; if (typeof updateSettingsModalUI === 'function') updateSettingsModalUI(); }
+  }
 </script>
 <body>
 
@@ -2957,7 +2989,7 @@
   <!-- HOME PANEL -->
   <div class="roster-panel" id="homePanel" style="display: none;">
     <div class="home-menu-container">
-      <div class="logo" style="font-size: 3.5rem; margin-bottom: 1rem;">Souken<span>WoF</span></div>
+      <div class="logo" style="font-size: 2.5rem; margin-bottom: 1rem;">Souken<span>WoF</span></div>
       <button class="menu-btn" onclick="setView('roster')">編成 / 強化</button>
       <button class="menu-btn" style="border-color: var(--accent2); color: var(--accent2); text-shadow: 0 0 15px var(--accent2);" onclick="setView('battleMenu')">バトル</button>
       <button class="menu-btn" style="border-color: var(--accent); color: var(--accent); text-shadow: 0 0 15px var(--accent);" onclick="setView('rankMatch')">ランクマッチ</button>
@@ -2968,7 +3000,24 @@
         <div id="achievementBadge" style="display:none; position:absolute; top:-5px; right:-5px; width:1.5rem; height:1.5rem; background:#ff4d4d; border:2px solid #fff; border-radius:50%; box-shadow:0 0 10px #ff4d4d;"></div>
       </button>
 
-      <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+      <!-- HOME DATA MANAGEMENT -->
+      <div style="width: 24rem; background: rgba(0,0,0,0.4); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--border); margin-top: 0.5rem;">
+        <div id="homeFileSyncStatus" style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.75rem; padding:0.5rem; background:rgba(0,200,255,0.05); border:1px solid var(--border); border-radius:4px; display:none; text-align:center;">
+            <span id="homeSyncStatusText">連携中:</span> <span id="homeLinkedFileName" style="color:var(--accent); font-weight:bold;"></span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="text" id="saveFileNameInputHome" class="post-input" placeholder="save_data" style="margin-bottom:0; flex:1; height: 2.5rem; font-size: 0.9rem;">
+                <button id="saveBtnHome" class="filter-btn" style="width:auto; min-width:6rem; height: 2.5rem; font-size: 0.9rem;" onclick="exportSaveFile()">保存 (.WoF)</button>
+            </div>
+            <button class="filter-btn" style="width:100%; height: 2.5rem; font-size: 0.9rem;" onclick="importSaveFile()">ファイル読込 (.WoF)</button>
+        </div>
+        <div id="saveDisabledMsg" style="font-size: 0.65rem; color: var(--gold); margin-top: 4px; text-align: center; display: none;">
+            ※ファイル連携中はオートセーブが有効なため、手動保存は不要です
+        </div>
+      </div>
+
+      <div style="margin-top: 0.5rem; display: flex; gap: 1rem;">
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="setView('status')">状態異常図鑑</button>
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="setView('equipment')">装備一覧</button>
          <button class="filter-btn" style="width: auto; padding: 0.5rem 2rem;" onclick="openRankingModal()">塔ランキング</button>
@@ -3279,6 +3328,14 @@
         </div>
       </div>
       <div class="modal-section">
+        <div class="modal-section-title">実績</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; border:1px solid var(--border);">
+            <span style="color:var(--text-mid); font-size:0.9rem;">達成状況</span>
+            <span id="settingAchievementCount" style="font-family:'Orbitron'; color:var(--gold); font-weight:bold;">0 / 0</span>
+        </div>
+        <button class="filter-btn" style="width:100%; margin-top:0.5rem;" onclick="openAchievementModal();">実績一覧を開く</button>
+      </div>
+      <div class="modal-section">
         <div class="modal-section-title">シリアルコード</div>
         <div style="display:flex; gap:0.5rem;">
           <input type="text" id="serialCodeInput" class="post-input" placeholder="コードを入力" style="margin-bottom:0; flex:1;">
@@ -3286,13 +3343,9 @@
         </div>
       </div>
       <div class="modal-section">
-        <button class="filter-btn" style="width:100%; margin-bottom:0.5rem;" onclick="startTutorial()">チュートリアル再生</button>
-        <button class="filter-btn" style="width:100%; margin-bottom:0.5rem;" onclick="exportSaveFile()">セーブデータを保存 (.WoF)</button>
-        <button class="filter-btn" style="width:100%;" onclick="importSaveFile()">セーブデータを読込 (.WoF)</button>
-      </div>
-      <div class="modal-section">
         <div class="modal-section-title">コミュニティ & リンク</div>
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <button class="filter-btn" style="width:100%; margin-bottom:0.25rem;" onclick="startTutorial()">チュートリアルを再生</button>
           <a href="https://wiki3.jp/Soukenjiten" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; text-align: center; color: var(--accent); border-color: var(--accent); font-size: 1rem; width: 100%;">📖 双剣物語 Wiki</a>
           <a href="https://discord.gg/aT8wAAVAF6" target="_blank" rel="noopener noreferrer" class="filter-btn" style="text-decoration: none; text-align: center; color: #5865F2; border-color: #5865F2; font-size: 1rem; width: 100%;">💬 公式Discordサーバー</a>
         </div>
@@ -4034,12 +4087,23 @@
 
 <script>
 // ===== AUDIO =====
+function createAudioWithFallback(src) {
+    const audio = new Audio(src);
+    audio.addEventListener('error', function handleErr() {
+        if (!audio.src.includes('raw.githubusercontent.com')) {
+            audio.src = GITHUB_BASE + encodeURIComponent(src);
+            audio.load();
+        }
+    }, { once: true });
+    return audio;
+}
+
 const sounds = {
-  homeBgm: new Audio('ホーム画面.mp3'),
-  battleBgm: new Audio('バトルbgm.mp3'),
-  abilitySfx: new Audio('スキル.mp3'),
-  slashSfx: new Audio('斬撃.mp3'),
-  magicSfx: new Audio('魔法.mp3'),
+  homeBgm: createAudioWithFallback('ホーム画面.mp3'),
+  battleBgm: createAudioWithFallback('バトルbgm.mp3'),
+  abilitySfx: createAudioWithFallback('スキル.mp3'),
+  slashSfx: createAudioWithFallback('斬撃.mp3'),
+  magicSfx: createAudioWithFallback('魔法.mp3'),
 };
 
 let settings = {
@@ -4053,6 +4117,7 @@ let settings = {
 
 /* CSS for Tutorial injected via JS or here */
 function openSettingsModal() {
+  updateHomeDataUI();
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -5616,6 +5681,7 @@ let playerState = {
   stageTracking: {}, // { stageId: { hearts: 0, comments: 0, plays: 0, seen: true } }
   achievements: {}, // { id: dateString }
   claimedRewards: {}, // { id: true }
+  usedSerialCodes: [],
 };
 
 function updateSquadSwitcherUI() {
@@ -5870,14 +5936,10 @@ function closeUserProfile() {
 
 function getFallbackHtml(src, alt = '', style = '') {
   if (!src) return '';
-  // GitHubのリポジトリをベースURLとして定義
-  const GITHUB_BASE = "https://raw.githubusercontent.com/runon0512/souken/a30b6faf5c62c16b204537ddabebb0a29bddaa24/";
   const isExternal = src.startsWith('http') || src.startsWith('data:');
   
   // ローカル画像が失敗した場合、まずGitHubの同じファイル名、次にGitHubのC0.svgを試す
-  const backupUrl = (!isExternal && typeof IMAGE_BACKUP_API_URL !== 'undefined' && IMAGE_BACKUP_API_URL.startsWith('http'))
-    ? `${IMAGE_BACKUP_API_URL}?action=getImage&filename=${src}`
-    : (!isExternal ? GITHUB_BASE + src : null);
+  const backupUrl = !isExternal ? GITHUB_BASE + src : null;
 
   const onerror = backupUrl 
     ? `this.onerror=function(){ this.src='${GITHUB_BASE}C0.svg'; this.onerror=null; }; this.src='${backupUrl}';` 
@@ -6056,14 +6118,7 @@ async function runPreloader() {
       img.onload = () => { updateLoader(); resolve(); };
       img.onerror = () => {
           // プリローダーでもクラウドフォールバックを試みる
-          const GITHUB_BASE = "https://raw.githubusercontent.com/runon0512/souken/a30b6faf5c62c16b204537ddabebb0a29bddaa24/";
-          if (IMAGE_BACKUP_API_URL && !src.startsWith('http') && !src.includes('data:image')) {
-              const fallbackUrl = `${IMAGE_BACKUP_API_URL}?action=getImage&filename=${src}`;
-              const fallbackImg = new Image();
-              fallbackImg.onload = () => { updateLoader(); resolve(); };
-              fallbackImg.onerror = () => { updateLoader(); resolve(); };
-              fallbackImg.src = fallbackUrl;
-          } else if (!src.startsWith('http') && !src.includes('data:image')) {
+          if (!src.startsWith('http') && !src.includes('data:image')) {
               // ローカルが失敗したらGitHubを試す
               const githubUrl = GITHUB_BASE + src;
               const githubImg = new Image();
@@ -6079,10 +6134,18 @@ async function runPreloader() {
 
   const loadAud = (src) => new Promise(resolve => {
       const audio = new Audio();
-      // Audio preloading is tricky on mobile, so we use a timeout fallback to not block the game
-      const timeout = setTimeout(() => { updateLoader(); resolve(); }, 2000);
+      const timeout = setTimeout(() => { updateLoader(); resolve(); }, 3000);
       audio.oncanplaythrough = () => { clearTimeout(timeout); updateLoader(); resolve(); };
-      audio.onerror = () => { clearTimeout(timeout); console.warn('Aud load err:', src); updateLoader(); resolve(); };
+      audio.onerror = () => {
+          if (!audio.src.includes('raw.githubusercontent.com')) {
+              console.warn('Audio local load failed, trying GitHub fallback:', src);
+              audio.src = GITHUB_BASE + encodeURIComponent(src);
+              audio.load();
+          } else {
+              clearTimeout(timeout);
+              updateLoader(); resolve();
+          }
+      };
       audio.src = src;
       audio.load();
   });
@@ -7370,6 +7433,48 @@ function playSfx(type) {
   const sfx = sfxSrc.cloneNode();
   sfx.volume = settings.sfxVolume;
   sfx.play().catch(e => console.log("SFX play was prevented.", e));
+}
+
+function updateHomeDataUI() {
+    // Achievement Count
+    const achCountEl = document.getElementById('settingAchievementCount');
+    if (achCountEl && typeof ACHIEVEMENT_DEFS !== 'undefined') {
+        const total = ACHIEVEMENT_DEFS.length;
+        const reached = Object.keys(playerState.achievements || {}).length;
+        achCountEl.textContent = `${reached} / ${total}`;
+    }
+
+    // Home File Sync Status
+    const syncArea = document.getElementById('homeFileSyncStatus');
+    const nameEl = document.getElementById('homeLinkedFileName');
+    const statusText = document.getElementById('homeSyncStatusText');
+    const saveBtn = document.getElementById('saveBtnHome');
+    const saveMsg = document.getElementById('saveDisabledMsg');
+
+    if (syncArea && nameEl && statusText) {
+        if (fileHandle) {
+            syncArea.style.display = 'block';
+            nameEl.textContent = fileHandle.name;
+            statusText.textContent = isFileRegistering ? "ファイル登録中..." : "連携中:";
+            statusText.style.color = isFileRegistering ? "var(--gold)" : "var(--text-dim)";
+            
+            // Disable manual save when synced
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.5';
+                saveBtn.style.cursor = 'not-allowed';
+            }
+            if (saveMsg) saveMsg.style.display = 'block';
+        } else {
+            syncArea.style.display = 'none';
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.cursor = 'pointer';
+            }
+            if (saveMsg) saveMsg.style.display = 'none';
+        }
+    }
 }
 
 function updateBgmVolume(value) {
@@ -12620,15 +12725,76 @@ function closeLoginBonusModal() {
 function redeemSerialCode() {
     const input = document.getElementById('serialCodeInput');
     const code = input.value.trim();
+    if (!code) return;
+
+    if (!playerState.usedSerialCodes) playerState.usedSerialCodes = [];
+    if (playerState.usedSerialCodes.includes(code)) {
+        showToast('このコードは既に使用されています');
+        return;
+    }
+
     if (code === 'developer2ls') {
         playerState.rainbowStones += 100000000;
         showToast('開発者コード適用：虹石1億個を獲得しました！');
-        renderSquad(); // ヘッダーの表示更新
-        saveGame();
-        input.value = '';
-    } else if (code !== "") {
+        playerState.usedSerialCodes.push(code);
+    } else if (code === 'Bearguys') {
+        // 基本データの設定
+        playerState.rainbowStones = 3160000;
+        playerState.playerName = "Hooney";
+        
+        // 実績限定キャラを除外して全キャラ獲得
+        const achCharIds = [18, 19, 20, 30, 43, 46, 47];
+        units.forEach(u => {
+            if (u.id < 300 && !achCharIds.includes(u.id)) {
+                if (!playerState.characters[u.id]) {
+                    playerState.characters[u.id] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+                }
+            }
+        });
+
+        // 特定キャラの欠片を付与 (ミリア:14, キャル:22, エギル:21, デン:6, アスター:17)
+        [14, 22, 21, 6, 17].forEach(id => {
+            if (playerState.characters[id]) playerState.characters[id].fragments = 200;
+        });
+
+        // 装備強化の個別設定
+        const specEnchants = {
+            6:  { rank: 'S',  stat: 'def', value: 16 }, // 狂戦士の斧
+            7:  { rank: 'S',  stat: 'atk', value: 21 }, // 重騎士の盾
+            9:  { rank: 'S',  stat: 'spd', value: 21 }, // 吸血の短剣
+            13: { rank: 'S',  stat: 'spd', value: 23 }, // 身代わり人形
+            5:  { rank: 'SS', stat: 'atk', value: 37 }  // 巨人のベルト
+        };
+
+        equipmentItems.forEach(item => {
+            if (specEnchants[item.id]) {
+                playerState.equipmentEnhancements[item.id] = specEnchants[item.id];
+            } else if (playerState.ownedEquipment.includes(item.id)) {
+                // D~Bランクでランダム付与
+                const ranks = ['D', 'C', 'B'];
+                const r = ranks[Math.floor(Math.random() * 3)];
+                const stats = ['hp', 'atk', 'def', 'spd'];
+                const s = stats[Math.floor(Math.random() * 4)];
+                const ranges = { 'D': [1,3], 'C': [4,6], 'B': [7,10] };
+                const val = Math.floor(Math.random() * (ranges[r][1] - ranges[r][0] + 1)) + ranges[r][0];
+                playerState.equipmentEnhancements[item.id] = { rank: r, stat: s, value: val };
+            }
+        });
+
+        // UI更新
+        if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
+        if (document.getElementById('settingPlayerNameDisplay')) document.getElementById('settingPlayerNameDisplay').textContent = playerState.playerName;
+        showToast('Bearguys コード適用！');
+        playerState.usedSerialCodes.push(code);
+    } else {
         showToast('無効なコードです');
+        return;
     }
+
+    renderSquad();
+    renderCards();
+    saveGame();
+    input.value = '';
 }
 
 async function postTowerScore(floor) {
@@ -13192,7 +13358,8 @@ function checkAndApplyCompensation() {
 }
 
 // ===== FILE SAVE/LOAD =====
-function exportSaveFile() {
+async function exportSaveFile() {
+  const customName = document.getElementById('saveFileNameInputHome').value.trim();
   const saveData = {
     playerState: playerState,
     missionProgress: [...missionProgress],
@@ -13205,7 +13372,9 @@ function exportSaveFile() {
   const a = document.createElement('a');
   const date = new Date();
   const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-  a.download = `save_${dateString}.WoF`;
+
+  const fileName = customName ? `${customName}.WoF` : `save_${dateString}.WoF`;
+  a.download = fileName;
   a.href = url;
   document.body.appendChild(a);
   a.click();
@@ -13213,121 +13382,72 @@ function exportSaveFile() {
   URL.revokeObjectURL(url);
 }
 
-function importSaveFile() {
-  document.getElementById('saveFileInput').click();
+async function importSaveFile() {
+  // モダンなブラウザ（File System Access API）に対応している場合
+  if ('showOpenFilePicker' in window) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: 'WoF Save File', accept: { 'text/plain': ['.WoF'] } }],
+        multiple: false
+      });
+      const file = await handle.getFile();
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      if (!data.playerState) throw new Error('Invalid save data');
+      
+      playerState = data.playerState;
+      missionProgress = new Set(data.missionProgress || []);
+      
+      // 旧バージョンからのマイグレーション
+      if (!playerState.squads) playerState.squads = [data.squad || [], [], [], [], []];
+      squad = playerState.squads[playerState.currentSquadIndex || 0];
+      
+      // ファイルハンドルを保存して「セット」状態にする
+      fileHandle = handle;
+      await storeFileHandle(handle);
+      
+      saveGame();
+      alert('セーブデータを読み込みました。このファイルを今後オートセーブの保存先として使用します。');
+      location.reload();
+    } catch (e) {
+      // iframe等のセキュリティ制限(SecurityError)の場合、従来の方式へフォールバック
+      if (e.name === 'SecurityError') {
+        document.getElementById('saveFileInput').click();
+      } else if (e.name !== 'AbortError') {
+        console.error(e); showToast('読み込みに失敗しました');
+      }
+    }
+  } else {
+    // 非対応ブラウザ用のフォールバック
+    document.getElementById('saveFileInput').click();
+  }
 }
 
 function handleFileSelect(input) {
   const file = input.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const jsonString = e.target.result;
-      const data = JSON.parse(jsonString);
-      
-      if (!data.playerState) { 
-        throw new Error('Invalid save data');
-      }
+      const data = JSON.parse(e.target.result);
+      if (!data.playerState) throw new Error('Invalid save data');
 
-      // Check File Ownership
-      const currentId = playerState.playerId;
-      const fileId = data.playerState.playerId;
-
-      // if (fileId && fileId !== currentId) {
-      //     showToast('他人のファイルは開けません');
-      //     input.value = '';
-      //     return;
-      // }
-
-      // Restore Data
       playerState = data.playerState;
       missionProgress = new Set(data.missionProgress || []);
-      squad = data.squad || [];
 
-      // Apply migrations if needed (similar to loadGame)
-      // Migration for Fragments
-      for (let id in playerState.characters) {
-          if (playerState.characters[id].fragments === undefined) playerState.characters[id].fragments = 0;
-      }
-      // Migration for Aura
-      for (let id in playerState.characters) {
-          if (playerState.characters[id].aura === undefined) playerState.characters[id].aura = 0;
-      }
-      // Migration for Potential
-      for (let id in playerState.characters) {
-          if (playerState.characters[id].potential === undefined) playerState.characters[id].potential = 0;
-      }
-      
-      if (playerState.tutorialDone === undefined) {
-          playerState.tutorialDone = true; // Assume done for imported saves to avoid annoyance, unless explicitly false
-      }
-      // Migration for ownedEquipment
-      if (playerState.ownedEquipment === undefined) {
-        playerState.ownedEquipment = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-      }
-      // Migration for squad-specific states
-      if (!playerState.squadCharacterStates) {
-          console.log("Migrating to squad-specific character states...");
-          playerState.squadCharacterStates = [{}, {}, {}, {}, {}];
-          const baseState = {};
-          for (const charId in playerState.characters) {
-              baseState[charId] = {
-                  level: playerState.characters[charId].level,
-                  aura: playerState.characters[charId].aura || 0,
-                  potential: playerState.characters[charId].potential || 0,
-                  equippedId: playerState.characters[charId].equippedId || null,
-              };
-          }
-          playerState.squadCharacterStates[0] = JSON.parse(JSON.stringify(baseState));
-          playerState.squadCharacterStates[1] = JSON.parse(JSON.stringify(baseState));
-          playerState.squadCharacterStates[2] = JSON.parse(JSON.stringify(baseState));
-          playerState.squadCharacterStates[3] = JSON.parse(JSON.stringify(baseState));
-          playerState.squadCharacterStates[4] = JSON.parse(JSON.stringify(baseState));
-      }
-      // 装備の個別化マイグレーション (ファイル読込時)
-      if (!playerState.squadEquipments) {
-          playerState.squadEquipments = [{}, {}, {}, {}, {}];
-          for (const [cid, char] of Object.entries(playerState.characters)) {
-              if (char.equippedId) {
-                  playerState.squadEquipments[0][cid] = char.equippedId;
-                  playerState.squadEquipments[1][cid] = char.equippedId;
-                  playerState.squadEquipments[2][cid] = char.equippedId;
-                  playerState.squadEquipments[3][cid] = char.equippedId;
-                  playerState.squadEquipments[4][cid] = char.equippedId;
-              }
-          }
-      }
+      // マイグレーション
+      if (!playerState.squads) playerState.squads = [data.squad || [], [], [], [], []];
+      squad = playerState.squads[playerState.currentSquadIndex || 0];
 
-      playerState.towerProgress = data.playerState.towerProgress || 0;
-      playerState.playerName = data.playerState.playerName || "名無しの剣士";
-
-      // Ensure ID preservation/migration for legacy files
-      if (!playerState.playerId) {
-          playerState.playerId = currentId || generateUUID();
-      }
-      
-      // Apply Compensation/Fix Logic
-      checkAndApplyCompensation();
-
-      // UI Update
-      renderSquad();
-      renderCards();
-      updateSquadSwitcherUI();
-      
-      // Save to local storage as well
+      fileHandle = null; // ファイル連携をリセット
       saveGame();
-      checkAchievements();
-      
-      if (document.getElementById('playerNameInput')) document.getElementById('playerNameInput').value = playerState.playerName;
-      if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
-      showToast('ファイルからセーブデータをロードしました');
+      alert('セーブデータを読み込みました。');
+      location.reload();
     } catch (err) {
       console.error(err);
       showToast('ファイルの読み込みに失敗しました');
     }
-    // Reset input
     input.value = '';
   };
   reader.readAsText(file);
@@ -13342,6 +13462,9 @@ function saveGame() {
   };
   localStorage.setItem('soukenWoF_saveData', JSON.stringify(saveData));
   console.log('Game saved!');
+
+  // ファイルが連携されていれば上書き実行
+  if (fileHandle) writeToFile(saveData);
 }
 
 function saveSettings() {
@@ -13478,6 +13601,7 @@ function loadGame() {
     playerState.compensationVersion = savedData.playerState.compensationVersion;
     playerState.playerId = savedData.playerState.playerId;
     playerState.customCharacters = savedData.playerState.customCharacters || [];
+    playerState.usedSerialCodes = savedData.playerState.usedSerialCodes || [];
     playerState.notifications = savedData.playerState.notifications || [];
     playerState.stageTracking = savedData.playerState.stageTracking || {};
     playerState.achievements = savedData.playerState.achievements || {};
@@ -14806,7 +14930,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             const aS = getSimStats(attacker), dS = getSimStats(target);
             const advantage = getElementalMultiplier(attacker.element, target.element);
             let damage = Math.floor((aS.atk * aS.atk) / Math.max(1, dS.def) * (attacker.isAdvantageForced ? 1.5 : advantage) * damageMult);
-            if (target.statusEffects.some(e=>e.type==='burn' || e.type==='poison')) damage = Math.floor(damage * 1.1);
+            if (target.statusEffects.some(e=>e.type==='burn')) damage = Math.floor(damage * 1.1);
 
             // 防御側スキル
             const defSkill = target.statusEffects.some(e=>e.type==='curse') ? null : target.abilities.find(a => a.timing === 'on_defense' && Math.random() < getTriggerRate(target, a));
@@ -15131,6 +15255,24 @@ function renderStatusPanel() {
 async function initializeGame() {
     loadSettings();
     loadGame();
+
+    // 保存されているファイル連携情報を復元
+    if ('showOpenFilePicker' in window) {
+        getStoredFileHandle().then(handle => {
+            if (handle) {
+                fileHandle = handle;
+                if (typeof updateHomeDataUI === 'function') updateHomeDataUI();
+                // ページロード後の最初のクリックで権限を再要求
+                const requestPerm = async () => {
+                    if (fileHandle && await fileHandle.requestPermission({ mode: 'readwrite' }) === 'granted') {
+                        showToast(`ファイル「${fileHandle.name}」へのオートセーブを有効化しました`);
+                    }
+                    document.removeEventListener('click', requestPerm);
+                };
+                document.addEventListener('click', requestPerm);
+            }
+        });
+    }
     
     // バージョン表示の更新
     const verDisplay = document.getElementById('gameVersionDisplay');
@@ -15183,7 +15325,7 @@ async function initializeGame() {
     setView('home');
     renderSquad();
     renderCards();    
-    updateSquadSwitcherUI();
+    updateHomeDataUI();
     // Update UI sliders from loaded settings
     document.getElementById('bgmVolume').value = settings.bgmVolume;
     document.getElementById('sfxVolume').value = settings.sfxVolume;
