@@ -2717,12 +2717,13 @@
 
   .gacha-anim-card {
     opacity: 0;
-    transform: scale(0.5) translateY(50px);
-    animation: gacha-card-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transform: scale(3) rotate(20deg);
+    animation: gacha-card-reveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
 
-  @keyframes gacha-card-in {
-    to { opacity: 1; transform: scale(1) translateY(0); }
+  @keyframes gacha-card-reveal {
+    0% { opacity: 0; transform: scale(3) rotate(25deg); filter: brightness(12) blur(15px); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); filter: brightness(1); }
   }
 
   .gacha-anim-card.is-new {
@@ -2734,6 +2735,12 @@
     0% { opacity: 0; transform: scale(0.5) translateY(50px); }
     50% { transform: scale(1.2); box-shadow: 0 0 40px var(--gold), 0 0 80px var(--gold); }
     100% { opacity: 1; transform: scale(1) translateY(0); box-shadow: none; }
+  }
+
+  /* Gacha Reveal Flash */
+  @keyframes gacha-flash-anim {
+    0% { opacity: 0.8; }
+    100% { opacity: 0; }
   }
 </style>
 <style>
@@ -3924,6 +3931,7 @@
 <!-- GACHA ANIMATION OVERLAY -->
 <div class="gacha-animation-overlay" id="gachaAnimationOverlay">
   <div class="gacha-anim-bg"></div>
+  <div id="gachaRevealFlash" style="position:absolute; inset:0; background:white; opacity:0; pointer-events:none; z-index:300;"></div>
   <div class="gacha-anim-container" id="gachaAnimContainer">
     <!-- Animated cards will be injected here -->
   </div>
@@ -4687,7 +4695,7 @@ const units = [
     baseStats: { hp: 1350, atk: 95, def: 85, spd: 70 },
     abilityType: 'magic',
     abilities: [
-      { name: '不可能支配', desc: '被弾時、30%の確率でダメージを50%カットする。', triggerRate: 0.3, timing: 'on_defense', damageCut: 0.5 },
+      { name: '不可能支配', desc: '【パッシブ】自身が生存している間、フィールド全体の時の流れが歪み、速度の遅い順に行動するようになる。', timing: 'passive' },
       { name: '悪魔の契約', desc: '攻撃時、自身が状態異常の場合、その効果を全て相手に付与する。', timing: 'before_attack' }
     ],
     useImg: true, img: 'C35.svg'
@@ -4768,7 +4776,7 @@ const units = [
   },
   {
     id: 45, name: 'アラン・ジャルエイ', element: 'light', elementJp: '光', type: 'ルディ王国',
-    baseStats: { hp: 1320, atk: 95, def: 105, spd: 78 },
+    baseStats: { hp: 1320, atk: 95, def: 118, spd: 78 },
     abilityType: 'magic',
     abilities: [
       { name: '視界内情報自動処理', desc: '被弾時、30%の確率で発動。受けるダメージを40%軽減する。', triggerRate: 0.3, timing: 'on_defense', effect: { type: 'damage_cut', value: 40 } },
@@ -4847,7 +4855,7 @@ const units = [
     baseStats: { hp: 1280, atk: 115, def: 75, spd: 82 },
     abilityType: 'magic',
     abilities: [
-      { name: '不可能支配', desc: '被弾時、30%の確率でダメージを50%カットする。', triggerRate: 0.3, timing: 'on_defense', damageCut: 0.5 },
+      { name: '不可能支配', desc: '【パッシブ】自身が生存している間、フィールド全体の時の流れが歪み、速度の遅い順に行動するようになる。', timing: 'passive' },
       { name: '絶念のマジック', desc: '攻撃後、60%の確率で追撃を行う。威力は対象がこのスキルを受けた回数に応じて減衰する(200%→150%→125%→112.5%...)。', triggerRate: 0.6, timing: 'after_attack' },
     ],
     useImg: true, img: 'C50.svg'
@@ -5646,6 +5654,7 @@ const AURA_DATA = [
 ];
 
 const RANK_AURA_MAP = {
+  'Unique': 'aura-8', // Rainbow
   'X': 'aura-15',  // Boss
   'SS': 'aura-10', // Galactic (Highest)
   'S': 'aura-7',   // Amethyst
@@ -5656,6 +5665,7 @@ const RANK_AURA_MAP = {
 };
 
 const ENCHANT_PREFIXES = {
+  'Unique': '唯一無二の',
   'X': '神話の',
   'SS': '伝説の',
   'S': '英雄の',
@@ -5678,6 +5688,7 @@ let playerState = {
   currentSquadIndex: 0,
   playerId: null, // Will be generated
   notifications: [], // { id, text, date, read }
+    gutsCount: 0, // 内部的な残回数
   stageTracking: {}, // { stageId: { hearts: 0, comments: 0, plays: 0, seen: true } }
   achievements: {}, // { id: dateString }
   claimedRewards: {}, // { id: true }
@@ -5906,6 +5917,12 @@ function getTriggerRate(unit, ability) {
   if (unit.equipment && unit.equipment.effect && unit.equipment.effect.type === 'ability_rate') {
     rate *= unit.equipment.effect.val;
   }
+  
+  // Unique: Skill Boost
+  if (unit.enhancement && unit.enhancement.rank === 'Unique' && unit.enhancement.type === 'ability_up') {
+      rate *= 1.2;
+  }
+
   // 闘志効果
   if (unit.statusEffects.some(e => e.type === 'fighting_spirit')) {
     rate *= 1.5;
@@ -10107,10 +10124,21 @@ function initBattlePlayerUnits() {
          };
       });
 
-      let unit = { ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], equipment: equip, enhancement: enhancement, abilities: battleAbilities };
+      let unit = { 
+          ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, 
+          battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], 
+          equipment: equip, enhancement: enhancement, abilities: battleAbilities,
+          gutsCount: 0 
+      };
+
       if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
-      if (equip && equip.effect.type === 'guts') unit.guts = true;
       
+      // Guts (くいしばり) Stacking Logic
+      if (equip && equip.effect.type === 'guts') unit.gutsCount++;
+      if (enhancement && enhancement.rank === 'Unique' && enhancement.type === 'guts_stack') {
+          unit.gutsCount++;
+      }
+
       return unit;
     }).filter(Boolean);
 }
@@ -10594,7 +10622,20 @@ async function runBattleSequence() {
   await triggerOnBattleStartAbilities();
   if (battleState.isFinished) return;
 
-  const turnQueue = [...battleState.playerUnits, ...battleState.enemyUnits].sort((a, b) => b.stats.spd - a.stats.spd);
+  // Check for Impossible Domination (Reverse Speed)
+  const hasReverseSpeed = [...battleState.playerUnits, ...battleState.enemyUnits].some(u => 
+      u.currentHp > 0 && 
+      u.abilities.some(a => a.name === '不可能支配') && 
+      !u.statusEffects.some(e => e.type === 'curse')
+  );
+
+  // Initial Queue
+  const turnQueue = [...battleState.playerUnits, ...battleState.enemyUnits].sort((a, b) => {
+      const spdA = getBattleStats(a).spd;
+      const spdB = getBattleStats(b).spd;
+      return hasReverseSpeed ? spdA - spdB : spdB - spdA;
+  });
+
   let turnCount = 1;
 
   while (!battleState.isFinished) {
@@ -10620,6 +10661,14 @@ async function runBattleSequence() {
 
     for (const attacker of turnQueue) {
       if (battleState.isFinished || attacker.currentHp <= 0) continue;
+      
+      // Re-evaluate Speed in real-time if multiple units are alive (Turn Order Check)
+      const currentReverseSpeed = [...battleState.playerUnits, ...battleState.enemyUnits].some(u => 
+          u.currentHp > 0 && 
+          u.abilities.some(a => a.name === '不可能支配') && 
+          !u.statusEffects.some(e => e.type === 'curse')
+      );
+
       let canAct = true;
       attacker.isAdvantageForced = false; // Reset flag for Gira
 
@@ -10741,6 +10790,13 @@ async function runBattleSequence() {
                 updateUnitUI(attacker);
                 showDamageNumber(attackerEl, regenAmt, 'heal');
             }
+        }
+
+        // Unique: Regen High
+        if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'regen_up') {
+            const regenAmt = Math.floor(attacker.stats.hp * 0.1);
+            attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + regenAmt);
+            showDamageNumber(attackerEl, regenAmt, 'heal');
         }
 
         if (attacker.currentHp <= 0) {
@@ -11141,6 +11197,13 @@ async function runBattleSequence() {
         let isHeal = activeAbility?.effect?.type === 'heal';
         let isEvaded = false;
         let isNonDamaging = activeAbility && (activeAbility.damageMult === 0 || (activeAbility.damageMult === undefined && (activeAbility.effect?.type === 'heal' || activeAbility.effect?.type === 'damage_cut')));
+        
+        // Unique: Critical Strike
+        let isCritical = false;
+        if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'crit_up' && Math.random() < 0.2) {
+            damageMultiplier *= 1.5;
+            isCritical = true;
+        }
 
         if (activeAbility && activeAbility.name === '次元斬・空断') {
             const randomAdd = Math.floor(Math.random() * 201) - 100;
@@ -11316,13 +11379,25 @@ async function runBattleSequence() {
           }
           target.guts = false; // Consume guts
       }
-      
+      // Unique: Guts Stack
+      else if (target.gutsCount > 0 && actualDamage >= target.currentHp) {
+          actualDamage = target.currentHp - 1;
+          target.gutsCount--;
+          logBattleMessage(`${target.name}は唯一無二の生命力で耐えた！`);
+          showPassivePopup(document.getElementById(`unit-${target.battleId}`), "SURVIVE");
+      }
+
         // Landia (ID: 16) Passive: 無能力の意地
         const landiaPassive = target.abilities.find(ab => ab.timing === 'on_skill_defense');
         if (activeAbility && target.id === 16 && landiaPassive && !target.statusEffects.some(e => e.type === 'curse')) {
             actualDamage = Math.floor(actualDamage * 0.5);
             logBattleMessage(`${target.name}は<span class="ability">${landiaPassive.name}</span>でダメージを50%ブロックした！`);
             playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
+        }
+        
+        // Unique: Damage Cut Flat
+        if (target.enhancement && target.enhancement.rank === 'Unique' && target.enhancement.type === 'dmg_cut_up') {
+            actualDamage = Math.floor(actualDamage * 0.85);
         }
 
         target.currentHp = Math.max(0, target.currentHp - actualDamage);
@@ -11380,8 +11455,21 @@ async function runBattleSequence() {
 
         // スキルによる追加効果
         if (activeAbility && activeAbility.effect?.type === 'status') {
-            await addStatusEffect(target, activeAbility.effect.status, activeAbility.effect.turns);
+            let turns = activeAbility.effect.turns;
+            if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'status_ext') {
+                turns++;
+            }
+            await addStatusEffect(target, activeAbility.effect.status, turns);
         }
+        
+        // Unique: HP Drain
+        if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'drain_up' && actualDamage > 0) {
+            const drain = Math.floor(actualDamage * 0.2);
+            attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drain);
+            updateUnitUI(attacker);
+            showDamageNumber(attackerEl, drain, 'heal');
+        }
+
         if (isHeal) {
             const healAmt = Math.floor(target.stats.hp * (activeAbility.effectValue / 100));
             target.currentHp = Math.min(target.stats.hp, target.currentHp + healAmt);
@@ -11415,7 +11503,15 @@ async function runBattleSequence() {
         updateUnitUI(target);
         const damageClass = activeAbility ? 'is-taking-skill-damage' : 'is-taking-damage';
         const animDuration = activeAbility ? 500 : 400;
-        showDamageNumber(targetEl, actualDamage, damageType);
+        
+        if (isCritical) {
+            showDamageNumber(targetEl, actualDamage, 'damage');
+            showPassivePopup(attackerEl, "CRITICAL!");
+            playEffect(targetEl, 'impact');
+        } else {
+            showDamageNumber(targetEl, actualDamage, damageType);
+        }
+
         targetEl.classList.add(damageClass);
         setTimeout(() => targetEl.classList.remove(damageClass), animDuration);
 
@@ -12841,37 +12937,49 @@ function renderRanking(data) {
     list.innerHTML = data.map((item, i) => `<div class="ranking-item ${item.playerId === playerState.playerId ? 'self' : ''} rank-${i+1}"><div class="rank-num">${i+1}</div><div class="rank-name">${item.playerName}</div><div class="rank-score">${item.floor}階</div></div>`).join('');
 }
 
-function getEnchantment() {
-    const rand = Math.random() * 100;
-    let rank, value;
+const ENCHANT_TABLES = {
+    standard: [
+        { rank: 'X', chance: 0.01, min: 41, max: 50 },
+        { rank: 'SS', chance: 0.09, min: 26, max: 40 },
+        { rank: 'S', chance: 0.9, min: 16, max: 25 },
+        { rank: 'A', chance: 4.0, min: 11, max: 15 },
+        { rank: 'B', chance: 15.0, min: 7, max: 10 },
+        { rank: 'C', chance: 30.0, min: 4, max: 6 },
+        { rank: 'D', chance: 50.0, min: 1, max: 3 }
+    ],
+    S: [
+        { rank: 'Unique', chance: 0.5, label: ["王の器", "英雄の盾", "聖なる願い"], value: 120 },
+        { rank: 'X', chance: 4.5, min: 61, max: 80 },
+        { rank: 'SS', chance: 20.0, min: 41, max: 60 },
+        { rank: 'S', chance: 74.5, min: 25, max: 40 }
+    ],
+    X: [
+        { rank: 'Unique', chance: 5.0, label: ["虚無の果て", "神殺しの一撃", "不滅の真理", "星霜の記憶", "次元の裂け目"] },
+        { rank: 'X', chance: 95.0, min: 81, max: 100 }
+    ]
+};
 
-    if (rand < 0.01) { // X: 0.01%
-        rank = 'X';
-        value = Math.floor(Math.random() * (50 - 41 + 1)) + 41;
-    } else if (rand < 0.01 + 0.09) { // SS: 0.09%
-        rank = 'SS';
-        value = Math.floor(Math.random() * (40 - 26 + 1)) + 26;
-    } else if (rand < 0.1 + 0.9) { // S: 0.9%
-        rank = 'S';
-        value = Math.floor(Math.random() * (25 - 16 + 1)) + 16;
-    } else if (rand < 1 + 4) { // A: 4% (Total 5%)
-        rank = 'A';
-        value = Math.floor(Math.random() * (15 - 11 + 1)) + 11;
-    } else if (rand < 5 + 15) { // B: 15% (Total 20%)
-        rank = 'B';
-        value = Math.floor(Math.random() * (10 - 7 + 1)) + 7;
-    } else if (rand < 20 + 30) { // C: 30% (Total 50%)
-        rank = 'C';
-        value = Math.floor(Math.random() * (6 - 4 + 1)) + 4;
-    } else { // D: 50% (Total 100%)
-        rank = 'D';
-        value = Math.floor(Math.random() * (3 - 1 + 1)) + 1;
+function getEnchantment(tier = 'standard') {
+    const table = ENCHANT_TABLES[tier] || ENCHANT_TABLES.standard;
+    const rand = Math.random() * 100; // 0-99.999...
+    let cumulative = 0;
+    let selected = table[table.length - 1];
+
+    for (const entry of table) {
+        cumulative += entry.chance;
+        if (rand < cumulative) {
+            selected = entry;
+            break;
+        }
     }
 
     const stats = ['hp', 'atk', 'def', 'spd'];
     const stat = stats[Math.floor(Math.random() * stats.length)];
     
-    return { rank, stat, value };
+    const rank = selected.rank;
+    const value = selected.value !== undefined ? selected.value : Math.floor(Math.random() * (selected.max - selected.min + 1)) + selected.min;
+    const label = selected.label ? selected.label[Math.floor(Math.random() * selected.label.length)] : undefined;
+    return { rank, stat, value, label };
 }
 
 function openEnchantModal(itemId) {
@@ -12883,12 +12991,15 @@ function openEnchantModal(itemId) {
     const footer = document.getElementById('enchantFooter');
     const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
     const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
-    const rankColors = {'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'}; // Always exists
+    const rankColors = {'Unique': '#00ffff', 'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'}; // Always exists
     if (!body || !footer) return; // Ensure elements exist
 
     let currentHtml = '<div style="color: var(--text-dim);">付与効果なし</div>';
     let currentAuraClass = '';
-    if (currentEnhancement) {
+    if (currentEnhancement && currentEnhancement.rank === 'Unique') {
+        currentHtml = `<div><span style="font-size:1rem; color:var(--accent); font-weight:bold;">${currentEnhancement.label}</span> <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent);">Unique</span></div>`;
+        currentAuraClass = 'aura-8';
+    } else if (currentEnhancement) {
         const color = rankColors[currentEnhancement.rank] || '#fff';
         currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value}%</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color};">${currentEnhancement.rank}</span></div>`;
         currentAuraClass = RANK_AURA_MAP[currentEnhancement.rank] || '';
@@ -12911,14 +13022,25 @@ function openEnchantModal(itemId) {
       <div id="enchantResultArea"></div>
     `;
 
-    const canAfford = playerState.rainbowStones >= 3000;
-    footer.innerHTML = `<button class="modal-add-btn" onclick="performEnchant(${itemId})" ${!canAfford ? 'disabled' : ''}>強化する (💎 3000)</button>`;
+    const canAffordStd = playerState.rainbowStones >= 3000;
+    const canAffordS = playerState.rainbowStones >= 300000;
+    const canAffordX = playerState.rainbowStones >= 30000000;
+
+    footer.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:0.5rem; width:100%;">
+        <button class="modal-add-btn" onclick="performEnchant(${itemId}, 'standard')" ${!canAffordStd ? 'disabled' : ''}>通常強化 (💎 3,000)</button>
+        <button class="modal-add-btn" style="border-color:var(--accent); color:var(--accent); background:rgba(0,200,255,0.1);" onclick="performEnchant(${itemId}, 'S')" ${!canAffordS ? 'disabled' : ''}>上位強化S (💎 300,000)</button>
+        <button class="modal-add-btn" style="border-color:var(--gold); color:var(--gold); background:rgba(255,215,0,0.1);" onclick="performEnchant(${itemId}, 'X')" ${!canAffordX ? 'disabled' : ''}>極限強化X (💎 30,000,000)</button>
+      </div>
+    `;
     document.getElementById('enchantOverlay').classList.add('open');
 }
 
-async function performEnchant(itemId) {
-    if (playerState.rainbowStones < 3000) { showToast('虹石が足りません'); return; }
-    playerState.rainbowStones -= 3000;
+async function performEnchant(itemId, tier = 'standard') {
+    const costs = { standard: 3000, S: 300000, X: 30000000 };
+    const cost = costs[tier];
+    if (playerState.rainbowStones < cost) { showToast('虹石が足りません'); return; }
+    playerState.rainbowStones -= cost;
     renderSquad();
     
     // Animation
@@ -12934,14 +13056,14 @@ async function performEnchant(itemId) {
     flash.style.animation = 'enchant-flash-anim 0.5s ease-out';
     icon.style.animation = 'enchant-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
     
-    await sleep(400);
+    await sleep(600);
 
-    tempEnchantResult = getEnchantment();
+    tempEnchantResult = getEnchantment(tier);
     const resultArea = document.getElementById('enchantResultArea');
     const footerEl = document.getElementById('enchantFooter');
     if (!resultArea || !footerEl) return; // Ensure elements exist
     const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
-    const rankColors = {'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
+    const rankColors = {'Unique': '#00ffff', 'X':'#ff0000', 'SS':'#ff00ff','S':'#b388ff','A':'#4d90ff','B':'#50C878','C':'#ffd700','D':'#c0c0c0'};
     const color = rankColors[tempEnchantResult.rank];
 
     // Update Icon Preview
@@ -12949,7 +13071,17 @@ async function performEnchant(itemId) {
     icon.className = `equip-icon-box ${newAura}`;
     icon.innerHTML = `${newAura ? `<div class="aura-overlay"></div>` : ''}${equipmentItems.find(e=>e.id===itemId).icon}`;
 
-    resultArea.innerHTML = `
+    if (tempEnchantResult.rank === 'Unique') {
+        resultArea.innerHTML = `
+        <div class="modal-section-title">新しい効果</div>
+        <div class="equip-card-stats" style="border-color: var(--accent); background: rgba(0,200,255,0.2); box-shadow: 0 0 15px var(--accent);">
+          <div style="font-size:1.2rem; font-weight:bold; color:var(--accent); text-shadow:0 0 5px var(--accent);">
+             ${tempEnchantResult.label}
+             <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem;">Unique</span>
+          </div>
+        </div>`;
+    } else {
+        resultArea.innerHTML = `
       <div class="modal-section-title">新しい効果</div>
       <div class="equip-card-stats" style="border-color: ${color}; background: rgba(0,0,0,0.6); box-shadow: 0 0 10px ${color}40;">
         <div style="font-size:1.2rem; font-weight:bold; color:${color}; text-shadow:0 0 5px ${color}80;">
@@ -12957,6 +13089,7 @@ async function performEnchant(itemId) {
            <span class="enchant-rank-badge" style="color:${color}; border-color:${color}; font-size:0.8rem;">${tempEnchantResult.rank}</span>
         </div>
       </div>`;
+    }
       
     footerEl.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="cancelEnchant(${itemId})">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
     saveGame();
@@ -12964,7 +13097,7 @@ async function performEnchant(itemId) {
 
 function confirmEnchant(itemId) {
     const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
-    if (currentEnhancement && ['A', 'S', 'SS', 'X'].includes(currentEnhancement.rank)) {
+    if (currentEnhancement && ['A', 'S', 'SS', 'X', 'Unique'].includes(currentEnhancement.rank)) {
         if (!confirm(`現在の効果はランク ${currentEnhancement.rank} です。新しい効果で上書きしてもよろしいですか？`)) return;
     }
     if (tempEnchantResult) { playerState.equipmentEnhancements[itemId] = tempEnchantResult; showToast('装備を強化しました！'); saveGame(); }
@@ -12972,7 +13105,7 @@ function confirmEnchant(itemId) {
 }
 
 function cancelEnchant(itemId) {
-    if (tempEnchantResult && ['A', 'S', 'SS', 'X'].includes(tempEnchantResult.rank)) {
+    if (tempEnchantResult && ['A', 'S', 'SS', 'X', 'Unique'].includes(tempEnchantResult.rank)) {
         if (!confirm(`抽選結果のランクは ${tempEnchantResult.rank} です。適用せずに元に戻してもよろしいですか？`)) return;
     }
     openEnchantModal(itemId);
@@ -12987,6 +13120,7 @@ async function startGachaAnimation() {
   const container = document.getElementById('gachaAnimContainer');
   const skipBtn = document.getElementById('skipGachaAnimationBtn');
   const bg = document.querySelector('.gacha-anim-bg');
+  const flash = document.getElementById('gachaRevealFlash');
   // Ensure elements exist before trying to access their properties
   if (!overlay || !container || !skipBtn || !bg) return;
   container.innerHTML = '';
@@ -13010,11 +13144,19 @@ async function startGachaAnimation() {
       <div class="gacha-result-name">${res.char.name}</div>
       ${!res.isNew ? `<div class="gacha-result-info">欠片 x10</div>` : ''}
     `;
+
+    playSfx('ability');
+    if (flash) {
+        flash.style.animation = 'none';
+        void flash.offsetWidth;
+        flash.style.animation = 'gacha-flash-anim 0.4s ease-out';
+    }
+
     container.appendChild(item);
-    await sleep(20);
+    await sleep(400);
   }
 
-  const totalAnimTime = (currentGachaResults.length * 150) + 1000;
+  const totalAnimTime = (currentGachaResults.length * 400) + 500;
   gachaAnimationTimeout = setTimeout(finishGachaAnimation, totalAnimTime);
 }
 
