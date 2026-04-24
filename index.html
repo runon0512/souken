@@ -4227,15 +4227,13 @@ function closeSettingsModal() {
 
 // ===== VERSION & PATCH NOTES =====
 const GAME_VERSION = "V1.3.6α";
-const PATCH_NOTES_DATA = `バランス調整！
+const PATCH_NOTES_DATA = `
 
-アスター、キティー、シャムのスキルを変更
+UI改善！
 
-「強化」の状態異常を強化
+不可能支配のスキル内容変更
 
-「燃焼」などの状態異常を弱体化
-
-その他UI改善等`;
+`;
 
 // ===== DATA =====
 const units = [
@@ -5693,6 +5691,10 @@ let playerState = {
   achievements: {}, // { id: dateString }
   claimedRewards: {}, // { id: true }
   usedSerialCodes: [],
+  playerName: "名無しの剣士",
+  fileSyncPrompted: false,
+  hasHighRankEquipNoSync: false,
+  battleCountSinceHighRank: 0,
 };
 
 function updateSquadSwitcherUI() {
@@ -8201,12 +8203,13 @@ function renderUserStageCard(stage) {
     const heartRate = stage.plays > 0 ? Math.round((stage.hearts / stage.plays) * 100) : 0;
     const isCleared = missionProgress.has("user_" + stage.id);
     
+    const hasCustom = squadData.some(e => e.isCustom);
     const genre = stage.genre || '設定しない';
     const genreHtml = genre !== '設定しない' ? `<span style="font-size:0.7rem; background:rgba(255,255,255,0.1); border:1px solid var(--border); padding:2px 6px; border-radius:10px; color:var(--text-mid); white-space:nowrap;">${genre}</span>` : '';
     const noCommandHtml = noCommand ? `<span style="font-size:0.7rem; background:rgba(255,107,53,0.1); border:1px solid var(--accent2); padding:2px 6px; border-radius:10px; color:var(--accent2); white-space:nowrap;">指揮禁止</span>` : '';
     
     // Reward Calculation: Total Power
-    const rewardVal = Math.min(totalPower, 100000);
+    const rewardVal = Math.min(totalPower, hasCustom ? 30000 : 100000);
     
     let fieldBadge = '';
     if (fieldEffectP !== 'none' || fieldEffectE !== 'none') {
@@ -9849,7 +9852,8 @@ async function startUserStageBattle(stageId) {
     });
 
     // Reward Calc (Total Power)
-    const rewardVal = Math.min(calculateTotalPower(enemies), 100000);
+    const hasCustom = enemies.some(e => e.isCustom);
+    const rewardVal = Math.min(calculateTotalPower(enemies), hasCustom ? 30000 : 100000);
 
     // Create a temporary mission object
     const mission = {
@@ -13100,7 +13104,14 @@ function confirmEnchant(itemId) {
     if (currentEnhancement && ['A', 'S', 'SS', 'X', 'Unique'].includes(currentEnhancement.rank)) {
         if (!confirm(`現在の効果はランク ${currentEnhancement.rank} です。新しい効果で上書きしてもよろしいですか？`)) return;
     }
-    if (tempEnchantResult) { playerState.equipmentEnhancements[itemId] = tempEnchantResult; showToast('装備を強化しました！'); saveGame(); }
+    if (tempEnchantResult) { 
+        if (!fileHandle && ['A', 'S', 'SS', 'X', 'Unique'].includes(tempEnchantResult.rank)) {
+            playerState.hasHighRankEquipNoSync = true;
+        }
+        playerState.equipmentEnhancements[itemId] = tempEnchantResult; 
+        showToast('装備を強化しました！'); 
+        saveGame(); 
+    }
     openEnchantModal(itemId); // 閉じずに再度強化できる状態にする
 }
 
@@ -14466,6 +14477,15 @@ function checkLoginBonus() {
 }
 
 async function handleLoginSequence() {
+    // Prompt for file sync if available and not yet set
+    if (!fileHandle && 'showOpenFilePicker' in window && !playerState.fileSyncPrompted) {
+        if (confirm("オートセーブ先のファイルを指定しますか？\n指定すると、ブラウザを閉じてもデータが確実に保存されます。")) {
+            await importSaveFile();
+        }
+        playerState.fileSyncPrompted = true;
+        saveGame();
+    }
+
     // 1. 名前チェック (無効な名前 = 初回ログインと判断)
     const invalidNames = ["名無しの剣士", "null"];
     const currentName = String(playerState.playerName).toLowerCase();
