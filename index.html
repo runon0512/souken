@@ -12886,6 +12886,78 @@ function redeemSerialCode() {
         if (document.getElementById('settingPlayerNameDisplay')) document.getElementById('settingPlayerNameDisplay').textContent = playerState.playerName;
         showToast('Bearguys コード適用！');
         playerState.usedSerialCodes.push(code);
+    } else if (code === 'NaNag0') {
+        // NaNag0: 名前「なご」、塔270階、虹石124,758、指定キャラLv80
+        playerState.rainbowStones = 124758;
+        playerState.playerName = "なご";
+        playerState.towerProgress = 270;
+        for(let f=1; f<=270; f++) missionProgress.add(10000 + f);
+
+        const targets = [
+            { id: 6, level: 80, potential: 2 }, // デン
+            { id: 15, level: 80, potential: 2 }, // リディン
+            { id: 12, level: 80, potential: 2 }, // オリバー
+            { id: 5, level: 80, potential: 2 },  // ライ
+            { id: 23, level: 80, potential: 1 }  // シャム
+        ];
+        const aura80 = getRequiredAuraForLevel(80);
+        targets.forEach(t => {
+            playerState.characters[t.id] = { 
+                level: 80, potential: t.potential, aura: aura80, fragments: 0, 
+                equippedId: playerState.characters[t.id]?.equippedId || null 
+            };
+        });
+        // 全所持装備にDランクのランダム効果
+        playerState.ownedEquipment.forEach(eid => {
+            const stats = ['hp', 'atk', 'def', 'spd'];
+            playerState.equipmentEnhancements[eid] = { 
+                rank: 'D', stat: stats[Math.floor(Math.random()*4)], 
+                value: Math.floor(Math.random()*3)+1 
+            };
+        });
+        if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
+        if (document.getElementById('settingPlayerNameDisplay')) document.getElementById('settingPlayerNameDisplay').textContent = playerState.playerName;
+        showToast('ギフトコード「NaNag0」を適用しました！');
+        playerState.usedSerialCodes.push(code);
+    } else if (code === 'DraKgon') {
+        // DraKgon: 名前「どらけー」、塔340階、指定キャラLv80/素質MAX、他キャラ欠片100、特定装備強化
+        playerState.playerName = "どらけー";
+        playerState.towerProgress = 340;
+        for(let f=1; f<=340; f++) missionProgress.add(10000 + f);
+
+        const maxUnits = [1, 6, 15, 23, 10, 41, 27]; // ドラ,デン,リディン,シャム,エマ,エマS,ナック
+        const aura80 = getRequiredAuraForLevel(80);
+        
+        units.forEach(u => {
+            if (u.id >= 300) return; // 敵は除外
+            if (maxUnits.includes(u.id)) {
+                playerState.characters[u.id] = { 
+                    level: 80, potential: 3, aura: aura80, fragments: 0, 
+                    equippedId: playerState.characters[u.id]?.equippedId || null 
+                };
+            } else {
+                // 他のキャラは欠片100個
+                if (!playerState.characters[u.id]) {
+                    playerState.characters[u.id] = { level: 1, potential: 0, aura: 0, fragments: 100 };
+                } else {
+                    playerState.characters[u.id].fragments = 100;
+                }
+            }
+        });
+
+        // 装備強化設定
+        // 狂戦士の斧(6): X 45% ATK
+        playerState.equipmentEnhancements[6] = { rank: 'X', stat: 'atk', value: 45 };
+        // 毒針(11): S 19% ATK
+        playerState.equipmentEnhancements[11] = { rank: 'S', stat: 'atk', value: 19 };
+        // フェニックスの羽(14): S 24% HP
+        playerState.equipmentEnhancements[14] = { rank: 'S', stat: 'hp', value: 24 };
+
+        if (document.getElementById('headerPlayerName')) document.getElementById('headerPlayerName').textContent = playerState.playerName;
+        if (document.getElementById('settingPlayerNameDisplay')) document.getElementById('settingPlayerNameDisplay').textContent = playerState.playerName;
+        
+        showToast('ギフトコード「DraKgon」を適用しました！');
+        playerState.usedSerialCodes.push(code);
     } else {
         showToast('無効なコードです');
         return;
