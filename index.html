@@ -3834,6 +3834,29 @@
   </div>
 </div>
 
+<!-- ADMIN SQUAD EDITOR MODAL -->
+<div class="modal-overlay" id="adminRmEditorOverlay" style="z-index: 5000;">
+  <div class="modal" style="width: 45rem; max-height: 90vh; display:flex; flex-direction:column;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">管理者：編成干渉プロトコル</div>
+        <div id="adminEditorTargetId" style="font-size:0.7rem; color:var(--text-dim); font-family:monospace;">ID: -</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('adminRmEditorOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="adminRmEditorBody" style="flex:1; overflow-y:auto; padding:1.25rem;">
+      <!-- Content injected by JS -->
+    </div>
+    <div class="modal-footer" style="display:flex; justify-content:space-between; gap:1rem; background:rgba(0,0,0,0.2);">
+       <div style="display:flex; gap:1rem;">
+         <button class="modal-add-btn remove-mode" style="width:auto; padding:0 1.5rem; background:rgba(255,0,0,0.1); border-color:#ff4d4d; color:#ff4d4d;" onclick="adminDeleteSquad()">削除</button>
+         <button class="modal-add-btn" style="width:auto; padding:0 1.5rem; border-color:var(--gold); color:var(--gold);" onclick="adminResetStats()">戦績リセット</button>
+       </div>
+       <button class="modal-add-btn" style="flex:1;" onclick="adminSaveSquad()">干渉内容をサーバーへ反映</button>
+    </div>
+  </div>
+</div>
+
 <!-- ACHIEVEMENT MODAL -->
 <div class="modal-overlay" id="achievementOverlay" onclick="if(event.target===this) this.classList.remove('open')">
   <div class="modal" style="width: 35rem; max-height: 85vh; display: flex; flex-direction: column;">
@@ -7186,7 +7209,9 @@ function formatAbilityDetails(ability) {
         rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}; font-size:0.7rem; margin-left:5px;">${equipEnhancement.rank}</span>`;
     }
 
-    const enhancementText = equipEnhancement ? `<span style="font-size:0.7em; color:var(--accent); font-family:'Orbitron';"> (+${equipEnhancement.value}% ${equipEnhancement.stat.toUpperCase()})</span>` : '';
+    const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
+    const labelPrefix = (equipEnhancement && equipEnhancement.rank === 'Unique' && equipEnhancement.label) ? `${equipEnhancement.label}: ` : '';
+    const enhancementText = equipEnhancement ? `<span style="font-size:0.7em; color:var(--accent); font-family:'Orbitron';"> (${labelPrefix}+${equipEnhancement.value}% ${statJp[equipEnhancement.stat]})</span>` : '';
     
     const equipContent = equip ? `
       <div style="font-weight:700;color:var(--gold); display:flex; align-items:center; gap:8px;">
@@ -13263,7 +13288,7 @@ function openEnchantModal(itemId) {
     let currentHtml = '<div style="color: var(--text-dim);">付与効果なし</div>';
     let currentAuraClass = '';
     if (currentEnhancement && currentEnhancement.rank === 'Unique') {
-        currentHtml = `<div><span style="font-size:1rem; color:var(--accent); font-weight:bold;">${currentEnhancement.label}</span> <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent);">Unique</span></div>`;
+        currentHtml = `<div><div style="font-size:1rem; color:var(--accent); font-weight:bold;">${currentEnhancement.label} <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent);">Unique</span></div><div style="font-size:0.9rem; color:var(--gold); margin-top:2px;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value}%</div></div>`;
         currentAuraClass = 'aura-8';
     } else if (currentEnhancement) {
         const color = rankColors[currentEnhancement.rank] || '#fff';
@@ -13345,6 +13370,7 @@ async function performEnchant(itemId, tier = 'standard') {
              ${tempEnchantResult.label}
              <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem;">Unique</span>
           </div>
+          <div style="font-size:1rem; color:var(--gold); font-weight:bold; margin-top:4px;">${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value}%</div>
         </div>`;
     } else {
         resultArea.innerHTML = `
@@ -13762,12 +13788,47 @@ function openModalFromPreview(charId) {
     openModal(charId, true, unit);
 }
 
-const COMPENSATION_VERSION = '20260325_aura_free';
+const COMPENSATION_VERSION = '20260426_enchant_unified';
 
 function checkAndApplyCompensation() {
   if (playerState.compensationVersion === COMPENSATION_VERSION) return;
 
-  // 1. Reset Characters & Refund
+  // --- 1. 装備強化数値の移行 (Enchantment Migration) ---
+  let enchantAdjusted = false;
+  if (playerState.equipmentEnhancements) {
+      for (const id in playerState.equipmentEnhancements) {
+          const e = playerState.equipmentEnhancements[id];
+          const oldVal = e.value;
+          
+          if (e.rank === 'X') {
+              // 旧極限(81-100) または 旧上位(61-80) を 新基準(41-50)へ
+              if (oldVal >= 81) e.value = Math.min(50, 41 + (oldVal - 81));
+              else if (oldVal >= 61) e.value = Math.min(50, 41 + (oldVal - 61));
+          } else if (e.rank === 'SS') {
+              // 旧上位(41-60) を 新基準(26-40)へ
+              if (oldVal >= 41) e.value = Math.min(40, 26 + (oldVal - 41));
+          } else if (e.rank === 'S') {
+              // 旧上位(25-40) を 新基準(16-25)へ
+              if (oldVal >= 25) e.value = Math.min(25, 16 + (oldVal - 25));
+          }
+          
+          if (e.value !== oldVal) enchantAdjusted = true;
+      }
+  }
+
+  if (enchantAdjusted) {
+      alert("【重要：装備性能調整のお知らせとお詫び】\n\n" +
+            "装備強化のバランス適正化のため、全ティアでランクごとの上昇率を「通常強化」の基準に統一いたしました。\n" +
+            "これに伴い、お客様が現在所持している装備の数値を新基準へ調整させていただきました。\n\n" +
+            "例：ランクX 83% → 43% / ランクSS 45% → 30%\n\n" +
+            "※ランクマッチに登録済みの編成数値は、ランクマッチ画面から「編成を更新」することで最新の状態に同期されます。\n" +
+            "ご不便をおかけしますが、何卒ご理解いただけますようお願い申し上げます。");
+  }
+
+  // --- 2. オーラ費用撤廃時の補填 (既存ロジック) ---
+  const isOldAuraVersion = !playerState.compensationVersion || playerState.compensationVersion.includes('aura_free');
+  // (既存のオーラリセット・返還処理が必要な場合はここに維持、今回はバージョン更新により統合)
+
   let refund = 0;
   for (const charId in playerState.characters) {
     const charState = playerState.characters[charId];
@@ -13790,7 +13851,7 @@ function checkAndApplyCompensation() {
       alert("【アップデートのお知らせ】\n\nレベルアップ時のオーラ強化費用を撤廃しました。\nこれに伴い、全キャラクターのレベルとオーラをリセットし、消費された虹石（レベル強化費＋オーラ強化費）を全て返還いたしました。\n\nご迷惑をおかけしましたことをお詫び申し上げます。");
   }
 
-  // 4. Mark & Save
+  // 3. Mark & Save
   playerState.compensationVersion = COMPENSATION_VERSION;
   saveGame();
 }
@@ -15603,6 +15664,7 @@ function renderRmRankings() {
 
     const tbody = document.getElementById('rmRankingBody');
     const visible = cachedRmRankings.slice(0, rmRankingDisplayLimit);
+    const isAdmin = playerState.playerName === "るのん（製作者）";
     
     visible.forEach((row, i) => {
         const tr = document.createElement('tr');
@@ -15637,6 +15699,7 @@ function renderRmRankings() {
             <td style="text-align:center;">
                 <button class="filter-btn" style="width:auto; padding:2px 8px;" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="previewSquadFromRanking(${i})">表示</button>
                 <button class="filter-btn" style="width:auto; padding:2px 8px; border-color:var(--accent2); color:var(--accent2);" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="challengeRankingOpponent(${i})">対戦</button>
+                ${isAdmin ? `<button class="filter-btn" style="width:auto; padding:2px 8px; border-color:var(--gold); color:var(--gold); margin-top:4px;" onclick="openAdminSquadEditor(${i})">管理</button>` : ''}
             </td>
             <td class="rate-val">${row.rate}</td>
         `;
@@ -15695,6 +15758,165 @@ function challengeRankingOpponent(visibleIndex) {
         };
         startBattle("TEMP_USER_STAGE");
     } catch(e) { showToast("対戦データの生成に失敗しました"); }
+}
+
+let adminEditingRow = null;
+function openAdminSquadEditor(index) {
+    const row = cachedRmRankings[index];
+    if (!row) return;
+    adminEditingRow = JSON.parse(JSON.stringify(row));
+    
+    document.getElementById('adminEditorTargetId').textContent = `DB-ID: ${row.id} / PlayerID: ${row.playerId}`;
+    const body = document.getElementById('adminRmEditorBody');
+    
+    let squadObj = { squad: [], details: {} };
+    try { squadObj = JSON.parse(row.squadData); } catch(e) {}
+
+    let charHtml = squadObj.squad.map(cid => {
+        const detail = squadObj.details[cid] || {};
+        const char = units.find(u => u.id == cid) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == cid));
+        const enh = detail.enhancement || { rank: 'D', stat: 'atk', value: 0 };
+        
+        return `
+            <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:8px; border:1px solid var(--border); margin-bottom:1rem;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:0.75rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem;">
+                    ${getFallbackHtml(char?.img, '', 'width:2.5rem; height:3.5rem; object-fit:cover; border-radius:4px;')}
+                    <div style="font-weight:bold; color:var(--accent);">${char?.name || '不明'} (Lv.${detail.level})</div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
+                    <div>
+                        <label style="font-size:0.6rem; color:var(--text-dim);">強化ランク</label>
+                        <select class="post-input" style="margin:0; font-size:0.8rem; padding:4px;" onchange="adminUpdateEnhance(${cid}, 'rank', this.value)">
+                            ${['Unique','X','SS','S','A','B','C','D'].map(r => `<option value="${r}" ${enh.rank===r?'selected':''}>${r}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.6rem; color:var(--text-dim);">対象ステータス</label>
+                        <select class="post-input" style="margin:0; font-size:0.8rem; padding:4px;" onchange="adminUpdateEnhance(${cid}, 'stat', this.value)">
+                            ${['hp','atk','def','spd'].map(s => `<option value="${s}" ${enh.stat===s?'selected':''}>${s.toUpperCase()}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.6rem; color:var(--text-dim);">上昇量 (%)</label>
+                        <input type="number" class="post-input" style="margin:0; font-size:0.8rem; padding:4px;" value="${enh.value}" onchange="adminUpdateEnhance(${cid}, 'value', this.value)">
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    body.innerHTML = `
+        <div class="modal-section-title">基本データ</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1.5rem; background:rgba(0,0,0,0.2); padding:1rem; border-radius:8px;">
+            <div>
+                <label style="font-size:0.7rem; color:var(--text-dim);">部隊名</label>
+                <input type="text" class="post-input" style="margin:0;" value="${adminEditingRow.squadName}" onchange="adminEditingRow.squadName=this.value">
+            </div>
+            <div>
+                <label style="font-size:0.7rem; color:var(--text-dim);">レート</label>
+                <input type="number" class="post-input" style="margin:0;" value="${adminEditingRow.rate}" onchange="adminEditingRow.rate=parseInt(this.value)">
+            </div>
+            <div>
+                <label style="font-size:0.7rem; color:var(--text-dim);">勝利数</label>
+                <input type="number" class="post-input" style="margin:0;" value="${adminEditingRow.wins}" onchange="adminEditingRow.wins=parseInt(this.value)">
+            </div>
+            <div>
+                <label style="font-size:0.7rem; color:var(--text-dim);">敗北数</label>
+                <input type="number" class="post-input" style="margin:0;" value="${adminEditingRow.losses}" onchange="adminEditingRow.losses=parseInt(this.value)">
+            </div>
+        </div>
+        <div class="modal-section-title">所属キャラクター装備干渉</div>
+        ${charHtml}
+    `;
+    
+    document.getElementById('adminRmEditorOverlay').classList.add('open');
+}
+
+function adminUpdateEnhance(charId, field, value) {
+    let squadObj = JSON.parse(adminEditingRow.squadData);
+    const detail = squadObj.details[charId];
+    if (!detail) return;
+    if (!detail.enhancement) {
+        detail.enhancement = { rank: 'D', stat: 'atk', value: 0 };
+    }
+    const enh = detail.enhancement;
+    if (field === 'value') enh[field] = parseInt(value);
+    else enh[field] = value;
+    
+    // Uniqueラベルの自動付与（必要なら）
+    if (field === 'rank' && value === 'Unique') enh.label = "管理者権限の理";
+    else if (field === 'rank') delete enh.label;
+
+    adminEditingRow.squadData = JSON.stringify(squadObj);
+}
+
+function adminResetStats() {
+    if (!confirm("戦績（勝敗・履歴）をリセットしますか？レートは維持されます。")) return;
+    adminEditingRow.wins = 0;
+    adminEditingRow.losses = 0;
+    adminEditingRow.history = "";
+    openAdminSquadEditor(cachedRmRankings.findIndex(r => r.id === adminEditingRow.id));
+    showToast("戦績をローカルでリセットしました（反映には保存が必要です）");
+}
+
+async function adminSaveSquad() {
+    if (!confirm("この編成データをサーバーへ上書き保存しますか？")) return;
+    
+    isRmSimulating = true;
+    showToast("サーバーへ送信中...");
+    try {
+        // 変更後の強化を反映した総戦力を再計算
+        let squadObj = JSON.parse(adminEditingRow.squadData);
+        let newPower = 0;
+        squadObj.squad.forEach(id => {
+            const detail = squadObj.details[id];
+            const char = units.find(u => u.id == id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
+            if (char && detail) {
+                const equip = detail.equippedId ? equipmentItems.find(e => e.id == detail.equippedId) : null;
+                const stats = calcStats(char.baseStats, detail.level, equip, detail.potential || 0, detail.enhancement, char.id);
+                newPower += Math.floor(stats.hp + stats.atk * 2 + stats.def + stats.spd);
+            }
+        });
+        adminEditingRow.totalPower = newPower;
+
+        // GASへのPOST前に接続を確立 (CORS/Redirect対策)
+        await fetch(RANK_MATCH_API_URL, { method: 'GET' }).catch(() => {});
+
+        const formData = new URLSearchParams();
+        formData.append('action', 'adminUpdateSquad');
+        formData.append('id', adminEditingRow.id);
+        formData.append('squadName', adminEditingRow.squadName);
+        formData.append('squadData', adminEditingRow.squadData);
+        formData.append('totalPower', adminEditingRow.totalPower);
+        formData.append('rate', adminEditingRow.rate);
+        formData.append('wins', adminEditingRow.wins);
+        formData.append('losses', adminEditingRow.losses);
+        formData.append('history', adminEditingRow.history || "");
+
+        await fetch(RANK_MATCH_API_URL, { method: 'POST', body: formData });
+        showToast("サーバー上のデータを更新しました");
+        document.getElementById('adminRmEditorOverlay').classList.remove('open');
+        fetchRmRankings(true);
+    } catch(e) { showToast("保存エラーが発生しました"); }
+    finally { isRmSimulating = false; }
+}
+
+async function adminDeleteSquad() {
+    if (!confirm("【警告】この編成をランキングから完全に削除しますか？")) return;
+    isRmSimulating = true;
+    try {
+        // GASへのPOST前に接続を確立
+        await fetch(RANK_MATCH_API_URL, { method: 'GET' }).catch(() => {});
+
+        const formData = new URLSearchParams();
+        formData.append('action', 'adminDeleteSquad');
+        formData.append('id', adminEditingRow.id);
+        await fetch(RANK_MATCH_API_URL, { method: 'POST', body: formData });
+        showToast("編成を削除しました");
+        document.getElementById('adminRmEditorOverlay').classList.remove('open');
+        fetchRmRankings(true);
+    } catch(e) { showToast("削除エラーが発生しました"); }
+    finally { isRmSimulating = false; }
 }
 
 function renderStatusPanel() {
