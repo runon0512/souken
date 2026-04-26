@@ -10190,7 +10190,7 @@ function initBattlePlayerUnits() {
       // バトル用：ドラ属性解放ロジック
       if (char.id == 1 && equip && equip.id === 15) {
           battleAbilities[0] = {
-              name: 'れーばティン・ワイド',
+              name: 'レーヴァティン・ワイド',
               desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。',
               triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
               effect: { type: 'status', status: 'burn', turns: 3 }
