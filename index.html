@@ -4472,11 +4472,11 @@ const units = [
   },
   {
     id: 16, name: 'ランディア・スクラ', element: 'none', elementJp: '無', type: 'ルディ王国',
-    baseStats: { hp: 1346, atk: 108, def: 77, spd: 65 },
+    baseStats: { hp: 1346, atk: 118, def: 77, spd: 65 },
     abilityType: 'slash',
     abilities: [
       { name: '虹斬', desc: '攻撃前に発動し、相性有利で攻撃し、衰弱を2ターン付与。', triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 2 } },
-      { name: '「無」の意地', desc: '戦闘開始時、自分と無属性の味方に強化を5ターン付与する。', timing: 'on_battle_start' },
+      { name: '「無」の象徴', desc: '戦闘開始時、自分と無属性の味方に強化を5ターン付与する。', timing: 'on_battle_start' },
     ],
     useImg: true, img: 'C11.svg'
   },
@@ -4690,7 +4690,7 @@ const units = [
   },
   {
     id: 30, name: 'セーレ', element: 'thunder', elementJp: '雷', type: 'ロベリア',
-    baseStats: { hp: 1350, atk: 95, def: 85, spd: 70 },
+    baseStats: { hp: 1357, atk: 106, def: 115, spd: 43 },
     abilityType: 'magic',
     abilities: [
       { name: '不可能支配', desc: '【パッシブ】自身が生存している間、フィールド全体の時の流れが歪み、速度の遅い順に行動するようになる。', timing: 'passive' },
@@ -4763,7 +4763,7 @@ const units = [
     element: 'none',
     elementJp: '無',
     type: 'ルディ王国',
-    baseStats: { hp: 1200, atk: 110, def: 65, spd: 88 },
+    baseStats: { hp: 1207, atk: 113, def: 65, spd: 88 },
     abilityType: 'shoot',
     abilities: [
       { name: '五色の銃', desc: '40%の確率で発動。攻撃が属性相性有利として計算される。', triggerRate: 0.4, timing: 'before_attack', isAdvantageForced: true },
@@ -4850,7 +4850,7 @@ const units = [
   },
   {
     id: 52, name: 'シムリス・ムーベル', element: 'thunder', elementJp: '雷', type: 'ロベリア',
-    baseStats: { hp: 1280, atk: 115, def: 75, spd: 82 },
+    baseStats: { hp: 1283, atk: 119, def: 75, spd: 82 },
     abilityType: 'magic',
     abilities: [
       { name: '不可能支配', desc: '【パッシブ】自身が生存している間、フィールド全体の時の流れが歪み、速度の遅い順に行動するようになる。', timing: 'passive' },
@@ -6459,11 +6459,16 @@ function renderCards() {
       const charA = playerState.characters[a.id];
       const charB = playerState.characters[b.id];
 
-      const favA = charA.isFavorite ? 1 : 0;
-      const favB = charB.isFavorite ? 1 : 0;
-      if (favA !== favB) return favB - favA;
+      // 1. お気に入り優先
+      if (charA.isFavorite !== charB.isFavorite) return charB.isFavorite ? 1 : -1;
 
-      // 3. Selected Sort
+      // 2. 最近の調整キャラ（ピックアップ）優先
+      const pickupIds = [30, 44, 18, 52, 16]; // セーレ, ヒデ, シオン, シムリス, ランディア
+      const isPickupA = pickupIds.includes(a.id);
+      const isPickupB = pickupIds.includes(b.id);
+      if (isPickupA !== isPickupB) return isPickupB ? 1 : -1;
+
+      // 3. 選択されたソート条件
       if (currentSort === 'power') {
         return getPower(b, charB.level) - getPower(a, charA.level);
       } else if (currentSort === 'level') {
@@ -6476,16 +6481,35 @@ function renderCards() {
     return a.id - b.id;
   });
 
-  filtered.forEach((c, idx) => {
-    const isOwned = ownedCharIds.includes(c.id.toString());
+  const pickupIds = [30, 44, 18, 52, 16];
+  const favs = [];
+  const pickups = [];
+  const others = [];
+
+  filtered.forEach(c => {
+    const isOwned = playerState.characters.hasOwnProperty(c.id);
+    if (!isOwned) {
+      others.push(c);
+      return;
+    }
+    const charState = playerState.characters[c.id];
+    if (charState.isFavorite) favs.push(c);
+    else if (pickupIds.includes(c.id)) pickups.push(c);
+    else others.push(c);
+  });
+
+  let globalIdx = 0;
+  const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex] || {};
+
+  const createCard = (c) => {
+    const idx = globalIdx++;
+    const isOwned = playerState.characters.hasOwnProperty(c.id);
     const inSquad = isOwned && squad.includes(c.id);
     const card = document.createElement('div');
     card.className = 'char-card' + (inSquad ? ' in-squad' : '') + (!isOwned ? ' not-owned' : '');
     card.style.animationDelay = (idx * 0.04) + 's';
 
-    const ab = c.abilities[0];
     const charState = isOwned ? playerState.characters[c.id] : null;
-    const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex] || {};
     const level = isOwned ? charState.level : 1;
     const equipId = isOwned ? (currentSquadEquips[c.id] || null) : null;
     const potential = isOwned ? (charState.potential || 0) : 0;
@@ -6563,14 +6587,42 @@ function renderCards() {
     `;
     if (auraData) card.classList.add(auraClass);
     card.onclick = () => openModal(c.id);
-    
-    // Make roster cards draggable
     card.setAttribute('draggable', isOwned ? 'true' : 'false');
     card.ondragstart = (e) => handleRosterDragStart(e, c.id);
     card.ondragend = (e) => { e.target.classList.remove('dragging'); draggedRosterCharId = null; };
+    return card;
+  };
 
-    fragment.appendChild(card);
-  });
+  favs.forEach(c => fragment.appendChild(createCard(c)));
+
+  if (pickups.length > 0) {
+    const wrapper = document.createElement('div');
+    wrapper.style.gridColumn = "1 / -1";
+    wrapper.style.padding = "1.5rem";
+    wrapper.style.border = "2px solid var(--gold)";
+    wrapper.style.borderRadius = "1rem";
+    wrapper.style.background = "rgba(255, 215, 0, 0.04)";
+    wrapper.style.marginBottom = "1.5rem";
+    wrapper.style.boxShadow = "inset 0 0 20px rgba(255, 215, 0, 0.1)";
+
+    const title = document.createElement('div');
+    title.textContent = "Pick up!";
+    title.style.fontFamily = "'Orbitron'";
+    title.style.color = "var(--gold)";
+    title.style.fontSize = "1.4rem";
+    title.style.fontWeight = "900";
+    title.style.marginBottom = "1rem";
+    title.style.textShadow = "0 0 10px rgba(255, 215, 0, 0.5)";
+    wrapper.appendChild(title);
+
+    const subGrid = document.createElement('div');
+    subGrid.className = grid.className;
+    pickups.forEach(c => subGrid.appendChild(createCard(c)));
+    wrapper.appendChild(subGrid);
+    fragment.appendChild(wrapper);
+  }
+
+  others.forEach(c => fragment.appendChild(createCard(c)));
   grid.appendChild(fragment);
   updateFilterCounts();
 }
@@ -6698,7 +6750,7 @@ function renderEquipmentPanel() {
     }
 
     const card = document.createElement('div');
-    const enhancedName = getEnhancedEquipName(item, enhancement, charId);
+    const enhancedName = getEnhancedEquipName(item, enhancement, ownerId);
     card.className = 'equip-card';
     card.innerHTML = `
       <div class="equip-card-header">
@@ -10051,7 +10103,7 @@ async function startBattle(missionId, skipDialogue = false) {
       let unit, equip = null;
       if (enemyConfig.isCustom) {
           const level = enemyConfig.level || 50;
-          const stats = calcStats(enemyConfig.baseStats, level, enemyConfig.equipment, enemyConfig.potential || 0, enemyConfig.enhancement);
+          const stats = calcStats(enemyConfig.baseStats, level, enemyConfig.equipment, enemyConfig.potential || 0, enemyConfig.enhancement, enemyConfig.id);
           
           // Map Custom Abilities to Battle Format
           const battleAbilities = (enemyConfig.abilities || []).map(ab => {
@@ -10094,9 +10146,32 @@ async function startBattle(missionId, skipDialogue = false) {
           equip = enemyConfig.equipment || null;
           const enhancement = enemyConfig.enhancement || null;
           // Enemies don't use potential yet (or default 0)
-          const stats = calcStats(enemy.baseStats, level, equip, enemyConfig.potential || 0, enhancement);
+          const stats = calcStats(enemy.baseStats, level, equip, enemyConfig.potential || 0, enhancement, enemy.id);
 
-          unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip, enhancement: enhancement };
+          const battleAbilities = [...(enemy.abilities || [])];
+          if ((enemy.id == 1 || enemy.id == 4) && equip && equip.id === 15) {
+              if (enemy.id == 1) {
+                  battleAbilities[0] = {
+                      name: 'レーヴァティン・ワイド',
+                      desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。',
+                      triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+                      effect: { type: 'status', status: 'burn', turns: 3 }
+                  };
+              } else if (enemy.id == 4) {
+                  battleAbilities[0] = {
+                      name: '激流一閃・刹那',
+                      desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
+                      triggerRate: 0.3, timing: 'on_defense'
+                  };
+              }
+          }
+
+          unit = { 
+              ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, 
+              isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], 
+              equipment: equip, enhancement: enhancement, abilities: battleAbilities 
+          };
+
           if ((unit.id == 1 || unit.id == 4) && equip && equip.id == 15) {
               unit.name = unit.id == 1 ? '【属性解放】ドラ・クラヴェール' : '【属性解放】いえみけ';
               unit.img = unit.id == 1 ? 'A1.svg' : 'A3.svg';
@@ -10568,10 +10643,14 @@ async function checkDeathAbilities(unit) {
           return false;
       } else {
           await showCutIn(unit, '運命支配');
-          const healAmount = Math.floor(unit.stats.hp * 0.1);
+          const healAmount = Math.floor(unit.stats.hp * 0.3);
           unit.currentHp = healAmount;
-          unit.statusEffects = []; // Clear all debuffs
-          logBattleMessage(`${unit.name}は運命を支配し、死を拒絶した！`);
+          
+          // 味方全員の全デバフ解除
+          const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+          allies.forEach(a => { if (a.currentHp > 0) a.statusEffects = []; });
+          
+          logBattleMessage(`${unit.name}は運命を支配し、味方全員の厄災を払った！`);
           updateUnitUI(unit);
           if (unitEl) {
               unitEl.classList.remove('defeated');
@@ -13650,6 +13729,24 @@ function openModalFromPreview(charId) {
     
     const stats = calcStats(char.baseStats, level, equip, potential, enhancement, char.id);
 
+    const battleAbilities = [...(char.abilities || [])];
+    if ((char.id == 1 || char.id == 4) && equip && equip.id === 15) {
+        if (char.id == 1) {
+            battleAbilities[0] = {
+                name: 'レーヴァティン・ワイド',
+                desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。',
+                triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+                effect: { type: 'status', status: 'burn', turns: 3 }
+            };
+        } else if (char.id == 4) {
+            battleAbilities[0] = {
+                name: '激流一閃・刹那',
+                desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
+                triggerRate: 0.3, timing: 'on_defense'
+            };
+        }
+    }
+
     const unit = {
         ...char,
         stats,
@@ -13660,7 +13757,7 @@ function openModalFromPreview(charId) {
         statusEffects: [],
         equipment: equip,
         enhancement: enhancement,
-        abilities: char.abilities || []
+        abilities: battleAbilities
     };
     openModal(charId, true, unit);
 }
@@ -14547,7 +14644,11 @@ async function openUsageStatsModal() {
 function getRmUsageStats() {
     const statsMap = {};
     let totalSquads = 0;
-    cachedRmRankings.forEach(row => {
+    
+    // ランクマッチ使用率制限: 上位30名のプレイヤーのみを集計対象とする
+    const top30 = cachedRmRankings.slice(0, 30);
+    
+    top30.forEach(row => {
         try {
             const data = JSON.parse(row.squadData);
             if (data && data.squad) {
@@ -14619,7 +14720,6 @@ function renderUsageStats(data) {
         const rate = ((s.count / data.total) * 100).toFixed(1);
         html += `
             <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem; background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:4px; border:1px solid var(--border);">
-                <img src="${char.useImg ? char.img : 'C0.svg'}" style="width:3rem; height:3rem; border-radius:4px; object-fit:cover; background:#000;">
                 ${getFallbackHtml(char.useImg ? char.img : 'C0.svg', '', 'width:3rem; height:3rem; border-radius:4px; object-fit:cover; background:#000;')}
                 <div style="flex:1;">
                     <div style="font-weight:bold; font-size:0.9rem;">${char.name}</div>
@@ -15017,10 +15117,10 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         let char = units.find(u => u.id === id) || playerState.customCharacters?.find(u => u.id == id);
         if (!char || !detail) return null;
         const equip = detail.equippedId ? equipmentItems.find(e => e.id === detail.equippedId) : null;
-        const stats = calcStats(char.baseStats, detail.level, equip, detail.potential || 0, detail.enhancement);
+        const stats = calcStats(char.baseStats, detail.level, equip, detail.potential || 0, detail.enhancement, char.id);
         
         // スキルのマッピング
-        const battleAbilities = (char.abilities || []).map(ab => {
+        let battleAbilities = (char.abilities || []).map(ab => {
             if (!ab.isCustom) return ab;
             return {
                 ...ab, timing: ab.trigger, triggerRate: (ab.triggerValue || 0) / 100,
@@ -15030,6 +15130,22 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                       : (ab.effect === 'damage_cut' ? { type: 'damage_cut', value: ab.effectValue } : (ab.effect === 'heal' ? { type: 'heal', value: ab.effectValue } : undefined))
             };
         });
+
+        // 属性解放スキルの適用
+        if ((char.id == 1 || char.id == 4) && equip && equip.id === 15) {
+            if (char.id == 1) {
+                battleAbilities[0] = {
+                    name: 'レーヴァティン・ワイド',
+                    triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+                    effect: { type: 'status', status: 'burn', turns: 3 }
+                };
+            } else if (char.id == 4) {
+                battleAbilities[0] = {
+                    name: '激流一閃・刹那',
+                    triggerRate: 0.3, timing: 'on_defense'
+                };
+            }
+        }
 
         let u = { ...char, stats, level: detail.level, currentHp: stats.hp, isPlayer, statusEffects: [], equipment: equip, enhancement: detail.enhancement, abilities: battleAbilities, battleId: (isPlayer ? 'p-' : 'e-') + index, passiveUsed: false, guts: !!(equip && equip.effect.type === 'guts') };
         if (equip && equip.effect.type === 'shield_hit') u.shieldHits = equip.effect.val;
