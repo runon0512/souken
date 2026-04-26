@@ -5705,10 +5705,13 @@ function updateSquadSwitcherUI() {
             const id = sq[j];
             const u = id ? (units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id))) : null;
             let imgSrc = u ? (u.useImg ? u.img : 'C0.svg') : null;
-            // 部隊切替UIでのドラ属性解放反映
-            if (id == 1) {
+            // 部隊切替UIでの属性解放反映
+            if (id == 1 || id == 4) {
                 const currentSquadEquips = playerState.squadEquipments[i];
-                if (currentSquadEquips && currentSquadEquips[1] === 15) imgSrc = 'A1.svg';
+                if (currentSquadEquips && currentSquadEquips[id] === 15) {
+                    if (id == 1) imgSrc = 'A1.svg';
+                    if (id == 4) imgSrc = 'A3.svg';
+                }
             }
             if (imgSrc) {
                 iconsHtml += getFallbackHtml(imgSrc, '', 'width:0.8rem; height:1.1rem; object-fit:cover; border:1px solid rgba(255,255,255,0.2); border-radius:1px;');
@@ -5858,7 +5861,7 @@ function openAchievementModal() {
 
 function getEnhancedEquipName(item, enhancement, ownerId = null) {
     if (!item) return '';
-    if (item.id === 15 && ownerId == 1) return '属性解放：賢者の石';
+    if (item.id === 15 && (ownerId == 1 || ownerId == 4)) return '属性解放：賢者の石';
     if (!enhancement) return item.name;
     const prefix = ENCHANT_PREFIXES[enhancement.rank] || '';
     return `${prefix}${item.name}`;
@@ -5975,9 +5978,14 @@ function getFallbackHtml(src, alt = '', style = '') {
 
 function calcStats(baseStats, level, equipment = null, potential = 0, explicitEnhancement = undefined, unitId = null) {
   let effectiveBase = { ...baseStats };
-  // ドラ(ID:1) + 賢者の石(ID:15) による覚醒ステータス
-  if (unitId == 1 && equipment && equipment.id === 15) {
-      effectiveBase = { hp: 1204, atk: 133, def: 83, spd: 96 };
+  // 属性解放 (ドラ:1, いえみけ:4) + 賢者の石(ID:15) によるステータス上昇 (約1割)
+  if ((unitId == 1 || unitId == 4) && equipment && equipment.id === 15) {
+      effectiveBase = {
+        hp: Math.floor(baseStats.hp * 1.1),
+        atk: Math.floor(baseStats.atk * 1.1),
+        def: Math.floor(baseStats.def * 1.1),
+        spd: Math.floor(baseStats.spd * 1.1)
+      };
   }
   // レベル1ごとに10%上昇する計算
   const multiplier = 1 + (level - 1) * 0.1;
@@ -6355,10 +6363,12 @@ function renderSquad() {
     if (c) {
       let displayName = c.name;
       if (c.id == 1 && equipId === 15) displayName = '【属性解放】ドラ・クラヴェール';
+      if (c.id == 4 && equipId === 15) displayName = '【属性解放】いえみけ';
       let portraitHtml;
       if (c.useImg && c.img) {
-          let displayImg = c.img;
+        let displayImg = c.img;
           if (c.id == 1 && equipId === 15) displayImg = 'A1.svg';
+          if (c.id == 4 && equipId === 15) displayImg = 'A3.svg';
           portraitHtml = getFallbackHtml(displayImg, displayName);
       } else {
           portraitHtml = `<div style="font-size: 2rem;">${c.icon || '👤'}</div>`;
@@ -6482,6 +6492,7 @@ function renderCards() {
     const aura = isOwned ? (charState.aura || 0) : 0;
     let displayName = c.name;
     if (c.id == 1 && equipId === 15) displayName = '【属性解放】ドラ・クラヴェール';
+    if (c.id == 4 && equipId === 15) displayName = '【属性解放】いえみけ';
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
     const s = calcStats(c.baseStats, level, equip, potential, undefined, c.id);
     const isFav = isOwned && charState.isFavorite;
@@ -6497,9 +6508,10 @@ function renderCards() {
 
     let effectiveAura = aura;
     let effectiveImg = c.img;
-    if (c.id == 1 && equip && equip.id === 15) {
+    if ((c.id == 1 || c.id == 4) && equip && equip.id === 15) {
         effectiveAura = 8;
-        effectiveImg = 'A1.svg';
+        if (c.id == 1) effectiveImg = 'A1.svg';
+        if (c.id == 4) effectiveImg = 'A3.svg';
     }
     const auraData = effectiveAura > 0 ? AURA_DATA.find(a => a.class === `aura-${effectiveAura}`) : null;
     const auraClass = auraData ? auraData.class : '';
@@ -6932,16 +6944,26 @@ function formatAbilityDetails(ability) {
   let displayName = c.name;
   let abilities = [...c.abilities];
 
-  if (c.id == 1 && equipId === 15) {
+  if ((c.id == 1 || c.id == 4) && equipId === 15) {
       effectiveAura = 8;
-      effectiveImg = 'A1.svg';
-      displayName = '【属性解放】ドラ・クラヴェール';
-      abilities[0] = { 
-          name: 'レーヴァティン・ワイド', 
-          desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。', 
-          triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
-          effect: { type: 'status', status: 'burn', turns: 3 } 
-      };
+      if (c.id == 1) effectiveImg = 'A1.svg';
+      if (c.id == 4) effectiveImg = 'A3.svg';
+      if (c.id == 1) {
+          displayName = '【属性解放】ドラ・クラヴェール';
+          abilities[0] = { 
+              name: 'れーばティン・ワイド', 
+              desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。', 
+              triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+              effect: { type: 'status', status: 'burn', turns: 3 } 
+          };
+      } else if (c.id == 4) {
+          displayName = '【属性解放】いえみけ';
+          abilities[0] = {
+              name: '激流一閃・刹那',
+              desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
+              triggerRate: 0.3, timing: 'on_defense'
+          };
+      }
   }
   const auraData = effectiveAura > 0 ? AURA_DATA[effectiveAura - 1] : null;
   const typeHtml = c.type ? `&nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.type}</span>` : '';
@@ -10075,9 +10097,9 @@ async function startBattle(missionId, skipDialogue = false) {
           const stats = calcStats(enemy.baseStats, level, equip, enemyConfig.potential || 0, enhancement);
 
           unit = { ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], equipment: equip, enhancement: enhancement };
-          if (unit.id == 1 && equip && equip.id == 15) {
-              unit.name = '【属性解放】ドラ・クラヴェール';
-              unit.img = 'A1.svg';
+          if ((unit.id == 1 || unit.id == 4) && equip && equip.id == 15) {
+              unit.name = unit.id == 1 ? '【属性解放】ドラ・クラヴェール' : '【属性解放】いえみけ';
+              unit.img = unit.id == 1 ? 'A1.svg' : 'A3.svg';
               unit.aura = 8;
           }
       }
@@ -10196,6 +10218,13 @@ function initBattlePlayerUnits() {
               effect: { type: 'status', status: 'burn', turns: 3 }
           };
       }
+      if (char.id == 4 && equip && equip.id === 15) {
+          battleAbilities[0] = {
+              name: '激流一閃・刹那',
+              desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
+              triggerRate: 0.3, timing: 'on_defense'
+          };
+      }
 
       let unit = { 
           ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, 
@@ -10204,10 +10233,10 @@ function initBattlePlayerUnits() {
           gutsCount: 0 
       };
 
-      if (char.id == 1 && equip && equip.id === 15) {
-          unit.img = 'A1.svg';
+      if ((char.id == 1 || char.id == 4) && equip && equip.id === 15) {
+          unit.img = char.id == 1 ? 'A1.svg' : 'A3.svg';
           unit.aura = 8;
-          unit.name = '【属性解放】ドラ・クラヴェール';
+          unit.name = char.id == 1 ? '【属性解放】ドラ・クラヴェール' : '【属性解放】いえみけ';
       }
 
       if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
@@ -11336,6 +11365,13 @@ async function runBattleSequence() {
                     }
 
                     if (Math.random() < currentTriggerRate) {
+                        if (ab.name === '激流一閃・刹那') {
+                            actualDamage = 0;
+                            logBattleMessage(`${target.name}の激流一閃・刹那！攻撃を完全に受け流した！`);
+                            playEffect(targetEl, 'guard-vertical');
+                            break;
+                        }
+
                         await showCutIn(target, ab.name);
 
                         if (target.id === 20 && ab.name === '運操作') { // Kitty
@@ -13560,15 +13596,17 @@ function renderSquadPreview(data) {
 
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
     let effectiveAura = aura;
+    let effectiveImg = char.img;
     let displayName = char.name;
-    if (char.id == 1 && equipId === 15) { effectiveAura = 8; displayName = '【属性解放】ドラ・クラヴェール'; }
+    if (char.id == 1 && equipId === 15) { effectiveAura = 8; displayName = '【属性解放】ドラ・クラヴェール'; effectiveImg = 'A1.svg'; }
+    if (char.id == 4 && equipId === 15) { effectiveAura = 8; displayName = '【属性解放】いえみけ'; effectiveImg = 'A3.svg'; }
     const auraData = effectiveAura > 0 ? AURA_DATA.find(a => a.class === `aura-${effectiveAura}`) : null;
       const auraClass = auraData ? auraData.class : '';
       const equipAuraClass = enhancement ? (RANK_AURA_MAP[enhancement.rank] || '') : '';
       
       let portraitHtml;
-      if (char.useImg && char.img) {
-          portraitHtml = getFallbackHtml(char.img, char.name);
+      if (char.useImg && effectiveImg) {
+          portraitHtml = getFallbackHtml(effectiveImg, char.name);
       } else {
           portraitHtml = `<div class="char-silhouette">${char.icon || '👤'}</div>`;
       }
