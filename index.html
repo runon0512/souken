@@ -2925,6 +2925,7 @@ de<!DOCTYPE html>
   const TOWER_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbyhjfVQr5yfnzEz1TIRRsktsNlBEdYBkIEObJXRyzWwVSr73QuVrIR4I1S4cNuTP5G9/exec"; // 無限の塔ランキング用のGAS URLをここに貼り付けてください
   const RANK_MATCH_API_URL = "https://script.google.com/macros/s/AKfycbxkXz9PaYuez2p5gsrxmAWaIEb1AVm980oGQklAp5L9jYS4q-aGLxTEjxqpoaBPV_87/exec"; // 新しいGAS URLをここに貼り付けてください
 
+  const GITHUB_RAW_URL = "https://raw.githubusercontent.com/runon0512/souken/main/index.html";
   const GITHUB_BASE = "https://raw.githubusercontent.com/runon0512/souken/a30b6faf5c62c16b204537ddabebb0a29bddaa24/";
 
   // ファイル上書き保存用のハンドル管理
@@ -10319,6 +10320,7 @@ async function startBattle(missionId, skipDialogue = false) {
   applyStatusUIVisibility();
 }
 
+
 function initBattlePlayerUnits() {
     const currentSquadEquips = playerState.squadEquipments[playerState.currentSquadIndex];
     return squad.map(id => {
@@ -16093,6 +16095,9 @@ async function initializeGame() {
         });
     }
     
+    // コード整合性チェックをゲーム初期化の早い段階で実行
+    await checkCodeIntegrity();
+
     // バージョン表示の更新
     const verDisplay = document.getElementById('gameVersionDisplay');
     if (verDisplay) verDisplay.textContent = GAME_VERSION;
