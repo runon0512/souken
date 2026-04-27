@@ -5947,6 +5947,8 @@ let viewingUserProfile = null; // { id, name }
 
 function getTriggerRate(unit, ability) {
   if (!ability) return 0;
+  if (!_0x2a1b(unit)) _0x1c3d();
+
   let rate = ability.triggerRate;
   if (rate === undefined) return 1.0;
   if (unit.equipment && unit.equipment.effect && unit.equipment.effect.type === 'ability_rate') {
@@ -6001,6 +6003,12 @@ function getFallbackHtml(src, alt = '', style = '') {
 }
 
 function calcStats(baseStats, level, equipment = null, potential = 0, explicitEnhancement = undefined, unitId = null) {
+  // Verify integrity before calculation
+  if (unitId && unitId < 300) {
+      const u = units.find(x => x.id === unitId);
+      if (u && !_0x2a1b(u)) _0x1c3d();
+  }
+
   let effectiveBase = { ...baseStats };
   // 属性解放 (ドラ:1, いえみけ:4) + 賢者の石(ID:15) によるステータス上昇 (約1割)
   if ((unitId == 1 || unitId == 4) && equipment && equipment.id === 15) {
@@ -6259,6 +6267,35 @@ function switchSquad(index) {
   updateSquadSwitcherUI();
   saveGame();
   checkAchievements();
+}
+
+// Anti-cheat verification data (Base64 encoded string containing ID, stats, and trigger rates)
+// Format: ID:HP-ATK-DEF-SPD:Rate1,Rate2...|ID...
+const _0x4f2e = "MToxMjUzLTEwOC03Mi04NTowLjN8MjoxMzQ3LTkyLTgxLTc0OjAuNCwwLjR8NDoxNDAyLTc2LTEyMi00ODowLjN8NToxMTg0LTgzLTg0LTk2OjAuMiwxLjB8NjoxMjk4LTc0LTk3LTU2OjAuNHw3OjExMDUtMTAyLTU4LTcxOjAuMnw4OjEyMDAtMTAxLTgyLTQ5fDk6MTE1NC05MS00OC05MjoyLjB8MTA6MTIwMi0xMTYtNTktNjY6MC40fDExOjEzNTUtOTQtNzYtNTg6MC4zfDEyOjExNDgtMTAyLTY0LTg3OjAuM3wxMzoxNDAzLTExMi02OC02NDowLjN8MTQ6MTYwMC05MC0xMjAtNTA6MC41fDQxOjEyNTQtMTEyLTY0LTY5OjAuM3wzNjoyMDAtMTEwLTcwLTgwfDM3OjEzODAtODAtMTE1LTU1OjAuNCwwLjR8Mzg6MTI4NC0xMTMtNjgtODE6MS4wfDE2OjEzNDYtMTE4LTc3LTY1OjAuM3wxNzoxMjYyLTEwMy04MS0xMzg6MS4wfDE4OjEzODctOTctNjgtODU6MC40fDE5OjEzNDUtOTgtNzItNzM6MC4yLDAuNHwyMDoxMzgyLTkzLTc5LTc4OjEuMHwyMToxMzc4LTExNS03MC01NTowLjYsMS4wfDIyOjEzNTQtMTA3LTU4LTg5OjEuMHwyMzoxMzAyLTEwMS02NC02MTowLjN8MjQ6MTMyNy0xMDMtNzEtODQ6MC40LDAuNnwyNToxMTQwLTEwNS04NS04MDowLjR8MjY6MTI1MC04NS0xMTAtNjA6MC40fDI3OjEwODAtMTI1LTcwLTg1OjEuMHwyODoxMTMwLTEwMC04MC03NTowLjZ8Mjk6MTI1NC05MS0xMDYtNjQ6MC4zfDMwOjEzNTctMTA2LTExNS00MzoxLjB8NDI6MTIyMC0xMTUtNjAtODU6MC42fDQzOjEyODAtMTA1LTc1LTc4OjAuNHw0NDoxMjA3LTExMy02NS04ODowLjQsMC42fDQ1OjEzMjAtOTUtMTE4LTc4OjAuM3w0NjoxMzAwLTExMC03MC04MDowLjQsMC40fDQ3OjEyNDAtOTUtODAtODU6MC4yNXw0ODoxMTAwLTExNS02MC03MDowLjM1fDQ5OjExNTAtMTEyLTY1LTgyOjAuNHw1MDoxMjAwLTEwNS03NS04MDowLjZ8NTE6MTMwMC05MC0xMDAtNjA6MC43NXw1MjoxMjgzLTExOS03NS04Mjo2LjAsMC42";
+
+function _0x2a1b(u) {
+    if (!u || u.id >= 300 || u.isCustom) return true;
+    try {
+        const m = atob(_0x4f2e).split('|').find(x => x.startsWith(u.id + ':'));
+        if (!m) return true;
+        const [_, stats, rates] = m.split(':');
+        const [hp, atk, def, spd] = stats.split('-').map(Number);
+        if (u.baseStats.hp != hp || u.baseStats.atk != atk || u.baseStats.def != def || u.baseStats.spd != spd) return false;
+        if (rates) {
+            const rArr = rates.split(',').map(Number);
+            for (let i = 0; i < rArr.length; i++) {
+                const actualRate = u.abilities[i]?.triggerRate;
+                if (actualRate !== undefined && Math.abs(actualRate - rArr[i]) > 0.001) return false;
+            }
+        }
+        return true;
+    } catch (e) { return false; }
+}
+
+function _0x1c3d() {
+    alert("不正なデータ改ざんを検知しました。ゲームを中断します。");
+    location.reload();
+    throw new Error("Data Integrity Violation");
 }
 
 // ===== SHOP PANEL =====
@@ -14751,10 +14788,10 @@ function getRmUsageStats() {
     const statsMap = {};
     let totalSquads = 0;
     
-    // ランクマッチ使用率制限: 上位30名のプレイヤーのみを集計対象とする
-    const top30 = cachedRmRankings.slice(0, 30);
+    // ランクマッチ使用率制限: 上位50名のプレイヤーを集計対象にする
+    const top50 = cachedRmRankings.slice(0, 50);
     
-    top30.forEach(row => {
+    top50.forEach(row => {
         try {
             const data = JSON.parse(row.squadData);
             if (data && data.squad) {
