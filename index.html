@@ -6080,10 +6080,15 @@ function calcStats(baseStats, level, equipment = null, potential = 0, explicitEn
       }
 
       if (enhancement) {
-          // The enhancement is a percentage of the character's BASE stats
-          const baseStatValue = baseStats[enhancement.stat];
-          if (baseStatValue) {
-              s[enhancement.stat] += Math.floor(baseStatValue * (enhancement.value / 2 / 100));
+          const multiplier = 1 + (enhancement.value / 100);
+          if (enhancement.rank === 'Z') {
+              // Zランク: 攻撃力 +40%
+              s.atk = Math.floor(s.atk * multiplier);
+          } else {
+              // X-Dランク: 全ステータスを最終値に対して割合増加
+              ['hp', 'atk', 'def', 'spd'].forEach(st => {
+                  s[st] = Math.floor(s[st] * multiplier);
+              });
           }
       }
   }
@@ -6596,6 +6601,7 @@ function renderCards() {
     if (c.id == 4 && equipId === 15) displayName = '【属性解放】いえみけ';
     if (c.id == 5 && equipId === 15) displayName = '【属性解放】ライ・アルバロ';
     if (c.id == 5 && equipId === 15) displayName = '【属性解放】ライ・アルバロ';
+    if (c.id == 5 && equipId === 15) displayName = '【属性解放】ライ・アルバロ';
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
     const s = calcStats(c.baseStats, level, equip, potential, undefined, c.id);
     const isFav = isOwned && charState.isFavorite;
@@ -6816,12 +6822,13 @@ function renderEquipmentPanel() {
     if (enhancement) {
         const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
         const rankColor = {
+            'Z': '#ff7f00',
             'SS': '#ff00ff', 'S': '#b388ff', 'A': '#4d90ff',
             'B': '#50C878', 'C': '#ffd700', 'D': '#c0c0c0'
         }[enhancement.rank] || '#fff';
         
         rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}">${enhancement.rank}</span>`;
-        enhancementHtml = `<div style="color:${rankColor}; font-weight:bold;">${statJp[enhancement.stat]} +${enhancement.value} Pt.</div>`;
+        enhancementHtml = enhancement.rank === 'Z' ? `<div style="color:${rankColor}; font-weight:bold;">攻撃力 +${enhancement.value}%</div>` : `<div style="color:${rankColor}; font-weight:bold;">全ステータス +${enhancement.value}%</div>`;
         auraClass = RANK_AURA_MAP[enhancement.rank] || '';
     }
 
@@ -7118,7 +7125,7 @@ function formatAbilityDetails(ability) {
           displayName = '【属性解放】ドラ・クラヴェール';
           abilities[0] = { 
               name: 'レーヴァティン・ワイド', 
-              desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。', 
+              desc: '40%の確率で発動。敵全体に攻撃力の80%のダメージを与え、3ターンの燃焼を付与する。', 
               triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8,
               effect: { type: 'status', status: 'burn', turns: 3 } 
           };
@@ -7133,7 +7140,7 @@ function formatAbilityDetails(ability) {
           displayName = '【属性解放】ライ・アルバロ';
           abilities[2] = {
               name: '轟',
-              desc: '攻撃後、100%の確率で発動(HP50%以下)。敵単体に攻撃力の200%のダメージを与え、2ターンの怯みを付与する。さらに敵全体に1ターンの麻痺を付与する。',
+              desc: 'HP50%以下の攻撃後、100%の確率で発動。敵単体に攻撃力の200%のダメージを与え、2ターンの怯みを付与する。さらに敵全体に1ターンの麻痺を付与する。',
               triggerRate: 1.0, timing: 'after_attack', damageMult: 2.0
           };
       }
@@ -10314,7 +10321,7 @@ async function startBattle(missionId, skipDialogue = false) {
               if (enemy.id == 1) {
                   battleAbilities[0] = {
                       name: 'レーヴァティン・ワイド',
-                      desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。',
+                      desc: '40%の確率で発動。敵全体に攻撃力の80%のダメージを与え、3ターンの燃焼を付与する。',
                       triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8,
                       effect: { type: 'status', status: 'burn', turns: 3 }
                   };
@@ -12033,8 +12040,29 @@ async function runBattleSequence() {
           let chaseAbility = null;
           // ライ・アルバロ (ID:5) の特殊処理
           if (attacker.id === 5) {
-            if (attacker.isPassiveActive) { // 八連雷撃斬
-              chaseAbility = attacker.abilities[2]; // 八連雷撃斬
+            if (attacker.isPassiveActive) {
+              chaseAbility = attacker.abilities[2]; 
+              if (chaseAbility && chaseAbility.name === '轟') {
+                  await showCutIn(attacker, chaseAbility.name);
+                  const chaseDamage = Math.floor(calculateDamage(attacker, target) * 2.0);
+                  target.currentHp = Math.max(0, target.currentHp - chaseDamage);
+                  recordDamage(attacker, chaseDamage);
+                  updateUnitUI(target);
+                  showDamageNumber(targetEl, chaseDamage);
+                  playEffect(targetEl, 'impact');
+                  await addStatusEffect(target, 'flinch', 2);
+                  
+                  const opponents = attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+                  for (const opp of opponents) {
+                      if (opp.currentHp > 0) {
+                          await addStatusEffect(opp, 'paralysis', 1);
+                          playEffect(document.getElementById(`unit-${opp.battleId}`), 'magic');
+                      }
+                  }
+                  logBattleMessage(`<span class="ability">${chaseAbility.name}！</span> 轟音が戦場を支配する！`);
+                  await sleep(600 / battleSpeedMultiplier);
+                  continue; // '轟' handled specially
+              }
             } else { // 雷撃斬
               if (Math.random() < (attacker.abilities[0].triggerRate || 0)) {
                 chaseAbility = attacker.abilities[0]; // 雷撃斬
@@ -13442,27 +13470,27 @@ function renderRanking(data) {
 
 const ENCHANT_TABLES = {
     standard: [
-        { rank: 'X', chance: 0.01, min: 40, max: 50 },
-        { rank: 'SS', chance: 0.09, min: 26, max: 40 },
-        { rank: 'S', chance: 0.9, min: 16, max: 24 },
-        { rank: 'A', chance: 4.0, min: 10, max: 14 },
-        { rank: 'B', chance: 15.0, min: 6, max: 10 },
-        { rank: 'C', chance: 30.0, min: 4, max: 6 },
-        { rank: 'D', chance: 50.0, min: 2, max: 2 }
+        { rank: 'X', chance: 0.01, value: 10 },
+        { rank: 'SS', chance: 0.09, value: 8 },
+        { rank: 'S', chance: 0.9, value: 6 },
+        { rank: 'A', chance: 4.0, value: 5 },
+        { rank: 'B', chance: 15.0, value: 3 },
+        { rank: 'C', chance: 30.0, value: 2 },
+        { rank: 'D', chance: 50.0, value: 1 }
     ],
     S: [
         { rank: 'Z', chance: 0.5, effects: [
-            { label: "破壊の極意", type: "status_up", stat: "atk", value: 55 }
+            { label: "破壊の極意", type: "status_up", stat: "atk", value: 40 }
         ]},
-        { rank: 'X', chance: 4.5, min: 26, max: 40 },
-        { rank: 'SS', chance: 20.0, min: 26, max: 40 },
-        { rank: 'S', chance: 74.5, min: 16, max: 24 }
+        { rank: 'X', chance: 4.5, value: 10 },
+        { rank: 'SS', chance: 20.0, value: 8 },
+        { rank: 'S', chance: 74.5, value: 6 }
     ],
     X: [
         { rank: 'Z', chance: 5.0, effects: [
-            { label: "破壊の極意", type: "status_up", stat: "atk", value: 55 }
+            { label: "破壊の極意", type: "status_up", stat: "atk", value: 40 }
         ]},
-        { rank: 'X', chance: 95.0, min: 40, max: 50 }
+        { rank: 'X', chance: 95.0, value: 10 }
     ]
 };
 
@@ -13494,7 +13522,7 @@ function getEnchantment(tier = 'standard') {
 
     const stats = ['hp', 'atk', 'def', 'spd'];
     const stat = stats[Math.floor(Math.random() * stats.length)];
-    const value = Math.floor(Math.random() * (selected.max - selected.min + 1)) + selected.min;
+    const value = selected.value;
     return { rank, stat, value };
 }
 
@@ -13527,7 +13555,7 @@ function openEnchantModal(itemId) {
         currentAuraClass = 'aura-8';
     } else if (currentEnhancement) {
         const color = rankColors[currentEnhancement.rank] || '#fff';
-        currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value} Pt.</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color};">${currentEnhancement.rank}</span></div>`;
+        currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">全ステータス +${currentEnhancement.value}%</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color};">${currentEnhancement.rank}</span></div>`;
         currentAuraClass = RANK_AURA_MAP[currentEnhancement.rank] || '';
     }
 
@@ -13634,7 +13662,7 @@ async function performEnchant(itemId, tier = 'standard') {
              <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem;">Z</span>
           </div>
           <div style="font-size:1rem; color:var(--gold); font-weight:bold; margin-top:4px;">
-            ${tempEnchantResult.type === 'status_up' ? `${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value} Pt.` : 
+            ${tempEnchantResult.type === 'status_up' ? `攻撃力 +${tempEnchantResult.value}%` : 
               tempEnchantResult.type === 'def_ignore' ? '特性：防御貫通' : 
               tempEnchantResult.type === 'crit_up' ? '特性：確定会心' :
               tempEnchantResult.type === 'guts_stack' ? `特性：くいしばり+${tempEnchantResult.value}` :
@@ -13649,7 +13677,7 @@ async function performEnchant(itemId, tier = 'standard') {
       <div class="modal-section-title">新しい効果</div>
       <div class="equip-card-stats" style="border-color: ${color}; background: rgba(0,0,0,0.6); box-shadow: 0 0 10px ${color}40;">
         <div style="font-size:1.2rem; font-weight:bold; color:${color}; text-shadow:0 0 5px ${color}80;">
-           ${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value} Pt.
+           全ステータス +${tempEnchantResult.value}%
            <span class="enchant-rank-badge" style="color:${color}; border-color:${color}; font-size:0.8rem;">${tempEnchantResult.rank}</span>
         </div>
       </div>`;
@@ -14069,8 +14097,8 @@ function openModalFromPreview(charId) {
         if (char.id == 1) {
             battleAbilities[0] = {
                 name: 'レーヴァティン・ワイド',
-                desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。',
-                triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+              desc: '40%の確率で発動。敵全体に攻撃力の80%のダメージを与え、3ターンの燃焼を付与する。',
+              triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8,
                 effect: { type: 'status', status: 'burn', turns: 3 }
             };
         } else if (char.id == 4) {
@@ -14079,6 +14107,8 @@ function openModalFromPreview(charId) {
                 desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
                 triggerRate: 0.3, timing: 'on_defense'
             };
+            } else if (char.id == 5) {
+                battleAbilities[2] = { name: '轟', triggerRate: 1.0, timing: 'after_attack', damageMult: 2.0 };
         }
     }
 
@@ -14097,40 +14127,28 @@ function openModalFromPreview(charId) {
     openModal(charId, true, unit);
 }
 
-const COMPENSATION_VERSION = '20260426_enchant_unified';
+const COMPENSATION_VERSION = '20260427_unified_all_stats_v2';
 
 function checkAndApplyCompensation() {
   if (playerState.compensationVersion === COMPENSATION_VERSION) return;
 
-  // --- 1. 装備強化数値の移行 (Enchantment Migration) ---
+  // --- 1. 装備強化の完全統一 (Pt. & 5-digit Fix) ---
   let enchantAdjusted = false;
   if (playerState.equipmentEnhancements) {
+      const rankVals = { 'X': 10, 'SS': 8, 'S': 6, 'A': 5, 'B': 3, 'C': 2, 'D': 1 };
       for (const id in playerState.equipmentEnhancements) {
           const e = playerState.equipmentEnhancements[id];
-          const oldVal = e.value;
-          
-          if (e.rank === 'X') {
-              // 旧極限(81-100) または 旧上位(61-80) を 新基準(41-50)へ
-              if (oldVal >= 81) e.value = Math.min(50, 41 + (oldVal - 81));
-              else if (oldVal >= 61) e.value = Math.min(50, 41 + (oldVal - 61));
-          } else if (e.rank === 'SS') {
-              // 旧上位(41-60) を 新基準(26-40)へ
-              if (oldVal >= 41) e.value = Math.min(40, 26 + (oldVal - 41));
-          } else if (e.rank === 'S') {
-              // 旧上位(25-40) を 新基準(16-25)へ
-              if (oldVal >= 25) e.value = Math.min(25, 16 + (oldVal - 25));
-          }
-          
-          if (e.value !== oldVal) enchantAdjusted = true;
+          if (e.rank === 'Z') { e.value = 40; e.stat = 'atk'; e.type = 'status_up'; enchantAdjusted = true; }
+          else if (rankVals[e.rank]) { e.value = rankVals[e.rank]; enchantAdjusted = true; }
       }
   }
+  if (enchantAdjusted) playerState.hasHighRankEquipNoSync = true;
 
   if (enchantAdjusted) {
-      alert("【重要：装備性能調整のお知らせとお詫び】\n\n" +
-            "装備強化のバランス適正化のため、全ティアでランクごとの上昇率を「通常強化」の基準に統一いたしました。\n" +
-            "これに伴い、お客様が現在所持している装備の数値を新基準へ調整させていただきました。\n\n" +
-            "例：ランクX 83% → 43% / ランクSS 45% → 30%\n\n" +
-            "※ランクマッチに登録済みの編成数値は、ランクマッチ画面から「編成を更新」することで最新の状態に同期されます。\n" +
+      alert("【装備システム一新のお知らせ】\n\n" +
+            "装備強化のランダム要素とPt加算方式を撤廃し、全ステータス%強化システムに移行しました。\n" +
+            "所持している全装備の数値が自動的に新基準（例：Xランクなら全能力+10%）へと調整されました。\n\n" +
+            "※古いバージョンの5桁数値やPt表記はすべて解消されました。\n" +
             "ご不便をおかけしますが、何卒ご理解いただけますようお願い申し上げます。");
   }
 
@@ -15924,6 +15942,10 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                         else if (chase.name === '嵐呼ぶ剣戟') count = 3;
                         else if (chase.name === '跳弾の矢') count = 2;
                         else if (chase.name === '神威【天秤】') count = 5;
+                    else if (chase.name === '轟') {
+                        count = 1;
+                        opponents.forEach(opp => { if (opp.currentHp > 0) applyStatus(opp, 'paralysis', 1); });
+                    }
 
                         const aS = getSimStats(attacker), dS = getSimStats(target);
                         for (let c = 0; c < count; c++) {
@@ -16280,16 +16302,12 @@ function adminNormalizeStats() {
         const detail = squadObj.details[charId];
         if (detail.enhancement) {
             const e = detail.enhancement;
-            const oldVal = e.value;
-            if (e.rank === 'X') {
-                if (oldVal >= 81) e.value = Math.min(50, 41 + (oldVal - 81));
-                else if (oldVal >= 61) e.value = Math.min(50, 41 + (oldVal - 61));
-            } else if (e.rank === 'SS') {
-                if (oldVal >= 41) e.value = Math.min(40, 26 + (oldVal - 41));
-            } else if (e.rank === 'S') {
-                if (oldVal >= 25) e.value = Math.min(25, 16 + (oldVal - 25));
+            const rankVals = { 'X': 10, 'SS': 8, 'S': 6, 'A': 5, 'B': 3, 'C': 2, 'D': 1, 'Z': 55 };
+            if (rankVals[e.rank]) {
+                e.value = rankVals[e.rank];
+                if (e.rank === 'Z') e.stat = 'atk';
+                count++;
             }
-            if (e.value !== oldVal) count++;
         }
     }
     
