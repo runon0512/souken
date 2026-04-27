@@ -1688,6 +1688,12 @@
   }
   .cutin-overlay.active .cutin-text { transform: translateX(50vw); left: 0; }
 
+  /* 陣営別カットインカラー */
+  .cutin-overlay.player-active .cutin-text { color: var(--accent); text-shadow: 0 0 1.25rem var(--accent); }
+  .cutin-overlay.enemy-active .cutin-text { color: var(--accent2); text-shadow: 0 0 1.25rem var(--accent2); }
+  .cutin-overlay.player-active .cutin-char-wrap { filter: drop-shadow(0 0 20px var(--accent)); }
+  .cutin-overlay.enemy-active .cutin-char-wrap { filter: drop-shadow(0 0 20px var(--accent2)); }
+
   #battleActionBtn {
     width: 7.5rem;
     align-self: stretch;
@@ -2803,7 +2809,7 @@
     margin-top: 4px;
   }
 
-  .gacha-result-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; text-align: center; padding-bottom: 0.5rem; position: relative; aspect-ratio: 105 / 140; display: flex; flex-direction: column; }
+  .gacha-result-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; text-align: center; padding-bottom: 0.5rem; position: relative; width: 8.75rem; aspect-ratio: 105 / 140; display: flex; flex-direction: column; }
   .gacha-result-item.is-new .gacha-result-new-tag { display: block; }
   .gacha-result-img { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #0d1a2a, #070e18); }
   .gacha-result-img img { width: 90%; height: auto; }
@@ -3205,7 +3211,6 @@
       <div id="storyCategoryTabs" style="display:none; gap:0.5rem; flex-wrap: wrap;">
           <button class="filter-btn active" id="tab-story-main" onclick="setStoryTab('main')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">メイン</button>
           <button class="filter-btn" id="tab-story-event" onclick="setStoryTab('event')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">イベント</button>
-          <button class="filter-btn" id="tab-story-challenge" onclick="setStoryTab('challenge')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">チャレンジ</button>
           <button class="filter-btn" id="tab-story-collab" onclick="setStoryTab('collab')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">コラボ</button>
           <button class="filter-btn" id="tab-story-user" onclick="setStoryTab('user')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">ユーザー</button>
           <button class="filter-btn" id="tab-story-tower" onclick="setStoryTab('tower')" style="flex:1; padding: 0.5rem 1rem; margin:0; text-align:center;">無限の塔 <span class="new-badge">New!</span></button>
@@ -3275,6 +3280,7 @@
         <div class="modal-stats-grid" id="modalBaseStats"></div>
       </div>
       <div class="modal-section">
+        <div id="modalSkillChoiceArea"></div>
         <div class="modal-section-title">装備</div>
         <div id="modalEquipDisplay"></div>
       </div>
@@ -4891,11 +4897,6 @@ const units = [
   },
 ];
 
-// チート対策用：正規のキャラクターIDリスト（順番も完全に一致させる必要があります）
-const unitsIntegrityRef = [
-  1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 41, 306, 307, 308, 309, 313, 310, 311, 312, 36, 37, 38, 16, 17, 15, 315, 316, 18, 19, 20, 21, 317, 319, 321, 320, 318, 22, 23, 24, 25, 26, 27, 28, 29, 30, 322, 323, 40, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52
-];
-
 // Equipment Data
 const equipmentItems = [
   { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } },
@@ -5000,8 +5001,8 @@ function generateMissions(startId, count, baseName, defaultEnemyPool, rewardBase
       description: `レベル${level}の脅威を排除せよ。`,
       enemies: missionEnemies,
       recommendedPower: totalPower,
-      reward: (rewardBase + (i * 5)) * 30,
-      firstTimeReward: ((rewardBase + (i * 5)) * 30) * 2
+      reward: (rewardBase + (i * 5)) * 15,
+      firstTimeReward: ((rewardBase + (i * 5)) * 15) * 2
     };
   });
 }
@@ -5144,8 +5145,14 @@ const chapter8Missions = [
     id: 801, name: '雷の試練', description: 'ライメルの力を試す', recommendedPower: 50000,
     enemies: [
       { id: 36, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライメル
+      { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, 
+            { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, // 衛兵
+
       { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, // 衛兵
-    ], reward: 20000, firstTimeReward: 40000
+
+      { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, // 衛兵
+// 衛兵
+    ], reward: 10000, firstTimeReward: 20000
   },
   {
     id: 802, name: '雷と騎士', description: 'ライメルとライを守る', recommendedPower: 55000,
@@ -5153,7 +5160,7 @@ const chapter8Missions = [
       { id: 5, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライ
       { id: 36, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライメル
       { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM } // 衛兵
-    ], reward: 22000, firstTimeReward: 44000
+    ], reward: 11000, firstTimeReward: 22000
   },
   {
     id: 803, name: '”雷”', description: 'セーレとライとライメルを守る', recommendedPower: 60000,
@@ -5162,13 +5169,13 @@ const chapter8Missions = [
       { id: 5, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライ
       { id: 36, level: 55, aiType: AI_TYPES.HIGHEST_ATK }, // ライメル
       { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, { id: 315, level: 20, aiType: AI_TYPES.RANDOM }, // 衛兵
-    ], reward: 24000, firstTimeReward: 48000
+    ], reward: 12000, firstTimeReward: 24000
   },
   {
     id: 804, name: '5人の試練', description: '5人で力を合わせる', recommendedPower: 70000,
     enemies: [
       { id: 5, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 36, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 30, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 1, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK }, { id: 4, level: 55, aura: 12, aiType: AI_TYPES.HIGHEST_ATK } // ライ、ライメル、セーレ、ドラk、いえみけ
-    ], reward: 26000, firstTimeReward: 52000
+    ], reward: 13000, firstTimeReward: 26000
   }
 ];
 
@@ -5581,7 +5588,7 @@ function getMissionById(id) {
   if (id >= 10000) {
     return generateTowerMission(id - 10000);
   }
-  const allChapters = [...storyChapters, ...eventChapters, ...challengeChapters, ...collabChapters];
+  const allChapters = [...storyChapters, ...eventChapters, ...collabChapters];
   for (const chapter of allChapters) {
     const m = chapter.missions.find(mis => mis.id === id);
     if (m) return m;
@@ -5629,6 +5636,21 @@ const elementalAdvantage = {
   thunder: { fire: 0.5, water: 1.5 },
   light: { dark: 1.5 },
   dark: { light: 1.5 },
+};
+
+const SKILL_CHOICES = {
+  15: { // リディン
+    1: [
+      { name: '雷攻撃強化', desc: '戦闘開始時、雷属性の味方と自分に5ターンの強化を付与する。' },
+      { name: '相打ち殺法', desc: '死亡時、自身の最大体力の50%のダメージを敵全体に与える。' }
+    ]
+  },
+  17: { // アスター
+    1: [
+      { name: '嵐呼ぶ剣戟', desc: 'HP30%以下で発動。攻撃力が30%上昇し、攻撃後、60%の確率で最大3回まで追撃を行う。' },
+      { name: 'ただひたすらの努力', desc: '体力が50%以下になると一度だけ、味方全員に障壁と強化を5T付与する。' }
+    ]
+  }
 };
 
 function calculateTotalPower(enemies) {
@@ -5688,7 +5710,8 @@ const AURA_DATA = [
 ];
 
 const RANK_AURA_MAP = {
-  'Unique': 'aura-8', // Rainbow
+  'Z': 'aura-8', // Rainbow
+  'Unique': 'aura-8',
   'X': 'aura-15',  // Boss
   'SS': 'aura-10', // Galactic (Highest)
   'S': 'aura-7',   // Amethyst
@@ -5699,6 +5722,7 @@ const RANK_AURA_MAP = {
 };
 
 const ENCHANT_PREFIXES = {
+  'Z': '究極の',
   'Unique': '唯一無二の',
   'X': '神話の',
   'SS': '伝説の',
@@ -5724,6 +5748,7 @@ let playerState = {
   notifications: [], // { id, text, date, read }
     gutsCount: 0, // 内部的な残回数
   stageTracking: {}, // { stageId: { hearts: 0, comments: 0, plays: 0, seen: true } }
+  skillChoices: {}, // { charId: { abilityIndex: choiceIndex } }
   achievements: {}, // { id: dateString }
   claimedRewards: {}, // { id: true }
   usedSerialCodes: [],
@@ -5745,11 +5770,12 @@ function updateSquadSwitcherUI() {
             const u = id ? (units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id))) : null;
             let imgSrc = u ? (u.useImg ? u.img : 'C0.svg') : null;
             // 部隊切替UIでの属性解放反映
-            if (id == 1 || id == 4) {
+            if (id == 1 || id == 4 || id == 5) {
                 const currentSquadEquips = playerState.squadEquipments[i];
                 if (currentSquadEquips && currentSquadEquips[id] === 15) {
                     if (id == 1) imgSrc = 'A1.svg';
                     if (id == 4) imgSrc = 'A3.svg';
+                    if (id == 5) imgSrc = 'A4.svg';
                 }
             }
             if (imgSrc) {
@@ -5802,7 +5828,7 @@ const ACHIEVEMENT_DEFS = [
     { id: 'enchant_a', name: '職人の技', desc: '装備強化でランクAの効果を作成', stones: 50000, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'A') },
     { id: 'enchant_s', name: '巨匠の領域', desc: '装備強化でランクSの効果を作成', stones: 80000, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'S') },
     { id: 'enchant_ss', name: '伝説の鍛冶師', desc: '装備強化でランクSSの効果を作成', stones: 100000, charId: 47, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'SS') },
-    { id: 'enchant_x', name: '神の息吹', desc: '装備強化でランクXの効果を作成', stones: 200000, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'X') },
+    { id: 'enchant_x', name: '神の息吹', desc: '装備強化でランクZの効果を作成', stones: 200000, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'Z') },
 ];
 
 function checkAchievements() {
@@ -6419,6 +6445,7 @@ function renderSquad() {
         let displayImg = c.img;
           if (c.id == 1 && equipId === 15) displayImg = 'A1.svg';
           if (c.id == 4 && equipId === 15) displayImg = 'A3.svg';
+          if (c.id == 5 && equipId === 15) displayImg = 'A4.svg';
           portraitHtml = getFallbackHtml(displayImg, displayName);
       } else {
           portraitHtml = `<div style="font-size: 2rem;">${c.icon || '👤'}</div>`;
@@ -6513,7 +6540,7 @@ function renderCards() {
       if (charA.isFavorite !== charB.isFavorite) return charB.isFavorite ? 1 : -1;
 
       // 2. 最近の調整キャラ（ピックアップ）優先
-      const pickupIds = [30, 44, 18, 52, 16]; // セーレ, ヒデ, シオン, シムリス, ランディア
+      const pickupIds = [1, 4, 15, 17]; // ドラ, いえみけ, リディン, アスター
       const isPickupA = pickupIds.includes(a.id);
       const isPickupB = pickupIds.includes(b.id);
       if (isPickupA !== isPickupB) return isPickupB ? 1 : -1;
@@ -6531,7 +6558,7 @@ function renderCards() {
     return a.id - b.id;
   });
 
-  const pickupIds = [30, 44, 18, 52, 16];
+  const pickupIds = [1, 4, 15, 17];
   const favs = [];
   const pickups = [];
   const others = [];
@@ -6567,6 +6594,8 @@ function renderCards() {
     let displayName = c.name;
     if (c.id == 1 && equipId === 15) displayName = '【属性解放】ドラ・クラヴェール';
     if (c.id == 4 && equipId === 15) displayName = '【属性解放】いえみけ';
+    if (c.id == 5 && equipId === 15) displayName = '【属性解放】ライ・アルバロ';
+    if (c.id == 5 && equipId === 15) displayName = '【属性解放】ライ・アルバロ';
     const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;    
     const s = calcStats(c.baseStats, level, equip, potential, undefined, c.id);
     const isFav = isOwned && charState.isFavorite;
@@ -6578,10 +6607,11 @@ function renderCards() {
 
     let effectiveAura = aura;
     let effectiveImg = c.img;
-    if ((c.id == 1 || c.id == 4) && equip && equip.id === 15) {
+    if ((c.id == 1 || c.id == 4 || c.id == 5) && equip && equip.id === 15) {
         effectiveAura = 8;
         if (c.id == 1) effectiveImg = 'A1.svg';
         if (c.id == 4) effectiveImg = 'A3.svg';
+        if (c.id == 5) effectiveImg = 'A4.svg';
     }
     const auraData = effectiveAura > 0 ? AURA_DATA.find(a => a.class === `aura-${effectiveAura}`) : null;
     const auraClass = auraData ? auraData.class : '';
@@ -6949,6 +6979,22 @@ function openModal(id, isBattleContext = false, battleUnit = null) {
   document.getElementById('modalOverlay').classList.add('open');
 }
 
+function selectSkillChoice(charId, abilityIndex, choiceIndex) {
+    if (!playerState.skillChoices) playerState.skillChoices = {};
+    if (!playerState.skillChoices[charId]) playerState.skillChoices[charId] = {};
+    
+    playerState.skillChoices[charId][abilityIndex] = choiceIndex;
+    
+    // 対応するキャラデータに反映
+    const char = units.find(u => u.id === charId);
+    if (char && SKILL_CHOICES[charId] && SKILL_CHOICES[charId][abilityIndex]) {
+        char.abilities[abilityIndex] = { ...char.abilities[abilityIndex], ...SKILL_CHOICES[charId][abilityIndex][choiceIndex] };
+    }
+    
+    updateModal();
+    saveGame();
+}
+
 function formatAbilityDetails(ability) {
   let details = [];
   if (ability.triggerRate) {
@@ -7037,21 +7083,43 @@ function formatAbilityDetails(ability) {
       equip = null;
     }
 
+  // スキルチョイスUIの生成
+  let skillChoiceHtml = '';
+  if (isOwned && !isBattleContext && SKILL_CHOICES[c.id]) {
+      skillChoiceHtml = `<div class="modal-section"><div class="modal-section-title">スキルセット選択</div><div style="display:flex; flex-direction:column; gap:8px;">`;
+      for (const abilityIdx in SKILL_CHOICES[c.id]) {
+          const choices = SKILL_CHOICES[c.id][abilityIdx];
+          const currentChoice = (playerState.skillChoices?.[c.id]?.[abilityIdx]) || 0;
+          
+          skillChoiceHtml += `<div style="display:flex; gap:5px; background:rgba(0,0,0,0.2); padding:5px; border-radius:4px;">`;
+          choices.forEach((choice, idx) => {
+              const isActive = currentChoice == idx;
+              skillChoiceHtml += `
+                <button class="filter-btn ${isActive ? 'active' : ''}" style="flex:1; font-size:0.8rem; padding:6px;" onclick="selectSkillChoice(${c.id}, ${abilityIdx}, ${idx})">
+                    ${choice.name}
+                </button>`;
+          });
+          skillChoiceHtml += `</div>`;
+      }
+      skillChoiceHtml += `</div></div>`;
+  }
+
   let effectiveAura = aura;
   let effectiveImg = c.img;
   let displayName = c.name;
   let abilities = [...c.abilities];
 
-  if ((c.id == 1 || c.id == 4) && equipId === 15) {
+  if ((c.id == 1 || c.id == 4 || c.id == 5) && equipId === 15) {
       effectiveAura = 8;
       if (c.id == 1) effectiveImg = 'A1.svg';
       if (c.id == 4) effectiveImg = 'A3.svg';
+      if (c.id == 5) effectiveImg = 'A4.svg';
       if (c.id == 1) {
           displayName = '【属性解放】ドラ・クラヴェール';
           abilities[0] = { 
               name: 'レーヴァティン・ワイド', 
               desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。', 
-              triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+              triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8,
               effect: { type: 'status', status: 'burn', turns: 3 } 
           };
       } else if (c.id == 4) {
@@ -7060,6 +7128,13 @@ function formatAbilityDetails(ability) {
               name: '激流一閃・刹那',
               desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
               triggerRate: 0.3, timing: 'on_defense'
+          };
+      } else if (c.id == 5) {
+          displayName = '【属性解放】ライ・アルバロ';
+          abilities[2] = {
+              name: '轟',
+              desc: '攻撃後、100%の確率で発動(HP50%以下)。敵単体に攻撃力の200%のダメージを与え、2ターンの怯みを付与する。さらに敵全体に1ターンの麻痺を付与する。',
+              triggerRate: 1.0, timing: 'after_attack', damageMult: 2.0
           };
       }
   }
@@ -7434,7 +7509,7 @@ function unlockPotential() {
   if (charState.fragments >= cost) {
     charState.fragments -= cost;
     charState.potential = currentPot + 1;
-    showToast(`素質解放！ ★${charState.potential} になりました！`);
+    showToast(`拡張！ ★${charState.potential} になりました！`);
     updateModal();
     renderCards();
     renderSquad();
@@ -7927,7 +8002,7 @@ function setStoryTab(tab) {
   if (tab === 'user' || tab === 'event') {
       container.style.gridTemplateColumns = '1fr';
   } else {
-      container.style.gridTemplateColumns = ''; // デフォルトに戻す
+      container.style.gridTemplateColumns = '';
   }
   renderStoryChapters();
 }
@@ -7979,7 +8054,6 @@ function renderStoryChapters() {
     // イベントまたはチャレンジ：ミッション一覧を表示
     let targetChapters;
     if (currentStoryTab === 'event') targetChapters = eventChapters;
-    else if (currentStoryTab === 'challenge') targetChapters = challengeChapters;
     else if (currentStoryTab === 'collab') targetChapters = collabChapters;
     
     if (targetChapters) {
@@ -10236,12 +10310,12 @@ async function startBattle(missionId, skipDialogue = false) {
           const stats = calcStats(enemy.baseStats, level, equip, enemyConfig.potential || 0, enhancement, enemy.id);
 
           const battleAbilities = [...(enemy.abilities || [])];
-          if ((enemy.id == 1 || enemy.id == 4) && equip && equip.id === 15) {
+          if ((enemy.id == 1 || enemy.id == 4 || enemy.id == 5) && equip && equip.id === 15) {
               if (enemy.id == 1) {
                   battleAbilities[0] = {
                       name: 'レーヴァティン・ワイド',
                       desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。',
-                      triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+                      triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8,
                       effect: { type: 'status', status: 'burn', turns: 3 }
                   };
               } else if (enemy.id == 4) {
@@ -10249,6 +10323,12 @@ async function startBattle(missionId, skipDialogue = false) {
                       name: '激流一閃・刹那',
                       desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
                       triggerRate: 0.3, timing: 'on_defense'
+                  };
+              } else if (enemy.id == 5) {
+                  battleAbilities[2] = {
+                      name: '轟',
+                      desc: '敵単体に攻撃力の200%のダメージを与え、2ターンの怯みを付与する。さらに敵全体に1ターンの麻痺を付与する。',
+                      triggerRate: 1.0, timing: 'after_attack', damageMult: 2.0
                   };
               }
           }
@@ -10259,9 +10339,10 @@ async function startBattle(missionId, skipDialogue = false) {
               equipment: equip, enhancement: enhancement, abilities: battleAbilities 
           };
 
-          if ((unit.id == 1 || unit.id == 4) && equip && equip.id == 15) {
-              unit.name = unit.id == 1 ? '【属性解放】ドラ・クラヴェール' : '【属性解放】いえみけ';
-              unit.img = unit.id == 1 ? 'A1.svg' : 'A3.svg';
+          if ((unit.id == 1 || unit.id == 4 || unit.id == 5) && equip && equip.id == 15) {
+              if (unit.id == 1) { unit.name = '【属性解放】ドラ・クラヴェール'; unit.img = 'A1.svg'; }
+              else if (unit.id == 4) { unit.name = '【属性解放】いえみけ'; unit.img = 'A3.svg'; }
+              else if (unit.id == 5) { unit.name = '【属性解放】ライ・アルバロ'; unit.img = 'A4.svg'; }
               unit.aura = 8;
           }
       }
@@ -10355,7 +10436,22 @@ function initBattlePlayerUnits() {
       const enhancement = equipId ? playerState.equipmentEnhancements[equipId] : null;
       const stats = calcStats(char.baseStats, level, equip, potential, undefined, char.id);
       
-      const battleAbilities = (char.abilities || []).map(ab => {
+      // スキルチョイスの反映
+      let baseAbilities = [...(char.abilities || [])];
+      if (playerState.skillChoices && playerState.skillChoices[id]) {
+          for (const [aIdx, choiceIdx] of Object.entries(playerState.skillChoices[id])) {
+              if (SKILL_CHOICES[id] && SKILL_CHOICES[id][aIdx] && SKILL_CHOICES[id][aIdx][choiceIdx]) {
+                  const choice = SKILL_CHOICES[id][aIdx][choiceIdx];
+                  baseAbilities[aIdx] = { 
+                      ...baseAbilities[aIdx], 
+                      name: choice.name, 
+                      desc: choice.desc 
+                  };
+              }
+          }
+      }
+
+      const battleAbilities = baseAbilities.map(ab => {
          if (!ab.isCustom) return ab;
          return {
              ...ab,
@@ -10371,21 +10467,28 @@ function initBattlePlayerUnits() {
          };
       });
 
-      // バトル用：ドラ属性解放ロジック
-      if (char.id == 1 && equip && equip.id === 15) {
+      // バトル用：属性解放ロジック
+      if ((char.id == 1 || char.id == 4 || char.id == 5) && equip && equip.id === 15) {
+          if (char.id == 1) {
           battleAbilities[0] = {
               name: 'レーヴァティン・ワイド',
               desc: '80%の確率で発動。敵全体に攻撃力の150%のダメージを与え、3ターンの燃焼を付与する。',
-              triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+                  triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8,
               effect: { type: 'status', status: 'burn', turns: 3 }
           };
-      }
-      if (char.id == 4 && equip && equip.id === 15) {
+          } else if (char.id == 4) {
           battleAbilities[0] = {
               name: '激流一閃・刹那',
               desc: '30%の確率で発動。被弾時に敵の攻撃を完全に受け流し、ダメージを100%カットする。',
               triggerRate: 0.3, timing: 'on_defense'
           };
+          } else if (char.id == 5) {
+          battleAbilities[2] = {
+              name: '轟',
+              desc: '敵単体に攻撃力の200%のダメージを与え、2ターンの怯みを付与する。さらに敵全体に1ターンの麻痺を付与する。',
+              triggerRate: 1.0, timing: 'after_attack', damageMult: 2.0
+          };
+          }
       }
 
       let unit = { 
@@ -10395,10 +10498,10 @@ function initBattlePlayerUnits() {
           gutsCount: 0 
       };
 
-      if ((char.id == 1 || char.id == 4) && equip && equip.id === 15) {
-          unit.img = char.id == 1 ? 'A1.svg' : 'A3.svg';
+      if ((char.id == 1 || char.id == 4 || char.id == 5) && equip && equip.id === 15) {
+          unit.img = char.id == 1 ? 'A1.svg' : (char.id == 4 ? 'A3.svg' : 'A4.svg');
           unit.aura = 8;
-          unit.name = char.id == 1 ? '【属性解放】ドラ・クラヴェール' : '【属性解放】いえみけ';
+          unit.name = char.id == 1 ? '【属性解放】ドラ・クラヴェール' : (char.id == 4 ? '【属性解放】いえみけ' : '【属性解放】ライ・アルバロ');
       }
 
       if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
@@ -10654,6 +10757,21 @@ async function checkDeathAbilities(unit) {
   if (unit.statusEffects.some(e => e.type === 'curse')) {
     logBattleMessage(`${unit.name}は呪いでスキルを発動できない！`);
     return false;
+  }
+
+  // Ridin (ID: 15) Choice: 相打ち殺法
+  if (unit.id === 15 && unit.skillChoices?.[1] === 1 && !unit.passiveUsed) {
+      unit.passiveUsed = true;
+      await showCutIn(unit, '相打ち殺法');
+      const enemies = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
+      const dmg = Math.floor(unit.stats.hp * 0.5);
+      for (const e of enemies) {
+          if (e.currentHp > 0) {
+              e.currentHp = Math.max(0, e.currentHp - dmg);
+              updateUnitUI(e);
+              if (e.currentHp <= 0) await processUnitDeath(e);
+          }
+      }
   }
   
   // Gira (ID: 13) Passive: 祟り神の降臨
@@ -10952,6 +11070,19 @@ async function runBattleSequence() {
               logBattleMessage(`${attacker.name}は永遠の肉体でHPを<span class="heal">${healAmt}</span>回復した！`);
               updateUnitUI(attacker);
               showDamageNumber(document.getElementById(`unit-${attacker.battleId}`), healAmt, 'heal');
+          }
+      }
+
+      // Aster (ID: 17) Choice: ただひたすらの努力
+      if (attacker.id === 17 && attacker.skillChoices?.[1] === 1 && attacker.currentHp <= attacker.stats.hp * 0.5 && !attacker.passiveUsed) {
+          attacker.passiveUsed = true;
+          await showCutIn(attacker, 'ただひたすらの努力');
+          const allies = attacker.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+          for (const a of allies) {
+              if (a.currentHp > 0) {
+                  await addStatusEffect(a, 'barrier', 5);
+                  await addStatusEffect(a, 'strengthen', 5);
+              }
           }
       }
 
@@ -11676,8 +11807,9 @@ async function runBattleSequence() {
         }
         
         // Unique: Damage Cut Flat
-        if (target.enhancement && target.enhancement.rank === 'Unique' && target.enhancement.type === 'dmg_cut_up') {
-            actualDamage = Math.floor(actualDamage * 0.85);
+        if (target.enhancement && target.enhancement.rank === 'Z' && target.enhancement.type === 'dmg_cut_up') {
+            const cutRate = (target.enhancement.value / 2) / 100;
+            actualDamage = Math.floor(actualDamage * (1 - cutRate));
         }
 
         target.currentHp = Math.max(0, target.currentHp - actualDamage);
@@ -11743,7 +11875,7 @@ async function runBattleSequence() {
         }
         
         // Unique: HP Drain (Effect is 1/2 of Pt.)
-        if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'drain_up' && actualDamage > 0) {
+        if (attacker.enhancement && attacker.enhancement.rank === 'Z' && attacker.enhancement.type === 'drain_up' && actualDamage > 0) {
             const drainRate = (attacker.enhancement.value / 2) / 100;
             const drain = Math.floor(actualDamage * drainRate);
             attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drain);
@@ -12243,6 +12375,10 @@ function checkWinLoss() {
     if (battleState.isFinished) return true;
     const mission = battleState.mission;
     if (!mission) return false;
+  
+  // スキルチョイス情報を詳細データから取得
+  const getChoice = (u, idx) => (u.skillChoices?.[idx]) || 0;
+  const isPlayerUnit = (u) => u.battleId.startsWith('p-');
 
     const livingEnemies = battleState.enemyUnits.filter(u => u.currentHp > 0).length;
     const livingPlayers = battleState.playerUnits.filter(u => u.currentHp > 0).length;
@@ -12402,14 +12538,19 @@ async function showCutIn(unit, abilityName) {
   const text = document.getElementById('cutinText');
   // Ensure elements exist before trying to access their properties
   if (!overlay || !charWrap || !text) return;
-  const imgSrc = unit.useImg ? unit.img : 'C0.svg';
-  charWrap.innerHTML = getFallbackHtml(imgSrc, '', "height:100%;width:auto;filter:drop-shadow(0 0 20px var(--accent))");
   
-  text.textContent = abilityName;
+  // 陣営クラスのリセットと適用
+  overlay.classList.remove('player-active', 'enemy-active');
+  overlay.classList.add(unit.isPlayer ? 'player-active' : 'enemy-active');
+
+  const imgSrc = unit.useImg ? unit.img : 'C0.svg';
+  charWrap.innerHTML = getFallbackHtml(imgSrc, '', "height:100%;width:auto;");
+  
+  text.textContent = (unit.isPlayer ? "味方：" : "敵：") + abilityName;
 
   overlay.classList.add('active');
   await sleep(2400 / battleSpeedMultiplier);
-  overlay.classList.remove('active');
+  overlay.classList.remove('active', 'player-active', 'enemy-active');
   await sleep(400 / battleSpeedMultiplier);
 }
 
@@ -12686,10 +12827,15 @@ function calculateDamage(attacker, defender) {
 function updateUnitUI(unit) {
   const unitEl = document.getElementById(`unit-${unit.battleId}`);
   if (!unitEl) return;
-  const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100); // Always calculate
+  const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100);
   // Ensure elements exist before trying to set their properties
   unitEl.querySelector('.b-unit-hp-bar').style.width = `${hpPercent}%`;
   unitEl.querySelector('.b-unit-hp-text').textContent = `${unit.currentHp} / ${unit.stats.hp}`;
+
+  // HP1以上なら死亡色（グレースケール）を解除
+  if (unit.currentHp > 0) {
+      unitEl.classList.remove('defeated');
+  }
 
   // Status effect icons
   const statusContainer = unitEl.querySelector('.b-unit-status-effects');
@@ -13305,22 +13451,16 @@ const ENCHANT_TABLES = {
         { rank: 'D', chance: 50.0, min: 2, max: 2 }
     ],
     S: [
-        { rank: 'Unique', chance: 0.5, effects: [
-            { label: "王の器", type: "all_stats_up", value: 20 },
-            { label: "英雄の盾", type: "dmg_cut_up", value: 30 },
-            { label: "聖なる願い", type: "guts_stack", value: 1 }
+        { rank: 'Z', chance: 0.5, effects: [
+            { label: "破壊の極意", type: "status_up", stat: "atk", value: 55 }
         ]},
-        { rank: 'X', chance: 4.5, min: 40, max: 50 },
+        { rank: 'X', chance: 4.5, min: 26, max: 40 },
         { rank: 'SS', chance: 20.0, min: 26, max: 40 },
         { rank: 'S', chance: 74.5, min: 16, max: 24 }
     ],
     X: [
-        { rank: 'Unique', chance: 5.0, effects: [
-            { label: "虚無の果て", type: "def_ignore", value: 100 },
-            { label: "神殺しの一撃", type: "crit_up", value: 100 },
-            { label: "不滅の真理", type: "regen_up", value: 20 },
-            { label: "星霜 de記憶", type: "ability_up", value: 50 },
-            { label: "次元の裂け目", type: "status_up", stat: "spd", value: 120 }
+        { rank: 'Z', chance: 5.0, effects: [
+            { label: "破壊の極意", type: "status_up", stat: "atk", value: 55 }
         ]},
         { rank: 'X', chance: 95.0, min: 40, max: 50 }
     ]
@@ -13341,10 +13481,10 @@ function getEnchantment(tier = 'standard') {
     }
 
     const rank = selected.rank;
-    if (rank === 'Unique') {
+    if (rank === 'Z') {
         const eff = selected.effects[Math.floor(Math.random() * selected.effects.length)];
         return { 
-            rank: 'Unique', 
+            rank: 'Z', 
             label: eff.label, 
             type: eff.type, 
             stat: eff.stat || 'hp', // Default stat to avoid breaks, though type handles it
@@ -13372,7 +13512,7 @@ function openEnchantModal(itemId) {
 
     let currentHtml = '<div style="color: var(--text-dim);">付与効果なし</div>';
     let currentAuraClass = '';
-    if (currentEnhancement && currentEnhancement.rank === 'Unique') {
+    if (currentEnhancement && currentEnhancement.rank === 'Z') {
         let effectDesc = '特殊特性が発現中';
         if (currentEnhancement.type === 'status_up') effectDesc = `${statJp[currentEnhancement.stat]} +${currentEnhancement.value} Pt.`;
         else if (currentEnhancement.type === 'def_ignore') effectDesc = '防御貫通 (攻撃力分のダメージ)';
@@ -13383,7 +13523,7 @@ function openEnchantModal(itemId) {
         else if (currentEnhancement.type === 'regen_up') effectDesc = `毎ターンHP ${currentEnhancement.value} Pt. 回復`;
         else if (currentEnhancement.type === 'ability_up') effectDesc = `スキル発動率 1.5倍`;
 
-        currentHtml = `<div><div style="font-size:1rem; color:var(--accent); font-weight:bold;">${currentEnhancement.label} <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent);">Unique</span></div><div style="font-size:0.9rem; color:var(--gold); margin-top:2px;">${effectDesc}</div></div>`;
+        currentHtml = `<div><div style="font-size:1rem; color:var(--accent); font-weight:bold;">${currentEnhancement.label} <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent);">Z</span></div><div style="font-size:0.9rem; color:var(--gold); margin-top:2px;">${effectDesc}</div></div>`;
         currentAuraClass = 'aura-8';
     } else if (currentEnhancement) {
         const color = rankColors[currentEnhancement.rank] || '#fff';
@@ -13485,13 +13625,13 @@ async function performEnchant(itemId, tier = 'standard') {
     icon.className = `equip-icon-box ${newAura}`;
     icon.innerHTML = `${newAura ? `<div class="aura-overlay"></div>` : ''}${equipmentItems.find(e=>e.id===itemId).icon}`;
 
-    if (tempEnchantResult.rank === 'Unique') {
+    if (tempEnchantResult.rank === 'Z') {
         resultArea.innerHTML = `
         <div class="modal-section-title">新しい効果</div>
         <div class="equip-card-stats" style="border-color: var(--accent); background: rgba(0,200,255,0.2); box-shadow: 0 0 15px var(--accent);">
           <div style="font-size:1.2rem; font-weight:bold; color:var(--accent); text-shadow:0 0 5px var(--accent);">
              ${tempEnchantResult.label}
-             <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem;">Unique</span>
+             <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem;">Z</span>
           </div>
           <div style="font-size:1rem; color:var(--gold); font-weight:bold; margin-top:4px;">
             ${tempEnchantResult.type === 'status_up' ? `${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value} Pt.` : 
@@ -13521,11 +13661,11 @@ async function performEnchant(itemId, tier = 'standard') {
 
 function confirmEnchant(itemId) {
     const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
-    if (currentEnhancement && ['A', 'S', 'SS', 'X', 'Unique'].includes(currentEnhancement.rank)) {
+    if (currentEnhancement && ['A', 'S', 'SS', 'X', 'Z'].includes(currentEnhancement.rank)) {
         if (!confirm(`現在の効果はランク ${currentEnhancement.rank} です。新しい効果で上書きしてもよろしいですか？`)) return;
     }
     if (tempEnchantResult) { 
-        if (!fileHandle && ['A', 'S', 'SS', 'X', 'Unique'].includes(tempEnchantResult.rank)) {
+        if (!fileHandle && ['A', 'S', 'SS', 'X', 'Z'].includes(tempEnchantResult.rank)) {
             playerState.hasHighRankEquipNoSync = true;
         }
         playerState.equipmentEnhancements[itemId] = tempEnchantResult; 
@@ -13536,7 +13676,7 @@ function confirmEnchant(itemId) {
 }
 
 function cancelEnchant(itemId) {
-    if (tempEnchantResult && ['A', 'S', 'SS', 'X', 'Unique'].includes(tempEnchantResult.rank)) {
+    if (tempEnchantResult && ['A', 'S', 'SS', 'X', 'Z'].includes(tempEnchantResult.rank)) {
         if (!confirm(`抽選結果のランクは ${tempEnchantResult.rank} です。適用せずに元に戻してもよろしいですか？`)) return;
     }
     openEnchantModal(itemId);
@@ -13564,6 +13704,7 @@ async function startGachaAnimation() {
   bg.style.display = 'none';
 
   for (let i = 0; i < currentGachaResults.length; i++) {
+    if (!currentGachaResults) break; // スキップされたら中断
     const res = currentGachaResults[i];
     const item = document.createElement('div');
     // Use the same card structure as the result modal for consistency
@@ -13690,8 +13831,13 @@ function performGacha(type, count) {
   }
   refillNormalGachaQueue(); // 消費した分を補充
 
-  currentGachaResults = results;
-  startGachaAnimation();
+  if (count === 100) {
+    openGachaResultModal(results);
+    renderCards();
+  } else {
+    currentGachaResults = results;
+    startGachaAnimation();
+  }
   }
   
   renderGachaPanel(); // Update button disabled state
@@ -14295,7 +14441,18 @@ function loadGame() {
     if (playerState.equipmentEnhancements && !playerState.enchantValueDoubled) {
         for (const id in playerState.equipmentEnhancements) {
             const e = playerState.equipmentEnhancements[id];
-            if (e.rank !== 'Unique') {
+            
+            // 1. Convert Unique to Z (Essence of Destruction)
+            if (e.rank === 'Unique' || e.rank === 'Z') {
+                e.rank = 'Z';
+                e.label = "破壊の極意";
+                e.type = "status_up";
+                e.stat = "atk";
+                e.value = 55;
+            }
+
+            // 2. Double values if not already doubled
+            if (e.rank !== 'Z' && e.rank !== 'Unique') {
                 e.value = (e.value || 0) * 2;
             } else if (['status_up', 'all_stats_up', 'dmg_cut_up', 'regen_up', 'drain_up'].includes(e.type)) {
                 // These unique types are treated as percentages
@@ -14309,6 +14466,7 @@ function loadGame() {
     playerState.playerId = savedData.playerState.playerId;
     playerState.customCharacters = savedData.playerState.customCharacters || [];
     playerState.usedSerialCodes = savedData.playerState.usedSerialCodes || [];
+    playerState.skillChoices = savedData.playerState.skillChoices || {};
     playerState.notifications = savedData.playerState.notifications || [];
     playerState.stageTracking = savedData.playerState.stageTracking || {};
     playerState.achievements = savedData.playerState.achievements || {};
@@ -15331,7 +15489,7 @@ async function submitToRankMatch(localIdx, rmIndex) {
         formData.append('playerName', playerState.playerName);
         formData.append('rmSlotIndex', rmIndex);
         formData.append('squadName', submitName);
-        formData.append('squadData', squadDataStr);
+        formData.append('squadData', updatedSquadDataStr);
         formData.append('totalPower', pwr);
         formData.append('rate', Math.round(myRate));
         formData.append('wins', wins);
@@ -15394,6 +15552,16 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         const equip = detail.equippedId ? equipmentItems.find(e => e.id === detail.equippedId) : null;
         const stats = calcStats(char.baseStats, detail.level, equip, detail.potential || 0, detail.enhancement, char.id);
         
+        // スキルチョイスを反映
+        let charAbilities = [...(char.abilities || [])];
+        if (detail.skillChoices) {
+            for (const [aIdx, cIdx] of Object.entries(detail.skillChoices)) {
+                if (SKILL_CHOICES[id] && SKILL_CHOICES[id][aIdx] && SKILL_CHOICES[id][aIdx][cIdx]) {
+                    charAbilities[aIdx] = { ...charAbilities[aIdx], ...SKILL_CHOICES[id][aIdx][cIdx] };
+                }
+            }
+        }
+        
         // スキルのマッピング
         let battleAbilities = (char.abilities || []).map(ab => {
             if (!ab.isCustom) return ab;
@@ -15407,11 +15575,11 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         });
 
         // 属性解放スキルの適用
-        if ((char.id == 1 || char.id == 4) && equip && equip.id === 15) {
+        if ((char.id == 1 || char.id == 4 || char.id == 5) && equip && equip.id === 15) {
             if (char.id == 1) {
                 battleAbilities[0] = {
                     name: 'レーヴァティン・ワイド',
-                    triggerRate: 0.8, timing: 'before_attack', isAoe: true, damageMult: 1.5,
+                    triggerRate: 0.4, timing: 'before_attack', isAoe: true, damageMult: 0.8,
                     effect: { type: 'status', status: 'burn', turns: 3 }
                 };
             } else if (char.id == 4) {
@@ -15419,10 +15587,15 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                     name: '激流一閃・刹那',
                     triggerRate: 0.3, timing: 'on_defense'
                 };
+            } else if (char.id == 5) {
+                battleAbilities[2] = {
+                    name: '轟',
+                    triggerRate: 1.0, timing: 'after_attack', damageMult: 2.0
+                };
             }
         }
 
-        let u = { ...char, stats, level: detail.level, currentHp: stats.hp, isPlayer, statusEffects: [], equipment: equip, enhancement: detail.enhancement, abilities: battleAbilities, battleId: (isPlayer ? 'p-' : 'e-') + index, passiveUsed: false, guts: !!(equip && equip.effect.type === 'guts') };
+        let u = { ...char, stats, level: detail.level, currentHp: stats.hp, isPlayer, statusEffects: [], equipment: equip, enhancement: detail.enhancement, abilities: battleAbilities, battleId: (isPlayer ? 'p-' : 'e-') + index, passiveUsed: false, guts: !!(equip && equip.effect.type === 'guts'), skillChoices: detail.skillChoices };
         if (equip && equip.effect.type === 'shield_hit') u.shieldHits = equip.effect.val;
         return u;
     };
@@ -15464,6 +15637,15 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         const opps = u.isPlayer ? eUnits : pUnits;
 
         if (!isCursed) {
+            // 相打ち殺法
+            if (u.id === 15 && u.skillChoices?.[1] === 1 && !u.passiveUsed) {
+                u.passiveUsed = true;
+                const dmg = Math.floor(u.stats.hp * 0.5);
+                opps.forEach(e => {
+                    if (e.currentHp > 0) e.currentHp -= dmg;
+                    checkDeath(e);
+                });
+            }
             if (u.id === 8 && !u.gutsUsed) { // リカルド: 土残流
                 u.currentHp = 1; u.gutsUsed = true;
                 const ts = opps.filter(x => x.currentHp > 0);
@@ -15508,6 +15690,13 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         // パッシブ
         if (u.id === 1 && u.currentHp <= u.stats.hp * 0.5) s.atk = Math.floor(s.atk * 1.3);
         if (u.id === 2 && u.currentHp <= u.stats.hp * 0.3) s.def = Math.floor(s.def * 1.1);
+        
+        // アスター Choice: ただひたすらの努力
+        if (u.id === 17 && u.skillChoices?.[1] === 1 && u.currentHp <= u.stats.hp * 0.5 && !u.passiveUsed) {
+            u.passiveUsed = true;
+            const allies = u.isPlayer ? pUnits : eUnits;
+            allies.forEach(a => { if (a.currentHp > 0) { applyStatus(a, 'barrier', 5); applyStatus(a, 'strengthen', 5); }});
+        }
         if (u.id === 4 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.4);
         if (u.id === 37 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.2);
         if (u.id === 10) { const m = 1 + (1 - u.currentHp/u.stats.hp)*0.5; s.atk=Math.floor(s.atk*m); s.def=Math.floor(s.def*m); s.spd=Math.floor(s.spd*m); }
@@ -16012,7 +16201,7 @@ function openAdminSquadEditor(index) {
                     <div>
                         <label style="font-size:0.6rem; color:var(--text-dim);">強化ランク</label>
                         <select class="post-input" style="margin:0; font-size:0.8rem; padding:4px;" onchange="adminUpdateEnhance('${cid}', 'rank', this.value)">
-                            ${['Unique','X','SS','S','A','B','C','D'].map(r => `<option value="${r}" ${enh.rank===r?'selected':''}>${r}</option>`).join('')}
+                            ${['Z','X','SS','S','A','B','C','D'].map(r => `<option value="${r}" ${enh.rank===r?'selected':''}>${r}</option>`).join('')}
                         </select>
                     </div>
                     <div>
@@ -16073,7 +16262,7 @@ function adminUpdateEnhance(charId, field, value) {
     else enh[field] = value;
     
     // Uniqueラベルの自動付与（必要なら）
-    if (field === 'rank' && value === 'Unique') enh.label = "管理者権限の理";
+    if (field === 'rank' && value === 'Z') enh.label = "管理者権限の理";
     else if (field === 'rank') delete enh.label;
 
     // 更新したオブジェクトを文字列に戻して保存
@@ -16212,30 +16401,6 @@ function renderStatusPanel() {
 
 // ===== INIT =====
 async function initializeGame() {
-    // チート対策: キャラクターデータの整合性チェック
-    let isDataTampered = false;
-    if (units.length !== unitsIntegrityRef.length) {
-        console.error(`Integrity Error: Length mismatch (Actual: ${units.length}, Expected: ${unitsIntegrityRef.length})`);
-        isDataTampered = true;
-    } else {
-        for (let i = 0; i < units.length; i++) {
-            if (Number(units[i].id) !== unitsIntegrityRef[i]) {
-                console.error(`Integrity Error: ID mismatch at index ${i} (Actual ID: ${units[i].id}, Expected ID: ${unitsIntegrityRef[i]})`);
-                isDataTampered = true;
-                break;
-            }
-        }
-    }
-
-    if (isDataTampered) {
-        document.body.innerHTML = `
-            <div style="background:#000;color:red;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Orbitron;text-align:center;padding:2rem;">
-                <h1 style="font-size:3rem;margin-bottom:1rem;">CRITICAL ERROR</h1>
-                <p style="font-size:1.5rem;">DATA TAMPERING DETECTED<br>GAME TERMINATED</p>
-            </div>`;
-        throw new Error("Game terminated due to integrity check failure.");
-    }
-
     loadSettings();
     loadGame();
 
