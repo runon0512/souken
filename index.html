@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+de<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -1148,6 +1148,7 @@
     color: var(--gold);
     text-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
   }
+  .potential-stars-display .star.purple { color: #b388ff; text-shadow: 0 0 5px rgba(179, 136, 255, 0.8); }
 
   .modal-footer {
     padding: 0 1.25rem 1.25rem;
@@ -3745,6 +3746,11 @@
       <div class="creator-step" style="display:none;" id="creatorStep3">
         <h4>3. 名前と容姿</h4>
         <input type="text" id="customCharNameInput" class="post-input" placeholder="キャラクター名 (必須)" maxlength="15">
+        <div style="margin: 1rem 0; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); border-radius: 4px;">
+            <label style="display:block; font-size:0.8rem; color:var(--accent); margin-bottom:0.5rem;">画像をアップロード (任意)</label>
+            <input type="file" id="customCharUpload" accept=".png,.jpg,.jpeg" onchange="handleCustomImageUpload(this)" style="font-size:0.8rem; color:var(--text-dim);">
+            <div style="font-size:0.65rem; color:var(--text-dim); margin-top:4px;">※対応: png, jpg / サイズ: 50KBまで<br>※アップロードするとパーツエディタは無効になります</div>
+        </div>
         <div class="image-editor-layout" style="margin-top: 1rem;">
           <div class="image-editor-preview">
             <canvas id="customCharCanvas" width="315" height="354"></canvas>
@@ -4250,12 +4256,12 @@ function closeSettingsModal() {
 <script>
 
 // ===== VERSION & PATCH NOTES =====
-const GAME_VERSION = "V1.3.6α";
+const GAME_VERSION = "V1.4.1α";
 const PATCH_NOTES_DATA = `
 
-UI改善！
+運命支配を大幅強化！
 
-不可能支配のスキル内容変更
+是非使ってください！
 
 `;
 
@@ -4563,7 +4569,7 @@ const units = [
     baseStats: { hp: 1382, atk: 93, def: 79, spd: 78 },
     abilityType: 'slash',
     abilities: [
-      { name: '運操作', desc: '自身が生存している間、味方全体のスキル発動率が2倍になる。', triggerRate: 1.0, timing: 'passive' },
+      { name: '運操作', desc: '自身が生存している間、味方全体のスキル発動率が1.5倍になる。', triggerRate: 1.0, timing: 'passive' },
       { name: '透明化', desc: 'HPが40%以下になると発動。被弾時、40%の確率で攻撃を無効化する。' }
     ],
     useImg: true, img: 'C17.svg'
@@ -5947,8 +5953,6 @@ let viewingUserProfile = null; // { id, name }
 
 function getTriggerRate(unit, ability) {
   if (!ability) return 0;
-  if (!_0x2a1b(unit)) _0x1c3d();
-
   let rate = ability.triggerRate;
   if (rate === undefined) return 1.0;
   if (unit.equipment && unit.equipment.effect && unit.equipment.effect.type === 'ability_rate') {
@@ -5978,6 +5982,16 @@ function getTriggerRate(unit, ability) {
   return rate;
 }
 
+function getStarHtml(potential) {
+    let html = '';
+    for(let i = 0; i < 6; i++) {
+        const isLit = i < potential;
+        const colorClass = i >= 3 ? 'purple' : 'lit';
+        html += `<span class="star ${isLit ? colorClass : ''}">★</span>`;
+    }
+    return html;
+}
+
 function openUserProfile(id, name) {
     viewingUserProfile = { id, name };
     renderUserStagesPage();
@@ -6003,12 +6017,6 @@ function getFallbackHtml(src, alt = '', style = '') {
 }
 
 function calcStats(baseStats, level, equipment = null, potential = 0, explicitEnhancement = undefined, unitId = null) {
-  // Verify integrity before calculation
-  if (unitId && unitId < 300) {
-      const u = units.find(x => x.id === unitId);
-      if (u && !_0x2a1b(u)) _0x1c3d();
-  }
-
   let effectiveBase = { ...baseStats };
   // 属性解放 (ドラ:1, いえみけ:4) + 賢者の石(ID:15) によるステータス上昇 (約1割)
   if ((unitId == 1 || unitId == 4) && equipment && equipment.id === 15) {
@@ -6267,35 +6275,6 @@ function switchSquad(index) {
   updateSquadSwitcherUI();
   saveGame();
   checkAchievements();
-}
-
-// Anti-cheat verification data (Base64 encoded string containing ID, stats, and trigger rates)
-// Format: ID:HP-ATK-DEF-SPD:Rate1,Rate2...|ID...
-const _0x4f2e = "MToxMjUzLTEwOC03Mi04NTowLjN8MjoxMzQ3LTkyLTgxLTc0OjAuNCwwLjR8NDoxNDAyLTc2LTEyMi00ODowLjN8NToxMTg0LTgzLTg0LTk2OjAuMiwxLjB8NjoxMjk4LTc0LTk3LTU2OjAuNHw3OjExMDUtMTAyLTU4LTcxOjAuMnw4OjEyMDAtMTAxLTgyLTQ5fDk6MTE1NC05MS00OC05MjoyLjB8MTA6MTIwMi0xMTYtNTktNjY6MC40fDExOjEzNTUtOTQtNzYtNTg6MC4zfDEyOjExNDgtMTAyLTY0LTg3OjAuM3wxMzoxNDAzLTExMi02OC02NDowLjN8MTQ6MTYwMC05MC0xMjAtNTA6MC41fDQxOjEyNTQtMTEyLTY0LTY5OjAuM3wzNjoyMDAtMTEwLTcwLTgwfDM3OjEzODAtODAtMTE1LTU1OjAuNCwwLjR8Mzg6MTI4NC0xMTMtNjgtODE6MS4wfDE2OjEzNDYtMTE4LTc3LTY1OjAuM3wxNzoxMjYyLTEwMy04MS0xMzg6MS4wfDE4OjEzODctOTctNjgtODU6MC40fDE5OjEzNDUtOTgtNzItNzM6MC4yLDAuNHwyMDoxMzgyLTkzLTc5LTc4OjEuMHwyMToxMzc4LTExNS03MC01NTowLjYsMS4wfDIyOjEzNTQtMTA3LTU4LTg5OjEuMHwyMzoxMzAyLTEwMS02NC02MTowLjN8MjQ6MTMyNy0xMDMtNzEtODQ6MC40LDAuNnwyNToxMTQwLTEwNS04NS04MDowLjR8MjY6MTI1MC04NS0xMTAtNjA6MC40fDI3OjEwODAtMTI1LTcwLTg1OjEuMHwyODoxMTMwLTEwMC04MC03NTowLjZ8Mjk6MTI1NC05MS0xMDYtNjQ6MC4zfDMwOjEzNTctMTA2LTExNS00MzoxLjB8NDI6MTIyMC0xMTUtNjAtODU6MC42fDQzOjEyODAtMTA1LTc1LTc4OjAuNHw0NDoxMjA3LTExMy02NS04ODowLjQsMC42fDQ1OjEzMjAtOTUtMTE4LTc4OjAuM3w0NjoxMzAwLTExMC03MC04MDowLjQsMC40fDQ3OjEyNDAtOTUtODAtODU6MC4yNXw0ODoxMTAwLTExNS02MC03MDowLjM1fDQ5OjExNTAtMTEyLTY1LTgyOjAuNHw1MDoxMjAwLTEwNS03NS04MDowLjZ8NTE6MTMwMC05MC0xMDAtNjA6MC43NXw1MjoxMjgzLTExOS03NS04Mjo2LjAsMC42";
-
-function _0x2a1b(u) {
-    if (!u || u.id >= 300 || u.isCustom) return true;
-    try {
-        const m = atob(_0x4f2e).split('|').find(x => x.startsWith(u.id + ':'));
-        if (!m) return true;
-        const [_, stats, rates] = m.split(':');
-        const [hp, atk, def, spd] = stats.split('-').map(Number);
-        if (u.baseStats.hp != hp || u.baseStats.atk != atk || u.baseStats.def != def || u.baseStats.spd != spd) return false;
-        if (rates) {
-            const rArr = rates.split(',').map(Number);
-            for (let i = 0; i < rArr.length; i++) {
-                const actualRate = u.abilities[i]?.triggerRate;
-                if (actualRate !== undefined && Math.abs(actualRate - rArr[i]) > 0.001) return false;
-            }
-        }
-        return true;
-    } catch (e) { return false; }
-}
-
-function _0x1c3d() {
-    alert("不正なデータ改ざんを検知しました。ゲームを中断します。");
-    location.reload();
-    throw new Error("Data Integrity Violation");
 }
 
 // ===== SHOP PANEL =====
@@ -6584,11 +6563,7 @@ function renderCards() {
     
     let starsHtml = '';
     if (isOwned && potential > 0) {
-        starsHtml = '<div class="potential-stars-display">';
-        for(let i=0; i<3; i++) {
-            starsHtml += `<span class="star ${i < potential ? 'lit' : ''}">★</span>`;
-        }
-        starsHtml += '</div>';
+        starsHtml = `<div class="potential-stars-display">${getStarHtml(potential)}</div>`;
     }
 
     let effectiveAura = aura;
@@ -7198,16 +7173,13 @@ function formatAbilityDetails(ability) {
     potRow.className = 'potential-row';
     potRow.style.marginBottom = '1rem';
     
-    const potCosts = [20, 50, 100];
-    const nextCost = potential < 3 ? potCosts[potential] : 0;
+    const potCosts = [20, 50, 100, 300, 500, 1000];
+    const nextCost = potential < 6 ? potCosts[potential] : 0;
     
-    let starsHtml = '';
-    for(let i=0; i<3; i++) {
-      starsHtml += `<span class="star ${i < potential ? 'lit' : ''}">★</span>`;
-    }
+    let starsHtml = getStarHtml(potential);
 
     let btnHtml = '';
-    if (potential < 3) {
+    if (potential < 6) {
         const canAfford = charState.fragments >= nextCost;
         btnHtml = `<button class="level-btn" onclick="unlockPotential()" style="font-size:10px; padding:0.5rem 1rem; margin-left:8px;" ${!canAfford ? 'disabled' : ''}>解放 (欠片 ${nextCost})</button>`;
     } else {
@@ -7444,9 +7416,9 @@ function unlockPotential() {
   if (!charState) return;
 
   const currentPot = charState.potential || 0;
-  if (currentPot >= 3) return;
+  if (currentPot >= 6) return;
 
-  const costs = [20, 50, 100];
+  const costs = [20, 50, 100, 300, 500, 1000];
   const cost = costs[currentPot];
 
   if (charState.fragments >= cost) {
@@ -8930,6 +8902,36 @@ function openCustomCharCreator(charToEdit = null) {
     
     updateCreatorStepUI();
     document.getElementById('customCharCreatorOverlay').classList.add('open');
+}
+
+function handleCustomImageUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        alert('pngまたはjpg形式の画像を選択してください');
+        input.value = ''; return;
+    }
+    if (file.size > 50 * 1024) {
+        alert('ファイルサイズが大きすぎます (50KB以下にしてください)');
+        input.value = ''; return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        imgDataUrl = e.target.result;
+        const canvas = document.getElementById('customCharCanvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = () => {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            document.getElementById('imageEditorControls').style.opacity = '0.3';
+            document.getElementById('imageEditorControls').style.pointerEvents = 'none';
+        };
+        img.src = imgDataUrl;
+    };
+    reader.readAsDataURL(file);
 }
 
 function editCustomCharacter(id) {
@@ -10473,11 +10475,7 @@ function renderUnit(unit) {
   const potential = unit.potential || 0;
   let starsHtml = '';
   if (potential > 0) {
-      starsHtml = '<div class="potential-stars-display">';
-      for(let i=0; i<3; i++) {
-          starsHtml += `<span class="star ${i < potential ? 'lit' : ''}">★</span>`;
-      }
-      starsHtml += '</div>';
+      starsHtml = `<div class="potential-stars-display">${getStarHtml(potential)}</div>`;
   }
 
   const clickAction = battleState.isStarted
@@ -13274,23 +13272,23 @@ function renderRanking(data) {
 
 const ENCHANT_TABLES = {
     standard: [
-        { rank: 'X', chance: 0.01, min: 41, max: 50 },
-        { rank: 'SS', chance: 0.09, min: 26, max: 40 },
-        { rank: 'S', chance: 0.9, min: 16, max: 25 },
-        { rank: 'A', chance: 4.0, min: 11, max: 15 },
-        { rank: 'B', chance: 15.0, min: 7, max: 10 },
-        { rank: 'C', chance: 30.0, min: 4, max: 6 },
-        { rank: 'D', chance: 50.0, min: 1, max: 3 }
+        { rank: 'X', chance: 0.01, min: 20, max: 25 },
+        { rank: 'SS', chance: 0.09, min: 13, max: 20 },
+        { rank: 'S', chance: 0.9, min: 8, max: 12 },
+        { rank: 'A', chance: 4.0, min: 5, max: 7 },
+        { rank: 'B', chance: 15.0, min: 3, max: 5 },
+        { rank: 'C', chance: 30.0, min: 2, max: 3 },
+        { rank: 'D', chance: 50.0, min: 1, max: 1 }
     ],
     S: [
         { rank: 'Unique', chance: 0.5, effects: [
-            { label: "王の器", type: "all_stats_up", value: 20 },
-            { label: "英雄の盾", type: "dmg_cut_up", value: 30 },
-            { label: "聖なる願い", type: "guts_stack", value: 2 }
+            { label: "王の器", type: "all_stats_up", value: 10 },
+            { label: "英雄の盾", type: "dmg_cut_up", value: 15 },
+            { label: "聖なる願い", type: "guts_stack", value: 1 }
         ]},
-        { rank: 'X', chance: 4.5, min: 41, max: 50 },
-        { rank: 'SS', chance: 20.0, min: 26, max: 40 },
-        { rank: 'S', chance: 74.5, min: 16, max: 25 }
+        { rank: 'X', chance: 4.5, min: 20, max: 25 },
+        { rank: 'SS', chance: 20.0, min: 13, max: 20 },
+        { rank: 'S', chance: 74.5, min: 8, max: 12 }
     ],
     X: [
         { rank: 'Unique', chance: 5.0, effects: [
@@ -13298,9 +13296,9 @@ const ENCHANT_TABLES = {
             { label: "神殺しの一撃", type: "crit_up", value: 100 },
             { label: "不滅の真理", type: "regen_up", value: 10 },
             { label: "星霜 de記憶", type: "ability_up", value: 50 },
-            { label: "次元の裂け目", type: "status_up", stat: "spd", value: 120 }
+            { label: "次元の裂け目", type: "status_up", stat: "spd", value: 60 }
         ]},
-        { rank: 'X', chance: 95.0, min: 41, max: 50 }
+        { rank: 'X', chance: 95.0, min: 20, max: 25 }
     ]
 };
 
