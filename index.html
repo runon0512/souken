@@ -1,4 +1,4 @@
-de<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -6144,8 +6144,9 @@ async function runPreloader() {
       .filter(u => u.useImg && u.img)
       .map(u => u.img);
   images.push('Title.png');
-  images.push('Title.png');
   images.push('C0.svg');
+  images.push('A1.svg'); // 属性解放ドラ
+  images.push('A3.svg'); // 属性解放いえみけ
   
   // Mission-specific portraits
   [...storyChapters, ...eventChapters, ...challengeChapters, ...collabChapters].forEach(ch => {
@@ -8627,10 +8628,18 @@ function updateEditorUI() {
         
         if (enemy) {
             const unit = enemy.isCustom ? enemy : units.find(u => u.id === enemy.id);
-            const imgSrc = unit ? (unit.useImg ? unit.img : 'C0.svg') : '';
+            let displayImg = unit ? (unit.useImg ? unit.img : 'C0.svg') : 'C0.svg';
+
+            // 属性解放の考慮 (エディタ表示)
+            if ((enemy.id == 1 || enemy.id == 4) && enemy.equippedId == 15) {
+                displayImg = (enemy.id == 1) ? 'A1.svg' : 'A3.svg';
+            }
+
             slot.innerHTML = `
                 <div class="editor-remove-btn" onclick="removeEditorEnemy(${i}); event.stopPropagation();">✕</div>
-                <img src="${imgSrc}" class="editor-slot-img">
+                <div class="editor-slot-img-wrap" style="width:100%; height:60%; overflow:hidden; background:#000;">
+                    ${getFallbackHtml(displayImg, '', 'width:100%; height:100%; object-fit:cover;')}
+                </div>
                 <div class="editor-slot-info">
                     <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${unit ? unit.name : '?'}</div>
                     <div style="color:var(--accent); font-size:0.65rem;">Lv.${enemy.level}</div>
@@ -9702,10 +9711,16 @@ function openEnemySetting(idx) {
     if (!unit && enemy.isCustom) unit = enemy;
     
     const imgEl = document.getElementById('enemySettingImg');
-    const imgSrc = (unit.useImg && unit.img) ? unit.img : 'C0.svg';
-    imgEl.src = imgSrc;
+    let displayImg = (unit.useImg && unit.img) ? unit.img : 'C0.svg';
+
+    // 属性解放の考慮
+    if ((enemy.id == 1 || enemy.id == 4) && enemy.equippedId == 15) {
+        displayImg = (enemy.id == 1) ? 'A1.svg' : 'A3.svg';
+    }
+
+    imgEl.src = displayImg;
     imgEl.onerror = function() {
-        if (!this.src.includes('raw.githubusercontent.com')) { this.src = GITHUB_BASE + imgSrc; }
+        if (!this.src.includes('raw.githubusercontent.com')) { this.src = GITHUB_BASE + displayImg; }
         else { this.src = GITHUB_BASE + 'C0.svg'; this.onerror = null; }
     };
     const enemySettingNameEl = document.getElementById('enemySettingName');
@@ -15049,7 +15064,13 @@ function renderRmMySquads() {
                 previewHtml = `<div class="rm-squad-preview">` + 
                     data.squad.map(id => {
                         const u = units.find(unit => unit.id === id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
-                        return `<img src="${u && u.useImg ? u.img : 'C0.svg'}" class="rm-mini-img">`;
+                        let displayImg = u && u.useImg ? u.img : 'C0.svg';
+                        // 属性解放チェック (ランクマ登録済み編成)
+                        const detail = data.details[id];
+                        if (detail && (id == 1 || id == 4) && detail.equippedId == 15) {
+                            displayImg = (id == 1) ? 'A1.svg' : 'A3.svg';
+                        }
+                        return getFallbackHtml(displayImg, '', 'width:2.5rem; height:3.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px;');
                     }).join('') + `</div>`;
             } catch(e) {}
         }
@@ -15758,10 +15779,17 @@ function renderRmRankings() {
         try {
             const data = JSON.parse(row.squadData);
             unitIcons = data.squad.map(id => {
-                // 数値と文字列のID両方に対応するため == を使用
                 const u = units.find(unit => unit.id == id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
-                if (u && u.useImg && u.img) {
-                    return getFallbackHtml(u.img, u.name, "width:1.8rem; height:2.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px; margin:0 1px;");
+                let displayImg = u ? (u.useImg ? u.img : 'C0.svg') : 'C0.svg';
+                
+                // 属性解放チェック (ランクマランキング表示)
+                const detail = data.details[id];
+                if (detail && (id == 1 || id == 4) && detail.equippedId == 15) {
+                    displayImg = (id == 1) ? 'A1.svg' : 'A3.svg';
+                }
+
+                if (u && u.useImg) {
+                    return getFallbackHtml(displayImg, u.name, "width:1.8rem; height:2.5rem; object-fit:cover; border:1px solid var(--border); border-radius:2px; margin:0 1px;");
                 } else {
                     return `<div style="display:inline-flex; align-items:center; justify-content:center; width:1.8rem; height:2.5rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:2px; margin:0 1px; font-size:1.2rem;" title="${u?u.name:''}"> ${u ? (u.icon || '👤') : '?'} </div>`;
                 }
@@ -16072,6 +16100,12 @@ function renderStatusPanel() {
 
 // ===== INIT =====
 async function initializeGame() {
+    // チート対策: キャラクターデータの整合性チェック
+    if (units.length !== unitsIntegrityRef.length || units.some((u, i) => u.id !== unitsIntegrityRef[i])) {
+        document.body.innerHTML = `<div style="background:#000;color:red;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-size:2rem;text-align:center;padding:2rem;">CRITICAL ERROR: DATA TAMPERING DETECTED<br>GAME TERMINATED</div>`;
+        throw new Error("Integrity check failed.");
+    }
+
     loadSettings();
     loadGame();
 
