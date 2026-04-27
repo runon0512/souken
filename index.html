@@ -4890,6 +4890,11 @@ const units = [
   },
 ];
 
+// チート対策用：正規のキャラクターIDリスト（順番も完全に一致させる必要があります）
+const unitsIntegrityRef = [
+  1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 41, 306, 307, 308, 309, 313, 310, 311, 312, 36, 37, 38, 16, 17, 15, 315, 316, 18, 19, 20, 21, 317, 319, 321, 320, 318, 22, 23, 24, 25, 26, 27, 28, 29, 30, 322, 323, 40, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52
+];
+
 // Equipment Data
 const equipmentItems = [
   { id: 1, name: '勇気のお守り', icon: '🧿', desc: 'アビリティの発動率が1.4倍になる', effect: { type: 'ability_rate', val: 1.4 } },
@@ -16101,9 +16106,27 @@ function renderStatusPanel() {
 // ===== INIT =====
 async function initializeGame() {
     // チート対策: キャラクターデータの整合性チェック
-    if (units.length !== unitsIntegrityRef.length || units.some((u, i) => u.id !== unitsIntegrityRef[i])) {
-        document.body.innerHTML = `<div style="background:#000;color:red;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-size:2rem;text-align:center;padding:2rem;">CRITICAL ERROR: DATA TAMPERING DETECTED<br>GAME TERMINATED</div>`;
-        throw new Error("Integrity check failed.");
+    let isDataTampered = false;
+    if (units.length !== unitsIntegrityRef.length) {
+        console.error(`Integrity Error: Length mismatch (Actual: ${units.length}, Expected: ${unitsIntegrityRef.length})`);
+        isDataTampered = true;
+    } else {
+        for (let i = 0; i < units.length; i++) {
+            if (Number(units[i].id) !== unitsIntegrityRef[i]) {
+                console.error(`Integrity Error: ID mismatch at index ${i} (Actual ID: ${units[i].id}, Expected ID: ${unitsIntegrityRef[i]})`);
+                isDataTampered = true;
+                break;
+            }
+        }
+    }
+
+    if (isDataTampered) {
+        document.body.innerHTML = `
+            <div style="background:#000;color:red;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Orbitron;text-align:center;padding:2rem;">
+                <h1 style="font-size:3rem;margin-bottom:1rem;">CRITICAL ERROR</h1>
+                <p style="font-size:1.5rem;">DATA TAMPERING DETECTED<br>GAME TERMINATED</p>
+            </div>`;
+        throw new Error("Game terminated due to integrity check failure.");
     }
 
     loadSettings();
