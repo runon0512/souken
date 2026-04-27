@@ -4263,7 +4263,7 @@ const PATCH_NOTES_DATA = `
 ・100連の結果はキャラクターごとに集計して表示されるようになります。
 
 【バランス調整】
-・エギル・ラブリュス：第2スキルをに刷新。状態異常がない時に攻撃力が1.5倍になります。
+・エギル・ラブリュス：第2スキルを「理性の美」に刷新。状態異常がない時に攻撃力が1.5倍になります。
 `;
 
 // ===== DATA =====
@@ -4581,7 +4581,7 @@ const units = [
     abilityType: 'impact',
     abilities: [
       { name: 'フェイスクラッシャー', desc: '60%の確率で発動。攻撃に衰弱(1ターン)を付与する。', triggerRate: 0.6, timing: 'before_attack', effect: { type: 'status', status: 'weakness', turns: 1 } },
-      { name: '筋肉の美', desc: '状態異常がない時、攻撃力が1.5倍になる。' },
+      { name: '理性の美', desc: '状態異常がない時、攻撃力が1.5倍になる。' },
     ],
     useImg: true,
     img: 'C23.svg',
@@ -5728,11 +5728,14 @@ let playerState = {
   claimedRewards: {}, // { id: true }
   usedSerialCodes: [],
   playerName: "名無しの剣士",
+    preDeterminedResults: { normalGachaQueue: [], enchantStandard: null, enchantS: null, enchantX: null },
+    gachaVersion: null, // ガチャシステムバージョン管理用
   fileSyncPrompted: false,
   hasHighRankEquipNoSync: false,
   battleCountSinceHighRank: 0,
 };
 
+const GACHA_SYSTEM_VERSION = "20260427.1"; // ガチャシステムバージョン
 function updateSquadSwitcherUI() {
     const types = ['squad-tab', 'battle-squad', 'b-squad'];
     playerState.squads.forEach((sq, i) => {
@@ -6054,7 +6057,7 @@ function calcStats(baseStats, level, equipment = null, potential = 0, explicitEn
           // The enhancement is a percentage of the character's BASE stats
           const baseStatValue = baseStats[enhancement.stat];
           if (baseStatValue) {
-              s[enhancement.stat] += Math.floor(baseStatValue * (enhancement.value / 100));
+              s[enhancement.stat] += Math.floor(baseStatValue * (enhancement.value / 2 / 100));
           }
       }
   }
@@ -6788,7 +6791,7 @@ function renderEquipmentPanel() {
         }[enhancement.rank] || '#fff';
         
         rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}">${enhancement.rank}</span>`;
-        enhancementHtml = `<div style="color:${rankColor}; font-weight:bold;">${statJp[enhancement.stat]} +${enhancement.value}%</div>`;
+        enhancementHtml = `<div style="color:${rankColor}; font-weight:bold;">${statJp[enhancement.stat]} +${enhancement.value} Pt.</div>`;
         auraClass = RANK_AURA_MAP[enhancement.rank] || '';
     }
 
@@ -7230,7 +7233,7 @@ function formatAbilityDetails(ability) {
     let enhancementText = '';
     if (equipEnhancement) {
         const labelPrefix = (equipEnhancement.rank === 'Unique' && equipEnhancement.label) ? `${equipEnhancement.label}: ` : '';
-        const valueText = equipEnhancement.type === 'status_up' || equipEnhancement.rank !== 'Unique' ? `+${equipEnhancement.value}% ${statJp[equipEnhancement.stat]}` : '特殊効果';
+        const valueText = equipEnhancement.type === 'status_up' || equipEnhancement.rank !== 'Unique' ? `+${equipEnhancement.value} Pt. ${statJp[equipEnhancement.stat]}` : '特殊効果';
         enhancementText = `<span style="font-size:0.7em; color:var(--accent); font-family:'Orbitron';"> (${labelPrefix}${valueText})</span>`;
     }
     
@@ -7637,12 +7640,6 @@ function updateHomeDataUI() {
             statusText.textContent = isFileRegistering ? "ファイル登録中..." : "連携中:";
             statusText.style.color = isFileRegistering ? "var(--gold)" : "var(--text-dim)";
             
-            // Disable manual save when synced
-            if (saveBtn) {
-                saveBtn.disabled = true;
-                saveBtn.style.opacity = '0.5';
-                saveBtn.style.cursor = 'not-allowed';
-            }
             if (saveMsg) saveMsg.style.display = 'block';
         } else {
             syncArea.style.display = 'none';
@@ -11065,9 +11062,10 @@ async function runBattleSequence() {
             }
         }
 
-        // Unique: Regen High
+    // Unique: Regen High (Effect is 1/2 of Pt.)
         if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'regen_up') {
-            const regenAmt = Math.floor(attacker.stats.hp * 0.1);
+        const regenRate = (attacker.enhancement.value / 2) / 100;
+        const regenAmt = Math.floor(attacker.stats.hp * regenRate);
             attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + regenAmt);
             showDamageNumber(attackerEl, regenAmt, 'heal');
         }
@@ -11744,9 +11742,10 @@ async function runBattleSequence() {
             await addStatusEffect(target, activeAbility.effect.status, turns);
         }
         
-        // Unique: HP Drain
+        // Unique: HP Drain (Effect is 1/2 of Pt.)
         if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'drain_up' && actualDamage > 0) {
-            const drain = Math.floor(actualDamage * 0.2);
+            const drainRate = (attacker.enhancement.value / 2) / 100;
+            const drain = Math.floor(actualDamage * drainRate);
             attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drain);
             updateUnitUI(attacker);
             showDamageNumber(attackerEl, drain, 'heal');
@@ -13297,33 +13296,33 @@ function renderRanking(data) {
 
 const ENCHANT_TABLES = {
     standard: [
-        { rank: 'X', chance: 0.01, min: 20, max: 25 },
-        { rank: 'SS', chance: 0.09, min: 13, max: 20 },
-        { rank: 'S', chance: 0.9, min: 8, max: 12 },
-        { rank: 'A', chance: 4.0, min: 5, max: 7 },
-        { rank: 'B', chance: 15.0, min: 3, max: 5 },
-        { rank: 'C', chance: 30.0, min: 2, max: 3 },
-        { rank: 'D', chance: 50.0, min: 1, max: 1 }
+        { rank: 'X', chance: 0.01, min: 40, max: 50 },
+        { rank: 'SS', chance: 0.09, min: 26, max: 40 },
+        { rank: 'S', chance: 0.9, min: 16, max: 24 },
+        { rank: 'A', chance: 4.0, min: 10, max: 14 },
+        { rank: 'B', chance: 15.0, min: 6, max: 10 },
+        { rank: 'C', chance: 30.0, min: 4, max: 6 },
+        { rank: 'D', chance: 50.0, min: 2, max: 2 }
     ],
     S: [
         { rank: 'Unique', chance: 0.5, effects: [
-            { label: "王の器", type: "all_stats_up", value: 10 },
-            { label: "英雄の盾", type: "dmg_cut_up", value: 15 },
+            { label: "王の器", type: "all_stats_up", value: 20 },
+            { label: "英雄の盾", type: "dmg_cut_up", value: 30 },
             { label: "聖なる願い", type: "guts_stack", value: 1 }
         ]},
-        { rank: 'X', chance: 4.5, min: 20, max: 25 },
-        { rank: 'SS', chance: 20.0, min: 13, max: 20 },
-        { rank: 'S', chance: 74.5, min: 8, max: 12 }
+        { rank: 'X', chance: 4.5, min: 40, max: 50 },
+        { rank: 'SS', chance: 20.0, min: 26, max: 40 },
+        { rank: 'S', chance: 74.5, min: 16, max: 24 }
     ],
     X: [
         { rank: 'Unique', chance: 5.0, effects: [
             { label: "虚無の果て", type: "def_ignore", value: 100 },
             { label: "神殺しの一撃", type: "crit_up", value: 100 },
-            { label: "不滅の真理", type: "regen_up", value: 10 },
+            { label: "不滅の真理", type: "regen_up", value: 20 },
             { label: "星霜 de記憶", type: "ability_up", value: 50 },
-            { label: "次元の裂け目", type: "status_up", stat: "spd", value: 60 }
+            { label: "次元の裂け目", type: "status_up", stat: "spd", value: 120 }
         ]},
-        { rank: 'X', chance: 95.0, min: 20, max: 25 }
+        { rank: 'X', chance: 95.0, min: 40, max: 50 }
     ]
 };
 
@@ -13375,20 +13374,20 @@ function openEnchantModal(itemId) {
     let currentAuraClass = '';
     if (currentEnhancement && currentEnhancement.rank === 'Unique') {
         let effectDesc = '特殊特性が発現中';
-        if (currentEnhancement.type === 'status_up') effectDesc = `${statJp[currentEnhancement.stat]} +${currentEnhancement.value}%`;
+        if (currentEnhancement.type === 'status_up') effectDesc = `${statJp[currentEnhancement.stat]} +${currentEnhancement.value} Pt.`;
         else if (currentEnhancement.type === 'def_ignore') effectDesc = '防御貫通 (攻撃力分のダメージ)';
         else if (currentEnhancement.type === 'crit_up') effectDesc = '確定会心 (威力1.5倍)';
         else if (currentEnhancement.type === 'guts_stack') effectDesc = `くいしばり+${currentEnhancement.value}回`;
-        else if (currentEnhancement.type === 'all_stats_up') effectDesc = `全能力 +${currentEnhancement.value}%`;
-        else if (currentEnhancement.type === 'dmg_cut_up') effectDesc = `被ダメージ ${currentEnhancement.value}%軽減`;
-        else if (currentEnhancement.type === 'regen_up') effectDesc = `毎ターンHP ${currentEnhancement.value}%回復`;
+        else if (currentEnhancement.type === 'all_stats_up') effectDesc = `全能力 +${currentEnhancement.value} Pt.`;
+        else if (currentEnhancement.type === 'dmg_cut_up') effectDesc = `被ダメージ ${currentEnhancement.value} Pt. 軽減`;
+        else if (currentEnhancement.type === 'regen_up') effectDesc = `毎ターンHP ${currentEnhancement.value} Pt. 回復`;
         else if (currentEnhancement.type === 'ability_up') effectDesc = `スキル発動率 1.5倍`;
 
         currentHtml = `<div><div style="font-size:1rem; color:var(--accent); font-weight:bold;">${currentEnhancement.label} <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent);">Unique</span></div><div style="font-size:0.9rem; color:var(--gold); margin-top:2px;">${effectDesc}</div></div>`;
         currentAuraClass = 'aura-8';
     } else if (currentEnhancement) {
         const color = rankColors[currentEnhancement.rank] || '#fff';
-        currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value}%</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color};">${currentEnhancement.rank}</span></div>`;
+        currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">${statJp[currentEnhancement.stat]} +${currentEnhancement.value} Pt.</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color};">${currentEnhancement.rank}</span></div>`;
         currentAuraClass = RANK_AURA_MAP[currentEnhancement.rank] || '';
     }
 
@@ -13423,6 +13422,23 @@ function openEnchantModal(itemId) {
     document.getElementById('enchantOverlay').classList.add('open');
 }
 
+function refillEnchantResults() {
+    if (!playerState.preDeterminedResults) playerState.preDeterminedResults = {};
+    if (!playerState.preDeterminedResults.enchantStandard) playerState.preDeterminedResults.enchantStandard = getEnchantment('standard');
+    if (!playerState.preDeterminedResults.enchantS) playerState.preDeterminedResults.enchantS = getEnchantment('S');
+    if (!playerState.preDeterminedResults.enchantX) playerState.preDeterminedResults.enchantX = getEnchantment('X');
+}
+
+function refillNormalGachaQueue() {
+    if (!playerState.preDeterminedResults) playerState.preDeterminedResults = {};
+    if (!playerState.preDeterminedResults.normalGachaQueue) playerState.preDeterminedResults.normalGachaQueue = [];
+    const gachaPool = units.filter(u => u.type === 'ルディ王国' && u.id < 300 && u.id !== 23);
+    while (playerState.preDeterminedResults.normalGachaQueue.length < 100) {
+        const pulledChar = gachaPool[Math.floor(Math.random() * gachaPool.length)];
+        playerState.preDeterminedResults.normalGachaQueue.push(pulledChar.id);
+    }
+}
+
 async function performEnchant(itemId, tier = 'standard') {
     const costs = { standard: 3000, S: 300000, X: 30000000 };
     const cost = costs[tier];
@@ -13445,7 +13461,18 @@ async function performEnchant(itemId, tier = 'standard') {
     
     await sleep(600);
 
-    tempEnchantResult = getEnchantment(tier);
+    // 事前決定された結果を使用し、次の結果を即座に生成
+    if (tier === 'standard') {
+        tempEnchantResult = playerState.preDeterminedResults.enchantStandard;
+        playerState.preDeterminedResults.enchantStandard = getEnchantment('standard');
+    } else if (tier === 'S') {
+        tempEnchantResult = playerState.preDeterminedResults.enchantS;
+        playerState.preDeterminedResults.enchantS = getEnchantment('S');
+    } else if (tier === 'X') {
+        tempEnchantResult = playerState.preDeterminedResults.enchantX;
+        playerState.preDeterminedResults.enchantX = getEnchantment('X');
+    }
+
     const resultArea = document.getElementById('enchantResultArea');
     const footerEl = document.getElementById('enchantFooter');
     if (!resultArea || !footerEl) return; // Ensure elements exist
@@ -13467,13 +13494,13 @@ async function performEnchant(itemId, tier = 'standard') {
              <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem;">Unique</span>
           </div>
           <div style="font-size:1rem; color:var(--gold); font-weight:bold; margin-top:4px;">
-            ${tempEnchantResult.type === 'status_up' ? `${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value}%` : 
+            ${tempEnchantResult.type === 'status_up' ? `${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value} Pt.` : 
               tempEnchantResult.type === 'def_ignore' ? '特性：防御貫通' : 
               tempEnchantResult.type === 'crit_up' ? '特性：確定会心' :
               tempEnchantResult.type === 'guts_stack' ? `特性：くいしばり+${tempEnchantResult.value}` :
-              tempEnchantResult.type === 'all_stats_up' ? `全能力 +${tempEnchantResult.value}%` :
-              tempEnchantResult.type === 'dmg_cut_up' ? `被ダメージ ${tempEnchantResult.value}%軽減` :
-              tempEnchantResult.type === 'regen_up' ? `リジェネ ${tempEnchantResult.value}%` :
+              tempEnchantResult.type === 'all_stats_up' ? `全能力 +${tempEnchantResult.value} Pt.` :
+              tempEnchantResult.type === 'dmg_cut_up' ? `被ダメージ ${tempEnchantResult.value} Pt. 軽減` :
+              tempEnchantResult.type === 'regen_up' ? `リジェネ ${tempEnchantResult.value} Pt.` :
               'スキル発動率アップ'}
           </div>
         </div>`;
@@ -13482,7 +13509,7 @@ async function performEnchant(itemId, tier = 'standard') {
       <div class="modal-section-title">新しい効果</div>
       <div class="equip-card-stats" style="border-color: ${color}; background: rgba(0,0,0,0.6); box-shadow: 0 0 10px ${color}40;">
         <div style="font-size:1.2rem; font-weight:bold; color:${color}; text-shadow:0 0 5px ${color}80;">
-           ${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value}%
+           ${statJp[tempEnchantResult.stat]} +${tempEnchantResult.value} Pt.
            <span class="enchant-rank-badge" style="color:${color}; border-color:${color}; font-size:0.8rem;">${tempEnchantResult.rank}</span>
         </div>
       </div>`;
@@ -13647,18 +13674,12 @@ function performGacha(type, count) {
   playerState.rainbowStones -= cost;
   playerState.totalGachaCount = (playerState.totalGachaCount || 0) + count;
   
-  let gachaPool = [];
-  
   if (type === 'rudy') {
-    // ルディ王国所属のみ (シャム ID:23 はイベント報酬のため除外)
-    gachaPool = units.filter(u => u.type === 'ルディ王国' && u.id < 300 && u.id !== 23);
-  }
-
-  const results = [];
-
-  for (let i = 0; i < count; i++) {
-    const pulledChar = gachaPool[Math.floor(Math.random() * gachaPool.length)];
-    const isNew = !playerState.characters[pulledChar.id];
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      const charId = playerState.preDeterminedResults.normalGachaQueue.shift();
+      const pulledChar = units.find(u => u.id === charId);
+      const isNew = !playerState.characters[pulledChar.id];
 
     if (isNew) {
       playerState.characters[pulledChar.id] = { level: 1, equippedId: null, fragments: 0, aura: 0 };
@@ -13667,10 +13688,12 @@ function performGacha(type, count) {
     }
     results.push({ char: pulledChar, isNew: isNew });
   }
+  refillNormalGachaQueue(); // 消費した分を補充
 
   currentGachaResults = results;
   startGachaAnimation();
-
+  }
+  
   renderGachaPanel(); // Update button disabled state
   renderSquad(); // Update header resource
   saveGame();
@@ -14035,6 +14058,10 @@ async function importSaveFile() {
       
       if (!data.playerState) throw new Error('Invalid save data');
       
+      if (!data.playerState.preDeterminedResults || data.playerState.preDeterminedResults.normalGachaQueue.length === 0) {
+          alert('バグの発生しやすいファイルです。最新のセーブファイルをダウンロードし直してください。');
+      }
+      
       playerState = data.playerState;
       missionProgress = new Set(data.missionProgress || []);
       
@@ -14071,6 +14098,10 @@ function handleFileSelect(input) {
     try {
       const data = JSON.parse(e.target.result);
       if (!data.playerState) throw new Error('Invalid save data');
+
+      if (!data.playerState.preDeterminedResults || data.playerState.preDeterminedResults.normalGachaQueue.length === 0) {
+          alert('バグの発生しやすいファイルです。最新のセーブファイルをダウンロードし直してください。');
+      }
 
       playerState = data.playerState;
       missionProgress = new Set(data.missionProgress || []);
@@ -14238,6 +14269,43 @@ function loadGame() {
     }
 
     playerState.compensationVersion = savedData.playerState.compensationVersion;
+
+    // Gacha system version check and migration
+    playerState.gachaVersion = savedData.playerState.gachaVersion || null;
+    if (playerState.gachaVersion !== GACHA_SYSTEM_VERSION) {
+        // Only show warning if it's an actual old file, not a brand new save
+        if (playerState.gachaVersion !== null) {
+            showToast("セーブファイルが古いバージョンです。ガチャシステムが不安定になる可能性があります。最新のセーブファイルをダウンロードし直してください。");
+        }
+        playerState.gachaVersion = GACHA_SYSTEM_VERSION;
+        saveGame(); // Save the updated gachaVersion
+    }
+
+    // ガチャ結果の事前決定データのマイグレーションと初期化
+    playerState.preDeterminedResults = savedData.playerState.preDeterminedResults || null;
+    if (!playerState.preDeterminedResults || !playerState.preDeterminedResults.normalGachaQueue || playerState.preDeterminedResults.normalGachaQueue.length === 0) {
+        if (savedData.playerState.preDeterminedResults) showToast("バグの発生しやすいファイルです。最新のセーブファイルをダウンロードし直してください。");
+        playerState.preDeterminedResults = { normalGachaQueue: [], enchantStandard: null, enchantS: null, enchantX: null };
+        refillNormalGachaQueue();
+        refillEnchantResults();
+        saveGame();
+    }
+
+    // Migration for Equipment Enhancement Values (Doubling for Pt. display)
+    if (playerState.equipmentEnhancements && !playerState.enchantValueDoubled) {
+        for (const id in playerState.equipmentEnhancements) {
+            const e = playerState.equipmentEnhancements[id];
+            if (e.rank !== 'Unique') {
+                e.value = (e.value || 0) * 2;
+            } else if (['status_up', 'all_stats_up', 'dmg_cut_up', 'regen_up', 'drain_up'].includes(e.type)) {
+                // These unique types are treated as percentages
+                e.value = (e.value || 0) * 2;
+            }
+        }
+        playerState.enchantValueDoubled = true;
+        saveGame();
+    }
+
     playerState.playerId = savedData.playerState.playerId;
     playerState.customCharacters = savedData.playerState.customCharacters || [];
     playerState.usedSerialCodes = savedData.playerState.usedSerialCodes || [];
@@ -15954,7 +16022,7 @@ function openAdminSquadEditor(index) {
                         </select>
                     </div>
                     <div>
-                        <label style="font-size:0.6rem; color:var(--text-dim);">上昇量 (%)</label>
+                        <label style="font-size:0.6rem; color:var(--text-dim);">上昇量 (Pt.)</label>
                         <input type="number" class="post-input" style="margin:0; font-size:0.8rem; padding:4px;" value="${enh.value}" onchange="adminUpdateEnhance('${cid}', 'value', this.value)">
                     </div>
                 </div>
