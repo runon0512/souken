@@ -4915,6 +4915,11 @@ const equipmentItems = [
   { id: 14, name: 'フェニックスの羽', icon: '🪶', desc: '一度だけ致死ダメージを耐える', effect: { type: 'guts', val: true } },
   { id: 15, name: '覚醒：賢者の石', icon: '💎', desc: 'ドラが装備すると「属性解放」が発生する。通常時は全ステータスが1.05倍になる', effect: { type: 'stat_mult_multi', stats: { hp: 1.05, atk: 1.05, def: 1.05, spd: 1.05 } } },
   { id: 16, name: '色欲の魔石', icon: '💖', desc: '攻撃時、20%の確率で盲目(2ターン)を付与する', effect: { type: 'add_status', status: 'blind', turns: 2, chance: 0.2 } },
+  { id: 17, name: 'ライ・アルバロ SP', icon: '⚡', desc: 'ライ専用。第二スキルが「不可能支配」になる。', effect: { type: 'skill_override' } },
+  { id: 18, name: 'リディン・イルカイ SP', icon: '🏮', desc: 'リディン(過去)専用。第二スキルが「相打ち殺法(SP)」になる。', effect: { type: 'skill_override' } },
+  { id: 19, name: 'アスター・エクレア SP', icon: '🌪️', desc: 'アスター専用。第二スキルが「運動量操作」になる。', effect: { type: 'skill_override' } },
+  { id: 20, name: 'ギラ・グレゴリオ SP', icon: '💮', desc: 'ギラ専用。第二スキルが「監魂葬災」になる。', effect: { type: 'skill_override' } },
+  { id: 21, name: 'オリバー・ジャック SP', icon: '🎺', desc: 'オリバー専用。第二スキルが「紅の行進曲」になる。', effect: { type: 'skill_override' } },
 ];
 
 // AI Types
@@ -5625,8 +5630,8 @@ function generateTowerMission(floor) {
         enemies: missionEnemies,
         recommendedPower: totalPower,
         reward: Math.floor((100 + (floor * 50)) / 50),
-        firstTimeReward: Math.floor(((100 + (floor * 50)) * 5) / 50),
-        isTower: true // Add a flag to identify tower missions
+        firstTimeReward: Math.min(32000, Math.floor(((100 + (floor * 50)) * 5) / 50) * 2),
+        isTower: true
     };
 }
 
@@ -5829,6 +5834,12 @@ const ACHIEVEMENT_DEFS = [
     { id: 'enchant_s', name: '巨匠の領域', desc: '装備強化でランクSの効果を作成', stones: 80000, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'S') },
     { id: 'enchant_ss', name: '伝説の鍛冶師', desc: '装備強化でランクSSの効果を作成', stones: 100000, charId: 47, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'SS') },
     { id: 'enchant_x', name: '神の息吹', desc: '装備強化でランクZの効果を作成', stones: 200000, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'Z') },
+    // 無限の塔 新報酬
+    { id: 'tower_500', name: '塔の深淵へ', desc: '無限の塔 500階に到達', stones: 50000, itemId: 17, check: () => playerState.towerProgress >= 500 },
+    { id: 'tower_1000', name: '塔の守護者', desc: '無限の塔 1000階に到達', stones: 100000, itemId: 18, check: () => playerState.towerProgress >= 1000 },
+    { id: 'tower_1500', name: '塔の征服者', desc: '無限の塔 1500階に到達', stones: 150000, itemId: 19, check: () => playerState.towerProgress >= 1500 },
+    { id: 'tower_2000', name: '塔の超越者', desc: '無限の塔 2000階に到達', stones: 200000, itemId: 20, check: () => playerState.towerProgress >= 2000 },
+    { id: 'tower_2500', name: '塔の伝説', desc: '無限の塔 2500階に到達', stones: 250000, itemId: 21, check: () => playerState.towerProgress >= 2500 },
 ];
 
 function checkAchievements() {
@@ -5887,6 +5898,12 @@ function grantAchievementReward(ach) {
             showToast(`報酬: キャラクター重複のため欠片x50を獲得`);
         }
     }
+    if (ach.itemId) {
+        if (!playerState.ownedEquipment.includes(ach.itemId)) {
+            playerState.ownedEquipment.push(ach.itemId);
+            showToast(`報酬: 限定アイテムを獲得！`);
+        }
+    }
 }
 
 function openAchievementModal() {
@@ -5902,6 +5919,10 @@ function openAchievementModal() {
         if (ach.charId) {
             const c = units.find(u => u.id == ach.charId);
             rewardText.push(`👤 ${c ? c.name : '新キャラ'}`);
+        }
+        if (ach.itemId) {
+            const itm = equipmentItems.find(i => i.id == ach.itemId);
+            rewardText.push(`${itm ? itm.icon + ' ' + itm.name : 'アイテム'}`);
         }
 
         return `
@@ -7142,6 +7163,32 @@ function formatAbilityDetails(ability) {
               triggerRate: 1.0, timing: 'after_attack', damageMult: 2.0
           };
       }
+  }
+
+  // SP装備によるスキル上書きロジック (モーダル表示)
+  if (equipId === 17 && c.id === 5) { // ライSP
+      abilities[1] = { name: '不可能支配', desc: '【パッシブ】自身が生存している間、フィールド全体の時の流れが歪み、速度の遅い順に行動するようになる。' };
+  }
+  if (equipId === 18 && c.id === 15) { // リディンSP
+      abilities[1] = { name: '相打ち殺法(SP)', desc: '死亡時、とどめを刺した敵に最大体力の60%のダメージを与える。(状態異常死の場合は無効)' };
+  }
+  if (equipId === 19 && c.id === 17) { // アスターSP
+      const currentChoice = (playerState.skillChoices?.[c.id]?.[1]) || 0;
+      abilities[1] = { 
+          name: '運動量操作', 
+          desc: '30%の確率で発動。攻撃時に敵に2ターンの呪いを付与する。',
+          triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'curse', turns: 2 }
+      };
+  }
+  if (equipId === 20 && c.id === 13) { // ギラSP
+      abilities[1] = { name: '監魂葬災', desc: '死亡時、敵全体に燃焼・毒・呪いを2ターン付与し、HP1で復活する。' };
+  }
+  if (equipId === 21 && c.id === 12) { // オリバーSP
+      abilities[1] = { 
+          name: '紅の行進曲', 
+          desc: '戦闘開始時、100%の確率で発動。味方全員に3ターンの強化を付与する。',
+          triggerRate: 1.0, timing: 'on_battle_start', effect: { type: 'status', status: 'strengthen', turns: 3 }, target: 'all_allies'
+      };
   }
   const auraData = effectiveAura > 0 ? AURA_DATA[effectiveAura - 1] : null;
   const typeHtml = c.type ? `&nbsp;|&nbsp; <span style="color:var(--text-mid)">${c.type}</span>` : '';
@@ -10501,6 +10548,31 @@ function initBattlePlayerUnits() {
           }
       }
 
+      // SP装備によるスキル上書き (バトル用)
+      if (equipId === 17 && char.id === 5) { // ライSP
+          battleAbilities[1] = { name: '不可能支配', timing: 'passive' };
+      }
+      if (equipId === 18 && char.id === 15) { // リディンSP
+          battleAbilities[1] = { name: '相打ち殺法(SP)', timing: 'on_death' };
+      }
+      if (equipId === 19 && char.id === 17) { // アスターSP
+          battleAbilities[1] = { 
+              name: '運動量操作', 
+              triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'curse', turns: 2 }
+          };
+      }
+      if (equipId === 20 && char.id === 13) { // ギラSP
+          battleAbilities[1] = { name: '監魂葬災', timing: 'on_death' };
+      }
+      if (equipId === 21 && char.id === 12) { // オリバーSP
+          battleAbilities[1] = { 
+              name: '紅の行進曲', 
+              triggerRate: 1.0, timing: 'on_battle_start', 
+              target: 'all_allies',
+              effect: { type: 'status', status: 'strengthen', turns: 3 }
+          };
+      }
+
       let unit = { 
           ...char, stats, currentHp: stats.hp, level, aura, potential, isPlayer: true, 
           battleId: `p-${char.id}`, isPassiveActive: false, statusEffects: [], 
@@ -10801,7 +10873,13 @@ async function checkDeathAbilities(unit) {
           if (e.currentHp > 0) {
               const eEl = document.getElementById(`unit-${e.battleId}`);
               if (eEl) playEffect(eEl, 'dark');
-              await addStatusEffect(e, 'weakness', 3);
+              if (unit.equipment?.id === 20) {
+                  await addStatusEffect(e, 'burn', 2);
+                  await addStatusEffect(e, 'poison', 2);
+                  await addStatusEffect(e, 'curse', 2);
+              } else {
+                  await addStatusEffect(e, 'weakness', 3);
+              }
           }
       }
       return true;
@@ -10923,8 +11001,27 @@ async function checkDeathAbilities(unit) {
       }
   }
 
+  // Ridin SP (ID: 15 + Equip 18) Suicide Method (Killer Target)
+  const isRidinSP = unit.id === 15 && unit.equipment?.id === 18 && !unit.passiveUsed;
+  if (isRidinSP && !unit.lastDamageWasStatus) {
+      unit.passiveUsed = true;
+      if (!unit.statusEffects.some(e => e.type === 'curse')) {
+          await showCutIn(unit, '相打ち殺法(SP)');
+          if (battleState.lastAttackerId) {
+              const killer = [...battleState.playerUnits, ...battleState.enemyUnits].find(u => u.battleId === battleState.lastAttackerId);
+              if (killer && killer.currentHp > 0) {
+                  const dmg = Math.floor(unit.stats.hp * 0.6);
+                  killer.currentHp = Math.max(0, killer.currentHp - dmg);
+                  logBattleMessage(`${unit.name}の相打ち！${killer.name}に<span class="damage">${dmg}</span>のダメージ！`);
+                  updateUnitUI(killer);
+                  if (killer.currentHp <= 0) await processUnitDeath(killer);
+              }
+          }
+      }
+  }
+  
   // Grega Sturm (ID: 48) Passive: 最後の炎
-  if (unit.id === 48 && !unit.passiveUsed) {
+  if ((unit.id === 13 || (unit.id === 13 && unit.equipment?.id === 20)) && !unit.passiveUsed) {
       unit.passiveUsed = true;
       await showCutIn(unit, '最後の炎');
       logBattleMessage(`${unit.name}の最後の炎が味方に灯る！`);
@@ -11116,6 +11213,7 @@ async function runBattleSequence() {
         const myField = attacker.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
         if (myField && myField !== 'none') {
             if (myField === 'miasma' && attacker.currentHp > 0) {
+                attacker.lastDamageWasStatus = true;
                 const dotDamage = Math.floor(attacker.stats.hp / 10);
                 attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
                 logBattleMessage(`${attacker.name}は<span class="damage">瘴気</span>で ${dotDamage} のダメージを受けた！`);
@@ -11149,6 +11247,7 @@ async function runBattleSequence() {
             for (const effect of effectsCopy) {
                 if (!effect) continue;
                 if (['burn', 'poison', 'drown'].includes(effect.type)) {
+                    attacker.lastDamageWasStatus = true;
                     const effectInfo = STATUS_EFFECTS[effect.type];
                     const dotDamage = Math.floor(attacker.stats.hp / 10);
                     attacker.currentHp = Math.max(0, attacker.currentHp - dotDamage);
@@ -11163,6 +11262,8 @@ async function runBattleSequence() {
                     if (attacker.currentHp <= 0) break;
                 }
             }
+            // Direct action reset
+            if (attacker.currentHp > 0) attacker.lastDamageWasStatus = false;
             
             // 2. 行動制限系の処理: 生存している場合のみ
             if (attacker.currentHp > 0 && canAct) {
@@ -12127,6 +12228,7 @@ async function runBattleSequence() {
                     showDamageNumber(targetEl, executionDamage);
                 }
             } else 
+            if (true) { // Re-entry for any chase logic
             if (attacker.id === 5 && attacker.isPassiveActive) { // 八連雷撃斬
               await showCutIn(attacker, chaseAbility.name);
               const chaseProbs = [0.86, 0.74, 0.64, 0.56, 0.50, 0.46];
@@ -12370,6 +12472,7 @@ async function runBattleSequence() {
               targetEl.classList.add('is-taking-damage');
               setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
               await sleep(600 / battleSpeedMultiplier);
+            }
             }
           }
           }
@@ -13040,13 +13143,26 @@ async function triggerOnBattleStartAbilities() {
                     const tEl = document.getElementById(`unit-${t.battleId}`);
                     playEffect(tEl, 'heal'); // バフエフェクトとしてhealを代用
                 }
-                const elemJp = {thunder:'雷', water:'水', fire:'炎', dark:'闇'}[targetElement];
-                logBattleMessage(`${skillName}！味方の${elemJp}属性ユニットが強化された！`);
+                if (targetElement) {
+                    const elemJp = {thunder:'雷', water:'水', fire:'炎', dark:'闇', light:'光'}[targetElement];
+                    logBattleMessage(`${skillName}！味方の${elemJp}属性ユニットが強化された！`);
+                } else {
+                    logBattleMessage(`${skillName}！味方全員が強化された！`);
+                }
             }
+        }
+        else if (ab.isCustom && ab.name === '紅の行進曲') { // Fallback for custom logic mapping
+            const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
+            for (const t of allies) {
+                if (t.currentHp > 0) {
+                    await addStatusEffect(t, 'strengthen', 3);
+                    playEffect(document.getElementById(`unit-${t.battleId}`), 'heal');
+                }
+            }
+            logBattleMessage(`${ab.name}！味方全員が奮い立つ！`);
         }
         else if (unit.id === 22) { // キャル・エクレア「多重障壁」
             // 味方全員
-            const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
             const targets = allies.filter(u => u.currentHp > 0);
             
             if (targets.length > 0) {
