@@ -6827,8 +6827,8 @@ function renderEquipmentPanel() {
             'B': '#50C878', 'C': '#ffd700', 'D': '#c0c0c0'
         }[enhancement.rank] || '#fff';
         
-        rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}">${enhancement.rank}</span>`;
-        enhancementHtml = enhancement.rank === 'Z' ? `<div style="color:${rankColor}; font-weight:bold;">攻撃力 +${enhancement.value}%</div>` : `<div style="color:${rankColor}; font-weight:bold;">全ステータス +${enhancement.value}%</div>`;
+        rankBadge = `<span class="enchant-rank-badge" style="color:${rankColor}; border-color:${rankColor}">${enhancement.rank}</span>`; // Always exists
+        enhancementHtml = `<div style="color:${rankColor}; font-weight:bold;">全ステータス +${enhancement.value}%</div>`;
         auraClass = RANK_AURA_MAP[enhancement.rank] || '';
     }
 
@@ -13470,27 +13470,27 @@ function renderRanking(data) {
 
 const ENCHANT_TABLES = {
     standard: [
-        { rank: 'X', chance: 0.01, value: 10 },
-        { rank: 'SS', chance: 0.09, value: 8 },
-        { rank: 'S', chance: 0.9, value: 6 },
-        { rank: 'A', chance: 4.0, value: 5 },
-        { rank: 'B', chance: 15.0, value: 3 },
-        { rank: 'C', chance: 30.0, value: 2 },
-        { rank: 'D', chance: 50.0, value: 1 }
+        { rank: 'X', chance: 0.01, value: 15 },
+        { rank: 'SS', chance: 0.09, value: 12 },
+        { rank: 'S', chance: 0.9, value: 10 },
+        { rank: 'A', chance: 4.0, value: 8 },
+        { rank: 'B', chance: 15.0, value: 6 },
+        { rank: 'C', chance: 30.0, value: 4 },
+        { rank: 'D', chance: 50.0, value: 2 }
     ],
     S: [
         { rank: 'Z', chance: 0.5, effects: [
-            { label: "破壊の極意", type: "status_up", stat: "atk", value: 40 }
+            { label: "究極の強化", type: "all_stats_up", value: 20 }
         ]},
-        { rank: 'X', chance: 4.5, value: 10 },
-        { rank: 'SS', chance: 20.0, value: 8 },
-        { rank: 'S', chance: 74.5, value: 6 }
+        { rank: 'X', chance: 4.5, value: 15 },
+        { rank: 'SS', chance: 20.0, value: 12 },
+        { rank: 'S', chance: 74.5, value: 10 }
     ],
     X: [
         { rank: 'Z', chance: 5.0, effects: [
-            { label: "破壊の極意", type: "status_up", stat: "atk", value: 40 }
+            { label: "究極の強化", type: "all_stats_up", value: 20 }
         ]},
-        { rank: 'X', chance: 95.0, value: 10 }
+        { rank: 'X', chance: 95.0, value: 15 }
     ]
 };
 
@@ -13523,7 +13523,7 @@ function getEnchantment(tier = 'standard') {
     const stats = ['hp', 'atk', 'def', 'spd'];
     const stat = stats[Math.floor(Math.random() * stats.length)];
     const value = selected.value;
-    return { rank, stat, value };
+    return { rank, value, type: 'all_stats_up' }; // 全ステータス強化なのでtypeを追加
 }
 
 function openEnchantModal(itemId) {
@@ -13531,7 +13531,7 @@ function openEnchantModal(itemId) {
     if (!item) return;
 
     tempEnchantResult = null;
-    const body = document.getElementById('enchantBody');
+    const body = document.getElementById('enchantBody'); // Always exists
     const footer = document.getElementById('enchantFooter');
     const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
     const statJp = { hp: 'HP', atk: '攻撃力', def: '防御力', spd: '速度' };
@@ -13540,24 +13540,12 @@ function openEnchantModal(itemId) {
 
     let currentHtml = '<div style="color: var(--text-dim);">付与効果なし</div>';
     let currentAuraClass = '';
-    if (currentEnhancement && currentEnhancement.rank === 'Z') {
-        let effectDesc = '特殊特性が発現中';
-        if (currentEnhancement.type === 'status_up') effectDesc = `${statJp[currentEnhancement.stat]} +${currentEnhancement.value} Pt.`;
-        else if (currentEnhancement.type === 'def_ignore') effectDesc = '防御貫通 (攻撃力分のダメージ)';
-        else if (currentEnhancement.type === 'crit_up') effectDesc = '確定会心 (威力1.5倍)';
-        else if (currentEnhancement.type === 'guts_stack') effectDesc = `くいしばり+${currentEnhancement.value}回`;
-        else if (currentEnhancement.type === 'all_stats_up') effectDesc = `全能力 +${currentEnhancement.value} Pt.`;
-        else if (currentEnhancement.type === 'dmg_cut_up') effectDesc = `被ダメージ ${currentEnhancement.value} Pt. 軽減`;
-        else if (currentEnhancement.type === 'regen_up') effectDesc = `毎ターンHP ${currentEnhancement.value} Pt. 回復`;
-        else if (currentEnhancement.type === 'ability_up') effectDesc = `スキル発動率 1.5倍`;
-
-        currentHtml = `<div><div style="font-size:1rem; color:var(--accent); font-weight:bold;">${currentEnhancement.label} <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent);">Z</span></div><div style="font-size:0.9rem; color:var(--gold); margin-top:2px;">${effectDesc}</div></div>`;
-        currentAuraClass = 'aura-8';
-    } else if (currentEnhancement) {
+    if (currentEnhancement) {
         const color = rankColors[currentEnhancement.rank] || '#fff';
         currentHtml = `<div><span style="font-size:1rem; color:${color}; font-weight:bold;">全ステータス +${currentEnhancement.value}%</span> <span class="enchant-rank-badge" style="color:${color}; border-color:${color};">${currentEnhancement.rank}</span></div>`;
-        currentAuraClass = RANK_AURA_MAP[currentEnhancement.rank] || '';
+        currentAuraClass = 'aura-8';
     }
+
 
     body.innerHTML = `
       <div class="enchant-anim-box" id="enchantAnimBox">
@@ -13649,30 +13637,19 @@ async function performEnchant(itemId, tier = 'standard') {
     const color = rankColors[tempEnchantResult.rank];
 
     // Update Icon Preview
-    const newAura = RANK_AURA_MAP[tempEnchantResult.rank] || '';
+    const newAura = RANK_AURA_MAP[tempEnchantResult.rank] || ''; // Always exists
     icon.className = `equip-icon-box ${newAura}`;
     icon.innerHTML = `${newAura ? `<div class="aura-overlay"></div>` : ''}${equipmentItems.find(e=>e.id===itemId).icon}`;
-
-    if (tempEnchantResult.rank === 'Z') {
+    if (tempEnchantResult.rank === 'Z') { // Zランクは攻撃力+55%固定
         resultArea.innerHTML = `
-        <div class="modal-section-title">新しい効果</div>
-        <div class="equip-card-stats" style="border-color: var(--accent); background: rgba(0,200,255,0.2); box-shadow: 0 0 15px var(--accent);">
-          <div style="font-size:1.2rem; font-weight:bold; color:var(--accent); text-shadow:0 0 5px var(--accent);">
-             ${tempEnchantResult.label}
-             <span class="enchant-rank-badge" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem;">Z</span>
-          </div>
-          <div style="font-size:1rem; color:var(--gold); font-weight:bold; margin-top:4px;">
-            ${tempEnchantResult.type === 'status_up' ? `攻撃力 +${tempEnchantResult.value}%` : 
-              tempEnchantResult.type === 'def_ignore' ? '特性：防御貫通' : 
-              tempEnchantResult.type === 'crit_up' ? '特性：確定会心' :
-              tempEnchantResult.type === 'guts_stack' ? `特性：くいしばり+${tempEnchantResult.value}` :
-              tempEnchantResult.type === 'all_stats_up' ? `全能力 +${tempEnchantResult.value} Pt.` :
-              tempEnchantResult.type === 'dmg_cut_up' ? `被ダメージ ${tempEnchantResult.value} Pt. 軽減` :
-              tempEnchantResult.type === 'regen_up' ? `リジェネ ${tempEnchantResult.value} Pt.` :
-              'スキル発動率アップ'}
-          </div>
-        </div>`;
-    } else {
+      <div class="modal-section-title">新しい効果</div>
+      <div class="equip-card-stats" style="border-color: ${rankColors['Z']}; background: rgba(0,0,0,0.6); box-shadow: 0 0 10px ${rankColors['Z']}40;">
+        <div style="font-size:1.2rem; font-weight:bold; color:${rankColors['Z']}; text-shadow:0 0 5px ${rankColors['Z']}80;">
+           攻撃力 +${tempEnchantResult.value}%
+           <span class="enchant-rank-badge" style="color:${rankColors['Z']}; border-color:${rankColors['Z']}; font-size:0.8rem;">Z</span>
+        </div>
+      </div>`;
+    } else { // X-Dランクは全ステータス+X%
         resultArea.innerHTML = `
       <div class="modal-section-title">新しい効果</div>
       <div class="equip-card-stats" style="border-color: ${color}; background: rgba(0,0,0,0.6); box-shadow: 0 0 10px ${color}40;">
@@ -13682,13 +13659,13 @@ async function performEnchant(itemId, tier = 'standard') {
         </div>
       </div>`;
     }
-      
+
     footerEl.innerHTML = `<div style="display:flex; gap: 1rem;"><button class="modal-add-btn remove-mode" style="flex:1;" onclick="cancelEnchant(${itemId})">元に戻す</button><button class="modal-add-btn" style="flex:1;" onclick="confirmEnchant(${itemId})">この効果にする</button></div>`;
     saveGame();
 }
 
 function confirmEnchant(itemId) {
-    const currentEnhancement = playerState.equipmentEnhancements?.[itemId];
+    const currentEnhancement = playerState.equipmentEnhancements?.[itemId]; // Always exists
     if (currentEnhancement && ['A', 'S', 'SS', 'X', 'Z'].includes(currentEnhancement.rank)) {
         if (!confirm(`現在の効果はランク ${currentEnhancement.rank} です。新しい効果で上書きしてもよろしいですか？`)) return;
     }
@@ -14127,29 +14104,25 @@ function openModalFromPreview(charId) {
     openModal(charId, true, unit);
 }
 
-const COMPENSATION_VERSION = '20260427_unified_all_stats_v2';
+const COMPENSATION_VERSION = '20260428_fix_doubling_v3';
 
 function checkAndApplyCompensation() {
-  if (playerState.compensationVersion === COMPENSATION_VERSION) return;
+  if (playerState.compensationVersion === COMPENSATION_VERSION) return false; // Return false if already compensated (v2)
 
   // --- 1. 装備強化の完全統一 (Pt. & 5-digit Fix) ---
   let enchantAdjusted = false;
   if (playerState.equipmentEnhancements) {
-      const rankVals = { 'X': 10, 'SS': 8, 'S': 6, 'A': 5, 'B': 3, 'C': 2, 'D': 1 };
+      const rankVals = { 'X': 15, 'SS': 12, 'S': 10, 'A': 8, 'B': 6, 'C': 4, 'D': 2 };
       for (const id in playerState.equipmentEnhancements) {
           const e = playerState.equipmentEnhancements[id];
-          if (e.rank === 'Z') { e.value = 40; e.stat = 'atk'; e.type = 'status_up'; enchantAdjusted = true; }
-          else if (rankVals[e.rank]) { e.value = rankVals[e.rank]; enchantAdjusted = true; }
+          if (e.rank === 'Z' || e.rank === 'Unique') { e.rank = 'Z'; e.value = 20; e.type = 'all_stats_up'; delete e.stat; enchantAdjusted = true; }
+          else if (rankVals[e.rank]) { e.value = rankVals[e.rank]; e.type = 'all_stats_up'; delete e.stat; enchantAdjusted = true; }
       }
   }
   if (enchantAdjusted) playerState.hasHighRankEquipNoSync = true;
 
   if (enchantAdjusted) {
-      alert("【装備システム一新のお知らせ】\n\n" +
-            "装備強化のランダム要素とPt加算方式を撤廃し、全ステータス%強化システムに移行しました。\n" +
-            "所持している全装備の数値が自動的に新基準（例：Xランクなら全能力+10%）へと調整されました。\n\n" +
-            "※古いバージョンの5桁数値やPt表記はすべて解消されました。\n" +
-            "ご不便をおかけしますが、何卒ご理解いただけますようお願い申し上げます。");
+      alert("【装備システム一新のお知らせ】\n\n装備強化のランダム要素とPt加算方式を撤廃し、全ステータス%強化システムに移行しました。\n所持している全装備の数値が自動的に新基準（例：Xランクなら全能力+10%）へと調整されました。\n\n※古いバージョンの5桁数値やPt表記はすべて解消されました。\nご不便をおかけしますが、何卒ご理解いただけますようお願い申し上げます。");
   }
 
   // --- 2. オーラ費用撤廃時の補填 (既存ロジック) ---
@@ -14452,32 +14425,6 @@ function loadGame() {
         playerState.preDeterminedResults = { normalGachaQueue: [], enchantStandard: null, enchantS: null, enchantX: null };
         refillNormalGachaQueue();
         refillEnchantResults();
-        saveGame();
-    }
-
-    // Migration for Equipment Enhancement Values (Doubling for Pt. display)
-    if (playerState.equipmentEnhancements && !playerState.enchantValueDoubled) {
-        for (const id in playerState.equipmentEnhancements) {
-            const e = playerState.equipmentEnhancements[id];
-            
-            // 1. Convert Unique to Z (Essence of Destruction)
-            if (e.rank === 'Unique' || e.rank === 'Z') {
-                e.rank = 'Z';
-                e.label = "破壊の極意";
-                e.type = "status_up";
-                e.stat = "atk";
-                e.value = 55;
-            }
-
-            // 2. Double values if not already doubled
-            if (e.rank !== 'Z' && e.rank !== 'Unique') {
-                e.value = (e.value || 0) * 2;
-            } else if (['status_up', 'all_stats_up', 'dmg_cut_up', 'regen_up', 'drain_up'].includes(e.type)) {
-                // These unique types are treated as percentages
-                e.value = (e.value || 0) * 2;
-            }
-        }
-        playerState.enchantValueDoubled = true;
         saveGame();
     }
 
@@ -16302,10 +16249,10 @@ function adminNormalizeStats() {
         const detail = squadObj.details[charId];
         if (detail.enhancement) {
             const e = detail.enhancement;
-            const rankVals = { 'X': 10, 'SS': 8, 'S': 6, 'A': 5, 'B': 3, 'C': 2, 'D': 1, 'Z': 55 };
+            const rankVals = { 'X': 15, 'SS': 12, 'S': 10, 'A': 8, 'B': 6, 'C': 4, 'D': 2, 'Z': 20, 'Unique': 20 };
             if (rankVals[e.rank]) {
                 e.value = rankVals[e.rank];
-                if (e.rank === 'Z') e.stat = 'atk';
+                if (e.rank === 'Z' || e.rank === 'Unique') { e.rank = 'Z'; e.type = 'all_stats_up'; e.label = "究極の強化"; delete e.stat; }
                 count++;
             }
         }
