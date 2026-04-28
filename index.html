@@ -5604,15 +5604,27 @@ function getMissionById(id) {
 function generateTowerMission(floor) {
     if (floor <= 0) return null;
 
-    const level = floor;
-    const enemyId = (floor % 2 === 1) ? 315 : 316; // 衛兵 or 傀儡
-    const enemyName = (floor % 2 === 1) ? '衛兵' : '傀儡';
+    let level = floor;
+    let enemyName;
+    let missionEnemies;
 
-    const missionEnemies = Array.from({ length: 5 }, () => ({
-        id: enemyId,
-        level: level,
-        aiType: AI_TYPES.RANDOM
-    }));
+    if (floor === 5001) {
+        level = 1;
+        enemyName = "ルディ王国の精鋭";
+        missionEnemies = [26, 27, 28, 25, 29].map(id => ({
+            id: id,
+            level: level,
+            aiType: AI_TYPES.RANDOM
+        }));
+    } else {
+        const enemyId = (floor % 2 === 1) ? 315 : 316; // 衛兵 or 傀儡
+        enemyName = (floor % 2 === 1) ? '衛兵' : '傀儡';
+        missionEnemies = Array.from({ length: 5 }, () => ({
+            id: enemyId,
+            level: level,
+            aiType: AI_TYPES.RANDOM
+        }));
+    }
 
     let totalPower = 0;
     missionEnemies.forEach(me => {
