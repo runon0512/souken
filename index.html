@@ -345,6 +345,28 @@
   /* Allow specific interactive elements */
   .editor-unit-slot .editor-remove-btn { pointer-events: auto; }
 
+  /* Squad slot individual remove button */
+  .squad-remove-btn {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: rgba(255, 107, 53, 0.8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    z-index: 10;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.2s;
+    pointer-events: auto;
+  }
+  .squad-remove-btn:hover { background: #ff6b35; transform: scale(1.1); }
+
   /* Ensure content sits above aura overlay in squad slots */
   .squad-slot > * { position: relative; z-index: 2; }
   .squad-slot .aura-overlay { position: absolute; z-index: 1; }
@@ -3064,12 +3086,15 @@
         <div class="squad-section">
           <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
             <input type="text" id="squadNameInput" class="squad-name-input" onchange="updateSquadName(this.value)" placeholder="部隊名を入力...">
-            <div class="squad-tabs">
-              <button class="squad-tab-btn active" id="squad-tab-0" onclick="switchSquad(0)">1</button>
-              <button class="squad-tab-btn" id="squad-tab-1" onclick="switchSquad(1)">2</button>
-              <button class="squad-tab-btn" id="squad-tab-2" onclick="switchSquad(2)">3</button>
-              <button class="squad-tab-btn" id="squad-tab-3" onclick="switchSquad(3)">4</button>
-              <button class="squad-tab-btn" id="squad-tab-4" onclick="switchSquad(4)">5</button>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <div class="squad-tabs" style="margin-bottom:0;">
+                <button class="squad-tab-btn active" id="squad-tab-0" onclick="switchSquad(0)">1</button>
+                <button class="squad-tab-btn" id="squad-tab-1" onclick="switchSquad(1)">2</button>
+                <button class="squad-tab-btn" id="squad-tab-2" onclick="switchSquad(2)">3</button>
+                <button class="squad-tab-btn" id="squad-tab-3" onclick="switchSquad(3)">4</button>
+                <button class="squad-tab-btn" id="squad-tab-4" onclick="switchSquad(4)">5</button>
+              </div>
+              <button class="filter-btn" onclick="removeAllFromSquad()" style="border-color:var(--accent2); color:var(--accent2); padding:0.4rem 0.6rem; font-size:0.8rem; white-space:nowrap;">全員外す</button>
             </div>
           </div>
           <div id="squadSlots" style="display:flex; gap:0.5rem;"></div>
@@ -6489,6 +6514,7 @@ function renderSquad() {
           portraitHtml = `<div style="font-size: 2rem;">${c.icon || '👤'}</div>`;
       }
       slot.innerHTML = `
+        <div class="squad-remove-btn" onclick="removeFromSquad(event, ${c.id})">✕</div>
         ${auraData ? `<div class="aura-overlay"></div>` : ''}        
         <div class="slot-img-wrap">${portraitHtml}</div>
         <div class="slot-info">
@@ -6555,8 +6581,8 @@ function renderCards() {
       currentFilter === c.element;
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || c.name.includes(q) ||
-      c.roleJp.includes(q) ||
-      c.abilities.some(a => a.name.includes(q) || a.desc.includes(q));
+      (c.type && c.type.includes(q)) ||
+      (c.abilities && c.abilities.some(a => a.name.includes(q) || a.desc.includes(q)));
     return matchFilter && matchSearch;
   });
 
@@ -6996,6 +7022,31 @@ function toggleSquad(e, id) {
   if (modalCharId !== null) updateModal();
   updateSquadSwitcherUI();
   saveGame();
+}
+
+function removeFromSquad(e, id) {
+  if (e) e.stopPropagation();
+  const idx = squad.indexOf(id);
+  if (idx > -1) {
+    squad.splice(idx, 1);
+    renderSquad();
+    renderCards();
+    updateSquadSwitcherUI();
+    saveGame();
+    showToast('編成から外しました');
+  }
+}
+
+function removeAllFromSquad() {
+  if (squad.length === 0) return;
+  if (confirm('現在の部隊メンバーを全員外しますか？')) {
+    squad.length = 0;
+    renderSquad();
+    renderCards();
+    updateSquadSwitcherUI();
+    saveGame();
+    showToast('部隊を空にしました');
+  }
 }
 
 function toggleFavorite() {
@@ -12650,7 +12701,7 @@ function checkWinLoss() {
         }
         playerState.rainbowStones += rewardAmount;
         saveGame(); // バトル勝利時に自動セーブ
-        showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName, mvpUnit, unlockedItem, unlockedTowerChars);
+        showVictoryScreen(rewardAmount, isFirstClear, unlockedCharName, mvpUnit, unlockedItem, unlockedTowerChars, grantedFragments);
     } else if (livingPlayers === 0) {
 
         battleState.isFinished = true;
@@ -13175,6 +13226,7 @@ async function triggerOnBattleStartAbilities() {
         }
         else if (unit.id === 22) { // キャル・エクレア「多重障壁」
             // 味方全員
+            const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
             const targets = allies.filter(u => u.currentHp > 0);
             
             if (targets.length > 0) {
@@ -14647,6 +14699,18 @@ function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUni
         </div>`;
   }
 
+  let fragmentsHtml = '';
+  if (grantedFragments) {
+    fragmentsHtml = `
+      <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
+        <div style="font-family: 'Orbitron'; font-size: 1.2rem; color: var(--gold);">FRAGMENT ACQUIRED</div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; background: rgba(255,215,0,0.05); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--gold);">
+          <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem;">${grantedFragments.name} の欠片</div><div style="font-size:0.75rem; color: var(--text-mid); margin-top: 4px;">x${grantedFragments.count} を獲得しました</div></div>
+        </div>
+      </div>
+    `;
+  }
+
   let unlockedItemHtml = '';
   if (unlockedItem) {
     unlockedItemHtml = `
@@ -14663,6 +14727,7 @@ function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUni
   rewardsContainer.innerHTML = `
     ${mvpHtml}
     ${unlockedCharHtml}
+    ${fragmentsHtml}
     ${unlockedItemHtml}
     <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
       <div style="font-size: 14px; color: var(--text-mid); margin-bottom: 8px;">獲得報酬</div>
