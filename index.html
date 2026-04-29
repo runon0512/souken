@@ -14581,13 +14581,13 @@ function loadGame() {
         saveGame();
     }
 
-    // Apply Compensation/Fix Logic
-    checkAndApplyCompensation();
-
     missionProgress = new Set(savedData.missionProgress || []);
     // squad変数を現在のアクティブなスロットへの参照にする
     squad = playerState.squads[playerState.currentSquadIndex];
-    
+
+    // Apply Compensation/Fix Logic
+    checkAndApplyCompensation();
+
     console.log('Game loaded from localStorage.');
     showToast('セーブデータをロードしました');
   } else {
