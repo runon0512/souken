@@ -6089,8 +6089,9 @@ function getFallbackHtml(src, alt = '', style = '') {
 
 function calcStats(baseStats, level, equipment = null, potential = 0, explicitEnhancement = undefined, unitId = null) {
   let effectiveBase = { ...baseStats };
-  // 属性解放 (ドラ:1, いえみけ:4) + 賢者の石(ID:15) によるステータス上昇 (約1割)
-  if ((unitId == 1 || unitId == 4) && equipment && equipment.id === 15) {
+  // 属性解放 (ドラ:1, いえみけ:4, ライ:5) + 賢者の石(ID:15) によるステータス上昇 (約1割)
+  const isAwakenedUnit = (unitId == 1 || unitId == 4 || unitId == 5);
+  if (isAwakenedUnit && equipment && equipment.id === 15) {
       effectiveBase = {
         hp: Math.floor(baseStats.hp * 1.1),
         atk: Math.floor(baseStats.atk * 1.1),
@@ -6130,8 +6131,8 @@ function calcStats(baseStats, level, equipment = null, potential = 0, explicitEn
   }
 
   // Equipment Stat Modifiers
-  // 覚醒ドラの場合は元の石の効果を無効化
-  if (equipment && equipment.effect && !(unitId == 1 && equipment.id === 15)) {
+  // 属性解放ユニットの場合は元の石の1.05倍効果を無効化（1.1倍に含まれるため）
+  if (equipment && equipment.effect && !(isAwakenedUnit && equipment.id === 15)) {
     if (equipment.effect.type === 'stat_mult') {
       s[equipment.effect.stat] = Math.floor(s[equipment.effect.stat] * equipment.effect.val);
     } else if (equipment.effect.type === 'stat_mult_multi') {
@@ -6149,8 +6150,8 @@ function calcStats(baseStats, level, equipment = null, potential = 0, explicitEn
   return s;
 }
 
-function getPower(unit, level, potential = 0) {
-  const equipId = playerState.characters[unit.id] ? playerState.characters[unit.id].equippedId : null;
+function getPower(unit, level, potential = 0, currentEquipId = null) {
+  const equipId = currentEquipId;
   const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
   const s = calcStats(unit.baseStats, level, equip, potential, undefined, unit.id);
   return Math.floor(s.hp + s.atk * 2 + s.def + s.spd);
@@ -6498,7 +6499,7 @@ function renderSquad() {
           <div class="slot-name">${displayName}</div>
           <div style="display:flex; align-items:center; gap:0.5rem;">
             ${equip ? `<div class="squad-equip-icon ${equipAuraClass}" title="${equip.name}">${equipAuraClass ? `<div class="aura-overlay"></div>` : ''}${equip.icon}</div>` : ''}
-            <div class="slot-power">${getPower(c, playerState.characters[id].level, potential)}</div>
+            <div class="slot-power">${getPower(c, playerState.characters[id].level, potential, equipId)}</div>
           </div>
         </div>
       `;
@@ -6528,8 +6529,10 @@ function renderSquad() {
 
   const total = squad.reduce((s, id) => {
     const c = units.find(u => u.id === id);
+    const currentSquadEquips = playerState.squadEquipments ? playerState.squadEquipments[playerState.currentSquadIndex] : {};
+    const eid = currentSquadEquips[id] || null;
     const pot = playerState.characters[id] ? (playerState.characters[id].potential || 0) : 0;
-    return s + (c ? getPower(c, playerState.characters[id].level, pot) : 0);
+    return s + (c ? getPower(c, playerState.characters[id].level, pot, eid) : 0);
   }, 0);
   const totalPowerEl = document.getElementById('totalPower');
   if (totalPowerEl) totalPowerEl.textContent = total;
@@ -6672,7 +6675,7 @@ function renderCards() {
     const powerVal = s.hp + s.atk * 2 + s.def + s.spd;
 
     card.innerHTML = `
-      <div class="card-power-badge">PWR ${powerVal}</div>
+      <div class="card-power-badge">PWR ${getPower(c, level, potential, equipId)}</div>
       <div class="char-card-inner">
         ${isFav ? '<div class="card-fav-badge">❤️</div>' : ''}
         ${!isOwned ? '<div class="char-card-status-label" style="background:var(--text-dim)">未所有</div>' : (inSquad ? '<div class="char-card-status-label">✓ 編成中</div>' : '')}
