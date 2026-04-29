@@ -31,22 +31,6 @@
     --elem-none: #aaaaaa;
   }
 
-  body.light-theme {
-    --bg-deep: #f8faff; /* 全体的に明るい背景色 */
-    --bg-mid: #eef2f7;  /* 中間の明るさの背景色 */
-    --bg-card: #ffffff;
-    --bg-card-hover: #fdfefe; /* カードホバー時の背景色 */
-    --accent: #66b3ff;  /* 明るいアクセントカラー */
-    --accent2: #ff9966; /* 明るいアクセントカラー2 */
-    --accent3: #88cc88; /* 明るいアクセントカラー3 */
-    --gold: #ffcc66;    /* 明るいゴールド */
-    --text-main: #4a4a4a; /* メインテキストの色を柔らかく */
-    --text-dim: #a0a0a0; /* 暗いテキストの色を明るく */
-    --text-mid: #666666; /* 中間のテキストの色を明るく */
-    --border: rgba(0,0,0,0.05); /* 境界線をより薄く */
-    --border-bright: rgba(0,0,0,0.15); /* 明るい境界線を薄く */
-  }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   /* 軽量化設定：画像をピクセル化して補間負荷を下げる */
@@ -93,11 +77,6 @@
       radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255,107,53,0.06) 0%, transparent 60%);
     pointer-events: none;
     z-index: 0;
-  }
-  
-  body.light-theme::before, 
-  body.light-theme::after {
-    opacity: 0.3;
   }
 
   /* GRID OVERLAY */
@@ -3101,7 +3080,6 @@
           <div style="display:flex; gap: 5px; margin-top: 0.5rem;">
              <button class="filter-btn" onclick="copySquadCode()" style="padding: 2px 5px; font-size: 1.25rem;">Copy</button>
              <button class="filter-btn" onclick="openCodeViewer()" style="padding: 2px 5px; font-size: 1.25rem;">View</button>
-             <button class="filter-btn" onclick="removeAllUnits()" style="padding: 2px 5px; font-size: 1.25rem; border-color: var(--accent2); color: var(--accent2);">Clear</button>
           </div>
         </div>
       </div>
@@ -3341,13 +3319,6 @@
       <button class="modal-close" onclick="closeSettingsModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="modal-section">
-        <div class="modal-section-title">外観設定</div>
-        <select class="sort-select" id="themeSelect" onchange="updateTheme(this.value)" style="width: 100%;">
-          <option value="dark">ダークモード</option>
-          <option value="light">ライトモード</option>
-        </select>
-      </div>
       <div class="modal-section">
         <div class="modal-section-title">サウンド</div>
         <label style="font-size: 0.9rem; color: var(--text-mid);">BGM音量</label>
@@ -4186,7 +4157,6 @@ let settings = {
   skipTutorial: false,
   cardSize: 'large',
   hideStatusUI: false,
-  theme: 'dark',
 };
 
 /* CSS for Tutorial injected via JS or here */
@@ -16655,7 +16625,6 @@ async function initializeGame() {
     if (document.getElementById('skipTutorialCheck')) {
         document.getElementById('skipTutorialCheck').checked = settings.skipTutorial || false;
     }
-    applyTheme();
     
     // Set initial card size. Ensure select element exists.
     const sizeSelectEl = document.getElementById('sizeSelect');
