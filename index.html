@@ -4918,7 +4918,7 @@ const equipmentItems = [
   { id: 17, name: 'ライ・アルバロ SP', icon: '⚡', desc: 'ライ専用。第二スキルが「不可能支配」になる。', effect: { type: 'skill_override' } },
   { id: 18, name: 'リディン・イルカイ SP', icon: '🏮', desc: 'リディン(過去)専用。第二スキルが「相打ち殺法(SP)」になる。', effect: { type: 'skill_override' } },
   { id: 19, name: 'アスター・エクレア SP', icon: '🌪️', desc: 'アスター専用。第二スキルが「運動量操作」になる。', effect: { type: 'skill_override' } },
-  { id: 20, name: 'ギラ・グレゴリオ SP', icon: '💮', desc: 'ギラ専用。第二スキルが「監魂葬災」になる。', effect: { type: 'skill_override' } },
+  { id: 20, name: 'ギラ・グレゴリオ SP', icon: '💮', desc: 'ギラ専用。第二スキルが「監魂葬災」になる。', effect: { type: 'skill_override' } }, // ギラSP
   { id: 21, name: 'オリバー・ジャック SP', icon: '🎺', desc: 'オリバー専用。第二スキルが「紅の行進曲」になる。', effect: { type: 'skill_override' } },
 ];
 
@@ -6913,7 +6913,7 @@ function renderStatusPanel() {
         <div class="equip-desc" style="white-space: normal; line-height: 1.5;">${effect.desc}</div>
       </div>
     `;
-    grid.appendChild(card);
+    grid.appendChild(card); // Always exists
   }
 }
 
@@ -10411,7 +10411,7 @@ async function startBattle(missionId, skipDialogue = false) {
           unit = { 
               ...enemy, stats, currentHp: stats.hp, level, aura, aiType: enemyConfig.aiType, 
               isPlayer: false, battleId: `e-${enemy.id}-${i}`, statusEffects: [], 
-              equipment: equip, enhancement: enhancement, abilities: battleAbilities 
+              equipment: equip, enhancement: enhancement, abilities: battleAbilities, skillChoices: enemyConfig.skillChoices
           };
 
           if ((unit.id == 1 || unit.id == 4 || unit.id == 5) && equip && equip.id == 15) {
@@ -10421,6 +10421,38 @@ async function startBattle(missionId, skipDialogue = false) {
               unit.aura = 8;
           }
       }
+
+      // SP装備によるスキル上書き (敵ユニットにも適用)
+      if (equip && equip.id === 17 && unit.id === 5) { // ライSP (ID:5)
+          unit.abilities[1] = { name: '不可能支配', timing: 'passive' };
+      }
+      if (equip && equip.id === 18 && unit.id === 15) { // リディンSP (ID:15)
+          unit.abilities[1] = { name: '相打ち殺法(SP)', timing: 'on_death' };
+      }
+      if (equip && equip.id === 19 && unit.id === 17) { // アスターSP (ID:17)
+          unit.abilities[1] = { 
+              name: '運動量操作', 
+              triggerRate: 0.3, timing: 'before_attack', effect: { type: 'status', status: 'curse', turns: 2 }
+          };
+      }
+      if (equip && equip.id === 20 && unit.id === 13) { // ギラSP (ID:13)
+          unit.abilities[1] = { name: '監魂葬災', timing: 'on_death' };
+      }
+      if (equip && equip.id === 21 && unit.id === 12) { // オリバーSP (ID:12)
+          unit.abilities[1] = { 
+              name: '紅の行進曲', 
+              triggerRate: 1.0, timing: 'on_battle_start', 
+              target: 'all_allies', // This is for custom skill, not standard
+              effect: { type: 'status', status: 'strengthen', turns: 3 }
+          };
+      }
+
+      // SP装備による名前変更
+      if (equip && equip.id === 17 && unit.id === 5) unit.name = '【SP】ライ・アルバロ';
+      else if (equip && equip.id === 18 && unit.id === 15) unit.name = '【SP】リディン・イルカイ(過去)';
+      else if (equip && equip.id === 19 && unit.id === 17) unit.name = '【SP】アスター・エクレア';
+      else if (equip && equip.id === 20 && unit.id === 13) unit.name = '【SP】ギラ・グレゴリオ';
+      else if (equip && equip.id === 21 && unit.id === 12) unit.name = '【SP】オリバー・ジャック';
       if (equip && equip.effect && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
       if (equip && equip.effect && equip.effect.type === 'guts') unit.guts = true;
       
@@ -10507,6 +10539,7 @@ function initBattlePlayerUnits() {
       const equipId = currentSquadEquips[id] || null;
       const aura = state ? (state.aura || 0) : 0;
       const potential = state ? (state.potential || 0) : 0;
+      const skillChoices = state ? (state.skillChoices || {}) : {};
       const equip = equipId ? equipmentItems.find(e => e.id === equipId) : null;
       const enhancement = equipId ? playerState.equipmentEnhancements[equipId] : null;
       const stats = calcStats(char.baseStats, level, equip, potential, undefined, char.id);
@@ -10514,7 +10547,7 @@ function initBattlePlayerUnits() {
       // スキルチョイスの反映
       let baseAbilities = [...(char.abilities || [])];
       if (playerState.skillChoices && playerState.skillChoices[id]) {
-          for (const [aIdx, choiceIdx] of Object.entries(playerState.skillChoices[id])) {
+          for (const [aIdx, choiceIdx] of Object.entries(skillChoices)) {
               if (SKILL_CHOICES[id] && SKILL_CHOICES[id][aIdx] && SKILL_CHOICES[id][aIdx][choiceIdx]) {
                   const choice = SKILL_CHOICES[id][aIdx][choiceIdx];
                   baseAbilities[aIdx] = { 
@@ -10602,7 +10635,7 @@ function initBattlePlayerUnits() {
           unit.img = char.id == 1 ? 'A1.svg' : (char.id == 4 ? 'A3.svg' : 'A4.svg');
           unit.aura = 8;
           unit.name = char.id == 1 ? '【属性解放】ドラ・クラヴェール' : (char.id == 4 ? '【属性解放】いえみけ' : '【属性解放】ライ・アルバロ');
-      }
+      } // 属性解放による名前変更
 
       if (equip && equip.effect.type === 'shield_hit') unit.shieldHits = equip.effect.val;
       
@@ -11481,15 +11514,15 @@ async function runBattleSequence() {
                         let defRate = ab.triggerRate || 0;
                         if (fieldAntiMagic) defRate *= 0.5;
 
-                        if (ab.timing === 'on_defense' && Math.random() < defRate) {
-                            if (aoeTarget.id === 6) { // Den Alvaro
+                        if (ab.timing === 'on_defense' && Math.random() < defRate) { // Always exists
+                            if (aoeTarget.id === 6) { // Den Alvaro // Always exists
                                 actualDamage = Math.floor(actualDamage * 0.7);
                             } else {
                                 actualDamage = Math.floor(actualDamage * 0.9);
                             }
                             if (ab.effect?.type === 'status') {
                                 await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
-                            }
+                            } // Always exists
                         }
                     }
                     }
@@ -11595,7 +11628,7 @@ async function runBattleSequence() {
       }
 
       // ノア (ID:2) Passive Activation
-      const isNoahPassiveConditionMet = attacker.id === 2 && attacker.currentHp <= attacker.stats.hp * 0.3;
+      const isNoahPassiveConditionMet = attacker.id === 2 && attacker.currentHp <= attacker.stats.hp * 0.3; // Always exists
       if (attacker.id === 2) {
           if (isNoahPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
@@ -11608,7 +11641,7 @@ async function runBattleSequence() {
           }
       }
 
-      const isRaiPassiveConditionMet = attacker.id === 5 && attacker.currentHp <= attacker.stats.hp * 0.5; // ライ
+      const isRaiPassiveConditionMet = attacker.id === 5 && attacker.currentHp <= attacker.stats.hp * 0.5; // ライ // Always exists
       if (attacker.id === 5) { // ライ
           if (isRaiPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
@@ -11621,7 +11654,7 @@ async function runBattleSequence() {
           }
       }
       
-      const isAsterPassiveConditionMet = attacker.id === 17 && attacker.currentHp <= attacker.stats.hp * 0.3; // アスター
+      const isAsterPassiveConditionMet = attacker.id === 17 && attacker.currentHp <= attacker.stats.hp * 0.3; // アスター // Always exists
       if (attacker.id === 17) { // アスター
           if (isAsterPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
@@ -11634,7 +11667,7 @@ async function runBattleSequence() {
           }
       }
 
-      const isLuisPassiveConditionMet = attacker.id === 47 && attacker.currentHp <= attacker.stats.hp * 0.5;
+      const isLuisPassiveConditionMet = attacker.id === 47 && attacker.currentHp <= attacker.stats.hp * 0.5; // Always exists
       if (attacker.id === 47) {
           if (isLuisPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
@@ -11647,7 +11680,7 @@ async function runBattleSequence() {
           }
       }
 
-      const isEaraPassiveConditionMet = attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5; // エアラ
+      const isEaraPassiveConditionMet = attacker.id === 37 && attacker.currentHp <= attacker.stats.hp * 0.5; // エアラ // Always exists
       if (attacker.id === 37) {
           if (isEaraPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
@@ -11658,7 +11691,7 @@ async function runBattleSequence() {
           }
       }
 
-      const isGindoPassiveConditionMet = attacker.id === 38 && attacker.currentHp <= attacker.stats.hp * 0.3; // ギンドー
+      const isGindoPassiveConditionMet = attacker.id === 38 && attacker.currentHp <= attacker.stats.hp * 0.3; // ギンドー // Always exists
       if (attacker.id === 38) {
           if (isGindoPassiveConditionMet && !attacker.isPassiveActive) {
             attacker.isPassiveActive = true;
@@ -11669,7 +11702,7 @@ async function runBattleSequence() {
           }
       }
 
-
+      // Always exists
       // Lloyd (ID: 11) Chemical Contamination
       if (attacker.id === 11 && attacker.currentHp <= attacker.stats.hp * 0.5 && !attacker.passiveUsed) {
           attacker.passiveUsed = true;
@@ -11702,7 +11735,7 @@ async function runBattleSequence() {
       if (attacker.id === 13 && activeAbility && activeAbility.name === '圧縮の札') attacker.isAdvantageForced = true;
       if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'crit_up') isCritical = true;
 
-        if (attacker.id === 18 && activeAbility.name === '五色の魔法') {
+        if (attacker.id === 18 && activeAbility && activeAbility.name === '五色の魔法') {
             attacker.isAdvantageForced = true;
         }
         if (attacker.id === 16 && activeAbility.name === '虹斬') {
@@ -11733,7 +11766,7 @@ async function runBattleSequence() {
         let isNonDamaging = activeAbility && (activeAbility.damageMult === 0 || (activeAbility.damageMult === undefined && (activeAbility.effect?.type === 'heal' || activeAbility.effect?.type === 'damage_cut')));
         
         // Unique: Critical Strike
-        let isCritical = false;
+        let isCritical = false; // Always exists
         if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'crit_up' && Math.random() < 0.2) {
             damageMultiplier *= 1.5;
             isCritical = true;
@@ -11782,7 +11815,7 @@ async function runBattleSequence() {
         // Ability: Defense (on_defense)
         if (target.abilities && actualDamage > 0 && (!activeAbility || !activeAbility.ignoresDefenseSkills)) {
             // 呪い状態なら防御スキル発動不可
-                    const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');                    
+                    const isTargetCursed = target.statusEffects.some(e => e.type === 'curse'); // Always exists
             if (!isTargetCursed && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
             for (const ab of target.abilities) {
                 if (ab.timing === 'on_defense') {
@@ -11823,7 +11856,7 @@ async function runBattleSequence() {
                         logBattleMessage(`${target.name}は${ab.name}でダメージを25%カットした！`);
                         playEffect(targetEl, 'guard-vertical');
                             break;
-                        } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos
+                        } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos // Always exists
                             actualDamage = Math.floor(actualDamage * 0.8); // 20% cut
                             logBattleMessage(`${target.name}は防御態勢でダメージを軽減した！`);
                             playEffect(targetEl, 'guard-vertical');
@@ -11831,7 +11864,7 @@ async function runBattleSequence() {
                         } else if (target.id === 30 && ab.name === '不可能支配') { // Sele
                             actualDamage = Math.floor(actualDamage * 0.5); // 50% cut
                             logBattleMessage(`${target.name}は「不可能支配」でダメージを50%カットした！`);
-                            playEffect(targetEl, 'guard-vertical');
+                            playEffect(targetEl, 'guard-vertical'); // Always exists
                             break; // Break from defense abilities loop
                         } else if (target.id === 318 && ab.name === '反転') {
                             await showCutIn(target, ab.name);
@@ -11850,7 +11883,7 @@ async function runBattleSequence() {
                             if (attacker.currentHp <= 0) await processUnitDeath(attacker);
                             break; 
                         } else if (target.id === 6 && ab.name === '雷業壁') { // Den Alvaro
-                            actualDamage = Math.floor(actualDamage * 0.7);
+                            actualDamage = Math.floor(actualDamage * 0.7); // Always exists
                             logBattleMessage(`${target.name}の${ab.name}！ダメージ軽減＆麻痺付与！`);
                             if (ab.effect?.type === 'status') {
                                 await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
@@ -11858,7 +11891,7 @@ async function runBattleSequence() {
                             playEffect(targetEl, 'guard-vertical');
                         } else if (target.id === 307) { // Sheria Wisteria
                             actualDamage = Math.floor(actualDamage * 0.9); // 10% cut
-                            logBattleMessage(`${target.name}の${ab.name}！ダメージを10%軽減！`);
+                            logBattleMessage(`${target.name}の${ab.name}！ダメージを10%軽減！`); // Always exists
                             playEffect(targetEl, 'guard-vertical');
                         } else if (ab.effect?.type === 'damage_cut') {
                             // Generic Damage Cut Effect (Custom Skills)
@@ -11878,7 +11911,7 @@ async function runBattleSequence() {
         }
         
         // ミリア・ルティス (ID: 14) Passive: 耐え抜く能力
-        // パッシブなので呪いの影響を受けるか微妙だが、スキル枠なので受けると判定
+        // パッシブなので呪いの影響を受けるか微妙だが、スキル枠なので受けると判定 // Always exists
         if (!target.statusEffects.some(e => e.type === 'curse')) {
         if (target.id === 14 && actualDamage >= target.currentHp) {
             if (target.endureCount === undefined) target.endureCount = 0;
@@ -11896,7 +11929,7 @@ async function runBattleSequence() {
         }
 
         // Equipment: Evasion
-      if (target.equipment && target.equipment.effect && target.equipment.effect.type === 'evasion' && Math.random() < target.equipment.effect.val) {
+      if (target.equipment && target.equipment.effect && target.equipment.effect.type === 'evasion' && Math.random() < target.equipment.effect.val) { // Always exists
           actualDamage = 0;
           isEvaded = true;
           logBattleMessage(`${target.name}は攻撃をひらりと回避した！`);
@@ -11904,7 +11937,7 @@ async function runBattleSequence() {
       }
       // Equipment: Shield (Nullify Hit)
       else if (target.shieldHits > 0) {
-          actualDamage = 0;
+          actualDamage = 0; // Always exists
           target.shieldHits--;
           logBattleMessage(`${target.name}の人形が身代わりになった！`);
           showPassivePopup(document.getElementById(`unit-${target.battleId}`), "BLOCK");
@@ -11912,7 +11945,7 @@ async function runBattleSequence() {
       // Equipment: Guts
       else if (target.equipment && target.equipment.effect && target.equipment.effect.type === 'guts' && target.guts && actualDamage >= target.currentHp) {
           const val = target.equipment.effect.val;
-          // If val is a specific percentage (< 1), revive with that amount. Otherwise survive with 1 HP.
+          // If val is a specific percentage (< 1), revive with that amount. Otherwise survive with 1 HP. // Always exists
           if (typeof val === 'number' && val < 1) {
             const reviveHp = Math.floor(target.stats.hp * val);
             actualDamage = target.currentHp - reviveHp; // Adjust damage so HP becomes reviveHp
@@ -11924,7 +11957,7 @@ async function runBattleSequence() {
           target.guts = false; // Consume guts
       }
       // Unique: Guts Stack
-      else if (target.gutsCount > 0 && actualDamage >= target.currentHp) {
+      else if (target.gutsCount > 0 && actualDamage >= target.currentHp) { // Always exists
           actualDamage = target.currentHp - 1;
           target.gutsCount--;
           logBattleMessage(`${target.name}は唯一無二の生命力で耐えた！`);
@@ -11933,7 +11966,7 @@ async function runBattleSequence() {
 
         // Landia (ID: 16) Passive: 無能力の意地
         const landiaPassive = target.abilities.find(ab => ab.timing === 'on_skill_defense');
-        if (activeAbility && target.id === 16 && landiaPassive && !target.statusEffects.some(e => e.type === 'curse')) {
+        if (activeAbility && target.id === 16 && landiaPassive && !target.statusEffects.some(e => e.type === 'curse')) { // Always exists
             actualDamage = Math.floor(actualDamage * 0.5);
             logBattleMessage(`${target.name}は<span class="ability">${landiaPassive.name}</span>でダメージを50%ブロックした！`);
             playEffect(document.getElementById(`unit-${target.battleId}`), 'guard-vertical');
@@ -11948,7 +11981,7 @@ async function runBattleSequence() {
         target.currentHp = Math.max(0, target.currentHp - actualDamage);
 
         // Guldie (ID: 319) Passive Activation
-        const wasAbove50 = (target.currentHp + actualDamage) > target.stats.hp * 0.5;
+        const wasAbove50 = (target.currentHp + actualDamage) > target.stats.hp * 0.5; // Always exists
         if (target.id === 319 && ((target.currentHp <= target.stats.hp * 0.5 && wasAbove50) || (target.missionSpecific?.alwaysLust && !target.passiveUsed))) {
             const passiveAbility = target.abilities.find(a => a.name === '大罪支配【色欲】');
             if (passiveAbility) {
@@ -11958,7 +11991,7 @@ async function runBattleSequence() {
         }
 
         // Ricardo (ID: 8) Earth Residue Flow
-        if (target.id === 8 && target.currentHp === 0 && !target.gutsUsed && !target.statusEffects.some(e => e.type === 'curse')) {
+        if (target.id === 8 && target.currentHp === 0 && !target.gutsUsed && !target.statusEffects.some(e => e.type === 'curse')) { // Always exists
             target.gutsUsed = true;
             updateUnitUI(target); // Show 0 HP
             await sleep(400 / battleSpeedMultiplier);
@@ -11999,7 +12032,7 @@ async function runBattleSequence() {
       }
 
         // スキルによる追加効果
-        if (activeAbility && activeAbility.effect?.type === 'status') {
+        if (activeAbility && activeAbility.effect?.type === 'status') { // Always exists
             let turns = activeAbility.effect.turns;
             if (attacker.enhancement && attacker.enhancement.rank === 'Unique' && attacker.enhancement.type === 'status_ext') {
                 turns++;
@@ -12008,7 +12041,7 @@ async function runBattleSequence() {
         }
         
         // Unique: HP Drain (Effect is 1/2 of Pt.)
-        if (attacker.enhancement && attacker.enhancement.rank === 'Z' && attacker.enhancement.type === 'drain_up' && actualDamage > 0) {
+        if (attacker.enhancement && attacker.enhancement.rank === 'Z' && attacker.enhancement.type === 'drain_up' && actualDamage > 0) { // Always exists
             const drainRate = (attacker.enhancement.value / 2) / 100;
             const drain = Math.floor(actualDamage * drainRate);
             attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + drain);
@@ -12017,7 +12050,7 @@ async function runBattleSequence() {
         }
 
         if (isHeal) {
-            const healAmt = Math.floor(target.stats.hp * (activeAbility.effectValue / 100));
+            const healAmt = Math.floor(target.stats.hp * (activeAbility.effectValue / 100)); // Always exists
             target.currentHp = Math.min(target.stats.hp, target.currentHp + healAmt);
             logBattleMessage(`${attacker.name}の${activeAbility.name}！ ${target.name}のHPが<span class="heal">${healAmt}</span>回復！`);
             updateUnitUI(target);
@@ -12026,13 +12059,13 @@ async function runBattleSequence() {
         }
 
       // パッシブ効果: 炎支配 (通常攻撃時)
-      if (!activeAbility && attacker.id === 1 && attacker.isPassiveActive) await addStatusEffect(target, 'burn', 2);
+      if (!activeAbility && attacker.id === 1 && attacker.isPassiveActive) await addStatusEffect(target, 'burn', 2); // Always exists
 
       // パッシブ効果: 正義の秘"儀" (通常攻撃時)
-      if (!activeAbility && attacker.id === 47 && attacker.isPassiveActive) await addStatusEffect(target, 'paralysis', 2);
+      if (!activeAbility && attacker.id === 47 && attacker.isPassiveActive) await addStatusEffect(target, 'paralysis', 2); // Always exists
 
       // パッシブ効果: 破壊眼 (通常攻撃時)
-      if (!activeAbility && attacker.id === 38 && attacker.isPassiveActive) {
+      if (!activeAbility && attacker.id === 38 && attacker.isPassiveActive) { // Always exists
           await addStatusEffect(target, 'flinch', 3);
           logBattleMessage(`${attacker.name}の破壊眼！${target.name}は怯んだ！`);
       }
@@ -12159,7 +12192,7 @@ async function runBattleSequence() {
         await sleep(600 / battleSpeedMultiplier);
 
         // 3. Check for 'after_attack' ability (追撃)
-        if (target.currentHp > 0 && attacker.currentHp > 0 && attacker.abilities) {
+        if (target.currentHp > 0 && attacker.currentHp > 0 && attacker.abilities) { // Always exists
           // 呪いなら追撃不可
           const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');          
           if (!isAttackerCursed) {
@@ -12196,7 +12229,7 @@ async function runBattleSequence() {
             }
           }
           // ノアの特殊処理
-          else if (attacker.id === 2) {
+          else if (attacker.id === 2) { // Always exists
             const abIndex = attacker.isPassiveActive ? 2 : 0; // ハート・ブレイク or クリスタル・ブレイク
             const ab = attacker.abilities[abIndex];
             const rate = getTriggerRate(attacker, ab);
@@ -12204,7 +12237,7 @@ async function runBattleSequence() {
               chaseAbility = ab;
             }
           } else if (attacker.id === 17 && attacker.isPassiveActive) {
-            if (Math.random() < 0.6) { // 嵐呼ぶ剣戟
+            if (Math.random() < 0.6) { // 嵐呼ぶ剣戟 // Always exists
               chaseAbility = attacker.abilities[1];
             }
           } else if (attacker.id === 22) { // キャル・エクレア
@@ -12228,7 +12261,7 @@ async function runBattleSequence() {
               }
           } else {
             // 汎用処理
-            for (const ab of attacker.abilities) {
+            for (const ab of attacker.abilities) { // Always exists
               const rate = getTriggerRate(attacker, ab);
               if (ab.timing === 'after_attack' && Math.random() < rate) {
                 chaseAbility = ab;
@@ -12239,7 +12272,7 @@ async function runBattleSequence() {
 
           if (chaseAbility) {
             // Execution Logic (Lacyud Belhades etc.)
-            if (chaseAbility.execution) {
+            if (chaseAbility.execution) { // Always exists
                 if (target.currentHp > 0 && target.currentHp < target.stats.hp * 0.3) {
                     await showCutIn(attacker, chaseAbility.name);
                     const executionDamage = target.currentHp;
@@ -12251,7 +12284,7 @@ async function runBattleSequence() {
                 }
             } else 
             if (true) { // Re-entry for any chase logic
-            if (attacker.id === 5 && attacker.isPassiveActive) { // 八連雷撃斬
+            if (attacker.id === 5 && attacker.isPassiveActive) { // 八連雷撃斬 // Always exists
               await showCutIn(attacker, chaseAbility.name);
               const chaseProbs = [0.86, 0.74, 0.64, 0.56, 0.50, 0.46];
               for (let i = 0; i < 7; i++) {
@@ -12274,7 +12307,7 @@ async function runBattleSequence() {
                 }
               }
             } else if (attacker.id === 17 && attacker.isPassiveActive) { // 嵐呼ぶ剣戟
-              await showCutIn(attacker, chaseAbility.name);
+              await showCutIn(attacker, chaseAbility.name); // Always exists
               for (let i = 0; i < 3; i++) {
                   if (target.currentHp <= 0) break;
                   const chaseDamage = Math.floor(calculateDamage(attacker, target) * 0.6);
@@ -12290,7 +12323,7 @@ async function runBattleSequence() {
                   if (Math.random() > 0.6) break;
               }
             } else if (attacker.id === 14 && chaseAbility.name === '月輪無双') {
-              await showCutIn(attacker, chaseAbility.name);
+              await showCutIn(attacker, chaseAbility.name); // Always exists
               for (let i = 0; i < 4; i++) {
                   if (target.currentHp <= 0) break;
                   const chaseDamage = Math.floor(calculateDamage(attacker, target) * 0.8);
@@ -12306,7 +12339,7 @@ async function runBattleSequence() {
                   if (Math.random() > 0.5) break; // 50% chance to continue
               }
             } else if (attacker.id === 22 && chaseAbility.name === '多重詠唱') { // キャル: 多重詠唱
-              // 1回目:60%, 2回目:40%, 3回目:20%, 4回目:0%
+              // 1回目:60%, 2回目:40%, 3回目:20%, 4回目:0% // Always exists
               const castProbs = [0.6, 0.4, 0.2];
               for (let i = 0; i < 3; i++) {
                   if (Math.random() > castProbs[i]) break;
@@ -12325,7 +12358,7 @@ async function runBattleSequence() {
                   setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
                   await sleep(400 / battleSpeedMultiplier);
               }
-            } else if (chaseAbility.name === '絶念のマジック') {
+            } else if (chaseAbility.name === '絶念のマジック') { // Always exists
               await showCutIn(attacker, chaseAbility.name);
               const hitCount = target.despairMagicHits || 0;
               const mult = 1 + Math.pow(0.5, hitCount);
@@ -12342,7 +12375,7 @@ async function runBattleSequence() {
               targetEl.classList.add('is-taking-damage');
               setTimeout(() => targetEl.classList.remove('is-taking-damage'), 400);
               await sleep(600 / battleSpeedMultiplier);
-            } else if (attacker.id === 19 && chaseAbility.name === '情報操作') { // Soln
+            } else if (attacker.id === 19 && chaseAbility.name === '情報操作') { // Soln // Always exists
               await showCutIn(attacker, chaseAbility.name);
               await addStatusEffect(target, 'weakness', 4);
               await addStatusEffect(target, 'sleep', 2);
@@ -12350,7 +12383,7 @@ async function runBattleSequence() {
               playEffect(targetEl, 'magic');
             } else if (attacker.id === 317 && chaseAbility.name === '破壊拳') { // Ridin
               await showCutIn(attacker, chaseAbility.name);
-              const hakaiDamage = Math.floor(target.currentHp * 0.5);
+              const hakaiDamage = Math.floor(target.currentHp * 0.5); // Always exists
               target.currentHp -= hakaiDamage;
               recordDamage(attacker, hakaiDamage);
               logBattleMessage(`${attacker.name}の破壊拳！ ${target.name}に<span class="damage">${hakaiDamage}</span>のダメージ！`);
@@ -12361,7 +12394,7 @@ async function runBattleSequence() {
                 await processUnitDeath(target);
               }
             } else if (attacker.id === 319 && attacker.isPassiveActive && chaseAbility.name === 'エターナルクリムゾン') {
-              await showCutIn(attacker, chaseAbility.name);
+              await showCutIn(attacker, chaseAbility.name); // Always exists
               logBattleMessage(`${attacker.name}のエターナルクリムゾンが敵全体を焼き尽くす！`);
               const enemies = attacker.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
               for (const enemy of enemies) {
@@ -12372,7 +12405,7 @@ async function runBattleSequence() {
                   }
               }
             } else if (attacker.id === 318 && chaseAbility.name === '完全破壊') {
-              await showCutIn(attacker, chaseAbility.name);
+              await showCutIn(attacker, chaseAbility.name); // Always exists
               const newHp = Math.floor(target.stats.hp * 0.3);
               const damageDealt = target.currentHp - newHp;
               if (damageDealt > 0) {
@@ -12384,7 +12417,7 @@ async function runBattleSequence() {
                   playEffect(targetEl, 'magic');
                   if (target.currentHp <= 0) await processUnitDeath(target);
               }
-            } else if (chaseAbility.name === 'アブソリュート・ゼロ') { // シー・オーシャ
+            } else if (chaseAbility.name === 'アブソリュート・ゼロ') { // シー・オーシャ // Always exists
                 await showCutIn(attacker, chaseAbility.name);
                 await addStatusEffect(target, 'freeze', 2);
                 playEffect(targetEl, 'magic');
@@ -12392,7 +12425,7 @@ async function runBattleSequence() {
               }
             else if (attacker.id === 28 && chaseAbility.name === '跳弾の矢') { // Karma Morgol
                 const chainProbs = [0.6, 0.3];
-                for (let i = 0; i < 2; i++) {
+                for (let i = 0; i < 2; i++) { // Always exists
                    if (Math.random() > chainProbs[i]) break;
                    if (target.currentHp <= 0) break;
                    if (i===0) await showCutIn(attacker, chaseAbility.name);
@@ -12425,7 +12458,7 @@ async function runBattleSequence() {
                     await sleep(400 / battleSpeedMultiplier);
                     if (Math.random() > 0.5) break;
                 }
-            }
+            } // Always exists
             else { // Single chase attacks
               await showCutIn(attacker, chaseAbility.name);
               let chaseMult = 0.6; // Default for クリスタル・ブレイク
@@ -12445,7 +12478,7 @@ async function runBattleSequence() {
               // 追撃に対する防御スキルチェック
               if (target.abilities && actualChaseDamage > 0 && (!chaseAbility || !chaseAbility.ignoresDefenseSkills) && !target.missionSpecific?.alwaysLust) { // 常に色欲状態なら威力操作は発動しない
                 const isTargetCursed = target.statusEffects.some(e => e.type === 'curse');
-                if (!isTargetCursed) {
+                if (!isTargetCursed) { // Always exists
                   const targetFieldAntiMagic = (target.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy) === 'anti_magic';
                   for (const ab of target.abilities) {
                     let defRate = ab.triggerRate || 0;
@@ -12470,7 +12503,7 @@ async function runBattleSequence() {
                               await addStatusEffect(attacker, ab.effect.status, ab.effect.turns);
                           }
                           playEffect(targetEl, 'guard-vertical');
-                      } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos
+                      } else if (target.id === 29 && ab.name === '防御態勢') { // Lina Thanatos // Always exists
                           actualChaseDamage = Math.floor(actualChaseDamage * 0.8); // 20% cut
                           logBattleMessage(`${target.name}は防御態勢でダメージを軽減した！`);
                           playEffect(targetEl, 'guard-vertical');
@@ -12834,7 +12867,7 @@ function getBattleStats(unit) {
   const myField = unit.isPlayer ? battleState.fieldEffectPlayer : battleState.fieldEffectEnemy;
 
   // Field Effect: Berserk
-  if (myField === 'berserk') {
+  if (myField === 'berserk') { // Always exists
       s.atk = Math.floor(s.atk * 1.5);
       s.def = Math.floor(s.def * 0.5);
   }
@@ -12844,36 +12877,36 @@ function getBattleStats(unit) {
       s.spd = Math.floor(s.spd * 0.5);
   }
 
-  // パッシブ: ドラ (ID:1) HP50%以下で攻撃力30%UP
+  // パッシブ: ドラ (ID:1) HP50%以下で攻撃力30%UP // Always exists
   if (unit.id === 1 && unit.currentHp <= unit.stats.hp * 0.5) {
     s.atk = Math.floor(s.atk * 1.3);
   }
 
-  // パッシブ: ノア (ID:2) HP30%以下で防御力10%UP
+  // パッシブ: ノア (ID:2) HP30%以下で防御力10%UP // Always exists
   if (unit.id === 2 && unit.currentHp <= unit.stats.hp * 0.3) {
     s.def = Math.floor(s.def * 1.1);
   }
 
-  // パッシブ: いえみけ (ID:4) HP50%以下で防御力40%UP
+  // パッシブ: いえみけ (ID:4) HP50%以下で防御力40%UP // Always exists
   if (unit.id === 4 && unit.currentHp <= unit.stats.hp * 0.5) {
     s.def = Math.floor(s.def * 1.4);
   }
 
-  // パッシブ: エアラ・セイント (ID:37) HP50%以下で防御力20%UP (光支配)
+  // パッシブ: エアラ・セイント (ID:37) HP50%以下で防御力20%UP (光支配) // Always exists
   if (unit.id === 37 && unit.currentHp <= unit.stats.hp * 0.5) {
     s.def = Math.floor(s.def * 1.2);
   }
 
-  // パッシブ: エマ (ID:10) 厭世開花
+  // パッシブ: エマ (ID:10) 厭世開花 // Always exists
   if (unit.id === 10) {
     const lostHpRatio = 1 - (unit.currentHp / unit.stats.hp);
     const multiplier = 1 + (lostHpRatio * 0.5); // Max 1.5x at 0 HP
     s.atk = Math.floor(s.atk * multiplier);
     s.def = Math.floor(s.def * multiplier);
     s.spd = Math.floor(s.spd * multiplier);
-  }
+  } // Always exists
 
-  // パッシブ: エマ・ソフィーティア (ID:41) 愛世絢爛
+  // パッシブ: エマ・ソフィーティア (ID:41) 愛世絢爛 // Always exists
   if (unit.id === 41) {
     const hpRatio = unit.currentHp / unit.stats.hp;
     const multiplier = 1 + (hpRatio * 0.5); // Max 1.5x at 100% HP
@@ -12881,32 +12914,32 @@ function getBattleStats(unit) {
   }
 
   // パッシブ: フレイ (ID:42) 熱戦
-  if (unit.id === 42 && unit.statusEffects.some(e => e.type === 'burn')) {
+  if (unit.id === 42 && unit.statusEffects.some(e => e.type === 'burn')) { // Always exists
     s.atk = Math.floor(s.atk * 1.5);
   }
 
-  // パッシブ: オリバー (ID:12) フォルテ
+  // パッシブ: オリバー (ID:12) フォルテ // Always exists
   if (unit.id === 12 && unit.currentHp <= unit.stats.hp * 0.5) {
     s.atk = Math.floor(s.atk * 1.3);
   }
 
-  // パッシブ: アスター (ID:17) 嵐呼ぶ剣戟
+  // パッシブ: アスター (ID:17) 嵐呼ぶ剣戟 // Always exists
   if (unit.id === 17 && unit.currentHp <= unit.stats.hp * 0.3) {
     s.atk = Math.floor(s.atk * 1.3);
   }
 
-  // パッシブ: ギンドー (ID:38) HP30%以下で攻撃力2.5倍
+  // パッシブ: ギンドー (ID:38) HP30%以下で攻撃力2.5倍 // Always exists
   if (unit.id === 38 && unit.currentHp <= unit.stats.hp * 0.3) {
     s.atk = Math.floor(s.atk * 2.5);
   }
 
-  // パッシブ: エギル (ID:21) 状態異常がない時、攻撃力1.5倍
+  // パッシブ: エギル (ID:21) 状態異常がない時、攻撃力1.5倍 // Always exists
   if (unit.id === 21 && unit.statusEffects.length === 0) {
     s.atk = Math.floor(s.atk * 1.5);
   }
 
   // ステータス効果: 衰弱 (HP以外20%ダウン)
-  if (unit.statusEffects.some(e => e.type === 'weakness')) {
+  if (unit.statusEffects.some(e => e.type === 'weakness')) { // Always exists
     s.atk = Math.floor(s.atk * 0.8);
     s.def = Math.floor(s.def * 0.8);
     s.spd = Math.floor(s.spd * 0.8);
@@ -12916,7 +12949,7 @@ function getBattleStats(unit) {
     s.atk = Math.floor(s.atk * 1.5);
     s.def = Math.floor(s.def * 1.5);
     s.spd = Math.floor(s.spd * 1.5);
-  }
+  } // Always exists
   // ステータス効果: 重量化 (速度1/3)
   if (unit.statusEffects.some(e => e.type === 'heavy')) {
     s.spd = Math.floor(s.spd / 3);
@@ -12930,7 +12963,7 @@ function getBattleStats(unit) {
     s.atk = Math.floor(s.atk * 1.2);
     s.def = Math.floor(s.def * 0.8);
   }
-  
+
   return s;
 }
 
@@ -12962,7 +12995,7 @@ function calculateDamage(attacker, defender) {
   }
 
   // ダメージ計算式: 攻撃 * 攻撃 / 防御 * 属性相性
-  let damage = Math.floor((atkStats.atk * atkStats.atk) / Math.max(1, defStats.def) * advantage);
+  let damage = Math.floor((atkStats.atk * atkStats.atk) / Math.max(1, defStats.def) * advantage); // Always exists
   
   // 燃焼による被ダメージ増加
   if (defender.statusEffects.some(e => e.type === 'burn' || e.type === 'poison' || e.type === 'drown')) {
@@ -12970,7 +13003,7 @@ function calculateDamage(attacker, defender) {
   }
 
   // Equipment: Damage Cut
-  if (defender.equipment && defender.equipment.effect && defender.equipment.effect.type === 'dmg_cut') {
+  if (defender.equipment && defender.equipment.effect && defender.equipment.effect.type === 'dmg_cut') { // Always exists
       damage = Math.floor(damage * defender.equipment.effect.val);
   }
   // Equipment: Elemental Resistance
@@ -12978,7 +13011,7 @@ function calculateDamage(attacker, defender) {
       damage = Math.floor(damage * defender.equipment.effect.val);
   }
 
-  return damage;
+  return damage; // Always exists
 }
 
 function updateUnitUI(unit) {
@@ -12986,7 +13019,7 @@ function updateUnitUI(unit) {
   if (!unitEl) return;
   const hpPercent = Math.max(0, (unit.currentHp / unit.stats.hp) * 100);
   // Ensure elements exist before trying to set their properties
-  unitEl.querySelector('.b-unit-hp-bar').style.width = `${hpPercent}%`;
+  unitEl.querySelector('.b-unit-hp-bar').style.width = `${hpPercent}%`; // Always exists
   unitEl.querySelector('.b-unit-hp-text').textContent = `${unit.currentHp} / ${unit.stats.hp}`;
 
   // HP1以上なら死亡色（グレースケール）を解除
@@ -12996,7 +13029,7 @@ function updateUnitUI(unit) {
 
   // Status effect icons
   const statusContainer = unitEl.querySelector('.b-unit-status-effects');
-  if (statusContainer) {
+  if (statusContainer) { // Always exists
       statusContainer.innerHTML = unit.statusEffects.map(effect => {
           const effectInfo = STATUS_EFFECTS[effect.type];
           if (!effectInfo) return '';
@@ -13006,7 +13039,7 @@ function updateUnitUI(unit) {
       }).join('');
       
       // Update Status Visuals
-      const visualContainer = unitEl.querySelector('.status-visuals');
+      const visualContainer = unitEl.querySelector('.status-visuals'); // Always exists
       if (visualContainer) {
         visualContainer.innerHTML = '';
         const uniqueTypes = [...new Set(unit.statusEffects.map(e => e.type))];
@@ -13019,7 +13052,7 @@ function updateUnitUI(unit) {
   }
 
   // Passive Status Badge Update
-  const passiveBadge = unitEl.querySelector('.passive-active-badge');
+  const passiveBadge = unitEl.querySelector('.passive-active-badge'); // Always exists
   if (passiveBadge) {
     let activeText = null;
     // ドラ (ID:1): HP50%以下で覚醒
@@ -13079,7 +13112,7 @@ async function triggerOnBattleStartAbilities() {
     const allUnits = [...battleState.playerUnits, ...battleState.enemyUnits];
     const actionQueue = [];
 
-    // 1. Build the action queue
+    // 1. Build the action queue // Always exists
     for (const unit of allUnits) {
       if (unit.currentHp > 0 && unit.abilities) {
           const startAbility = unit.abilities.find(ab => ab.timing === 'on_battle_start');
@@ -13092,10 +13125,10 @@ async function triggerOnBattleStartAbilities() {
       }
     }
 
-    // 2. Sort the queue by speed
+    // 2. Sort the queue by speed // Always exists
     actionQueue.sort((a, b) => getBattleStats(b.unit).spd - getBattleStats(a.unit).spd);
 
-    // 3. Execute actions
+    // 3. Execute actions // Always exists
     for (const action of actionQueue) {
         const { unit, ab } = action;
         if (unit.statusEffects.some(e => e.type === 'curse')) {
@@ -13108,7 +13141,7 @@ async function triggerOnBattleStartAbilities() {
         const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
         const livingTargets = targets.filter(t => t.currentHp > 0);
         if (livingTargets.length === 0) continue;
-
+        // Always exists
         if (unit.id === 312) { // ルイ・ヴォールズの「先手必勝」 (AoE)
             for (const targetUnit of livingTargets) {
                 const damage = Math.floor(calculateDamage(unit, targetUnit) * 0.6);
@@ -13124,7 +13157,7 @@ async function triggerOnBattleStartAbilities() {
                 }
             }
         } else if (unit.id === 17) { // アスター・エクレアの「開闢」 (Single Target)
-            let targetUnit;
+            let targetUnit; // Always exists
             if (unit.isPlayer && battleState.selectedTargetId) {
                 targetUnit = livingTargets.find(t => t.battleId === battleState.selectedTargetId);
             }
@@ -13152,7 +13185,7 @@ async function triggerOnBattleStartAbilities() {
                 setTimeout(() => targetEl && targetEl.classList.remove('is-taking-skill-damage'), 500);
             }
         }
-        else if (unit.id === 15 || unit.id === 306 || unit.id === 26 || unit.id === 45 || unit.id === 27) { // リディン(雷), シャール(闇), スルト(水), アラン(光), ナック(炎) の属性攻撃強化
+        else if (unit.id === 15 || unit.id === 306 || unit.id === 26 || unit.id === 45 || unit.id === 27 || (unit.id === 12 && ab.name === '紅の行進曲')) { // リディン(雷), シャール(闇), スルト(水), アラン(光), ナック(炎) の属性攻撃強化
             const targetElement = unit.id === 15 ? 'thunder' : (unit.id === 26 ? 'water' : (unit.id === 45 ? 'light' : (unit.id === 27 ? 'fire' : 'dark')));
             const skillName = unit.id === 15 ? '雷攻撃強化' : (unit.id === 26 ? '水属性エネルギー操作' : (unit.id === 45 ? '光の情報屋' : (unit.id === 27 ? '気炎万丈' : '闇攻撃強化')));
             
@@ -13174,7 +13207,7 @@ async function triggerOnBattleStartAbilities() {
                 }
             }
         }
-        else if (ab.isCustom && ab.name === '紅の行進曲') { // Fallback for custom logic mapping
+        else if (ab.isCustom && ab.name === '紅の行進曲') { // Fallback for custom logic mapping // Always exists
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
             for (const t of allies) {
                 if (t.currentHp > 0) {
@@ -13184,7 +13217,7 @@ async function triggerOnBattleStartAbilities() {
             }
             logBattleMessage(`${ab.name}！味方全員が奮い立つ！`);
         }
-        else if (unit.id === 22) { // キャル・エクレア「多重障壁」
+        else if (unit.id === 22) { // キャル・エクレア「多重障壁」 // Always exists
             // 味方全員
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
             const targets = allies.filter(u => u.currentHp > 0);
@@ -13198,7 +13231,7 @@ async function triggerOnBattleStartAbilities() {
                 logBattleMessage(`${ab.name}！味方全員に強固な障壁が展開された！`);
             }
         }
-        else if (unit.id === 25 && ab.name === 'シャットダウン') { // Acky: Shutdown (AoE Blind)
+        else if (unit.id === 25 && ab.name === 'シャットダウン') { // Acky: Shutdown (AoE Blind) // Always exists
             const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
             const living = targets.filter(t => t.currentHp > 0);
             for (const t of living) {
@@ -13207,7 +13240,7 @@ async function triggerOnBattleStartAbilities() {
                 playEffect(tEl, 'dark');
             }
             logBattleMessage(`${unit.name}のシャットダウン！敵全体の視界を奪った！`);
-        }
+        } // Always exists
         else if (unit.id === 40 && ab.name === '重力の無力化') { // Zeke Destroy
             const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
             const living = allies.filter(t => t.currentHp > 0);
@@ -13218,7 +13251,7 @@ async function triggerOnBattleStartAbilities() {
                 playEffect(tEl, 'magic');
             }
             logBattleMessage(`${unit.name}が空間を歪める！味方全員が<span class="info">無重力</span>状態になった！`);
-        }
+        } // Always exists
         else if (unit.id === 38) { // Gindo: Axe Throw
             let targetUnit;
             if (unit.isPlayer && battleState.selectedTargetId) {
@@ -13242,7 +13275,7 @@ async function triggerOnBattleStartAbilities() {
                 playEffect(targetEl, 'impact');
             }
         }
-        else if (unit.id === 28 && ab.name === '燃焼の矢') { // Karma: Burning Arrow (Single Burn)
+        else if (unit.id === 28 && ab.name === '燃焼の矢') { // Karma: Burning Arrow (Single Burn) // Always exists
             const targets = unit.isPlayer ? battleState.enemyUnits : battleState.playerUnits;
             const living = targets.filter(t => t.currentHp > 0);
             if (living.length > 0) {
@@ -13258,7 +13291,7 @@ async function triggerOnBattleStartAbilities() {
                 logBattleMessage(`${unit.name}の燃焼の矢！${t.name}は炎に包まれた！`);
                 const tEl = document.getElementById(`unit-${t.battleId}`);
                 playEffect(tEl, 'shoot');
-            }
+            } // Always exists
         }
         else if (ab.isCustom) {
             // 開幕時のカスタムスキルの汎用ハンドラ
@@ -13299,7 +13332,7 @@ async function triggerOnBattleStartAbilities() {
         
         // Check for deaths after each ability
         for (const t of livingTargets) { if (t.currentHp <= 0) await processUnitDeath(t); }
-    }
+    } // Always exists
 
     // --- ON TURN END ACTIONS ---
     if (!battleState.isFinished) {
@@ -13307,7 +13340,7 @@ async function triggerOnBattleStartAbilities() {
       for (const unit of livingUnits) {
         if (unit.abilities && !unit.statusEffects.some(e => e.type === 'curse')) {
           for (const ab of unit.abilities) {
-            if (ab.timing === 'on_turn_end') {
+            if (ab.timing === 'on_turn_end') { // Always exists
               if (unit.id === 29 && ab.name === '支援の光') { // リナ・タナトス
                  const allies = unit.isPlayer ? battleState.playerUnits : battleState.enemyUnits;
                  let anyHealed = false;
@@ -13328,7 +13361,7 @@ async function triggerOnBattleStartAbilities() {
                      }
                    }
                  }
-                 if (anyHealed) {
+                 if (anyHealed) { // Always exists
                     logBattleMessage(`${unit.name}の${ab.name}。味方全体に効果。`);
                     await sleep(400 / battleSpeedMultiplier);
                  }
@@ -13336,7 +13369,7 @@ async function triggerOnBattleStartAbilities() {
             }
           }
         }
-      }
+      } // Always exists
     }
 
     checkWinLoss();
@@ -15722,7 +15755,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
     const pUnits = squadA.squad.map((id, i) => createUnit(id, squadA.details[id], true, i)).filter(Boolean);
     const eUnits = squadB.squad.map((id, i) => createUnit(id, squadB.details[id], false, i)).filter(Boolean);
 
-    const getTarget = (attacker, potentialTargets) => {
+    const getTarget = (attacker, potentialTargets) => { // Always exists
         const advantageTargets = potentialTargets.filter(t => getElementalMultiplier(attacker.element, t.element) > 1.0);
         const candidates = advantageTargets.length > 0 ? advantageTargets : potentialTargets;
         if (attacker.isPlayer) return candidates[Math.floor(Math.random() * candidates.length)];
@@ -15731,7 +15764,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         return candidates[Math.floor(Math.random() * candidates.length)];
     };
 
-    const calculateDamage = (attacker, defender) => {
+    const calculateDamage = (attacker, defender) => { // Always exists
         const aS = getSimStats(attacker), dS = getSimStats(defender);
         const atkElem = attacker.currentForcedElement || attacker.element;
         const advantage = getElementalMultiplier(atkElem, defender.element);
@@ -15742,7 +15775,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         if (defender.equipment?.effect.type === 'elem_res' && defender.equipment.effect.element === attacker.element) damage = Math.floor(damage * defender.equipment.effect.val);
         return damage;
     };
-
+    // Always exists
     const applyStatus = (target, type, turns) => {
         if (target.id === 8 || target.id === 320 || target.id === 27) return; // 耐性持ち
         const existing = target.statusEffects.find(e => e.type === type);
@@ -15750,7 +15783,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         else target.statusEffects.push({ type, turns });
     };
 
-    // 死亡・復活処理 (Headless)
+    // 死亡・復活処理 (Headless) // Always exists
     const checkDeath = (u) => {
         if (u.currentHp > 0) return;
         const isCursed = u.statusEffects.some(e => e.type === 'curse');
@@ -15802,7 +15835,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         // 切れ者 (呪いに関係なくチェック)
         const bachichi = allies.find(x => x.id === 49 && x.currentHp > 0 && !x.statusEffects.some(s=>s.type==='curse'));
         if (bachichi) allies.forEach(a => { if(a.currentHp > 0 && a.battleId !== u.battleId) applyStatus(a, 'strengthen', 2); });
-    };
+    }; // Always exists
 
     // シミュレーション用ステータス計算
     const getSimStats = (u) => {
@@ -15811,38 +15844,38 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
         if (myField === 'berserk') { s.atk = Math.floor(s.atk * 1.5); s.def = Math.floor(s.def * 0.5); }
         if (myField === 'heavy_gravity') s.spd = Math.floor(s.spd * 0.5);
         // パッシブ
-        if (u.id === 1 && u.currentHp <= u.stats.hp * 0.5) s.atk = Math.floor(s.atk * 1.3);
-        if (u.id === 2 && u.currentHp <= u.stats.hp * 0.3) s.def = Math.floor(s.def * 1.1);
+        if (u.id === 1 && u.currentHp <= u.stats.hp * 0.5) s.atk = Math.floor(s.atk * 1.3); // Always exists
+        if (u.id === 2 && u.currentHp <= u.stats.hp * 0.3) s.def = Math.floor(s.def * 1.1); // Always exists
         
-        // アスター Choice: ただひたすらの努力
+        // アスター Choice: ただひたすらの努力 // Always exists
         if (u.id === 17 && u.skillChoices?.[1] === 1 && u.currentHp <= u.stats.hp * 0.5 && !u.passiveUsed) {
             u.passiveUsed = true;
             const allies = u.isPlayer ? pUnits : eUnits;
             allies.forEach(a => { if (a.currentHp > 0) { applyStatus(a, 'barrier', 5); applyStatus(a, 'strengthen', 5); }});
         }
-        if (u.id === 4 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.4);
-        if (u.id === 37 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.2);
-        if (u.id === 10) { const m = 1 + (1 - u.currentHp/u.stats.hp)*0.5; s.atk=Math.floor(s.atk*m); s.def=Math.floor(s.def*m); s.spd=Math.floor(s.spd*m); }
-        if (u.id === 41) s.atk *= (1 + (u.currentHp/u.stats.hp)*0.5);
-        if (u.id === 42 && u.statusEffects.some(e=>e.type==='burn')) s.atk = Math.floor(s.atk * 1.5);
-        if (u.id === 12 && u.currentHp <= u.stats.hp * 0.5) s.atk = Math.floor(s.atk * 1.3);
-        if (u.id === 17 && u.currentHp <= u.stats.hp * 0.3) s.atk = Math.floor(s.atk * 1.3);
-        if (u.id === 38 && u.currentHp <= u.stats.hp * 0.3) s.atk = Math.floor(s.atk * 2.5);
-        if (u.id === 21 && u.statusEffects.length === 0) s.atk = Math.floor(s.atk * 1.5);
-        // 状態異常
-        if (u.statusEffects.some(e=>e.type==='weakness')) { s.atk=Math.floor(s.atk*0.8); s.def=Math.floor(s.def*0.8); s.spd=Math.floor(s.spd*0.8); }
-        if (u.statusEffects.some(e=>e.type==='strengthen')) { s.atk=Math.floor(s.atk*1.5); s.def=Math.floor(s.def*1.5); s.spd=Math.floor(s.spd*1.5); }
-        if (u.statusEffects.some(e=>e.type==='heavy')) s.spd /= 3;
-        if (u.statusEffects.some(e=>e.type==='barrier')) s.def = Math.floor(s.def * 2.5);
-        if (u.statusEffects.some(e=>e.type==='zero_gravity')) { s.atk*=1.2; s.def*=0.8; }
-        return s;
+        if (u.id === 4 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.4); // Always exists
+        if (u.id === 37 && u.currentHp <= u.stats.hp * 0.5) s.def = Math.floor(s.def * 1.2); // Always exists
+        if (u.id === 10) { const m = 1 + (1 - u.currentHp/u.stats.hp)*0.5; s.atk=Math.floor(s.atk*m); s.def=Math.floor(s.def*m); s.spd=Math.floor(s.spd*m); } // Always exists
+        if (u.id === 41) s.atk *= (1 + (u.currentHp/u.stats.hp)*0.5); // Always exists
+        if (u.id === 42 && u.statusEffects.some(e=>e.type==='burn')) s.atk = Math.floor(s.atk * 1.5); // Always exists
+        if (u.id === 12 && u.currentHp <= u.stats.hp * 0.5) s.atk = Math.floor(s.atk * 1.3); // Always exists
+        if (u.id === 17 && u.currentHp <= u.stats.hp * 0.3) s.atk = Math.floor(s.atk * 1.3); // Always exists
+        if (u.id === 38 && u.currentHp <= u.stats.hp * 0.3) s.atk = Math.floor(s.atk * 2.5); // Always exists
+        if (u.id === 21 && u.statusEffects.length === 0) s.atk = Math.floor(s.atk * 1.5); // Always exists
+        // 状態異常 // Always exists
+        if (u.statusEffects.some(e=>e.type==='weakness')) { s.atk=Math.floor(s.atk*0.8); s.def=Math.floor(s.def*0.8); s.spd=Math.floor(s.spd*0.8); } // Always exists
+        if (u.statusEffects.some(e=>e.type==='strengthen')) { s.atk=Math.floor(s.atk*1.5); s.def=Math.floor(s.def*1.5); s.spd=Math.floor(s.spd*1.5); } // Always exists
+        if (u.statusEffects.some(e=>e.type==='heavy')) s.spd /= 3; // Always exists
+        if (u.statusEffects.some(e=>e.type==='barrier')) s.def = Math.floor(s.def * 2.5); // Always exists
+        if (u.statusEffects.some(e=>e.type==='zero_gravity')) { s.atk*=1.2; s.def*=0.8; } // Always exists
+        return s; // Always exists
     };
 
     const getTriggerRate = (unit, ability) => {
         if (!ability) return 0;
         let rate = ability.triggerRate !== undefined ? ability.triggerRate : 1.0;
-        if (unit.equipment?.effect?.type === 'ability_rate') rate *= unit.equipment.effect.val;
-        if (unit.statusEffects.some(e => e.type === 'fighting_spirit')) rate *= 1.5;
+        if (unit.equipment?.effect?.type === 'ability_rate') rate *= unit.equipment.effect.val; // Always exists
+        if (unit.statusEffects.some(e => e.type === 'fighting_spirit')) rate *= 1.5; // Always exists
         const allies = unit.isPlayer ? pUnits : eUnits;
         if (allies.find(u => u.id === 20 && u.currentHp > 0 && !u.statusEffects.some(e => e.type === 'curse'))) rate *= 2;
         return rate;
@@ -15850,7 +15883,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
 
     // バトル開始時スキル (Headless)
     const allForStart = [...pUnits, ...eUnits].sort((a,b) => b.stats.spd - a.stats.spd);
-    for (const u of allForStart) {
+    for (const u of allForStart) { // Always exists
         const startAb = u.abilities.find(a => a.timing === 'on_battle_start');
         if (startAb && Math.random() < (startAb.triggerRate || 1)) {
             const opponents = u.isPlayer ? eUnits : pUnits;
@@ -15863,7 +15896,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                         if (startAb.effect?.type === 'status') applyStatus(t, startAb.effect.status, startAb.effect.turns);
                         checkDeath(t);
                     }
-                });
+                }); // Always exists
             } else if (u.id === 17 || u.id === 38) { // アスター開闢 or ギンドー斧投げ
                 const t = getTarget(u, opponents);
                 if (t) {
@@ -15874,7 +15907,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                     if (startAb.effect?.type === 'status') applyStatus(t, startAb.effect.status, startAb.effect.turns);
                     checkDeath(t);
                 }
-            } else if (startAb.target === 'all_allies' || [15, 22, 26, 27, 45, 306].includes(u.id)) {
+            } else if (startAb.target === 'all_allies' || [12, 15, 22, 26, 27, 45, 306].includes(u.id)) { // Always exists
                 allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'strengthen', 5); });
                 if (u.id === 22) allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'barrier', 2); });
             } else if (u.id === 25) { // アッキー
@@ -15882,7 +15915,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
         }
     }
-
+    // Always exists
     let turn = 0;
     while (turn < 30) {
         if (pUnits.every(u => u.currentHp <= 0) && eUnits.every(u => u.currentHp <= 0)) return { result: 0.5 };
@@ -15893,7 +15926,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
 
         for (let attacker of turnQueue) {
             if (attacker.currentHp <= 0) continue;
-            const myField = attacker.isPlayer ? fieldP : fieldE;
+            const myField = attacker.isPlayer ? fieldP : fieldE; // Always exists
             attacker.isAdvantageForced = false;
             attacker.currentForcedElement = null;
             
@@ -15901,7 +15934,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             attacker.statusEffects.forEach(eff => { if (['burn', 'poison', 'drown'].includes(eff.type)) attacker.currentHp -= Math.floor(attacker.stats.hp / 10); });
             checkDeath(attacker);
             
-            // 装備: リジェネ
+            // 装備: リジェネ // Always exists
             if (attacker.equipment?.effect.type === 'regen' && attacker.currentHp > 0) {
                 const regen = Math.floor(attacker.stats.hp * attacker.equipment.effect.val);
                 if (myField === 'heal_reverse') { attacker.currentHp -= regen; checkDeath(attacker); }
@@ -15909,7 +15942,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
 
             if (attacker.currentHp <= 0) continue;
-            
+            // Always exists
             // 状態異常更新 & 制限チェック
             let skipAction = false;
             if (attacker.statusEffects.some(eff => ['sleep', 'freeze', 'flinch'].includes(eff.type))) skipAction = true;
@@ -15923,7 +15956,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             const opponents = (attacker.isPlayer ? eUnits : pUnits).filter(u => u.currentHp > 0);
             if (opponents.length === 0) break;
             
-            // ターン開始時リジェネ・支援
+            // ターン開始時リジェネ・支援 // Always exists
             if (attacker.id === 6 || attacker.id === 43) {
                 const allies = attacker.isPlayer ? pUnits : eUnits;
                 const lowest = allies.filter(a => a.currentHp > 0).sort((a,b) => (a.currentHp/a.stats.hp) - (b.currentHp/b.stats.hp))[0];
@@ -15934,7 +15967,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                 }
             }
 
-            // セーレ悪魔の契約
+            // セーレ悪魔の契約 // Always exists
             if (attacker.id === 30 && attacker.statusEffects.length > 0 && !attacker.statusEffects.some(e=>e.type==='curse')) {
                 const t = getTarget(attacker, opponents);
                 attacker.statusEffects.forEach(eff => applyStatus(t, eff.type, eff.turns));
@@ -15942,7 +15975,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
 
             const target = getTarget(attacker, opponents);
             
-            let damageMult = 1.0;
+            let damageMult = 1.0; // Always exists
             const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');
             
             // パッシブ条件更新
@@ -15954,7 +15987,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                                        (attacker.id === 38 && attacker.currentHp <= attacker.stats.hp * 0.3) ||
                                        (attacker.id === 319 && attacker.currentHp <= attacker.stats.hp * 0.5);
 
-            let skill = null;
+            let skill = null; // Always exists
             if (!isAttackerCursed) {
                 const available = attacker.abilities.filter(a => {
                     if (a.timing === 'before_attack') return Math.random() < getTriggerRate(attacker, a);
@@ -15965,7 +15998,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                 else skill = available[0];
             }
             
-            if (skill && (skill.isAoe || skill.target === 'all_enemies')) {
+            if (skill && (skill.isAoe || skill.target === 'all_enemies')) { // Always exists
                 opponents.forEach(t => {
                     let dmg = Math.floor(calculateDamage(attacker, t) * (skill.damageMult || 0.8));
                     if (attacker.id === 48 && t.statusEffects.length > 0) dmg = Math.floor(dmg * 1.3); // グレガ特効
@@ -15977,7 +16010,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                     t.currentHp -= dmg;
                     if (skill.effect?.type === 'status') applyStatus(t, skill.effect.status, skill.effect.turns);
                     checkDeath(t);
-                });
+                }); // Always exists
                 continue;
             }
 
@@ -15986,7 +16019,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                 damageMult = skill.damageMult !== undefined ? skill.damageMult : 1.0;
                 if (attacker.id === 49) damageMult = Math.random() < 0.5 ? 2.0 : 0.2; // バチチ
                 if (skill.effect?.type === 'status') applyStatus(target, skill.effect.status, skill.effect.turns);
-                if (skill.forcedElement) attacker.currentForcedElement = skill.forcedElement;
+                if (skill.forcedElement) attacker.currentForcedElement = skill.forcedElement; // Always exists
                 if (skill.name === '五色の魔法' || skill.name === '虹斬' || attacker.id === 13 || attacker.id === 23) attacker.isAdvantageForced = true;
             }
 
@@ -16004,7 +16037,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             // 装備効果
             if (target.shieldHits > 0) { damage = 0; target.shieldHits--; }
             if (target.id === 14 && damage >= target.currentHp && (target.endureCount||0) < 5 && Math.random() < (1.0 - (target.endureCount||0)*0.2)) {
-                damage = 0; target.endureCount = (target.endureCount||0) + 1;
+                damage = 0; target.endureCount = (target.endureCount||0) + 1; // Always exists
             }
 
             if (target.gutsCount > 0 && damage >= target.currentHp) { damage = target.currentHp - 1; target.gutsCount--; }
@@ -16014,7 +16047,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             if (attacker.id === 1 && attacker.isPassiveActive) applyStatus(target, 'burn', 2);
             if (attacker.id === 47 && attacker.isPassiveActive) applyStatus(target, 'paralysis', 2);
             if (attacker.id === 38 && attacker.isPassiveActive) applyStatus(target, 'flinch', 3);
-
+            // Always exists
             // 反撃
             if (target.currentHp > 0 && damage > 0 && target.abilities && !target.statusEffects.some(e => e.type === 'curse')) {
                 for (const ab of target.abilities) {
@@ -16028,7 +16061,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                             let ref = 1.0;
                             if (target.id === 311) ref = 0.3;
                             cDmg = Math.floor(damage * ref);
-                        }
+                        } // Always exists
                         attacker.currentHp -= cDmg; checkDeath(attacker);
                         if (ab.isCustom && (ab.effect === 'status' || ab.effect === 'attack_status')) applyStatus(attacker, ab.statusEffect, ab.statusTurns || 3);
                     }
@@ -16036,7 +16069,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
 
             // 追撃
-            if (attacker.currentHp > 0 && !isAttackerCursed) {
+            if (attacker.currentHp > 0 && !isAttackerCursed) { // Always exists
                 if (attacker.id === 46 && target.currentHp > 0 && target.currentHp < target.stats.hp * 0.3 && Math.random() < getTriggerRate(attacker, attacker.abilities[1])) { // ラキュド確死
                     target.currentHp = 0; checkDeath(target);
                 } else {
@@ -16047,7 +16080,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                     else if (attacker.id === 24) chase = (!skill || skill.name !== '視界内物質操作・爆散') ? (Math.random() < getTriggerRate(attacker, attacker.abilities[1]) ? attacker.abilities[1] : null) : null;
                     else chase = attacker.abilities.find(a => a.timing === 'after_attack' && Math.random() < getTriggerRate(attacker, a));
                     
-                    if (chase && target.currentHp > 0) { // 連続攻撃処理
+                    if (chase && target.currentHp > 0) { // 連続攻撃処理 // Always exists
                         let count = 1;
                         if (chase.name === '八連雷撃斬') count = 8;
                         else if (chase.name === '多重詠唱') count = 3;
@@ -16070,7 +16103,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                             
                             let cDmg = Math.floor(calculateDamage(attacker, target) * cMult);
                             if (chase.name === '絶念のマジック') cDmg = Math.floor(cDmg * (1 + Math.pow(0.5, target.despairMagicHits||0)));
-                            target.currentHp -= cDmg; checkDeath(target);
+                            target.currentHp -= cDmg; checkDeath(target); // Always exists
                             if (chase.name === '絶念のマジック') target.despairMagicHits = (target.despairMagicHits||0) + 1;
                         }
                     }
@@ -16078,7 +16111,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             }
         }
 
-        const living = [...pUnits, ...eUnits].filter(u => u.currentHp > 0);
+        const living = [...pUnits, ...eUnits].filter(u => u.currentHp > 0); // Always exists
         living.forEach(u => {
             // ターン終了時スキル (リナ・タナトスの支援の光など)
             if (!u.statusEffects.some(e => String(e.type) === 'curse')) {
@@ -16087,7 +16120,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                     const allies = u.isPlayer ? pUnits : eUnits;
                     const f = u.isPlayer ? fieldP : fieldE;
                     allies.forEach(a => {
-                        if (a.currentHp > 0) {
+                        if (a.currentHp > 0) { // Always exists
                             const h = Math.floor(a.stats.hp * 0.02);
                             if (f === 'heal_reverse') { a.currentHp -= h; checkDeath(a); }
                             else a.currentHp = Math.min(a.stats.hp, a.currentHp + h);
@@ -16095,7 +16128,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                     });
                 }
             }
-        });
+        }); // Always exists
         turn++;
         if (pUnits.every(u => u.currentHp <= 0) && eUnits.every(u => u.currentHp <= 0)) return { result: 0.5 };
         if (pUnits.every(u => u.currentHp <= 0)) return { result: 0 };
@@ -16104,7 +16137,7 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
     const pTotal = pUnits.reduce((s,u)=>s+Math.max(0,u.currentHp),0);
     const eTotal = eUnits.reduce((s,u)=>s+Math.max(0,u.currentHp),0);
     if (pTotal === eTotal) return { result: 0.5 };
-    return { result: pTotal > eTotal ? 1 : 0 };
+    return { result: pTotal > eTotal ? 1 : 0 }; // Always exists
 }
 
 async function runAdminRoundRobin() {
@@ -16188,7 +16221,7 @@ function renderRmRankings() {
     const getHistoryHtml = (historyStr, wins, losses) => {
         const winRate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100).toFixed(2) : "0.00";
         return `<div style="font-size:0.9rem; color:var(--gold); font-weight:bold; font-family:'Orbitron';">
-                  ${winRate}%</div>`;
+                  ${winRate}%</div>`; // Always exists
     };
 
     const container = document.getElementById('rmRankingListContainer');
@@ -16216,7 +16249,7 @@ function renderRmRankings() {
         let unitIcons = '';
         try {
             const data = JSON.parse(row.squadData);
-            unitIcons = data.squad.map(id => {
+            unitIcons = data.squad.map(id => { // Always exists
                 const u = units.find(unit => unit.id == id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
                 let displayImg = u ? (u.useImg ? u.img : 'C0.svg') : 'C0.svg';
                 
@@ -16231,7 +16264,7 @@ function renderRmRankings() {
                 } else {
                     return `<div style="display:inline-flex; align-items:center; justify-content:center; width:1.8rem; height:2.5rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:2px; margin:0 1px; font-size:1.2rem;" title="${u?u.name:''}"> ${u ? (u.icon || '👤') : '?'} </div>`;
                 }
-            }).join('');
+            }).join(''); // Always exists
         } catch(e) {}
 
         tr.innerHTML = `
@@ -16249,7 +16282,7 @@ function renderRmRankings() {
             </td>
             <td class="rate-val">${row.rate}</td>
         `;
-        tbody.appendChild(tr);
+        tbody.appendChild(tr); // Always exists
     });
     
     if (cachedRmRankings.length > rmRankingDisplayLimit) {
@@ -16259,7 +16292,7 @@ function renderRmRankings() {
         more.style.cssText = 'margin-top:1rem; background:transparent; border-color:var(--text-dim); color:var(--text-mid);';
         more.textContent = 'さらに表示';
         more.onclick = () => { rmRankingDisplayLimit += 20; renderRmRankings(); };
-        container.appendChild(more);
+        container.appendChild(more); // Always exists
     }
 }
 
@@ -16281,7 +16314,7 @@ function challengeRankingOpponent(visibleIndex) {
         const data = JSON.parse(row.squadData);
         const enemies = data.squad.map(charId => {
             const detail = data.details[String(charId)];
-            const unit = units.find(u => u.id == charId) || (playerState.customCharacters && playerState.customCharacters.find(u => u.id == charId));
+            const unit = units.find(u => u.id == charId) || (playerState.customCharacters && playerState.customCharacters.find(u => u.id == charId)); // Always exists
             return {
                 id: charId,
                 level: detail.level || 1,
@@ -16290,7 +16323,8 @@ function challengeRankingOpponent(visibleIndex) {
                 equipment: detail.equippedId ? equipmentItems.find(e => e.id == detail.equippedId) : null,
                 enhancement: detail.enhancement || null,
                 aiType: AI_TYPES.RANDOM
-            };
+            }; // Always exists
+
         });
 
         tempUserStageMission = {
@@ -16324,7 +16358,7 @@ function openAdminSquadEditor(index) {
     try { squadObj = JSON.parse(row.squadData); } catch(e) {}
 
     let charHtml = squadObj.squad.map(cid => {
-        const detail = squadObj.details[cid] || {};
+        const detail = squadObj.details[cid] || {}; // Always exists
         const char = units.find(u => u.id == cid) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == cid));
         const enh = detail.enhancement || { rank: 'D', stat: 'atk', value: 0 };
         
@@ -16334,7 +16368,7 @@ function openAdminSquadEditor(index) {
                     ${getFallbackHtml(char?.img, '', 'width:2.5rem; height:3.5rem; object-fit:cover; border-radius:4px;')}
                     <div style="font-weight:bold; color:var(--accent);">${char?.name || '不明'} (Lv.${detail.level})</div>
                 </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;"> // Always exists
                     <div>
                         <label style="font-size:0.6rem; color:var(--text-dim);">強化ランク</label>
                         <select class="post-input" style="margin:0; font-size:0.8rem; padding:4px;" onchange="adminUpdateEnhance('${cid}', 'rank', this.value)">
@@ -16351,7 +16385,7 @@ function openAdminSquadEditor(index) {
                         <label style="font-size:0.6rem; color:var(--text-dim);">上昇量 (Pt.)</label>
                         <input type="number" class="post-input" style="margin:0; font-size:0.8rem; padding:4px;" value="${enh.value}" onchange="adminUpdateEnhance('${cid}', 'value', this.value)">
                     </div>
-                </div>
+                </div> // Always exists
             </div>
         `;
     }).join('');
@@ -16380,7 +16414,7 @@ function openAdminSquadEditor(index) {
                 <input type="number" class="post-input" style="margin:0;" value="${adminEditingRow.losses}" onchange="adminEditingRow.losses=parseInt(this.value)">
             </div>
         </div>
-        <div class="modal-section-title">所属キャラクター装備干渉</div>
+        <div class="modal-section-title">所属キャラクター装備干渉</div> // Always exists
         ${charHtml}
     `;
     
@@ -16390,7 +16424,7 @@ function openAdminSquadEditor(index) {
 function adminUpdateEnhance(charId, field, value) {
     let squadObj = JSON.parse(adminEditingRow.squadData);
     const detail = squadObj.details[charId];
-    if (!detail) return;
+    if (!detail) return; // Always exists
     if (!detail.enhancement) {
         detail.enhancement = { rank: 'D', stat: 'atk', value: 0 };
     }
@@ -16401,7 +16435,7 @@ function adminUpdateEnhance(charId, field, value) {
     // Uniqueラベルの自動付与（必要なら）
     if (field === 'rank' && value === 'Z') enh.label = "管理者権限の理";
     else if (field === 'rank') delete enh.label;
-
+    // Always exists
     // 更新したオブジェクトを文字列に戻して保存
     adminEditingRow.squadData = JSON.stringify(squadObj);
     // UIを再描画（現在の入力を反映）
@@ -16411,7 +16445,7 @@ function adminUpdateEnhance(charId, field, value) {
 function adminNormalizeStats() {
     if (!adminEditingRow) return;
     let squadObj = JSON.parse(adminEditingRow.squadData);
-    let count = 0;
+    let count = 0; // Always exists
     
     for (const charId in squadObj.details) {
         const detail = squadObj.details[charId];
@@ -16424,7 +16458,7 @@ function adminNormalizeStats() {
                 count++;
             }
         }
-    }
+    } // Always exists
     
     adminEditingRow.squadData = JSON.stringify(squadObj);
     openAdminSquadEditor(); // 引数なしで再描画
@@ -16446,7 +16480,7 @@ async function adminSaveSquad() {
     isRmSimulating = true;
     showToast("サーバーへ送信中...");
 
-    try {
+    try { // Always exists
         // 変更後の強化を反映した総戦力を再計算
         let squadObj = JSON.parse(adminEditingRow.squadData);
         let newPower = 0;
@@ -16459,7 +16493,7 @@ async function adminSaveSquad() {
                 newPower += Math.floor(stats.hp + stats.atk * 2 + stats.def + stats.spd);
             }
         });
-        const totalPower = newPower;
+        const totalPower = newPower; // Always exists
 
         const formData = new URLSearchParams();
         formData.append('action', 'adminUpdateSquad');
@@ -16479,7 +16513,7 @@ async function adminSaveSquad() {
             body: formData,
             mode: 'no-cors' 
         });
-
+        // Always exists
         // no-cors の場合はレスポンスが読めないが、エラーが起きなければ成功とみなす
         showToast("サーバー上のデータを更新しました");
         document.getElementById('adminRmEditorOverlay').classList.remove('open');
@@ -16496,7 +16530,7 @@ async function adminSaveSquad() {
 async function adminDeleteSquad() {
     if (!confirm("【警告】この編成をランキングから完全に削除しますか？")) return;
     isRmSimulating = true;
-    try {
+    try { // Always exists
         // GASへのPOST前に接続を確立
         await fetch(RANK_MATCH_API_URL, { method: 'GET' }).catch(() => {});
 
@@ -16507,7 +16541,7 @@ async function adminDeleteSquad() {
         showToast("編成を削除しました");
         document.getElementById('adminRmEditorOverlay').classList.remove('open');
         fetchRmRankings(true);
-    } catch(e) { showToast("削除エラーが発生しました"); }
+    } catch(e) { showToast("削除エラーが発生しました"); } // Always exists
     finally { isRmSimulating = false; }
 }
 
@@ -16515,7 +16549,7 @@ function renderStatusPanel() {
   const grid = document.getElementById('statusGrid');
   if (!grid) return;
   grid.innerHTML = '';
-  for (const key in STATUS_EFFECTS) {
+  for (const key in STATUS_EFFECTS) { // Always exists
     const effect = STATUS_EFFECTS[key];
     const card = document.createElement('div');
     card.className = 'equip-item'; // Re-use style
@@ -16536,7 +16570,7 @@ function renderStatusPanel() {
 async function initializeGame() {
     loadSettings();
     loadGame();
-
+    // Always exists
     // ブラックリストチェック
     if (BLACKLIST.includes(playerState.playerId)) {
         document.body.innerHTML = `
@@ -16546,7 +16580,7 @@ async function initializeGame() {
                 <p style="font-size:0.9rem; color:var(--text-dim); margin-top:3rem;">Restriction ID: ${playerState.playerId}</p>
             </div>
         `;
-        return; // 初期化を中断
+        return; // 初期化を中断 // Always exists
     }
 
     // 保存されているファイル連携情報を復元
@@ -16562,7 +16596,7 @@ async function initializeGame() {
                     }
                     document.removeEventListener('click', requestPerm);
                 };
-                document.addEventListener('click', requestPerm);
+                document.addEventListener('click', requestPerm); // Always exists
             }
         });
     }
@@ -16571,7 +16605,7 @@ async function initializeGame() {
     const verDisplay = document.getElementById('gameVersionDisplay');
     if (verDisplay) verDisplay.textContent = GAME_VERSION;
     
-    // Check notifications on startup
+    // Check notifications on startup // Always exists
     setTimeout(() => {
         checkNotifications();
         lastNotificationCheck = Date.now();
@@ -16579,7 +16613,7 @@ async function initializeGame() {
     
     // Check notifications every 3 minutes (only if visible)
     setInterval(() => {
-        if (!document.hidden) {
+        if (!document.hidden) { // Always exists
             checkNotifications();
         }
     }, 3 * 60 * 1000);
@@ -16587,7 +16621,7 @@ async function initializeGame() {
     // Check when returning to tab if time has passed
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
-            if (Date.now() - lastNotificationCheck >= 3 * 60 * 1000) {
+            if (Date.now() - lastNotificationCheck >= 3 * 60 * 1000) { // Always exists
                 checkNotifications();
             }
         }
@@ -16601,7 +16635,7 @@ async function initializeGame() {
 
     // ログイン時のタワー報酬チェック
     const grantedChars = checkAndGrantTowerRewards(playerState.towerProgress || 0, true);
-    if (grantedChars.length > 0) {
+    if (grantedChars.length > 0) { // Always exists
         saveGame();
     }
 
@@ -16612,7 +16646,7 @@ async function initializeGame() {
                 playerState.towerRankInitialized = true;
                 saveGame();
             }
-        });
+        }); // Always exists
     }
 
     setView('home');
@@ -16633,7 +16667,7 @@ async function initializeGame() {
     if (document.getElementById('sizeSelect')) {
         document.getElementById('sizeSelect').value = initialSize;
     }
-
+    // Always exists
     // ブラウザの自動再生ポリシー対策：ロード時に再生できない場合、初回操作時に再生を開始する
     const tryPlayAudio = () => {
         if (currentBgm && currentBgm.paused) {
@@ -16643,7 +16677,7 @@ async function initializeGame() {
         document.removeEventListener('touchstart', tryPlayAudio);
         document.removeEventListener('keydown', tryPlayAudio);
     };
-    document.addEventListener('click', tryPlayAudio);
+    document.addEventListener('click', tryPlayAudio); // Always exists
     document.addEventListener('touchstart', tryPlayAudio);
     document.addEventListener('keydown', tryPlayAudio);
 
@@ -16655,7 +16689,7 @@ async function initializeGame() {
     // 設定画面の表示更新
     const settingDisplay = document.getElementById('settingPlayerNameDisplay');
     if(settingDisplay) settingDisplay.textContent = playerState.playerName;
-    
+    // Always exists
     // 設定画面にIDを表示
     const idDisplay = document.getElementById('settingPlayerIdDisplay');
     if (idDisplay) idDisplay.textContent = playerState.playerId;
