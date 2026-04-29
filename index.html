@@ -345,28 +345,6 @@
   /* Allow specific interactive elements */
   .editor-unit-slot .editor-remove-btn { pointer-events: auto; }
 
-  /* Squad slot individual remove button */
-  .squad-remove-btn {
-    position: absolute;
-    top: 0.25rem;
-    right: 0.25rem;
-    width: 1.5rem;
-    height: 1.5rem;
-    background: rgba(255, 107, 53, 0.8);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    z-index: 10;
-    cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.2s;
-    pointer-events: auto;
-  }
-  .squad-remove-btn:hover { background: #ff6b35; transform: scale(1.1); }
-
   /* Ensure content sits above aura overlay in squad slots */
   .squad-slot > * { position: relative; z-index: 2; }
   .squad-slot .aura-overlay { position: absolute; z-index: 1; }
@@ -3086,15 +3064,12 @@
         <div class="squad-section">
           <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
             <input type="text" id="squadNameInput" class="squad-name-input" onchange="updateSquadName(this.value)" placeholder="部隊名を入力...">
-            <div style="display:flex; align-items:center; gap:0.5rem;">
-              <div class="squad-tabs" style="margin-bottom:0;">
-                <button class="squad-tab-btn active" id="squad-tab-0" onclick="switchSquad(0)">1</button>
-                <button class="squad-tab-btn" id="squad-tab-1" onclick="switchSquad(1)">2</button>
-                <button class="squad-tab-btn" id="squad-tab-2" onclick="switchSquad(2)">3</button>
-                <button class="squad-tab-btn" id="squad-tab-3" onclick="switchSquad(3)">4</button>
-                <button class="squad-tab-btn" id="squad-tab-4" onclick="switchSquad(4)">5</button>
-              </div>
-              <button class="filter-btn" onclick="removeAllFromSquad()" style="border-color:var(--accent2); color:var(--accent2); padding:0.4rem 0.6rem; font-size:0.8rem; white-space:nowrap;">全員外す</button>
+            <div class="squad-tabs">
+              <button class="squad-tab-btn active" id="squad-tab-0" onclick="switchSquad(0)">1</button>
+              <button class="squad-tab-btn" id="squad-tab-1" onclick="switchSquad(1)">2</button>
+              <button class="squad-tab-btn" id="squad-tab-2" onclick="switchSquad(2)">3</button>
+              <button class="squad-tab-btn" id="squad-tab-3" onclick="switchSquad(3)">4</button>
+              <button class="squad-tab-btn" id="squad-tab-4" onclick="switchSquad(4)">5</button>
             </div>
           </div>
           <div id="squadSlots" style="display:flex; gap:0.5rem;"></div>
@@ -4947,6 +4922,9 @@ const equipmentItems = [
   { id: 21, name: 'オリバー・ジャック SP', icon: '🎺', desc: 'オリバー専用。第二スキルが「紅の行進曲」になる。', effect: { type: 'skill_override' } },
 ];
 
+// プレイ制限対象のプレイヤーIDリスト
+const BLACKLIST = ['1eae965f-41fb-4971-b9bd-d4bb455001b1'];
+
 // AI Types
 const AI_TYPES = {
   LOWEST_HP_DEF: 'weakest', // 体力x防御が低い相手
@@ -6514,7 +6492,6 @@ function renderSquad() {
           portraitHtml = `<div style="font-size: 2rem;">${c.icon || '👤'}</div>`;
       }
       slot.innerHTML = `
-        <div class="squad-remove-btn" onclick="removeFromSquad(event, ${c.id})">✕</div>
         ${auraData ? `<div class="aura-overlay"></div>` : ''}        
         <div class="slot-img-wrap">${portraitHtml}</div>
         <div class="slot-info">
@@ -6581,8 +6558,8 @@ function renderCards() {
       currentFilter === c.element;
     const q = searchQuery.toLowerCase();
     const matchSearch = !q || c.name.includes(q) ||
-      (c.type && c.type.includes(q)) ||
-      (c.abilities && c.abilities.some(a => a.name.includes(q) || a.desc.includes(q)));
+      c.roleJp.includes(q) ||
+      c.abilities.some(a => a.name.includes(q) || a.desc.includes(q));
     return matchFilter && matchSearch;
   });
 
@@ -7022,31 +6999,6 @@ function toggleSquad(e, id) {
   if (modalCharId !== null) updateModal();
   updateSquadSwitcherUI();
   saveGame();
-}
-
-function removeFromSquad(e, id) {
-  if (e) e.stopPropagation();
-  const idx = squad.indexOf(id);
-  if (idx > -1) {
-    squad.splice(idx, 1);
-    renderSquad();
-    renderCards();
-    updateSquadSwitcherUI();
-    saveGame();
-    showToast('編成から外しました');
-  }
-}
-
-function removeAllFromSquad() {
-  if (squad.length === 0) return;
-  if (confirm('現在の部隊メンバーを全員外しますか？')) {
-    squad.length = 0;
-    renderSquad();
-    renderCards();
-    updateSquadSwitcherUI();
-    saveGame();
-    showToast('部隊を空にしました');
-  }
 }
 
 function toggleFavorite() {
@@ -11081,6 +11033,9 @@ async function checkDeathAbilities(unit) {
               }
           }
       }
+      unit.currentHp = 1;
+      updateUnitUI(unit);
+      return true;
   }
   
   // Grega Sturm (ID: 48) Passive: 最後の炎
@@ -11101,6 +11056,7 @@ async function checkDeathAbilities(unit) {
       // 自分だけ体力を1回復して耐える
       unit.currentHp = 1;
       updateUnitUI(unit);
+      return true;
   }
 
   // Silulu Styris (ID: 51) Passive: 絆の残火
@@ -12587,6 +12543,7 @@ function checkWinLoss() {
         battleState.isFinished = true;
         isGameOver = true;
         logBattleMessage(`<span class="info">勝利！</span>`);
+        let grantedFragments = null;
 
         // MVP選出ロジック
         let mvpUnit = null;
@@ -12650,7 +12607,7 @@ function checkWinLoss() {
             // We will return to editor when modal closes
         }
 
-        let unlockedCharName = null
+        let unlockedCharName = null;
         // Stage 5 (Mission ID: 104) Clear Reward: Iemike (ID: 4)
         if (mission.id === 104 && !playerState.characters[4]) {
             playerState.characters[4] = { level: 1, equippedId: null };
@@ -13133,7 +13090,7 @@ async function triggerOnBattleStartAbilities() {
     }
 
     // 2. Sort the queue by speed
-    actionQueue.sort((a, b) => b.unit.stats.spd - a.unit.stats.spd);
+    actionQueue.sort((a, b) => getBattleStats(b.unit).spd - getBattleStats(a.unit).spd);
 
     // 3. Execute actions
     for (const action of actionQueue) {
@@ -14664,7 +14621,7 @@ function closeVictoryModal() {
   closeBattle();
 }
 
-function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null, unlockedItem = null, unlockedTowerChars = []) {
+function showVictoryScreen(reward, isFirstClear, unlockedCharName = null, mvpUnit = null, unlockedItem = null, unlockedTowerChars = [], grantedFragments = null) {
   const rewardsContainer = document.getElementById('victoryRewards');
   let mvpHtml = '';
   if (mvpUnit) {
@@ -16564,6 +16521,18 @@ function renderStatusPanel() {
 async function initializeGame() {
     loadSettings();
     loadGame();
+
+    // ブラックリストチェック
+    if (BLACKLIST.includes(playerState.playerId)) {
+        document.body.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#060a0f; color:var(--accent2); font-family:'Orbitron', 'Noto Sans JP', sans-serif; text-align:center; padding:2rem; border: 4px solid var(--accent2);">
+                <h1 style="font-size:4rem; text-shadow: 0 0 20px var(--accent2); margin-bottom:1rem;">ACCESS DENIED</h1>
+                <p style="font-size:1.5rem; color:var(--text-main);">このアカウントはアクセス制限されています。</p>
+                <p style="font-size:0.9rem; color:var(--text-dim); margin-top:3rem;">Restriction ID: ${playerState.playerId}</p>
+            </div>
+        `;
+        return; // 初期化を中断
+    }
 
     // 保存されているファイル連携情報を復元
     if ('showOpenFilePicker' in window) {
