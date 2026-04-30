@@ -3231,6 +3231,17 @@
     <div id="gachaContainer">
       <!-- Gacha banners will be rendered here -->
     </div>
+
+    <!-- FRAGMENT ROLL SECTION -->
+    <div style="padding: 2rem 0; display: flex; justify-content: center;">
+      <div class="gacha-banner-card" style="max-width: 35rem; border-color: var(--accent3);">
+        <div class="gacha-banner-title" style="color: var(--accent3);">欠片変換（フラグメントロール）</div>
+        <div class="gacha-banner-desc">余った欠片 10個をランダムな仲間の欠片 10個に変換します。<br>※全プレイアブルキャラから等確率で抽選されます。</div>
+        <div id="fragmentRollUI">
+           <!-- Injected via renderFragmentRollUI -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- STATUS PANEL -->
@@ -4895,6 +4906,17 @@ const units = [
     ],
     useImg: true, img: 'C50.svg'
   },
+  {
+    id: 34, name: 'ラピジェル・ローレライ', element: 'water', elementJp: '水', type: 'ロベリア',
+    baseStats: { hp: 1350, atk: 105, def: 85, spd: 75 },
+    abilityType: 'magic',
+    abilities: [
+      { name: '水の精霊', desc: '戦闘開始時、味方全員に3ターンの「障壁(防御2.5倍)」を付与する。', timing: 'on_battle_start', target: 'all_allies' },
+      { name: '無謀な戦略', desc: '自分が倒れた時に発動。敵全体に攻撃力の200%のダメージを与え、体力を1回復させる。', timing: 'on_death' },
+    ],
+    useImg: true,
+    img: 'C34.svg',
+  },
 ];
 
 // Equipment Data
@@ -4923,9 +4945,7 @@ const equipmentItems = [
 ];
 
 // プレイ制限対象のプレイヤーIDリスト
-const BLACKLIST = ['1eae965f-41fb-4971-b9bd-d4bb455001b1',
-  'd69a56a0-43cd-4a6a-b8d3-f2f83db5a885'
-];
+const BLACKLIST = ['1eae965f-41fb-4971-b9bd-d4bb455001b1'];
 
 // AI Types
 const AI_TYPES = {
@@ -5609,21 +5629,20 @@ function getMissionById(id) {
 function generateTowerMission(floor) {
     if (floor <= 0) return null;
 
-    let level = floor;
+    let level = floor > 300 ? floor - 300 : floor;
     let enemyName;
     let missionEnemies;
 
-    if (floor === 5001) {
-        level = 1;
-        enemyName = "ルディ王国の精鋭";
-        missionEnemies = [26, 27, 28, 25, 29].map(id => ({
+    if (floor > 300) {
+        enemyName = "ルディ王国の精鋭部隊";
+        missionEnemies = [26, 27, 25, 28, 29].map(id => ({
             id: id,
             level: level,
             aiType: AI_TYPES.RANDOM
         }));
     } else {
         const enemyId = (floor % 2 === 1) ? 315 : 316; // 衛兵 or 傀儡
-        enemyName = (floor % 2 === 1) ? '衛兵' : '傀儡';
+        enemyName = (floor % 2 === 1) ? '衛兵部隊' : '傀儡部隊';
         missionEnemies = Array.from({ length: 5 }, () => ({
             id: enemyId,
             level: level,
@@ -5760,7 +5779,7 @@ let playerState = {
   characters: { 1: { level: 1, equippedId: null, fragments: 0 }, 2: { level: 1, equippedId: null, fragments: 0 } }, // id: {level, equippedId, fragments}
   equipmentEnhancements: {},
   lastLoginDate: null,
-  ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  ownedEquipment: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21],
   towerProgress: 0,
   squads: [[], [], [], [], []], // 5 slots
   squadNames: ["第1部隊", "第2部隊", "第3部隊", "第4部隊", "第5部隊"],
@@ -5852,11 +5871,11 @@ const ACHIEVEMENT_DEFS = [
     { id: 'enchant_ss', name: '伝説の鍛冶師', desc: '装備強化でランクSSの効果を作成', stones: 100000, charId: 47, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'SS') },
     { id: 'enchant_x', name: '神の息吹', desc: '装備強化でランクZの効果を作成', stones: 200000, check: () => Object.values(playerState.equipmentEnhancements || {}).some(e => e.rank === 'Z') },
     // 無限の塔 新報酬
-    { id: 'tower_500', name: '塔の深淵へ', desc: '無限の塔 500階に到達', stones: 50000, itemId: 17, check: () => playerState.towerProgress >= 500 },
-    { id: 'tower_1000', name: '塔の守護者', desc: '無限の塔 1000階に到達', stones: 100000, itemId: 18, check: () => playerState.towerProgress >= 1000 },
-    { id: 'tower_1500', name: '塔の征服者', desc: '無限の塔 1500階に到達', stones: 150000, itemId: 19, check: () => playerState.towerProgress >= 1500 },
-    { id: 'tower_2000', name: '塔の超越者', desc: '無限の塔 2000階に到達', stones: 200000, itemId: 20, check: () => playerState.towerProgress >= 2000 },
-    { id: 'tower_2500', name: '塔の伝説', desc: '無限の塔 2500階に到達', stones: 250000, itemId: 21, check: () => playerState.towerProgress >= 2500 },
+    { id: 'tower_500', name: '塔の深淵へ', desc: '無限の塔 500階に到達', stones: 50000, check: () => playerState.towerProgress >= 500 },
+    { id: 'tower_1000', name: '塔の守護者', desc: '無限の塔 1000階に到達', stones: 100000, check: () => playerState.towerProgress >= 1000 },
+    { id: 'tower_1500', name: '塔の征服者', desc: '無限の塔 1500階に到達', stones: 150000, check: () => playerState.towerProgress >= 1500 },
+    { id: 'tower_2000', name: '塔の超越者', desc: '無限の塔 2000階に到達', stones: 200000, check: () => playerState.towerProgress >= 2000 },
+    { id: 'tower_2500', name: '塔の伝説', desc: '無限の塔 2500階に到達', stones: 250000, check: () => playerState.towerProgress >= 2500 },
 ];
 
 function checkAchievements() {
@@ -6809,6 +6828,7 @@ function setView(view) {
     renderStoryChapters();
   } else if (view === 'gacha') {
     renderGachaPanel();
+    renderFragmentRollUI();
   } else if (view === 'equipment') {
     renderEquipmentPanel();
   } else if (view === 'status') {
@@ -12198,10 +12218,12 @@ async function runBattleSequence() {
           // 呪いなら追撃不可
           const isAttackerCursed = attacker.statusEffects.some(e => e.type === 'curse');          
           if (!isAttackerCursed) {
-          let chaseAbility = null;
-          // ライ・アルバロ (ID:5) の特殊処理
+          let chaseAbility = null; // Always exists
+          // ライ・アルバロ (ID:5) の特殊処理 (SP装備対応)
           if (attacker.id === 5) {
-            if (attacker.isPassiveActive) {
+            // 雷支配(index 1)が残っている場合のみ変身
+            const hasLightningRule = attacker.abilities[1] && attacker.abilities[1].name === '雷支配';
+            if (attacker.isPassiveActive && hasLightningRule) {
               chaseAbility = attacker.abilities[2]; 
               if (chaseAbility && chaseAbility.name === '轟') {
                   await showCutIn(attacker, chaseAbility.name);
@@ -12238,7 +12260,9 @@ async function runBattleSequence() {
             if (ab && ab.timing === 'after_attack' && Math.random() < rate) {
               chaseAbility = ab;
             }
-          } else if (attacker.id === 17 && attacker.isPassiveActive) {
+          } else if (attacker.id === 17 && attacker.isPassiveActive) { // アスター
+            // SP装備「運動量操作」は before_attack なので、通常の追撃は嵐呼ぶ剣戟(index 1)がある場合のみ
+            if (attacker.abilities[1] && attacker.abilities[1].name !== '嵐呼ぶ剣戟') chaseAbility = null;
             if (Math.random() < 0.6) { // 嵐呼ぶ剣戟 // Always exists
               chaseAbility = attacker.abilities[1];
             }
@@ -14028,6 +14052,50 @@ function performGacha(type, count) {
   saveGame();
 }
 
+function renderFragmentRollUI() {
+  const container = document.getElementById('fragmentRollUI');
+  if (!container) return;
+
+  const eligible = [];
+  for (const id in playerState.characters) {
+    if (playerState.characters[id].fragments >= 10) {
+      const unit = units.find(u => u.id == id) || (playerState.customCharacters && playerState.customCharacters.find(uc => uc.id == id));
+      if (unit) eligible.push({ id: id, name: unit.name, count: playerState.characters[id].fragments });
+    }
+  }
+
+  if (eligible.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-dim); font-size:0.9rem; padding: 1rem;">変換可能な欠片（10個以上）がありません</div>';
+    return;
+  }
+
+  let html = '<div style="display:flex; flex-direction:column; gap:0.5rem; max-height:15rem; overflow-y:auto; padding:0.5rem; background:rgba(0,0,0,0.2); border-radius:4px;">';
+  eligible.forEach(item => {
+    html += `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem; border-bottom:1px solid var(--border);">
+        <div style="text-align:left;">
+          <div style="font-weight:bold; font-size:0.9rem;">${item.name}</div>
+          <div style="font-size:0.75rem; color:var(--gold);">所持欠片: ${item.count}</div>
+        </div>
+        <button class="filter-btn active" style="width:auto; padding:0.4rem 1rem; font-size:0.8rem;" onclick="performFragmentRoll('${item.id}')">10個変換</button>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function performFragmentRoll(fromId) {
+  if (!playerState.characters[fromId] || playerState.characters[fromId].fragments < 10) return;
+  playerState.characters[fromId].fragments -= 10;
+  const gachaPool = units.filter(u => u.type === 'ルディ王国' && u.id < 300 && u.id !== 23);
+  const pulled = gachaPool[Math.floor(Math.random() * gachaPool.length)];
+  if (!playerState.characters[pulled.id]) playerState.characters[pulled.id] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+  else playerState.characters[pulled.id].fragments += 10;
+  showToast(`変換完了！「${pulled.name}」の欠片x10を獲得しました`);
+  saveGame();
+  renderFragmentRollUI();
+}
+
 function openGachaResultModal(results) {
   const grid = document.getElementById('gachaResultGrid');
   grid.innerHTML = '';
@@ -14510,6 +14578,10 @@ function loadGame() {
     // Migration for ownedEquipment
     playerState.ownedEquipment = savedData.playerState.ownedEquipment || defaultPlayerState.ownedEquipment;
     
+    // SP装備の強制付与
+    const spIds = [17, 18, 19, 20, 21];
+    spIds.forEach(id => { if (!playerState.ownedEquipment.includes(id)) playerState.ownedEquipment.push(id); });
+
     // Migration for squad-specific states
     if (savedData.playerState.squadCharacterStates) {
         console.log("Migrating from squad-specific states to a unified character state...");
@@ -14622,6 +14694,19 @@ function loadGame() {
     missionProgress = new Set(savedData.missionProgress || []);
     // squad変数を現在のアクティブなスロットへの参照にする
     squad = playerState.squads[playerState.currentSquadIndex];
+
+    // 無限の塔リセット & 新キャラ配布 & お詫び (一度きりの実行)
+    if (!playerState.towerResetAppliedV1) {
+        if (playerState.towerProgress > 300) {
+            playerState.towerProgress = 300;
+            // 300階を超えるミッション進捗も削除
+            [...missionProgress].forEach(mid => { if (typeof mid === 'number' && mid > 10300) missionProgress.delete(mid); });
+            // キャラクター配布
+            playerState.characters[34] = { level: 1, equippedId: null, fragments: 0, aura: 0, potential: 0 };
+            alert("【無限の塔 調整のお詫び】\n301階以降の敵編成リニューアルに伴い、300階を超えていた進捗を300階へ戻させていただきました。\n対象のプレイヤー様には、お詫びとして新キャラクター「ラピジェル・ローレライ」を配布いたしました。");
+        }
+        playerState.towerResetAppliedV1 = true;
+    }
 
     // Apply Compensation/Fix Logic
     checkAndApplyCompensation();
@@ -15511,9 +15596,12 @@ function renderRmMySquads() {
             <div style="font-size:0.8rem; margin-bottom:0.5rem; font-weight:bold; color:var(--text-mid); height:1.2rem; overflow:hidden;">
                 ${registered ? registered.squadName : ''}
             </div>
-            <button class="mission-btn" style="font-size:0.8rem; padding:0.5rem;" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="openRmSquadSelect(${i})">
-                ${!rmDataLoaded ? '読み込み中...' : (registered ? '編成を更新・再戦' : 'このスロットに登録')}
-            </button>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <button class="mission-btn" style="font-size:0.8rem; padding:0.5rem;" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="openRmSquadSelect(${i})">
+                    ${!rmDataLoaded ? '読み込み中...' : (registered ? '編成を更新' : 'このスロットに登録')}
+                </button>
+                ${registered ? `<button class="mission-btn" style="font-size:0.8rem; padding:0.5rem; border-color:var(--gold); color:var(--gold);" ${(!rmDataLoaded || isRmSimulating) ? 'disabled' : ''} onclick="simulateRmMatches(${i}, 50)">50回対戦 (シミュレート)</button>` : ''}
+            </div>
         `;
         grid.appendChild(card);
     }
@@ -15555,6 +15643,77 @@ function openRmSquadSelect(rmIndex) {
 
 function closeRmSquadSelect() {
     document.getElementById('rmSquadSelectOverlay').classList.remove('open');
+    isRmSimulating = false;
+    renderRmMySquads();
+}
+
+async function simulateRmMatches(rmIndex, count) {
+    if (isRmSimulating) return;
+    const registered = cachedRmMySquads.find(s => parseInt(s.rmSlotIndex) === rmIndex);
+    if (!registered) return;
+
+    if (!confirm(`この編成で ${count} 回のシミュレート対戦を行いますか？\n(レートと戦績が更新されます)`)) return;
+
+    isRmSimulating = true;
+    renderRmMySquads();
+    
+    let myRate = parseFloat(registered.rate) || 1500;
+    let wins = parseInt(registered.wins) || 0;
+    let losses = parseInt(registered.losses) || 0;
+    let history = registered.history || "";
+    const squadDataObj = JSON.parse(registered.squadData);
+    const K = 32;
+
+    let pool = [...cachedRmRankings].filter(r => r.id !== registered.id);
+    if (pool.length === 0) { showToast("対戦相手が見つかりません"); isRmSimulating = false; renderRmMySquads(); return; }
+    
+    const updates = [];
+    
+    for (let i = 0; i < count; i++) {
+        if (i % 5 === 0) { showToast(`シミュレーション中... (${i}/${count})`); await sleep(20); }
+        
+        const opp = pool[Math.floor(Math.random() * pool.length)];
+        const battleResult = runHeadlessBattle(squadDataObj, JSON.parse(opp.squadData));
+        const resultScore = battleResult.result;
+        const oppRate = parseFloat(opp.rate) || 1500;
+        const expectedMy = 1 / (1 + Math.pow(10, (oppRate - myRate) / 400));
+        const diff = Math.round(K * (resultScore - expectedMy));
+        
+        myRate += diff;
+        opp.rate = Math.round(oppRate - diff);
+        
+        if (resultScore === 1) { wins++; opp.losses = (parseInt(opp.losses)||0) + 1; history += "W"; opp.history = (opp.history || "") + "L"; } 
+        else if (resultScore === 0) { losses++; opp.wins = (parseInt(opp.wins)||0) + 1; history += "L"; opp.history = (opp.history || "") + "W"; }
+        else { history += "D"; opp.history = (opp.history || "") + "D"; }
+        
+        history = history.slice(-10);
+        opp.history = (opp.history || "").slice(-10);
+        
+        const existingUpdate = updates.find(u => u.id === opp.id);
+        if (existingUpdate) { existingUpdate.rate = opp.rate; existingUpdate.wins = opp.wins; existingUpdate.losses = opp.losses; existingUpdate.history = opp.history; } 
+        else { updates.push({ id: opp.id, rate: opp.rate, wins: opp.wins, losses: opp.losses, history: opp.history }); }
+    }
+
+    try {
+        await fetch(RANK_MATCH_API_URL, { method: 'GET' }).catch(() => {});
+        const formData = new URLSearchParams();
+        formData.append('action', 'submitSquad');
+        formData.append('playerId', playerState.playerId);
+        formData.append('playerName', playerState.playerName);
+        formData.append('rmSlotIndex', rmIndex);
+        formData.append('squadName', registered.squadName);
+        formData.append('squadData', registered.squadData);
+        formData.append('totalPower', registered.totalPower);
+        formData.append('rate', Math.round(myRate));
+        formData.append('wins', wins); formData.append('losses', losses); formData.append('history', history);
+        await fetch(RANK_MATCH_API_URL, { method: 'POST', body: formData });
+        const bulkData = new URLSearchParams();
+        bulkData.append('action', 'bulkUpdate');
+        bulkData.append('updates', JSON.stringify(updates));
+        await fetch(RANK_MATCH_API_URL, { method: 'POST', body: bulkData });
+        showToast(`${count}回対戦完了！\n新レート: ${Math.round(myRate)}`);
+        await fetchRmRankings(true);
+    } catch(e) { showToast("同期エラーが発生しました"); }
     isRmSimulating = false;
     renderRmMySquads();
 }
@@ -15817,6 +15976,9 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
             } else if (u.id === 23 && !u.passiveUsed) { // シャム: 監魂葬災
                 u.currentHp = 1; u.passiveUsed = true;
                 opps.forEach(e => { if(e.currentHp > 0) { applyStatus(e, 'burn', 2); applyStatus(e, 'poison', 2); applyStatus(e, 'curse', 2); }});
+            } else if (u.id === 34 && !u.passiveUsed) { // ラピジェル: 無謀な戦略
+                u.currentHp = 1; u.passiveUsed = true;
+                opps.forEach(e => { if(e.currentHp > 0) { e.currentHp -= Math.floor(u.stats.atk * 2.0); checkDeath(e); }});
             } else if (u.id === 40 && (u.reviveCount || 0) < 2) { // ゼーク: 復活
                 const pct = (u.reviveCount || 0) === 1 ? 0.3 : 0.15;
                 u.currentHp = Math.floor(u.stats.hp * pct);
@@ -15909,9 +16071,9 @@ function runHeadlessBattle(squadA, squadB, fieldP = 'none', fieldE = 'none') {
                     if (startAb.effect?.type === 'status') applyStatus(t, startAb.effect.status, startAb.effect.turns);
                     checkDeath(t);
                 }
-            } else if (startAb.target === 'all_allies' || [12, 15, 22, 26, 27, 45, 306].includes(u.id)) { // Always exists
+            } else if (startAb.target === 'all_allies' || [12, 15, 22, 26, 27, 34, 45, 306].includes(u.id)) { // Always exists
                 allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'strengthen', 5); });
-                if (u.id === 22) allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'barrier', 2); });
+                if (u.id === 22 || u.id === 34) allies.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'barrier', u.id === 34 ? 3 : 2); });
             } else if (u.id === 25) { // アッキー
                 opponents.forEach(t => { if(t.currentHp > 0) applyStatus(t, 'blind', 2); });
             }
