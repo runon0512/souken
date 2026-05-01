@@ -16803,14 +16803,30 @@ async function initializeGame() {
         saveGame();
     }
 
-    // ランキング初回送信（ログイン時、未初期化の場合のみ）
-    if (!playerState.towerRankInitialized && TOWER_RANKING_API_URL) {
-        postTowerScore(playerState.towerProgress || 0).then(success => {
-            if (success) {
+    // 無限の塔の進捗をランキングから同期
+    if (TOWER_RANKING_API_URL && TOWER_RANKING_API_URL.startsWith('http')) {
+        try {
+            const response = await fetch(TOWER_RANKING_API_URL + '?action=getRanking');
+            const rankingData = await response.json();
+            const myRecord = rankingData.find(item => item.playerId === playerState.playerId);
+            
+            if (myRecord) {
+                const serverFloor = parseInt(myRecord.floor);
+                // サーバーの階層がローカルより進んでいる場合に同期
+                if (serverFloor > (playerState.towerProgress || 0)) {
+                    playerState.towerProgress = serverFloor;
+                    // ミッションクリアフラグを階層に合わせて補完
+                    for (let f = 1; f <= serverFloor; f++) { missionProgress.add(10000 + f); }
+                    saveGame();
+                    console.log(`無限の塔の進捗をランキングから同期しました: ${serverFloor}階`);
+                }
                 playerState.towerRankInitialized = true;
-                saveGame();
+            } else if (!playerState.towerRankInitialized) {
+                // ランキングに未登録の場合は現在の進捗を送信
+                const success = await postTowerScore(playerState.towerProgress || 0);
+                if (success) { playerState.towerRankInitialized = true; saveGame(); }
             }
-        }); // Always exists
+        } catch (e) { console.warn("Tower progress sync failed", e); }
     }
 
     setView('home');
